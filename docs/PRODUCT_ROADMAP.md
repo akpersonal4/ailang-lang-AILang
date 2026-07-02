@@ -22,7 +22,7 @@ Milestone order:
 
 - [x] Repository
 - [x] Source Model
-- [ ] Diagnostics
+- [x] Diagnostics
 - [ ] Lexer
 - [ ] Parser
 - [ ] CST
