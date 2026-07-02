@@ -146,6 +146,22 @@ def test_semantic_analyzer_rejects_undefined_after_scope_exit() -> None:
     assert "Undefined identifier" in reporter.diagnostics[0].message
 
 
+def test_semantic_analyzer_resolves_nested_scopes() -> None:
+    source = (
+        "fn foo() {\n"
+        "    let x = 1;\n"
+        "    if (x > 0) {\n"
+        "        let y = 2;\n"
+        "        if (y > 0) {\n"
+        "            let z = x + y;\n"
+        "        }\n"
+        "    }\n"
+        "}"
+    )
+    _, reporter = _analyze(source)
+    assert reporter.error_count == 0
+
+
 # ------------------------------------------------------------------
 # Golden snapshot
 # ------------------------------------------------------------------

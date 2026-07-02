@@ -1,0 +1,3 @@
+errors: 2
+ERROR TYP002: Return statement outside function
+ERROR TYP002: Return statement outside function

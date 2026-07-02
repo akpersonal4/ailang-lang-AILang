@@ -12,39 +12,61 @@ class Symbol:
     name: str
     start_span: int | None = None
     end_span: int | None = None
+    type: object | None = None
 
 
 class Scope:
-    def __init__(self) -> None:
+    def __init__(self, parent: Scope | None = None) -> None:
+        self.parent = parent
         self.symbols: dict[str, Symbol] = {}
 
     def declare(
-        self, name: str, start_span: int | None = None, end_span: int | None = None
+        self,
+        name: str,
+        start_span: int | None = None,
+        end_span: int | None = None,
+        type: object | None = None,
     ) -> Symbol:
         if name in self.symbols:
             return self.symbols[name]
-        symbol = Symbol(name, start_span, end_span)
+        symbol = Symbol(name, start_span, end_span, type)
         self.symbols[name] = symbol
         return symbol
 
     def resolve(self, name: str) -> Symbol | None:
-        return self.symbols.get(name)
+        if name in self.symbols:
+            return self.symbols[name]
+        if self.parent is not None:
+            return self.parent.resolve(name)
+        return None
 
 
 class SymbolTable:
     def __init__(self, reporter: DiagnosticReporter | None = None) -> None:
         self.reporter = reporter
         self.scopes: list[Scope] = [Scope()]
+        self.node_scopes: dict[int, Scope] = {}
 
-    def enter_scope(self) -> None:
-        self.scopes.append(Scope())
+    def enter_scope(self, node: object | None = None) -> None:
+        if node is not None and id(node) in self.node_scopes:
+            self.scopes.append(self.node_scopes[id(node)])
+        else:
+            parent = self.scopes[-1] if self.scopes else None
+            new_scope = Scope(parent=parent)
+            self.scopes.append(new_scope)
+            if node is not None:
+                self.node_scopes[id(node)] = new_scope
 
     def exit_scope(self) -> None:
         if len(self.scopes) > 1:
             self.scopes.pop()
 
     def declare(
-        self, name: str, start_span: int | None = None, end_span: int | None = None
+        self,
+        name: str,
+        start_span: int | None = None,
+        end_span: int | None = None,
+        type: object | None = None,
     ) -> Symbol:
         scope = self.scopes[-1]
         if name in scope.symbols:
@@ -52,15 +74,15 @@ class SymbolTable:
                 f"Duplicate declaration: {name}", "SEM001", start_span, end_span
             )
             return scope.symbols[name]
-        return scope.declare(name, start_span, end_span)
+        return scope.declare(name, start_span, end_span, type)
 
     def resolve(
         self, name: str, start_span: int | None = None, end_span: int | None = None
     ) -> Symbol | None:
-        for scope in reversed(self.scopes):
-            symbol = scope.resolve(name)
-            if symbol is not None:
-                return symbol
+        active_scope = self.scopes[-1]
+        symbol = active_scope.resolve(name)
+        if symbol is not None:
+            return symbol
         self._report_error(
             f"Undefined identifier: {name}", "SEM002", start_span, end_span
         )

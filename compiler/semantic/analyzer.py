@@ -64,7 +64,7 @@ class SemanticAnalyzer:
         self.symbol_table.declare(
             node.name.name, node.name.start_span, node.name.end_span
         )
-        self.symbol_table.enter_scope()
+        self.symbol_table.enter_scope(node)
         for parameter in node.parameters:
             self.symbol_table.declare(
                 parameter.name, parameter.start_span, parameter.end_span
@@ -118,7 +118,7 @@ class SemanticAnalyzer:
         return
 
     def _analyze_BlockNode(self, node: BlockNode) -> None:
-        self.symbol_table.enter_scope()
+        self.symbol_table.enter_scope(node)
         for statement in node.statements:
             self.analyze(statement)
         self.symbol_table.exit_scope()
