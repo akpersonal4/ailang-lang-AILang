@@ -2,33 +2,36 @@
 
 ## Current Milestone
 
-AST Builder v1
+Semantic Analysis Phase 1
 
 ## Goal
 
-Implement immutable AST node definitions and CST-to-AST transformation according to AST_SPEC.md.
+Implement lexical scope analysis, symbol tables, declaration registration, and identifier resolution on the AST.
 
 ## Acceptance Criteria
 
-- Immutable AST node definitions exist in compiler/ast/nodes.py
-- CST-to-AST transformation exists in compiler/ast/builder.py
-- Source spans are preserved on AST nodes
-- Syntax-only tokens (semicolons, commas, braces, parens) are discarded
-- AST unit tests pass
-- AST golden snapshot is generated
+- Symbol table with lexical scoping exists in compiler/semantic/symbol_table.py
+- Semantic analyzer exists in compiler/semantic/analyzer.py
+- Duplicate symbol diagnostics (SEM001) are reported
+- Undefined identifier diagnostics (SEM002) are reported
+- Semantic unit tests pass
+- Semantic golden snapshot is generated
 - All quality gates pass
 
 ## Tasks
 
-- [x] Create compiler/ast/ package with package init
-- [x] Define immutable AST node dataclasses (Program, Block, VariableDeclaration, FunctionDeclaration, Parameter, ExpressionStatement, ReturnStatement, IfStatement, BinaryExpression, UnaryExpression, CallExpression, Identifier, NumberLiteral, StringLiteral)
-- [x] Implement CST-to-AST transformation in ASTBuilder
-- [x] Preserve source spans on all AST nodes
-- [x] Discard syntax-only tokens (ParameterList, ArgumentList, punctuation)
-- [x] Handle else-if chains (lifts nested IfStatement into synthetic Block)
-- [x] Add 25 AST unit tests
-- [x] Add AST golden snapshot
-- [x] Pass all quality gates (59 tests, black, ruff, mypy)
+- [x] Create compiler/semantic/ package with package init
+- [x] Implement Symbol, Scope, and SymbolTable with lexical scoping
+- [x] Implement SemanticAnalyzer with AST visitor pattern
+- [x] Register variable declarations in symbol table
+- [x] Register function declarations in symbol table
+- [x] Register function parameters in symbol table
+- [x] Resolve identifiers with lexical scope lookup
+- [x] Report duplicate declaration diagnostics (SEM001)
+- [x] Report undefined identifier diagnostics (SEM002)
+- [x] Add 15 semantic unit tests
+- [x] Add semantic golden snapshot
+- [x] Pass all quality gates (74 tests, black, ruff, mypy)
 
 ## Completion
 
@@ -40,6 +43,6 @@ None.
 
 ## Next Task
 
-Begin semantic analysis.
+Type Checker.
 
 Do NOT start without CTO approval.
