@@ -66,3 +66,32 @@ def test_lexer_tokenizes_arithmetic_operators() -> None:
         Token(TokenKind.IDENTIFIER, "f", 20, 21),
         Token(TokenKind.EOF, "", 21, 21),
     ]
+
+
+def test_lexer_tokenizes_comparison_and_logical_operators() -> None:
+    lexer = Lexer()
+
+    tokens = lexer.tokenize("a == b != c < d <= e > f >= g && h || i ! j")
+
+    assert tokens == [
+        Token(TokenKind.IDENTIFIER, "a", 0, 1),
+        Token(TokenKind.EQEQ, "==", 2, 4),
+        Token(TokenKind.IDENTIFIER, "b", 5, 6),
+        Token(TokenKind.NEQ, "!=", 7, 9),
+        Token(TokenKind.IDENTIFIER, "c", 10, 11),
+        Token(TokenKind.LT, "<", 12, 13),
+        Token(TokenKind.IDENTIFIER, "d", 14, 15),
+        Token(TokenKind.LTE, "<=", 16, 18),
+        Token(TokenKind.IDENTIFIER, "e", 19, 20),
+        Token(TokenKind.GT, ">", 21, 22),
+        Token(TokenKind.IDENTIFIER, "f", 23, 24),
+        Token(TokenKind.GTE, ">=", 25, 27),
+        Token(TokenKind.IDENTIFIER, "g", 28, 29),
+        Token(TokenKind.ANDAND, "&&", 30, 32),
+        Token(TokenKind.IDENTIFIER, "h", 33, 34),
+        Token(TokenKind.OROR, "||", 35, 37),
+        Token(TokenKind.IDENTIFIER, "i", 38, 39),
+        Token(TokenKind.BANG, "!", 40, 41),
+        Token(TokenKind.IDENTIFIER, "j", 42, 43),
+        Token(TokenKind.EOF, "", 43, 43),
+    ]

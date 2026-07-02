@@ -24,6 +24,15 @@ class TokenKind(Enum):
     STAR = "star"
     SLASH = "slash"
     PERCENT = "percent"
+    EQEQ = "eqeq"
+    NEQ = "neq"
+    LT = "lt"
+    LTE = "lte"
+    GT = "gt"
+    GTE = "gte"
+    ANDAND = "andand"
+    OROR = "oror"
+    BANG = "bang"
     EOF = "eof"
 
 
@@ -72,8 +81,50 @@ class Lexer:
                 tokens.append(Token(TokenKind.NUMBER, text[start:index], start, index))
                 continue
             if char == "=":
-                tokens.append(Token(TokenKind.ASSIGN, char, index, index + 1))
-                index += 1
+                if index + 1 < length and text[index + 1] == "=":
+                    tokens.append(Token(TokenKind.EQEQ, "==", index, index + 2))
+                    index += 2
+                else:
+                    tokens.append(Token(TokenKind.ASSIGN, char, index, index + 1))
+                    index += 1
+                continue
+            if char == "!":
+                if index + 1 < length and text[index + 1] == "=":
+                    tokens.append(Token(TokenKind.NEQ, "!=", index, index + 2))
+                    index += 2
+                else:
+                    tokens.append(Token(TokenKind.BANG, char, index, index + 1))
+                    index += 1
+                continue
+            if char == "<":
+                if index + 1 < length and text[index + 1] == "=":
+                    tokens.append(Token(TokenKind.LTE, "<=", index, index + 2))
+                    index += 2
+                else:
+                    tokens.append(Token(TokenKind.LT, char, index, index + 1))
+                    index += 1
+                continue
+            if char == ">":
+                if index + 1 < length and text[index + 1] == "=":
+                    tokens.append(Token(TokenKind.GTE, ">=", index, index + 2))
+                    index += 2
+                else:
+                    tokens.append(Token(TokenKind.GT, char, index, index + 1))
+                    index += 1
+                continue
+            if char == "&":
+                if index + 1 < length and text[index + 1] == "&":
+                    tokens.append(Token(TokenKind.ANDAND, "&&", index, index + 2))
+                    index += 2
+                else:
+                    raise ValueError(f"Unexpected character: {char}")
+                continue
+            if char == "|":
+                if index + 1 < length and text[index + 1] == "|":
+                    tokens.append(Token(TokenKind.OROR, "||", index, index + 2))
+                    index += 2
+                else:
+                    raise ValueError(f"Unexpected character: {char}")
                 continue
             if char == "+":
                 tokens.append(Token(TokenKind.PLUS, char, index, index + 1))
