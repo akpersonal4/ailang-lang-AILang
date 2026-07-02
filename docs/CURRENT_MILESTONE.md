@@ -2,32 +2,33 @@
 
 ## Current Milestone
 
-Parser Refactor
+AST Builder v1
 
 ## Goal
 
-Split the monolithic parser into a modular architecture before adding further grammar features.
+Implement immutable AST node definitions and CST-to-AST transformation according to AST_SPEC.md.
 
 ## Acceptance Criteria
 
-- Parser is split into separate modules: nodes, token_stream, expressions, declarations, statements, recovery, and main entry point.
-- Public API is preserved (Parser class, CSTNode, parse_program, parse_expression).
-- `parse_return_statement` span inconsistency is fixed.
-- All quality gates pass with no behavior changes.
+- Immutable AST node definitions exist in compiler/ast/nodes.py
+- CST-to-AST transformation exists in compiler/ast/builder.py
+- Source spans are preserved on AST nodes
+- Syntax-only tokens (semicolons, commas, braces, parens) are discarded
+- AST unit tests pass
+- AST golden snapshot is generated
+- All quality gates pass
 
 ## Tasks
 
-- [x] Extract CSTNode into compiler/parser/nodes.py
-- [x] Extract TokenStream into compiler/parser/token_stream.py
-- [x] Extract expression parsing into compiler/parser/expressions.py
-- [x] Extract declaration parsing into compiler/parser/declarations.py
-- [x] Extract statement parsing (block, if/else, return, expression) into compiler/parser/statements.py
-- [x] Extract recovery into compiler/parser/recovery.py
-- [x] Create main Parser entry point in compiler/parser/parser.py
-- [x] Create compiler/parser/__init__.py with re-exports
-- [x] Fix parse_return_statement span (current → previous)
-- [x] Delete old monolithic compiler/parser.py
-- [x] Pass all quality gates
+- [x] Create compiler/ast/ package with package init
+- [x] Define immutable AST node dataclasses (Program, Block, VariableDeclaration, FunctionDeclaration, Parameter, ExpressionStatement, ReturnStatement, IfStatement, BinaryExpression, UnaryExpression, CallExpression, Identifier, NumberLiteral, StringLiteral)
+- [x] Implement CST-to-AST transformation in ASTBuilder
+- [x] Preserve source spans on all AST nodes
+- [x] Discard syntax-only tokens (ParameterList, ArgumentList, punctuation)
+- [x] Handle else-if chains (lifts nested IfStatement into synthetic Block)
+- [x] Add 25 AST unit tests
+- [x] Add AST golden snapshot
+- [x] Pass all quality gates (59 tests, black, ruff, mypy)
 
 ## Completion
 
@@ -39,4 +40,6 @@ None.
 
 ## Next Task
 
-Parser finalization: loops (while) and remaining grammar features.
+Begin semantic analysis.
+
+Do NOT start without CTO approval.

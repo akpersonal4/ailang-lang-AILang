@@ -2,13 +2,13 @@
   "project": "AILang",
   "version": "0.0.1",
   "current_phase": "Compiler",
-  "current_component": "Parser Complete",
-  "completion": 55.0,
-  "next_component": "CST Refinement",
+  "current_component": "AST Builder v1",
+  "completion": 65.0,
+  "next_component": "Semantic Analysis",
   "updated_at": "2026-07-02",
-  "last_session_summary": "Parser is feature-complete per approved grammar. Implemented: if/else, nested blocks, full expression precedence chain (assignment, logical OR/AND, equality, comparison, additive, multiplicative, unary, postfix, call). Refactored monolithic parser into modular architecture (nodes, token_stream, expressions, declarations, statements, recovery, parser). Fixed parse_return_statement span inconsistency. No while/for/break/continue defined in LANGUAGE_SPEC.md.",
+  "last_session_summary": "Implemented AST Builder v1: immutable AST node definitions in compiler/ast/nodes.py, CST-to-AST transformation in compiler/ast/builder.py. Discards syntax-only tokens (semicolons, commas, braces, parens). Preserves source spans on all AST nodes. Added 25 AST unit tests and golden snapshot. All quality gates pass (59 tests, black, ruff, mypy).",
   "tests": {
-    "passed": 34,
+    "passed": 59,
     "failed": 0
   },
   "quality_gates": {
@@ -17,5 +17,5 @@
     "mypy": true,
     "pytest": true
   },
-  "last_commit": "refactor(parser): split monolithic parser into modular architecture"
+  "last_commit": "feat(ast): add AST Builder v1 with immutable nodes and CST-to-AST transformation"
 }
