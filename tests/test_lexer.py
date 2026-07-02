@@ -45,3 +45,24 @@ def test_lexer_tokenizes_keywords_and_punctuation() -> None:
         Token(TokenKind.SEMICOLON, ";", 32, 33),
         Token(TokenKind.EOF, "", 33, 33),
     ]
+
+
+def test_lexer_tokenizes_arithmetic_operators() -> None:
+    lexer = Lexer()
+
+    tokens = lexer.tokenize("a + b - c * d / e % f")
+
+    assert tokens == [
+        Token(TokenKind.IDENTIFIER, "a", 0, 1),
+        Token(TokenKind.PLUS, "+", 2, 3),
+        Token(TokenKind.IDENTIFIER, "b", 4, 5),
+        Token(TokenKind.MINUS, "-", 6, 7),
+        Token(TokenKind.IDENTIFIER, "c", 8, 9),
+        Token(TokenKind.STAR, "*", 10, 11),
+        Token(TokenKind.IDENTIFIER, "d", 12, 13),
+        Token(TokenKind.SLASH, "/", 14, 15),
+        Token(TokenKind.IDENTIFIER, "e", 16, 17),
+        Token(TokenKind.PERCENT, "%", 18, 19),
+        Token(TokenKind.IDENTIFIER, "f", 20, 21),
+        Token(TokenKind.EOF, "", 21, 21),
+    ]

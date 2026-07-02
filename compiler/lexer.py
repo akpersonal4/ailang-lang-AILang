@@ -19,6 +19,11 @@ class TokenKind(Enum):
     RBRACE = "rbrace"
     COMMA = "comma"
     SEMICOLON = "semicolon"
+    PLUS = "plus"
+    MINUS = "minus"
+    STAR = "star"
+    SLASH = "slash"
+    PERCENT = "percent"
     EOF = "eof"
 
 
@@ -68,6 +73,26 @@ class Lexer:
                 continue
             if char == "=":
                 tokens.append(Token(TokenKind.ASSIGN, char, index, index + 1))
+                index += 1
+                continue
+            if char == "+":
+                tokens.append(Token(TokenKind.PLUS, char, index, index + 1))
+                index += 1
+                continue
+            if char == "-":
+                tokens.append(Token(TokenKind.MINUS, char, index, index + 1))
+                index += 1
+                continue
+            if char == "*":
+                tokens.append(Token(TokenKind.STAR, char, index, index + 1))
+                index += 1
+                continue
+            if char == "/":
+                tokens.append(Token(TokenKind.SLASH, char, index, index + 1))
+                index += 1
+                continue
+            if char == "%":
+                tokens.append(Token(TokenKind.PERCENT, char, index, index + 1))
                 index += 1
                 continue
             if char == "(":
