@@ -2,34 +2,31 @@
 
 ## Current Milestone
 
-Parser Implementation
+Parser Refactor
 
 ## Goal
 
-Implement the parser according to the approved grammar, producing CST with source spans and diagnostics integration.
+Split the monolithic parser into a modular architecture before adding further grammar features.
 
 ## Acceptance Criteria
 
-- Parser produces CST for all grammar productions.
-- IF/ELSE statements are correctly parsed.
-- Full expression precedence chain is implemented.
-- Source spans are preserved on CST nodes.
-- Diagnostics are reported for syntax errors.
-- All quality gates pass.
+- Parser is split into separate modules: nodes, token_stream, expressions, declarations, statements, recovery, and main entry point.
+- Public API is preserved (Parser class, CSTNode, parse_program, parse_expression).
+- `parse_return_statement` span inconsistency is fixed.
+- All quality gates pass with no behavior changes.
 
 ## Tasks
 
-- [x] Implement variable declarations
-- [x] Implement function declarations
-- [x] Implement return statements
-- [x] Implement expression statements
-- [x] Implement if statements
-- [x] Implement else clauses
-- [x] Implement nested blocks
-- [x] Implement expression precedence chain (assignment, logical, equality, comparison, additive, multiplicative, unary, postfix)
-- [x] Add parser unit tests
-- [x] Add golden tests
-- [x] Add integration examples
+- [x] Extract CSTNode into compiler/parser/nodes.py
+- [x] Extract TokenStream into compiler/parser/token_stream.py
+- [x] Extract expression parsing into compiler/parser/expressions.py
+- [x] Extract declaration parsing into compiler/parser/declarations.py
+- [x] Extract statement parsing (block, if/else, return, expression) into compiler/parser/statements.py
+- [x] Extract recovery into compiler/parser/recovery.py
+- [x] Create main Parser entry point in compiler/parser/parser.py
+- [x] Create compiler/parser/__init__.py with re-exports
+- [x] Fix parse_return_statement span (current → previous)
+- [x] Delete old monolithic compiler/parser.py
 - [x] Pass all quality gates
 
 ## Completion
@@ -42,4 +39,4 @@ None.
 
 ## Next Task
 
-CST refinement: add line/column to source spans, enhance CST debug output, add CST visitor or iterator.
+Parser finalization: loops (while) and remaining grammar features.
