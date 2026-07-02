@@ -6,11 +6,22 @@ This document defines the lexical rules for the initial AILang lexer increments.
 ## Token Inventory
 The lexer must recognize the following token categories:
 
-- identifiers
-- numeric literals
-- assignment operator (`=`)
-- keywords: `let`, `fn`, `if`, `else`, `return`
-- punctuation: `(`, `)`, `{`, `}`, `,`, `;`
+| Category | Tokens | Status |
+| --- | --- | --- |
+| Keywords | `let`, `fn`, `if`, `else`, `return` | ✅ |
+| Identifiers | identifier | ✅ |
+| Numbers | integer | ✅ |
+| Assignment | `=` | ✅ |
+| Arithmetic | `+`, `-`, `*`, `/`, `%` | ✅ |
+| Comparison | `==`, `!=`, `<`, `<=`, `>`, `>=` | ✅ |
+| Logical | `&&`, `||`, `!` | ✅ |
+| Strings | `"..."` | ⬜ |
+| Characters | `'a'` | Decision pending |
+| Comments | `//`, `/* */` | ⬜ |
+| EOF | EOF | ✅ |
+
+## Character Literal Decision
+AILang will use string literals only. Character literals are not a distinct language feature and are intentionally not supported.
 
 ## Identifier Rules
 - Identifiers begin with a letter or underscore.
