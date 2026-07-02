@@ -24,3 +24,24 @@ def test_lexer_tokenizes_basic_punctuation() -> None:
         Token(TokenKind.NUMBER, "1", 4, 5),
         Token(TokenKind.EOF, "", 5, 5),
     ]
+
+
+def test_lexer_tokenizes_keywords_and_punctuation() -> None:
+    lexer = Lexer()
+
+    tokens = lexer.tokenize("let fn if else return ( ) { } , ;")
+
+    assert tokens == [
+        Token(TokenKind.LET, "let", 0, 3),
+        Token(TokenKind.FN, "fn", 4, 6),
+        Token(TokenKind.IF, "if", 7, 9),
+        Token(TokenKind.ELSE, "else", 10, 14),
+        Token(TokenKind.RETURN, "return", 15, 21),
+        Token(TokenKind.LPAREN, "(", 22, 23),
+        Token(TokenKind.RPAREN, ")", 24, 25),
+        Token(TokenKind.LBRACE, "{", 26, 27),
+        Token(TokenKind.RBRACE, "}", 28, 29),
+        Token(TokenKind.COMMA, ",", 30, 31),
+        Token(TokenKind.SEMICOLON, ";", 32, 33),
+        Token(TokenKind.EOF, "", 33, 33),
+    ]

@@ -8,6 +8,17 @@ class TokenKind(Enum):
     IDENTIFIER = "identifier"
     NUMBER = "number"
     ASSIGN = "assign"
+    LET = "let"
+    FN = "fn"
+    IF = "if"
+    ELSE = "else"
+    RETURN = "return"
+    LPAREN = "lparen"
+    RPAREN = "rparen"
+    LBRACE = "lbrace"
+    RBRACE = "rbrace"
+    COMMA = "comma"
+    SEMICOLON = "semicolon"
     EOF = "eof"
 
 
@@ -35,9 +46,18 @@ class Lexer:
                 index += 1
                 while index < length and (text[index].isalnum() or text[index] == "_"):
                     index += 1
-                tokens.append(
-                    Token(TokenKind.IDENTIFIER, text[start:index], start, index)
-                )
+                text_value = text[start:index]
+                keyword_kind = {
+                    "let": TokenKind.LET,
+                    "fn": TokenKind.FN,
+                    "if": TokenKind.IF,
+                    "else": TokenKind.ELSE,
+                    "return": TokenKind.RETURN,
+                }.get(text_value)
+                if keyword_kind is None:
+                    tokens.append(Token(TokenKind.IDENTIFIER, text_value, start, index))
+                else:
+                    tokens.append(Token(keyword_kind, text_value, start, index))
                 continue
             if char.isdigit():
                 start = index
@@ -48,6 +68,30 @@ class Lexer:
                 continue
             if char == "=":
                 tokens.append(Token(TokenKind.ASSIGN, char, index, index + 1))
+                index += 1
+                continue
+            if char == "(":
+                tokens.append(Token(TokenKind.LPAREN, char, index, index + 1))
+                index += 1
+                continue
+            if char == ")":
+                tokens.append(Token(TokenKind.RPAREN, char, index, index + 1))
+                index += 1
+                continue
+            if char == "{":
+                tokens.append(Token(TokenKind.LBRACE, char, index, index + 1))
+                index += 1
+                continue
+            if char == "}":
+                tokens.append(Token(TokenKind.RBRACE, char, index, index + 1))
+                index += 1
+                continue
+            if char == ",":
+                tokens.append(Token(TokenKind.COMMA, char, index, index + 1))
+                index += 1
+                continue
+            if char == ";":
+                tokens.append(Token(TokenKind.SEMICOLON, char, index, index + 1))
                 index += 1
                 continue
             raise ValueError(f"Unexpected character: {char}")
