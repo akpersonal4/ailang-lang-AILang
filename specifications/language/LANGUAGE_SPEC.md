@@ -1,5 +1,7 @@
 # Language Specification
 
+This file is the language-level specification root for AILang. It is the source of truth for the lexer and parser design documents in this repository.
+
 ## Language Decisions
 
 ### Strings Only

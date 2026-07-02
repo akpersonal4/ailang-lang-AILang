@@ -1,15 +1,23 @@
 # Grammar
 
+This grammar is the source of truth for the parser design. It is derived from [LANGUAGE_SPEC.md](../../LANGUAGE_SPEC.md) and feeds the parser, CST, and AST specifications.
+
 ## Notation
 This grammar uses EBNF-style notation.
 
 ## Program
-program = { statement } ;
+module = { declaration } ;
+program = module ;
+
+## Declarations
+
+declaration = variable_declaration
+            | function_declaration ;
 
 ## Statements
-statement = variable_declaration
-          | function_declaration
-          | expression_statement ;
+statement = declaration
+          | expression_statement
+          | if_statement ;
 
 variable_declaration = "let", identifier, "=", expression, ";" ;
 
@@ -17,6 +25,9 @@ function_declaration = "fn", identifier, "(", [ parameter_list ], ")", block ;
 parameter_list = identifier, { ",", identifier } ;
 
 expression_statement = expression, ";" ;
+
+if_statement = "if", "(", expression, ")", block, [ "else", block ] ;
+
 
 ## Blocks
 block = "{", { statement }, "}" ;
@@ -38,6 +49,9 @@ primary_expression = identifier
                    | number_literal
                    | string_literal
                    | "(", expression, ")" ;
+
+## Parsing Strategy
+The grammar is intended for recursive-descent parsing. It is unambiguous because declaration forms are distinguished by the leading keywords "let" and "fn", and operator precedence and associativity are defined explicitly from low precedence to high precedence.
 
 ## Lexical Elements
 identifier = letter_or_underscore, { letter_or_digit_or_underscore } ;

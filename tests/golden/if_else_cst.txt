@@ -1,0 +1,18 @@
+Program
+  FunctionDeclaration
+    Identifier
+    ParameterList
+      Identifier
+    Block
+      IfStatement
+        BinaryExpression
+          Identifier
+          NumberLiteral
+        Block
+          ReturnStatement
+            Identifier
+        Block
+          ReturnStatement
+            BinaryExpression
+              NumberLiteral
+              Identifier

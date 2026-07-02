@@ -132,3 +132,36 @@ def test_lexer_reports_invalid_escape_sequence() -> None:
         assert "Invalid escape sequence" in str(error)
     else:
         raise AssertionError("expected ValueError")
+
+
+def test_lexer_skips_comments_and_whitespace() -> None:
+    lexer = Lexer()
+
+    tokens = lexer.tokenize("let x = 1 // comment\nlet y = 2")
+
+    assert tokens == [
+        Token(TokenKind.LET, "let", 0, 3),
+        Token(TokenKind.IDENTIFIER, "x", 4, 5),
+        Token(TokenKind.ASSIGN, "=", 6, 7),
+        Token(TokenKind.NUMBER, "1", 8, 9),
+        Token(TokenKind.LET, "let", 21, 24),
+        Token(TokenKind.IDENTIFIER, "y", 25, 26),
+        Token(TokenKind.ASSIGN, "=", 27, 28),
+        Token(TokenKind.NUMBER, "2", 29, 30),
+        Token(TokenKind.EOF, "", 30, 30),
+    ]
+
+
+def test_tokens_expose_source_location_information() -> None:
+    lexer = Lexer()
+
+    tokens = lexer.tokenize("a\n")
+
+    assert tokens[0].line == 1
+    assert tokens[0].column == 1
+    assert tokens[0].start_offset == 0
+    assert tokens[0].end_offset == 1
+    assert tokens[1].line == 2
+    assert tokens[1].column == 1
+    assert tokens[1].start_offset == 2
+    assert tokens[1].end_offset == 2

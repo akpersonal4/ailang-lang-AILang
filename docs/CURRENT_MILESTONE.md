@@ -2,27 +2,35 @@
 
 ## Current Milestone
 
-Parser Design
+Parser Implementation
 
 ## Goal
 
-Define the parser contract before implementation by creating specifications for grammar, CST, and AST.
+Implement the parser according to the approved grammar, producing CST with source spans and diagnostics integration.
 
 ## Acceptance Criteria
 
-- Parser specification exists.
-- Formal grammar is documented.
-- CST design is documented.
-- AST design is documented.
-- The lexer API remains frozen for parser integration.
+- Parser produces CST for all grammar productions.
+- IF/ELSE statements are correctly parsed.
+- Full expression precedence chain is implemented.
+- Source spans are preserved on CST nodes.
+- Diagnostics are reported for syntax errors.
+- All quality gates pass.
 
 ## Tasks
 
-- [x] Freeze lexer API
-- [x] Create parser specification
-- [x] Create grammar document
-- [x] Create CST specification
-- [x] Create AST specification
+- [x] Implement variable declarations
+- [x] Implement function declarations
+- [x] Implement return statements
+- [x] Implement expression statements
+- [x] Implement if statements
+- [x] Implement else clauses
+- [x] Implement nested blocks
+- [x] Implement expression precedence chain (assignment, logical, equality, comparison, additive, multiplicative, unary, postfix)
+- [x] Add parser unit tests
+- [x] Add golden tests
+- [x] Add integration examples
+- [x] Pass all quality gates
 
 ## Completion
 
@@ -34,4 +42,4 @@ None.
 
 ## Next Task
 
-Begin parser implementation once the parser design documents are reviewed.
+CST refinement: add line/column to source spans, enhance CST debug output, add CST visitor or iterator.
