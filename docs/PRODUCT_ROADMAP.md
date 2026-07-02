@@ -23,7 +23,8 @@ Milestone order:
 - [x] Repository
 - [x] Source Model
 - [x] Diagnostics
-- [ ] Lexer
+- [x] Lexer
+- [ ] Parser Design
 - [ ] Parser
 - [ ] CST
 - [ ] AST

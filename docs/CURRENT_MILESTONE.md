@@ -2,30 +2,31 @@
 
 ## Current Milestone
 
-Lexer
+Parser Design
 
 ## Goal
 
-Implement the first small lexer increment for AILang.
+Define the parser contract before implementation by creating specifications for grammar, CST, and AST.
 
 ## Acceptance Criteria
 
-- The lexer exposes a clear public API.
-- The initial tokenization behavior is covered by tests.
-- The implementation remains deterministic and modular.
-- Quality gates pass for the milestone.
+- Parser specification exists.
+- Formal grammar is documented.
+- CST design is documented.
+- AST design is documented.
+- The lexer API remains frozen for parser integration.
 
 ## Tasks
 
-- [ ] Define lexer API
-- [ ] Identify initial token types
-- [ ] Write failing tests
-- [ ] Implement tokenization increment
-- [ ] Run quality gates
+- [x] Freeze lexer API
+- [x] Create parser specification
+- [x] Create grammar document
+- [x] Create CST specification
+- [x] Create AST specification
 
 ## Completion
 
-0%
+100%
 
 ## Blockers
 
@@ -33,4 +34,4 @@ None.
 
 ## Next Task
 
-Define the public lexer API and write the first tokenization tests.
+Begin parser implementation once the parser design documents are reviewed.
