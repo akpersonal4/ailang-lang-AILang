@@ -3,6 +3,12 @@
 ## Vision
 AILang is an AI-first programming language designed to be deterministic, specification-first, readable, and compiler-friendly.
 
+## Problem Statement
+Most language projects optimize for ecosystem growth or developer convenience before correctness and compiler clarity. AILang exists to make language design and compiler implementation explicit, deterministic, and maintainable from the start.
+
+## Why AILang Exists
+AILang exists to provide a practical, specification-first foundation for building compilers that are easy to reason about, test, and evolve with AI-assisted development.
+
 ## Mission
 Build a production-quality compiler and language ecosystem from first principles, with implementation quality and maintainability as the primary goals.
 
@@ -41,6 +47,15 @@ The language should prioritize correctness, clarity, and long-term maintainabili
 
 ## AI-first Approach
 AILang should be designed to be easy for AI systems to reason about, generate, and validate.
+
+## Comparison with Existing Languages
+
+| Aspect | AILang | Mainstream languages |
+| --- | --- | --- |
+| Primary focus | Deterministic compiler-first design | Broad ecosystem and productivity |
+| Specification style | Explicit and central | Often informal or implementation-driven |
+| AI friendliness | First-class concern | Secondary concern |
+| Compiler clarity | High priority | Variable |
 
 ## Non-goals
 - Building a large ecosystem before the core compiler is stable.

@@ -1,7 +1,7 @@
 # MASTER_ENGINEERING_PROMPT
 
 ## Purpose
-Use this document as the operating manual for all future development work on AILang.
+Use this document as the canonical operating manual for all future development work on AILang.
 
 ## Repository
 - Root: C:\Users\aleckhan\Projects\AiLang_New
