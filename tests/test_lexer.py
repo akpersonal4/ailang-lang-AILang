@@ -95,3 +95,40 @@ def test_lexer_tokenizes_comparison_and_logical_operators() -> None:
         Token(TokenKind.IDENTIFIER, "j", 42, 43),
         Token(TokenKind.EOF, "", 43, 43),
     ]
+
+
+def test_lexer_tokenizes_string_literals_and_escapes() -> None:
+    lexer = Lexer()
+
+    tokens = lexer.tokenize('"hello" "" "\\n" "\\t" "\\""')
+
+    assert tokens == [
+        Token(TokenKind.STRING, "hello", 0, 7),
+        Token(TokenKind.STRING, "", 8, 10),
+        Token(TokenKind.STRING, "\n", 11, 15),
+        Token(TokenKind.STRING, "\t", 16, 20),
+        Token(TokenKind.STRING, '"', 21, 25),
+        Token(TokenKind.EOF, "", 25, 25),
+    ]
+
+
+def test_lexer_reports_unterminated_string() -> None:
+    lexer = Lexer()
+
+    try:
+        lexer.tokenize('"unterminated')
+    except ValueError as error:
+        assert "Unterminated string" in str(error)
+    else:
+        raise AssertionError("expected ValueError")
+
+
+def test_lexer_reports_invalid_escape_sequence() -> None:
+    lexer = Lexer()
+
+    try:
+        lexer.tokenize('"\\q"')
+    except ValueError as error:
+        assert "Invalid escape sequence" in str(error)
+    else:
+        raise AssertionError("expected ValueError")

@@ -16,7 +16,6 @@ The lexer must recognize the following token categories:
 | Comparison | `==`, `!=`, `<`, `<=`, `>`, `>=` | ✅ |
 | Logical | `&&`, `||`, `!` | ✅ |
 | Strings | `"..."` | ⬜ |
-| Characters | `'a'` | Decision pending |
 | Comments | `//`, `/* */` | ⬜ |
 | EOF | EOF | ✅ |
 

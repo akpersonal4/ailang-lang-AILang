@@ -33,6 +33,7 @@ class TokenKind(Enum):
     ANDAND = "andand"
     OROR = "oror"
     BANG = "bang"
+    STRING = "string"
     EOF = "eof"
 
 
@@ -125,6 +126,41 @@ class Lexer:
                     index += 2
                 else:
                     raise ValueError(f"Unexpected character: {char}")
+                continue
+            if char == '"':
+                start = index
+                index += 1
+                value_chars: list[str] = []
+                while index < length:
+                    current = text[index]
+                    if current == '"':
+                        index += 1
+                        break
+                    if current == "\\":
+                        if index + 1 >= length:
+                            raise ValueError("Unterminated string")
+                        escaped = text[index + 1]
+                        if escaped == "n":
+                            value_chars.append("\n")
+                        elif escaped == "t":
+                            value_chars.append("\t")
+                        elif escaped == "r":
+                            value_chars.append("\r")
+                        elif escaped == "\\":
+                            value_chars.append("\\")
+                        elif escaped == '"':
+                            value_chars.append('"')
+                        else:
+                            raise ValueError("Invalid escape sequence")
+                        index += 2
+                        continue
+                    value_chars.append(current)
+                    index += 1
+                else:
+                    raise ValueError("Unterminated string")
+                tokens.append(
+                    Token(TokenKind.STRING, "".join(value_chars), start, index)
+                )
                 continue
             if char == "+":
                 tokens.append(Token(TokenKind.PLUS, char, index, index + 1))
