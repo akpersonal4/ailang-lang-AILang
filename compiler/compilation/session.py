@@ -9,6 +9,8 @@ from typing import cast
 from compiler.ast.builder import ASTBuilder
 from compiler.ast.nodes import ProgramNode
 from compiler.diagnostics import DiagnosticReporter
+from compiler.ir.builder import IRBuilder
+from compiler.ir.nodes import ProgramIR
 from compiler.lexer import Lexer
 from compiler.parser import Parser
 from compiler.semantic.analyzer import SemanticAnalyzer
@@ -17,6 +19,21 @@ from compiler.source import Source
 
 from .graph import DependencyGraph
 from .resolution import ModuleResolver
+
+
+class ModuleIRBundle:
+    """Holds all IR for a compilation session with module metadata."""
+
+    def __init__(self) -> None:
+        self.module_irs: dict[str, ProgramIR] = {}  # module_name -> IR
+        self.initialized: set[str] = set()
+
+    def get_or_initialize(self, module_name: str) -> ProgramIR | None:
+        """Return IR for module, marking it as initialized."""
+        if module_name not in self.module_irs:
+            return None
+        self.initialized.add(module_name)
+        return self.module_irs[module_name]
 
 
 class CompilationSession:
@@ -192,3 +209,20 @@ class CompilationSession:
         """Analyze a single module."""
         analyzer = SemanticAnalyzer(symbol_table)
         analyzer.analyze(self._asts[module_name])
+
+    def build_ir(self) -> ModuleIRBundle:
+        """Build IR for all compiled modules.
+
+        Returns:
+            ModuleIRBundle containing IR for each module in dependency order.
+        """
+        bundle = ModuleIRBundle()
+        ir_builder = IRBuilder()
+
+        for module_name in self._graph.topological_sort():
+            if module_name in self._asts:
+                ast = self._asts[module_name]
+                ir = ir_builder.build(ast)
+                bundle.module_irs[module_name] = ir
+
+        return bundle

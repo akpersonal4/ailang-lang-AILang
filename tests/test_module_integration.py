@@ -117,3 +117,56 @@ def test_missing_module_diagnostic() -> None:
 
         # Should have MOD003 error for the missing module
         assert reporter.error_count >= 1
+
+
+def test_runtime_module_initialization() -> None:
+    """Test that modules can be initialized at runtime."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmp_path = Path(tmpdir)
+
+        # Create a module with a function
+        module_file = tmp_path / "math.ail"
+        module_file.write_text("fn add(a, b) { a + b }")
+
+        # Create main file that imports the module
+        main_file = tmp_path / "main.ail"
+        main_file.write_text("import math; fn main() { 42 }")
+
+        session = CompilationSession()
+        session._root = tmp_path
+        session._resolver = type(session._resolver)(tmp_path)
+        session.discover(main_file)
+
+        # Build IR bundle
+        bundle = session.build_ir()
+        assert "math" in bundle.module_irs
+        assert "main" in bundle.module_irs
+
+
+def test_module_initialize_once() -> None:
+    """Test that module initialization happens exactly once."""
+    from compiler.runtime.interpreter import Runtime
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmp_path = Path(tmpdir)
+
+        # Create a module
+        module_file = tmp_path / "mod.ail"
+        module_file.write_text("fn test() { 1 }")
+
+        session = CompilationSession()
+        session._root = tmp_path
+        session._resolver = type(session._resolver)(tmp_path)
+        session.discover(module_file)
+
+        bundle = session.build_ir()
+        runtime = Runtime(bundle)
+
+        # Initialize module
+        env = runtime._initialize_module("mod")
+        assert env is not None
+        assert "mod" in runtime._initialized_modules
+
+        # Initialize again - should return same result without re-executing
+        env2 = runtime._initialize_module("mod")
+        assert env2 is env

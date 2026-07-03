@@ -37,10 +37,13 @@ class ReturnSignal:
 class Runtime:
     """Execute a lowered IR program with lexical scopes and frames."""
 
-    def __init__(self) -> None:
+    def __init__(self, module_bundle: Any = None) -> None:
         self._global_environment = Environment()
         self._frame_stack: list[StackFrame] = []
         self._functions: dict[str, FunctionIR] = {}
+        self._modules: dict[str, Any] = {}  # module_name -> module environment
+        self._module_bundle = module_bundle
+        self._initialized_modules: set[str] = set()
 
     def execute(self, program: ProgramIR) -> Any:
         result: Any = None
@@ -188,6 +191,47 @@ class Runtime:
             self._frame_stack[-1].assign(name, value)
         else:
             self._global_environment.define(name, value)
+
+    def _initialize_module(self, module_name: str) -> Environment | None:
+        """Initialize a module exactly once, following dependency order.
+
+        Returns:
+            The module environment if initialization succeeded, None otherwise.
+        """
+        if module_name in self._initialized_modules:
+            return self._modules.get(module_name)
+
+        if self._module_bundle is None:
+            return None
+
+        module_ir = self._module_bundle.module_irs.get(module_name)
+        if module_ir is None:
+            return None
+
+        # Create module environment
+        module_env = Environment()
+
+        # Execute module-level code
+        for node in module_ir.body:
+            self._execute_node_in_module(module_name, module_env, node)
+
+        self._modules[module_name] = module_env
+        self._initialized_modules.add(module_name)
+        return module_env
+
+    def _execute_node_in_module(
+        self, module_name: str, module_env: Environment, node: IRNode
+    ) -> Any:
+        """Execute an IR node in the context of a module's environment."""
+        if isinstance(node, FunctionIR):
+            # Register function with qualified name
+            qualified_name = f"{module_name}.{node.name}"
+            self._functions[qualified_name] = node
+            self._functions[node.name] = node
+            self._global_environment.define(node.name, node)
+            return None
+        # Default execution
+        return self._execute_node(node)
 
     def _get_local(self, name: str) -> Any:
         if self._frame_stack:
