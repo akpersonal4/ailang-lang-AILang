@@ -106,11 +106,30 @@ class SemanticAnalyzer:
         """Analyze an import declaration and resolve the imported symbol.
 
         Reports:
+        - MOD002 if duplicate import in same scope
         - MOD004 if the symbol is not defined in the imported module
         """
-        from compiler.diagnostics import MOD004_SYMBOL_NOT_FOUND
+        from compiler.diagnostics import (
+            MOD002_DUPLICATE_IMPORT,
+            MOD004_SYMBOL_NOT_FOUND,
+        )
 
         module_path = ".".join(node.module_path)
+
+        if self.symbol_table.reporter is not None:
+            # Check for duplicate import in the current scope
+            scopes = self.symbol_table.scopes
+            current_scope = scopes[-1] if scopes else None
+            if current_scope and module_path in current_scope.symbols:
+                diagnostic = Diagnostic(
+                    Severity.WARNING,
+                    MOD002_DUPLICATE_IMPORT,
+                    f"Duplicate import of {module_path}",
+                    None,
+                    None,
+                )
+                self.symbol_table.reporter.report(diagnostic)
+                return
 
         # If the import path has a symbol part (e.g., math.max where max is the symbol)
         # we need to check if module_path exists as a qualified export
