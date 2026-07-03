@@ -52,6 +52,7 @@ class CompilationSession:
         self._root = Path(".").resolve()
         self._resolver = ModuleResolver(self._root)
         self._registration_order: list[str] = []  # Track explicit order
+        self._cycle_detected: bool = False
 
         if paths is not None:
             for p in paths:
@@ -177,7 +178,28 @@ class CompilationSession:
         """Run semantic analysis on all modules.
 
         Performs cross-module symbol resolution.
+        Also reports circular import errors (MOD001).
         """
+        # Check for cycles first
+        cycle = self._graph.detect_cycle()
+        if cycle is not None and reporter is not None:
+            from compiler.diagnostics import (
+                MOD001_CIRCULAR_IMPORT,
+                Diagnostic,
+                Severity,
+            )
+
+            modules = " → ".join(sorted(cycle))
+            diagnostic = Diagnostic(
+                Severity.ERROR,
+                MOD001_CIRCULAR_IMPORT,
+                f"Circular import detected: {modules}",
+                None,
+                None,
+            )
+            reporter.report(diagnostic)
+            self._cycle_detected = True
+
         symbol_table = SymbolTable(reporter)
 
         # First, register all exports from all modules

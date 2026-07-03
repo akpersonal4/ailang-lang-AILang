@@ -97,6 +97,33 @@ def test_circular_import_detection() -> None:
         assert cycle is not None
 
 
+def test_circular_import_diagnostic() -> None:
+    """Test that circular imports produce MOD001 diagnostic."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmp_path = Path(tmpdir)
+
+        # Create two modules that import each other
+        a_file = tmp_path / "a.ail"
+        a_file.write_text("import b; fn a() { b() }")
+
+        b_file = tmp_path / "b.ail"
+        b_file.write_text("import a; fn b() { a() }")
+
+        from compiler.diagnostics import DiagnosticReporter
+
+        reporter = DiagnosticReporter()
+        session = CompilationSession()
+        session._root = tmp_path
+        session._resolver = type(session._resolver)(tmp_path)
+        session.discover(a_file)
+        session.analyze(reporter)
+
+        # Should have MOD001 error for circular import
+        assert reporter.error_count >= 1
+        error_codes = [d.error_code.code for d in reporter.diagnostics]
+        assert "MOD001" in error_codes
+
+
 def test_missing_module_diagnostic() -> None:
     """Test that missing modules produce MOD003 diagnostic."""
     with tempfile.TemporaryDirectory() as tmpdir:
