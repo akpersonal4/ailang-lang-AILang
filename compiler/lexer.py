@@ -15,6 +15,8 @@ class TokenKind(Enum):
     IF = "if"
     ELSE = "else"
     RETURN = "return"
+    IMPORT = "import"
+    AS = "as"
     LPAREN = "lparen"
     RPAREN = "rparen"
     LBRACE = "lbrace"
