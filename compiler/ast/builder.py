@@ -18,6 +18,7 @@ from compiler.ast.nodes import (
     FunctionDeclarationNode,
     IdentifierNode,
     IfStatementNode,
+    ImportDeclarationNode,
     MemberAccessNode,
     NumberLiteralNode,
     ParameterNode,
@@ -199,6 +200,23 @@ class ASTBuilder:
         return UnaryExpressionNode(
             operand=operand,
             operator=node.token.value,
+            start_span=node.start_span,
+            end_span=node.end_span,
+        )
+
+    @staticmethod
+    def _build_ImportDeclaration(node: CSTNode) -> ImportDeclarationNode:
+        module_path_cst = node.children[0]
+        path_parts: list[str] = []
+        alias: str | None = None
+        for child in module_path_cst.children:
+            if child.kind == "Identifier" and child.token is not None:
+                path_parts.append(child.token.value)
+            elif child.kind == "Alias" and child.token is not None:
+                alias = child.token.value
+        return ImportDeclarationNode(
+            module_path=tuple(path_parts),
+            alias=alias,
             start_span=node.start_span,
             end_span=node.end_span,
         )

@@ -16,6 +16,7 @@ from compiler.ast.nodes import (
     FunctionDeclarationNode,
     IdentifierNode,
     IfStatementNode,
+    ImportDeclarationNode,
     MemberAccessNode,
     NumberLiteralNode,
     ProgramNode,
@@ -279,6 +280,9 @@ class TypeChecker:
                 node.end_span,
             )
             return UnknownType()
+        return UnknownType()
+
+    def _infer_ImportDeclarationNode(self, node: ImportDeclarationNode) -> Type:
         return UnknownType()
 
     def _infer_MemberAccessNode(self, node: MemberAccessNode) -> Type:

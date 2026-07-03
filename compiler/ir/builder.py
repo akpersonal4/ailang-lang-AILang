@@ -18,6 +18,7 @@ from compiler.ast.nodes import (
     FunctionDeclarationNode,
     IdentifierNode,
     IfStatementNode,
+    ImportDeclarationNode,
     MemberAccessNode,
     NumberLiteralNode,
     ProgramNode,
@@ -183,6 +184,13 @@ class IRBuilder:
             left=left,
             operator=node.operator,
             right=right,
+            start_span=node.start_span,
+            end_span=node.end_span,
+        )
+
+    def _build_ImportDeclarationNode(self, node: ImportDeclarationNode) -> IRNode:
+        return ExpressionStatementIR(
+            expression=LiteralIR(value=None),
             start_span=node.start_span,
             end_span=node.end_span,
         )

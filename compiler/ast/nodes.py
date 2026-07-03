@@ -107,6 +107,16 @@ class MemberAccessNode:
 
 
 @dataclass(frozen=True)
+class ImportDeclarationNode:
+    """Represents an import declaration: import path as alias"""
+
+    module_path: tuple[str, ...]
+    alias: str | None = None
+    start_span: int | None = None
+    end_span: int | None = None
+
+
+@dataclass(frozen=True)
 class IdentifierNode:
     name: str
     start_span: int | None = None
@@ -140,6 +150,7 @@ ASTNode = (
     | UnaryExpressionNode
     | CallExpressionNode
     | MemberAccessNode
+    | ImportDeclarationNode
     | IdentifierNode
     | NumberLiteralNode
     | StringLiteralNode

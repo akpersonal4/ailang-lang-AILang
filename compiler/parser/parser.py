@@ -97,6 +97,8 @@ class Parser:
                 program.children.append(parse_function_declaration(self.stream))
             elif cur.kind is TokenKind.IF:
                 program.children.append(parse_if_statement(self.stream))
+            elif cur.kind is TokenKind.IMPORT:
+                program.children.append(self._parse_import_declaration())
             elif cur.kind in {
                 TokenKind.IDENTIFIER,
                 TokenKind.NUMBER,
@@ -116,6 +118,38 @@ class Parser:
                 else:
                     synchronize(self.stream)
         return program
+
+    def _parse_import_declaration(self) -> CSTNode:
+        import_token = self.stream.advance()
+        module_path = CSTNode("ImportModulePath")
+        module_path.start_span = import_token.start_offset
+        while True:
+            token = self.stream.current()
+            if token.kind is TokenKind.IDENTIFIER:
+                module_path.children.append(CSTNode("Identifier", token=token))
+                module_path.end_span = token.end_offset
+                self.stream.advance()
+            else:
+                self.stream.report("Expected identifier in import path", "PAR002")
+                break
+            if not self.stream.match(TokenKind.DOT):
+                break
+            self.stream.advance()
+        alias = None
+        if self.stream.match(TokenKind.AS):
+            self.stream.advance()
+            alias_token = self.stream.current()
+            if alias_token.kind is TokenKind.IDENTIFIER:
+                alias = alias_token.value
+                self.stream.advance()
+            else:
+                self.stream.report("Expected identifier after 'as'", "PAR003")
+        self.stream.expect(TokenKind.SEMICOLON)
+        if alias:
+            module_path.children.append(
+                CSTNode("Alias", token=Token(TokenKind.IDENTIFIER, alias, 0, 0))
+            )
+        return CSTNode("ImportDeclaration", [module_path])
 
     def parse_expression(self) -> CSTNode:
         return _parse_expression(self.stream)
