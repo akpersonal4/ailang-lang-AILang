@@ -103,11 +103,21 @@ class SemanticAnalyzer:
 
     def _analyze_ImportDeclarationNode(self, node: ImportDeclarationNode) -> None:
         module_name = ".".join(node.module_path)
-        self.symbol_table.declare(
-            node.alias or module_name,
-            node.start_span,
-            node.end_span,
-        )
+        # Check if this import was resolved during CompilationSession phase
+        # The symbol should already be registered as a qualified export
+        # If not, report MOD003 (missing module) or MOD004 (missing symbol)
+        qualified_name = module_name
+        if node.alias:
+            # For aliased imports, we check if the module exists
+            self.symbol_table.resolve(qualified_name, node.start_span, node.end_span)
+            self.symbol_table.declare(
+                node.alias,
+                node.start_span,
+                node.end_span,
+            )
+        else:
+            # For regular imports, check the module symbol
+            self.symbol_table.resolve(qualified_name, node.start_span, node.end_span)
 
     def _analyze_MemberAccessNode(self, node: MemberAccessNode) -> None:
         self.analyze(node.receiver)

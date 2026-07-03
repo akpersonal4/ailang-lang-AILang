@@ -19,6 +19,14 @@ class ErrorCode:
     message: str
 
 
+# Module error codes
+MOD001_CIRCULAR_IMPORT = ErrorCode("MOD001", "Circular import detected")
+MOD002_DUPLICATE_IMPORT = ErrorCode("MOD002", "Duplicate import")
+MOD003_MODULE_NOT_FOUND = ErrorCode("MOD003", "Module not found")
+MOD004_SYMBOL_NOT_FOUND = ErrorCode("MOD004", "Symbol not found in module")
+MOD005_INVALID_MODULE_PATH = ErrorCode("MOD005", "Import path traversal attempt")
+
+
 @dataclass(frozen=True)
 class Diagnostic:
     severity: Severity
