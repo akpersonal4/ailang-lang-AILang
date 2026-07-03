@@ -109,6 +109,8 @@ class CompilationSession:
         """Recursively discover modules and add to graph."""
         module_name = self._path_to_module_name(file_path)
         if module_name in self._sources:
+            if importer is not None:
+                self._graph.add_dependency(importer, module_name)
             return
 
         source = Source.from_file(str(file_path))
