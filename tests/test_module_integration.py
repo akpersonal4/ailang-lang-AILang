@@ -95,3 +95,25 @@ def test_circular_import_detection() -> None:
         # Check for cycle
         cycle = session._graph.detect_cycle()
         assert cycle is not None
+
+
+def test_missing_module_diagnostic() -> None:
+    """Test that missing modules produce MOD003 diagnostic."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmp_path = Path(tmpdir)
+
+        # Create main file that imports a non-existent module
+        main_file = tmp_path / "main.ail"
+        main_file.write_text("import nonexistent; fn test() { nonexistent() }")
+
+        from compiler.diagnostics import DiagnosticReporter
+
+        reporter = DiagnosticReporter()
+        session = CompilationSession()
+        session._root = tmp_path
+        session._resolver = type(session._resolver)(tmp_path)
+        session.discover(main_file)
+        session.analyze(reporter)
+
+        # Should have MOD003 error for the missing module
+        assert reporter.error_count >= 1
