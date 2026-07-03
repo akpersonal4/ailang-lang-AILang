@@ -158,6 +158,8 @@ class Lexer:
                     "if": TokenKind.IF,
                     "else": TokenKind.ELSE,
                     "return": TokenKind.RETURN,
+                    "import": TokenKind.IMPORT,
+                    "as": TokenKind.AS,
                 }.get(text_value)
                 if keyword_kind is None:
                     tokens.append(
