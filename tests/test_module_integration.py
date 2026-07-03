@@ -229,3 +229,92 @@ def test_module_initialize_once() -> None:
         # Initialize again - should return same result without re-executing
         env2 = runtime._initialize_module("mod")
         assert env2 is env
+
+
+def _run_ail_program(source: str) -> tuple[int, str]:
+    """Run an AILang program and return (result, output)."""
+    import sys
+    from io import StringIO
+
+    from compiler.runtime.interpreter import Runtime
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmp_path = Path(tmpdir)
+        main_file = tmp_path / "main.ail"
+        main_file.write_text(source)
+
+        session = CompilationSession()
+        session._root = tmp_path
+        session.discover(main_file)
+        bundle = session.build_ir()
+        runtime = Runtime(bundle)
+
+        # Capture output
+        old_stdout = sys.stdout
+        sys.stdout = StringIO()
+
+        try:
+            result = runtime.execute(bundle.module_irs["main"])
+            output = sys.stdout.getvalue()
+        finally:
+            sys.stdout = old_stdout
+
+    return result, output
+
+
+def test_validation_hello_world() -> None:
+    """Test Hello World program."""
+    source = """fn main() {
+    print("Hello, World!");
+    return 0;
+}"""
+    result, output = _run_ail_program(source)
+    assert result == 0
+    assert "Hello, World!" in output
+
+
+def test_validation_calculator() -> None:
+    """Test Calculator program with arithmetic operations."""
+    source = """fn add(a, b) {
+    return a + b;
+}
+fn subtract(a, b) {
+    return a - b;
+}
+fn multiply(a, b) {
+    return a * b;
+}
+fn divide(a, b) {
+    return a / b;
+}
+fn main() {
+    return add(subtract(multiply(divide(100, 10), 2), 3), 4);
+}"""
+    result, _ = _run_ail_program(source)
+    assert result == 21.0  # ((100/10)*2 - 3) + 4 = (10*2) - 3 + 4 = 20 - 3 + 4 = 21
+    # Note: division returns float, so all subsequent ops return float
+
+
+def test_validation_variables() -> None:
+    """Test variable declarations and assignments."""
+    source = """fn main() {
+    let x = 10;
+    let y = 20;
+    let sum = x + y;
+    return sum;
+}"""
+    result, _ = _run_ail_program(source)
+    assert result == 30
+
+
+def test_validation_if_else() -> None:
+    """Test if-else control flow."""
+    source = """fn main() {
+    let x = 10;
+    if (x > 5) {
+        return 1;
+    }
+    return 0;
+}"""
+    result, _ = _run_ail_program(source)
+    assert result == 1
