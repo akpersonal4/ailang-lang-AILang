@@ -41,6 +41,30 @@ postfix_expression
 - Nested member access chains left-to-right: `a.b.c` = `(a.b).c`
 - Member call evaluates callee as member access, then invokes
 
+## Modules
+
+### Grammar
+```
+import_declaration
+    → "import" identifier ( "." identifier )* [ "as" identifier ] ";"
+    → "import" "*" [ "as" identifier ] "from" string_literal ";"
+```
+
+### Syntax Rules
+- Import declarations are top-level only
+- Module path maps to file path: `math.max` → `math/max.ail`
+- All top-level declarations are exported by default
+- No circular imports allowed
+
+### Examples
+```ail
+import math.max;
+import io.print as p;
+import math.*;
+math.max(10, 20)
+```
+
 ## Syntax Goals
 - The language grammar should remain explicit and deterministic.
 - The grammar is the source of truth for parser design and implementation.
+- The parser must follow the grammar rather than inventing syntax.
