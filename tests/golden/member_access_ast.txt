@@ -1,0 +1,18 @@
+Program
+  MemberAccess
+    Identifier a
+    Identifier b
+
+Program
+  MemberAccess
+    MemberAccess
+      Identifier a
+      Identifier b
+    Identifier c
+
+Program
+  CallExpression
+    MemberAccess
+      Identifier a
+      Identifier b
+    ArgumentList

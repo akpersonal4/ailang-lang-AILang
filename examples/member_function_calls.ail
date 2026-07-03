@@ -1,0 +1,3 @@
+// Member function calls example
+let math = {"max": fn(x, y) { if x > y { x } else { y } }};
+math.max(10, 20)

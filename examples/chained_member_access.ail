@@ -1,0 +1,3 @@
+// Chained member access example
+let config = {"db": {"port": 5432}};
+config.db.port
