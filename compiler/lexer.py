@@ -36,6 +36,7 @@ class TokenKind(Enum):
     OROR = "oror"
     BANG = "bang"
     STRING = "string"
+    DOT = "dot"
     EOF = "eof"
 
 
@@ -353,6 +354,21 @@ class Lexer:
                         start_column,
                     )
                 continue
+            if char == ".":
+                tokens.append(
+                    make_token(
+                        TokenKind.DOT,
+                        char,
+                        index,
+                        index + 1,
+                        start_line,
+                        start_column,
+                    )
+                )
+                index += 1
+                column += 1
+                continue
+
             if char == '"':
                 start = index
                 index += 1

@@ -16,6 +16,7 @@ from compiler.ast.nodes import (
     FunctionDeclarationNode,
     IdentifierNode,
     IfStatementNode,
+    MemberAccessNode,
     NumberLiteralNode,
     ProgramNode,
     ReturnStatementNode,
@@ -279,6 +280,12 @@ class TypeChecker:
             )
             return UnknownType()
         return UnknownType()
+
+    def _infer_MemberAccessNode(self, node: MemberAccessNode) -> Type:
+        receiver_type = self._infer_expression(node.receiver)
+        if isinstance(receiver_type, UnknownType):
+            return UnknownType()
+        return receiver_type
 
     def _infer_CallExpressionNode(self, node: CallExpressionNode) -> Type:
         callee_type = self._infer_expression(node.callee)

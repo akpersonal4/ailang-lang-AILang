@@ -18,6 +18,7 @@ from compiler.ast.nodes import (
     FunctionDeclarationNode,
     IdentifierNode,
     IfStatementNode,
+    MemberAccessNode,
     NumberLiteralNode,
     ParameterNode,
     ProgramNode,
@@ -198,6 +199,19 @@ class ASTBuilder:
         return UnaryExpressionNode(
             operand=operand,
             operator=node.token.value,
+            start_span=node.start_span,
+            end_span=node.end_span,
+        )
+
+    @staticmethod
+    def _build_MemberAccess(node: CSTNode) -> MemberAccessNode:
+        receiver = ASTBuilder._try_build(node.children[0])
+        member = ASTBuilder._try_build(node.children[1])
+        assert isinstance(receiver, ASTNode)
+        assert isinstance(member, IdentifierNode)
+        return MemberAccessNode(
+            receiver=receiver,
+            member=member,
             start_span=node.start_span,
             end_span=node.end_span,
         )

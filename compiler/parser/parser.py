@@ -97,6 +97,18 @@ class Parser:
                 program.children.append(parse_function_declaration(self.stream))
             elif cur.kind is TokenKind.IF:
                 program.children.append(parse_if_statement(self.stream))
+            elif cur.kind in {
+                TokenKind.IDENTIFIER,
+                TokenKind.NUMBER,
+                TokenKind.STRING,
+                TokenKind.LPAREN,
+                TokenKind.MINUS,
+                TokenKind.BANG,
+            }:
+                expr = _parse_expression(self.stream)
+                program.children.append(CSTNode("ExpressionStatement", [expr]))
+                if self.stream.current().kind is TokenKind.SEMICOLON:
+                    self.stream.advance()
             else:
                 self.stream.report("Unexpected token in program")
                 if cur.kind is TokenKind.RBRACE:

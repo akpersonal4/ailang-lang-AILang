@@ -83,6 +83,7 @@ IRExpression: TypeAlias = Union[
     "CallIR",
     "LiteralIR",
     "VariableReferenceIR",
+    "MemberAccessIR",
 ]
 
 
@@ -119,6 +120,14 @@ class LiteralIR:
 
 
 @dataclass(frozen=True)
+class MemberAccessIR:
+    receiver: IRExpression
+    member: str
+    start_span: int | None = None
+    end_span: int | None = None
+
+
+@dataclass(frozen=True)
 class VariableReferenceIR:
     name: str
     start_span: int | None = None
@@ -139,5 +148,6 @@ IRNode: TypeAlias = (
     | UnaryOperationIR
     | CallIR
     | LiteralIR
+    | MemberAccessIR
     | VariableReferenceIR
 )

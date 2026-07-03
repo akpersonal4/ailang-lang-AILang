@@ -132,15 +132,26 @@ def parse_unary_expression(stream: TokenStream) -> CSTNode:
 
 def parse_postfix_expression(stream: TokenStream) -> CSTNode:
     expression = parse_primary_expression(stream)
-    while stream.match(TokenKind.LPAREN):
-        argument_list = parse_argument_list(stream)
-        stream.expect(TokenKind.RPAREN)
-        expression = CSTNode(
-            "CallExpression",
-            [expression, argument_list],
-            start_span=expression.start_span,
-            end_span=argument_list.end_span,
-        )
+    while True:
+        if stream.match(TokenKind.LPAREN):
+            argument_list = parse_argument_list(stream)
+            stream.expect(TokenKind.RPAREN)
+            expression = CSTNode(
+                "CallExpression",
+                [expression, argument_list],
+                start_span=expression.start_span,
+                end_span=argument_list.end_span,
+            )
+        elif stream.match(TokenKind.DOT):
+            member = parse_identifier(stream)
+            expression = CSTNode(
+                "MemberAccess",
+                [expression, member],
+                start_span=expression.start_span,
+                end_span=member.end_span,
+            )
+        else:
+            break
     return expression
 
 

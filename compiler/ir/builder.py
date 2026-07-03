@@ -18,6 +18,7 @@ from compiler.ast.nodes import (
     FunctionDeclarationNode,
     IdentifierNode,
     IfStatementNode,
+    MemberAccessNode,
     NumberLiteralNode,
     ProgramNode,
     ReturnStatementNode,
@@ -37,6 +38,7 @@ from .nodes import (
     IRExpression,
     IRNode,
     LiteralIR,
+    MemberAccessIR,
     ProgramIR,
     ReturnIR,
     UnaryOperationIR,
@@ -181,6 +183,15 @@ class IRBuilder:
             left=left,
             operator=node.operator,
             right=right,
+            start_span=node.start_span,
+            end_span=node.end_span,
+        )
+
+    def _build_expr_MemberAccessNode(self, node: MemberAccessNode) -> MemberAccessIR:
+        receiver = self._build_expression(node.receiver)
+        return MemberAccessIR(
+            receiver=receiver,
+            member=node.member.name,
             start_span=node.start_span,
             end_span=node.end_span,
         )

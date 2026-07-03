@@ -14,6 +14,7 @@ from compiler.ir.nodes import (
     IfIR,
     IRNode,
     LiteralIR,
+    MemberAccessIR,
     ProgramIR,
     ReturnIR,
     UnaryOperationIR,
@@ -173,6 +174,11 @@ class Runtime:
             raise TypeError(f"Cannot call non-function: {expression.callee}")
         if isinstance(expression, LiteralIR):
             return expression.value
+        if isinstance(expression, MemberAccessIR):
+            receiver = self._evaluate_expression(expression.receiver)
+            if isinstance(receiver, dict):
+                return receiver.get(expression.member)
+            return receiver
         if isinstance(expression, VariableReferenceIR):
             return self._get_local(expression.name)
         raise TypeError(f"Unsupported expression: {type(expression)!r}")

@@ -97,6 +97,16 @@ class CallExpressionNode:
 
 
 @dataclass(frozen=True)
+class MemberAccessNode:
+    """Represents qualified member access: object.member"""
+
+    receiver: ASTNode
+    member: IdentifierNode
+    start_span: int | None = None
+    end_span: int | None = None
+
+
+@dataclass(frozen=True)
 class IdentifierNode:
     name: str
     start_span: int | None = None
@@ -129,6 +139,7 @@ ASTNode = (
     | BinaryExpressionNode
     | UnaryExpressionNode
     | CallExpressionNode
+    | MemberAccessNode
     | IdentifierNode
     | NumberLiteralNode
     | StringLiteralNode

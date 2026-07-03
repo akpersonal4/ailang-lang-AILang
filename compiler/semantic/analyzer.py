@@ -15,6 +15,7 @@ from compiler.ast.nodes import (
     FunctionDeclarationNode,
     IdentifierNode,
     IfStatementNode,
+    MemberAccessNode,
     NumberLiteralNode,
     ProgramNode,
     ReturnStatementNode,
@@ -98,6 +99,10 @@ class SemanticAnalyzer:
 
     def _analyze_UnaryExpressionNode(self, node: UnaryExpressionNode) -> None:
         self.analyze(node.operand)
+
+    def _analyze_MemberAccessNode(self, node: MemberAccessNode) -> None:
+        self.analyze(node.receiver)
+        self.analyze(node.member)
 
     def _analyze_CallExpressionNode(self, node: CallExpressionNode) -> None:
         self.analyze(node.callee)
