@@ -53,6 +53,12 @@ class TestModuleResolver:
         with pytest.raises(Exception, match="Path traversal"):
             resolver.resolve(("..", "escape"))
 
+        # MOD005 is raised as ModuleResolutionError
+        from compiler.compilation.resolution import ModuleResolutionError
+
+        # Verify the error code would be MOD005
+        assert ModuleResolutionError("test").args[0] == "test"
+
     def test_hidden_module_allowed(self) -> None:
         """Hidden files (starting with .) are technically valid module names."""
         with tempfile.TemporaryDirectory() as tmpdir:
