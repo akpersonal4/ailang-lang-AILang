@@ -155,6 +155,20 @@ class Runtime:
             if expression.operator == "||":
                 return bool(left or right)
             raise ValueError(f"Unsupported operator: {expression.operator}")
+        if isinstance(expression, MemberAccessIR):
+            receiver = self._evaluate_expression(expression.receiver)
+            member = expression.member
+            # Handle module function access: math.add -> look up module + function
+            if isinstance(receiver, Environment):
+                func = receiver.resolve(member)
+                if func is not None:
+                    return func
+            # Handle dict-style access
+            if isinstance(receiver, dict):
+                return receiver.get(member)
+            if hasattr(receiver, member):
+                return getattr(receiver, member)
+            return receiver
         if isinstance(expression, UnaryOperationIR):
             operand = self._evaluate_expression(expression.operand)
             if expression.operator == "-":
@@ -163,25 +177,30 @@ class Runtime:
                 return not operand
             raise ValueError(f"Unsupported operator: {expression.operator}")
         if isinstance(expression, CallIR):
-            callee = self._get_local(expression.callee)
+            # callee can be a string (function name) or an expression
+            if isinstance(expression.callee, str):
+                callee = self._get_local(expression.callee)
+            else:
+                callee = self._evaluate_expression(expression.callee)
+
+            # Handle callable (built-in or regular function)
             if isinstance(callee, FunctionIR):
                 args = tuple(
                     self._evaluate_expression(arg) for arg in expression.arguments
                 )
                 return self._call_function(callee, args)
-            if expression.callee in BUILTINS:
+
+            # callable() handles both functions and built-ins
+            if callable(callee):
                 args = tuple(
                     self._evaluate_expression(arg) for arg in expression.arguments
                 )
-                return BUILTINS[expression.callee](args)
-            raise TypeError(f"Cannot call non-function: {expression.callee}")
+                return callee(args)
+
+            raise TypeError(f"Cannot call non-function: {callee}")
+
         if isinstance(expression, LiteralIR):
             return expression.value
-        if isinstance(expression, MemberAccessIR):
-            receiver = self._evaluate_expression(expression.receiver)
-            if isinstance(receiver, dict):
-                return receiver.get(expression.member)
-            return receiver
         if isinstance(expression, VariableReferenceIR):
             return self._get_local(expression.name)
         raise TypeError(f"Unsupported expression: {type(expression)!r}")
