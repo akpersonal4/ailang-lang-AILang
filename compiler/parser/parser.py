@@ -134,10 +134,8 @@ class Parser:
                 break
             if not self.stream.match(TokenKind.DOT):
                 break
-            self.stream.advance()
         alias = None
         if self.stream.match(TokenKind.AS):
-            self.stream.advance()
             alias_token = self.stream.current()
             if alias_token.kind is TokenKind.IDENTIFIER:
                 alias = alias_token.value
