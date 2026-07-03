@@ -248,3 +248,18 @@ class CompilationSession:
                 bundle.module_irs[module_name] = ir
 
         return bundle
+
+    def type_check(self, reporter: DiagnosticReporter | None = None) -> None:
+        """Run type checking on all modules.
+
+        Performs cross-module type checking.
+        """
+        from compiler.types.checker import TypeChecker
+
+        local_reporter = reporter or DiagnosticReporter()
+
+        # Type check each module (type checking uses its own symbol resolution)
+        for module_name in self._graph.topological_sort():
+            if module_name in self._asts:
+                type_checker = TypeChecker(SymbolTable(), local_reporter)
+                type_checker.check(self._asts[module_name])

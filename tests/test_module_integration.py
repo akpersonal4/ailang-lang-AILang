@@ -124,14 +124,18 @@ def test_circular_import_diagnostic() -> None:
         assert "MOD001" in error_codes
 
 
-def test_missing_module_diagnostic() -> None:
-    """Test that missing modules produce MOD003 diagnostic."""
+def test_missing_symbol_diagnostic() -> None:
+    """Test that missing symbols in modules produce MOD004 diagnostic."""
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp_path = Path(tmpdir)
 
-        # Create main file that imports a non-existent module
+        # Create a module file
+        module_file = tmp_path / "math.ail"
+        module_file.write_text("fn add(a, b) { a + b }")
+
+        # Create main file that imports a non-existent symbol from the module
         main_file = tmp_path / "main.ail"
-        main_file.write_text("import nonexistent; fn test() { nonexistent() }")
+        main_file.write_text("import math.missing; fn test() { 1 }")
 
         from compiler.diagnostics import DiagnosticReporter
 
@@ -142,8 +146,10 @@ def test_missing_module_diagnostic() -> None:
         session.discover(main_file)
         session.analyze(reporter)
 
-        # Should have MOD003 error for the missing module
+        # Should have MOD004 error for the missing symbol
         assert reporter.error_count >= 1
+        error_codes = [d.error_code.code for d in reporter.diagnostics]
+        assert "MOD004" in error_codes
 
 
 def test_runtime_module_initialization() -> None:

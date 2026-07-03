@@ -24,11 +24,7 @@ from compiler.ast.nodes import (
     UnaryExpressionNode,
     VariableDeclarationNode,
 )
-from compiler.diagnostics import (
-    MOD003_MODULE_NOT_FOUND,
-    Diagnostic,
-    Severity,
-)
+from compiler.diagnostics import Diagnostic, Severity
 from compiler.semantic.symbol_table import SymbolTable
 
 
@@ -110,36 +106,24 @@ class SemanticAnalyzer:
         """Analyze an import declaration and resolve the imported symbol.
 
         Reports:
-        - MOD003 if the module file cannot be found
         - MOD004 if the symbol is not defined in the imported module
         """
-        module_path = ".".join(node.module_path)
+        from compiler.diagnostics import MOD004_SYMBOL_NOT_FOUND
 
-        # For the import path, we need to check if it exists as an export
-        # The symbol table should have been populated with qualified names
-        # like "module_name.symbol_name" during CompilationSession.analyze()
+        module_path = ".".join(node.module_path)
 
         # If the import path has a symbol part (e.g., math.max where max is the symbol)
         # we need to check if module_path exists as a qualified export
         symbol = self.symbol_table.resolve(module_path, node.start_span, node.end_span)
 
-        if symbol is None and node.alias:
-            # Try to resolve for alias - the module should exist
-            # Report MOD003 if module not found, MOD004 if symbol not found
-            self.symbol_table.declare(
-                node.alias,
-                node.start_span,
-                node.end_span,
-            )
-        elif symbol is None:
-            # The import target (module.symbol or just module) doesn't exist
-            # This could be MOD003 (module not found) or MOD004 (symbol not found)
-            # We report it as MOD003 since we can't distinguish at this level
+        if symbol is None:
+            # Module exists but symbol doesn't - MOD004
+            # (The module was discovered, but the specific symbol wasn't found)
             if self.symbol_table.reporter is not None:
                 diagnostic = Diagnostic(
                     Severity.ERROR,
-                    MOD003_MODULE_NOT_FOUND,
-                    f"Module not found: {module_path}",
+                    MOD004_SYMBOL_NOT_FOUND,
+                    f"Symbol not found in module: {module_path}",
                     None,
                     None,
                 )
