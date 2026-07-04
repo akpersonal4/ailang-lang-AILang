@@ -353,3 +353,32 @@ def test_regression_main_return_value_not_printed_by_cli() -> None:
         # The return value of main() is an integer, not None — callers must
         # not treat it as output to be printed.
         assert main_return == 0, f"Expected main() to return 0 but got: {main_return!r}"
+
+
+def test_all_examples_in_repo_compile_and_run() -> None:
+    """Discovers and runs all main.ail examples in the examples/ directory."""
+    examples_dir = Path(__file__).parent.parent / "examples"
+    assert examples_dir.exists(), f"Examples directory not found at {examples_dir}"
+
+    for main_file in examples_dir.glob("**/main.ail"):
+        session = CompilationSession()
+        session._root = main_file.parent
+        session._resolver = type(session._resolver)(main_file.parent)
+        session.discover(main_file)
+
+        from compiler.diagnostics import DiagnosticReporter
+
+        reporter = DiagnosticReporter()
+        session.analyze(reporter)
+        assert reporter.error_count == 0, (
+            f"Failed to analyze example {main_file}: "
+            f"{[d.message for d in reporter.diagnostics]}"
+        )
+
+        bundle = session.build_ir()
+        runtime = Runtime(bundle)
+        for module_name in session._graph.topological_sort():
+            runtime._initialize_module(module_name)
+
+        # Ensure execution doesn't crash
+        runtime.execute(bundle.module_irs["main"])

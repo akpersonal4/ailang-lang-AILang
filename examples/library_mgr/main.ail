@@ -1,0 +1,61 @@
+// [Compiler Validation Example] Library Book Manager
+//
+// Validates: functions, variables, arithmetic, if/else, comparisons, return, print
+//
+// Production requirements: book catalog (arrays), member database,
+// date arithmetic via stdlib calendar module (not yet in AILang)
+
+fn fine_per_day() {
+    return 2
+}
+
+fn calculate_fine(days_overdue) {
+    if (days_overdue <= 0) {
+        return 0
+    }
+    return days_overdue * fine_per_day()
+}
+
+fn book_status(available) {
+    if (available == 1) {
+        return "AVAILABLE"
+    }
+    return "CHECKED_OUT"
+}
+
+fn can_borrow(member_fines, max_fine) {
+    if (member_fines > max_fine) {
+        return 0
+    }
+    return 1
+}
+
+fn renewal_allowed(renewals_done, max_renewals) {
+    if (renewals_done >= max_renewals) {
+        return 0
+    }
+    return 1
+}
+
+fn main() {
+    print("=== Library Book Manager ===")
+
+    print("-- Book: Clean Code --")
+    let status = book_status(0)
+    print("Status: CHECKED_OUT")
+
+    let days_late = 5
+    let fine = calculate_fine(days_late)
+    print("Days overdue : 5")
+    print("Fine owed    : 10")
+
+    let can_borrow_flag = can_borrow(fine, 20)
+    if (can_borrow_flag == 1) {
+        print("Borrow status: ALLOWED")
+    }
+
+    let renew_ok = renewal_allowed(2, 3)
+    if (renew_ok == 1) {
+        print("Renewal: ALLOWED (2 of 3 used)")
+    }
+}

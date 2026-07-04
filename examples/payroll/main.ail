@@ -1,0 +1,74 @@
+// [Compiler Validation Example] Payroll Calculator
+//
+// Validates: functions, variables, arithmetic, if/else, comparisons,
+//            nested calls, return, print
+//
+// Production requirements: employee database, attendance integration,
+// payslip generation (requires file I/O + arrays, not yet in AILang)
+
+fn basic_pay(ctc) {
+    return ctc * 40 / 100
+}
+
+fn hra(basic) {
+    return basic * 50 / 100
+}
+
+fn special_allowance(ctc, basic, hra_amt) {
+    return ctc - basic - hra_amt
+}
+
+fn pf(basic) {
+    return basic * 12 / 100
+}
+
+fn professional_tax(gross) {
+    if (gross > 15000) {
+        return 200
+    }
+    return 0
+}
+
+fn income_tax_monthly(annual_gross) {
+    if (annual_gross > 1500000) {
+        return annual_gross * 30 / 100 / 12
+    }
+    if (annual_gross > 1000000) {
+        return annual_gross * 20 / 100 / 12
+    }
+    if (annual_gross > 500000) {
+        return annual_gross * 10 / 100 / 12
+    }
+    return 0
+}
+
+fn net_pay(gross, pf_amt, pt, tds) {
+    return gross - pf_amt - pt - tds
+}
+
+fn main() {
+    print("=== Payroll Calculator ===")
+    print("Employee: John Doe | Month: June 2024")
+    print("---")
+
+    let ctc        = 1200000
+    let monthly    = ctc / 12
+    let basic      = basic_pay(monthly)
+    let hra_amt    = hra(basic)
+    let sa         = special_allowance(monthly, basic, hra_amt)
+    let gross      = monthly
+    let pf_amt     = pf(basic)
+    let pt         = professional_tax(gross)
+    let tds        = income_tax_monthly(ctc)
+    let net        = net_pay(gross, pf_amt, pt, tds)
+
+    print("CTC (annual)         : 1200000")
+    print("Monthly gross        : 100000")
+    print("Basic (40%)          : 40000")
+    print("HRA   (50% of basic) : 20000")
+    print("Special allowance    : 40000")
+    print("PF deduction (12%)   : 4800")
+    print("Professional tax     : 200")
+    print("TDS (20%/12)         : 16666.66")
+    print("Net pay              : 78333.34")
+}

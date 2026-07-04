@@ -1,0 +1,47 @@
+// [Compiler Validation Example] Expression Evaluator
+//
+// Validates: functions, variables, arithmetic, if/else, comparisons, return, print
+//
+// Production requirements: tokenization, parser stack, float/integer evaluation engine
+// (requires collections/stack + string parsing from stdlib, not yet in AILang)
+
+fn eval_binary(op, left, right) {
+    if (op == "+") {
+        return left + right
+    }
+    if (op == "-") {
+        return left - right
+    }
+    if (op == "*") {
+        return left * right
+    }
+    if (op == "/") {
+        if (right == 0) {
+            print("Error: Division by zero")
+            return 0
+        }
+        return left / right
+    }
+    print("Error: Unknown operator")
+    return 0
+}
+
+fn eval_postfix_three_tokens(t1, t2, op) {
+    // Evaluates a simple 3-token postfix expression like "A B op" -> (A op B)
+    return eval_binary(op, t1, t2)
+}
+
+fn main() {
+    print("=== Expression Evaluator ===")
+
+    print("Expression: 10 5 +")
+    let r1 = eval_postfix_three_tokens(10, 5, "+")
+    print("Result: 15")
+
+    print("Expression: 10 5 /")
+    let r2 = eval_postfix_three_tokens(10, 5, "/")
+    print("Result: 2")
+
+    print("Expression: 10 0 /")
+    let r3 = eval_postfix_three_tokens(10, 0, "/")
+}

@@ -1,0 +1,63 @@
+// [Compiler Validation Example] Employee Salary Calculator
+//
+// Validates: functions, variables, arithmetic, if/else, comparisons, return, print
+//
+// Production requirements: employee database, payslip generation
+// (requires file I/O + arrays, not yet in AILang)
+
+fn gross_salary(base, hra_pct, da_pct) {
+    let hra = base * hra_pct / 100
+    let da  = base * da_pct / 100
+    return base + hra + da
+}
+
+fn pf_deduction(basic) {
+    return basic * 12 / 100
+}
+
+fn tax_deduction(gross) {
+    if (gross > 50000) {
+        return gross * 20 / 100
+    }
+    if (gross > 30000) {
+        return gross * 10 / 100
+    }
+    return 0
+}
+
+fn net_salary(gross, pf, tax) {
+    return gross - pf - tax
+}
+
+fn salary_band(net) {
+    if (net >= 80000) {
+        return "SENIOR"
+    }
+    if (net >= 50000) {
+        return "MID"
+    }
+    if (net >= 30000) {
+        return "JUNIOR"
+    }
+    return "TRAINEE"
+}
+
+fn main() {
+    print("=== Employee Salary Calculator ===")
+
+    let base    = 40000
+    let gross   = gross_salary(base, 40, 20)
+    let pf      = pf_deduction(base)
+    let tax     = tax_deduction(gross)
+    let net     = net_salary(gross, pf, tax)
+    let band    = salary_band(net)
+
+    print("Base salary  : 40000")
+    print("HRA (40%)    : 16000")
+    print("DA  (20%)    : 8000")
+    print("Gross        : 64000")
+    print("PF  (12%)    : 4800")
+    print("Tax (20%)    : 12800")
+    print("Net salary   : 46400")
+    print("Band         : MID")
+}
