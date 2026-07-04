@@ -1,0 +1,41 @@
+// Directory Tree Printer
+// Prints a hardcoded directory structure in tree format.
+
+fn print_root(name) {
+    print(name)
+}
+
+fn print_dir(depth, name) {
+    if (depth == 1) {
+        print("|-- dir")
+        return 0
+    }
+    if (depth == 2) {
+        print("    |-- dir")
+        return 0
+    }
+    return 0
+}
+
+fn print_file(depth, name) {
+    if (depth == 1) {
+        print("|-- file")
+        return 0
+    }
+    if (depth == 2) {
+        print("    |-- file")
+        return 0
+    }
+    return 0
+}
+
+fn main() {
+    print("=== Directory Tree Printer ===")
+    print(".")
+    print("|-- src")
+    print("    |-- main.ail")
+    print("    |-- utils.ail")
+    print("|-- tests")
+    print("    |-- test_main.ail")
+    print("|-- README.md")
+}

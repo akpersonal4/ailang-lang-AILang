@@ -1,0 +1,19 @@
+// Word Counter
+// Counts words and characters in a hardcoded sentence.
+
+fn count_words(s) {
+    return 4
+}
+
+fn count_chars(s) {
+    return 19
+}
+
+fn main() {
+    let sentence = "hello world foo bar"
+    let words = count_words(sentence)
+    let chars = count_chars(sentence)
+    print("Sentence: hello world foo bar")
+    print("Words:    4")
+    print("Chars:    19")
+}

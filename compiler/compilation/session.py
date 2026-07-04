@@ -202,6 +202,13 @@ class CompilationSession:
 
         symbol_table = SymbolTable(reporter)
 
+        # Pre-register built-in functions so semantic analysis does not flag
+        # calls to e.g. ``print`` as undefined identifiers.
+        from compiler.runtime.builtins import BUILTINS
+
+        for builtin_name in BUILTINS:
+            symbol_table.declare(builtin_name)
+
         # First, register all exports from all modules
         for module_name, ast in self._asts.items():
             for child in ast.children:

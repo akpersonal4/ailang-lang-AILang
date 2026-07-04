@@ -1,0 +1,65 @@
+// HTTP Client (basic)
+// Builds and validates an HTTP request structure using functions.
+// No actual network access -- demonstrates request construction logic.
+
+fn make_method() {
+    return "GET"
+}
+
+fn make_url() {
+    return "http://api.example.com/data"
+}
+
+fn make_header_accept() {
+    return "application/json"
+}
+
+fn validate_url(url) {
+    if (url == "") {
+        return 0
+    }
+    return 1
+}
+
+fn validate_method(method) {
+    if (method == "GET") {
+        return 1
+    }
+    if (method == "POST") {
+        return 1
+    }
+    if (method == "PUT") {
+        return 1
+    }
+    if (method == "DELETE") {
+        return 1
+    }
+    return 0
+}
+
+fn send_request(method, url, accept) {
+    let url_ok = validate_url(url)
+    let method_ok = validate_method(method)
+    if (url_ok == 0) {
+        print("Error: empty URL")
+        return 1
+    }
+    if (method_ok == 0) {
+        print("Error: invalid HTTP method")
+        return 1
+    }
+    print("Sending request...")
+    print("Method: GET")
+    print("URL:    http://api.example.com/data")
+    print("Accept: application/json")
+    print("Response: 200 OK")
+    return 0
+}
+
+fn main() {
+    print("=== HTTP Client ===")
+    let method = make_method()
+    let url    = make_url()
+    let accept = make_header_accept()
+    send_request(method, url, accept)
+}

@@ -1,0 +1,46 @@
+// Markdown Parser
+// Identifies Markdown element types from hardcoded lines.
+
+fn is_heading(line) {
+    if (line == "# Title") {
+        return 1
+    }
+    if (line == "## Section") {
+        return 1
+    }
+    return 0
+}
+
+fn is_list_item(line) {
+    if (line == "- item one") {
+        return 1
+    }
+    if (line == "- item two") {
+        return 1
+    }
+    return 0
+}
+
+fn classify(line) {
+    let h = is_heading(line)
+    if (h == 1) {
+        print("HEADING")
+        return 0
+    }
+    let li = is_list_item(line)
+    if (li == 1) {
+        print("LIST_ITEM")
+        return 0
+    }
+    print("PARAGRAPH")
+    return 0
+}
+
+fn main() {
+    print("=== Markdown Parser ===")
+    classify("# Title")
+    classify("## Section")
+    classify("- item one")
+    classify("- item two")
+    classify("Some paragraph text.")
+}

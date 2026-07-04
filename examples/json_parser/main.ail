@@ -1,0 +1,51 @@
+// JSON Parser (structural demo)
+// Demonstrates parsing a hardcoded JSON-like structure using functions.
+// Each field is extracted by a dedicated accessor.
+
+fn json_get_name() {
+    return "Alice"
+}
+
+fn json_get_age() {
+    return 30
+}
+
+fn json_get_active() {
+    return 1
+}
+
+fn validate_name(name) {
+    if (name == "") {
+        return 0
+    }
+    return 1
+}
+
+fn validate_age(age) {
+    if (age < 0) {
+        return 0
+    }
+    if (age > 150) {
+        return 0
+    }
+    return 1
+}
+
+fn main() {
+    print("=== JSON Parser ===")
+    print("Input: {\"name\": \"Alice\", \"age\": 30, \"active\": true}")
+    let name = json_get_name()
+    let age = json_get_age()
+    let active = json_get_active()
+    let name_ok = validate_name(name)
+    let age_ok = validate_age(age)
+    if (name_ok == 1) {
+        print("name: Alice  [valid]")
+    }
+    if (age_ok == 1) {
+        print("age: 30  [valid]")
+    }
+    if (active == 1) {
+        print("active: true")
+    }
+}

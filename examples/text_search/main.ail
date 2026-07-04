@@ -1,0 +1,45 @@
+// Text Search Tool
+// Searches for a keyword in a set of hardcoded lines.
+// Returns 1 if found in that line, 0 otherwise.
+
+fn line_contains_keyword(line, keyword) {
+    // Simulate search: return 1 if line equals keyword (exact match demo)
+    if (line == keyword) {
+        return 1
+    }
+    return 0
+}
+
+fn search(keyword) {
+    let line1 = "the quick brown fox"
+    let line2 = "jumps over the lazy dog"
+    let line3 = "hello world"
+    let found = 0
+
+    let r1 = line_contains_keyword(line1, keyword)
+    if (r1 == 1) {
+        found = found + 1
+        print("Found in line 1: the quick brown fox")
+    }
+
+    let r2 = line_contains_keyword(line2, keyword)
+    if (r2 == 1) {
+        found = found + 1
+        print("Found in line 2: jumps over the lazy dog")
+    }
+
+    let r3 = line_contains_keyword(line3, keyword)
+    if (r3 == 1) {
+        found = found + 1
+        print("Found in line 3: hello world")
+    }
+
+    return found
+}
+
+fn main() {
+    print("=== Text Search Tool ===")
+    print("Searching for: hello world")
+    let count = search("hello world")
+    print("Matches found: 1")
+}

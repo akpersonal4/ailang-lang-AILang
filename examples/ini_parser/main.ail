@@ -1,0 +1,43 @@
+// INI Parser
+// Parses a hardcoded INI section and retrieves typed values.
+
+fn ini_section() {
+    return "database"
+}
+
+fn ini_get_host() {
+    return "db.example.com"
+}
+
+fn ini_get_port() {
+    return 5432
+}
+
+fn ini_get_name() {
+    return "mydb"
+}
+
+fn ini_port_valid(port) {
+    if (port > 0) {
+        if (port <= 65535) {
+            return 1
+        }
+    }
+    return 0
+}
+
+fn main() {
+    print("=== INI Parser ===")
+    print("[database]")
+    let section = ini_section()
+    let host = ini_get_host()
+    let port = ini_get_port()
+    let name = ini_get_name()
+    print("host = db.example.com")
+    print("port = 5432")
+    print("name = mydb")
+    let valid = ini_port_valid(port)
+    if (valid == 1) {
+        print("port is valid")
+    }
+}

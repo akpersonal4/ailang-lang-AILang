@@ -243,11 +243,13 @@ class Runtime:
     ) -> Any:
         """Execute an IR node in the context of a module's environment."""
         if isinstance(node, FunctionIR):
-            # Register function with qualified name
+            # Register function with both unqualified and qualified names so
+            # that ``math.add(...)`` resolves via ``_get_local("math.add")``.
             qualified_name = f"{module_name}.{node.name}"
             self._functions[qualified_name] = node
             self._functions[node.name] = node
             self._global_environment.define(node.name, node)
+            self._global_environment.define(qualified_name, node)
             return None
         # Default execution
         return self._execute_node(node)

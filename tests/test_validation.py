@@ -273,3 +273,77 @@ def test_prog_multiple_operations() -> None:
 }"""
     result = _run_ail_program(source)
     assert result == 14.333333333333334  # (5+3)*2 - 5/3 = 16 - 1.66.. = 14.33..
+
+
+# =============================================================================
+# Regression Tests
+# =============================================================================
+
+
+def test_regression_main_return_value_not_printed_by_cli() -> None:
+    """Regression: CLI must not auto-print the return value of main().
+
+    Bug: compiler.cli.main used to call ``print(result)`` after executing the
+    program, which caused programs whose ``main()`` returned an integer (e.g.
+    ``return 0`` used as a sentinel) to emit a spurious trailing '0' line on
+    stdout in addition to their actual print() output.
+
+    Fix: cli.main.run() now discards the return value of runtime.execute() and
+    never prints it. All visible output must come from print() builtins.
+    """
+    from io import StringIO
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmp_path = Path(tmpdir)
+        main_file = tmp_path / "main.ail"
+        # Program uses print() for output and returns 0 as a sentinel.
+        # The CLI should show exactly one line: "hello" – not "hello\n0".
+        main_file.write_text(
+            "fn greet() {\n"
+            '    print("hello")\n'
+            "    return 0\n"
+            "}\n"
+            "fn main() {\n"
+            "    greet()\n"
+            "    return 0\n"
+            "}\n"
+        )
+
+        from compiler.diagnostics import DiagnosticReporter
+
+        session = CompilationSession()
+        session._root = tmp_path
+        session._resolver = type(session._resolver)(tmp_path)
+        session.discover(main_file)
+
+        reporter = DiagnosticReporter()
+        session.analyze(reporter)
+        assert (
+            reporter.error_count == 0
+        ), f"Unexpected errors: {[d.message for d in reporter.diagnostics]}"
+
+        bundle = session.build_ir()
+        runtime = Runtime(bundle)
+        for module_name in session._graph.topological_sort():
+            runtime._initialize_module(module_name)
+
+        captured = StringIO()
+        import sys
+
+        old_stdout = sys.stdout
+        sys.stdout = captured
+        try:
+            # execute() returns the return value of main() — callers must NOT
+            # auto-print it.
+            main_return = runtime.execute(bundle.module_irs["main"])
+        finally:
+            sys.stdout = old_stdout
+
+        # The captured output must be exactly "hello\n" — no trailing "0".
+        assert (
+            captured.getvalue() == "hello\n"
+        ), f"Expected 'hello\\n' but got: {captured.getvalue()!r}"
+
+        # The return value of main() is an integer, not None — callers must
+        # not treat it as output to be printed.
+        assert main_return == 0, f"Expected main() to return 0 but got: {main_return!r}"

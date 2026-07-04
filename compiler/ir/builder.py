@@ -205,12 +205,17 @@ class IRBuilder:
         )
 
     def _build_expr_CallExpressionNode(self, node: CallExpressionNode) -> CallIR:
-        callee = self._build_expression(node.callee)
-        # In our language the callee is always an identifier; extract its name
-        if isinstance(callee, VariableReferenceIR):
-            callee_name = callee.name
+        callee_ir = self._build_expression(node.callee)
+        # Callee is a simple identifier – use the variable name directly.
+        if isinstance(callee_ir, VariableReferenceIR):
+            callee_name: str = callee_ir.name
+        elif isinstance(callee_ir, MemberAccessIR):
+            # Flatten nested MemberAccess into a dotted qualified name so that
+            # ``math.add(...)`` becomes callee ``"math.add"`` rather than the
+            # string representation of the MemberAccessIR object.
+            callee_name = self._flatten_member_access(callee_ir)
         else:
-            callee_name = str(callee)
+            callee_name = str(callee_ir)
         args = tuple(self._build_expression(arg) for arg in node.arguments)
         return CallIR(
             callee=callee_name,
@@ -218,3 +223,17 @@ class IRBuilder:
             start_span=node.start_span,
             end_span=node.end_span,
         )
+
+    def _flatten_member_access(self, node: MemberAccessIR) -> str:
+        """Recursively flatten a MemberAccessIR tree into a dotted name string.
+
+        Examples::
+
+            MemberAccess(VariableRef("math"), "add")   -> "math.add"
+            MemberAccess(MemberAccess(VariableRef("a"), "b"), "c")  -> "a.b.c"
+        """
+        if isinstance(node.receiver, VariableReferenceIR):
+            return f"{node.receiver.name}.{node.member}"
+        if isinstance(node.receiver, MemberAccessIR):
+            return f"{self._flatten_member_access(node.receiver)}.{node.member}"
+        return f"{node.receiver}.{node.member}"

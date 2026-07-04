@@ -38,6 +38,10 @@ class SemanticAnalyzer:
 
     def __init__(self, symbol_table: SymbolTable | None = None) -> None:
         self.symbol_table = symbol_table or SymbolTable()
+        # Tracks qualified names that have been explicitly imported by the
+        # user in the current analysis pass – distinct from symbols
+        # pre-registered by CompilationSession._register_export.
+        self._imported_names: set[str] = set()
 
     def analyze(self, node: ASTNode) -> None:
         method_name = f"_analyze_{type(node).__name__}"
@@ -103,11 +107,16 @@ class SemanticAnalyzer:
         self.analyze(node.operand)
 
     def _analyze_ImportDeclarationNode(self, node: ImportDeclarationNode) -> None:
-        """Analyze an import declaration and resolve the imported symbol.
+        """Analyze an import declaration and declare the imported symbol.
+
+        When called through a CompilationSession, the session pre-registers all
+        exported qualified names (e.g. ``math.add``) before analysis begins.
+        This method uses that pre-registration to validate that the imported
+        symbol actually exists (MOD004) and to skip duplicate imports (MOD002).
 
         Reports:
-        - MOD002 if duplicate import in same scope
-        - MOD004 if the symbol is not defined in the imported module
+        - MOD002 if the same qualified name was already imported in this scope
+        - MOD004 if the qualified name was never exported by any discovered module
         """
         from compiler.diagnostics import (
             MOD002_DUPLICATE_IMPORT,
@@ -116,11 +125,17 @@ class SemanticAnalyzer:
 
         module_path = ".".join(node.module_path)
 
-        if self.symbol_table.reporter is not None:
-            # Check for duplicate import in the current scope
-            scopes = self.symbol_table.scopes
-            current_scope = scopes[-1] if scopes else None
-            if current_scope and module_path in current_scope.symbols:
+        scopes = self.symbol_table.scopes
+        current_scope = scopes[-1] if scopes else None
+
+        # ------------------------------------------------------------------
+        # Duplicate-import guard (MOD002)
+        # Use _imported_names (not the symbol table) to detect duplicate user
+        # imports, since the session may pre-register the same qualified name
+        # via _register_export before analysis begins.
+        # ------------------------------------------------------------------
+        if module_path in self._imported_names:
+            if self.symbol_table.reporter is not None:
                 diagnostic = Diagnostic(
                     Severity.WARNING,
                     MOD002_DUPLICATE_IMPORT,
@@ -129,16 +144,26 @@ class SemanticAnalyzer:
                     None,
                 )
                 self.symbol_table.reporter.report(diagnostic)
-                return
+            return
 
-        # If the import path has a symbol part (e.g., math.max where max is the symbol)
-        # we need to check if module_path exists as a qualified export
-        symbol = self.symbol_table.resolve(module_path, node.start_span, node.end_span)
+        # ------------------------------------------------------------------
+        # Symbol existence check (MOD004)
+        # When a CompilationSession is used it pre-declares every exported
+        # qualified name via _register_export before analysis begins.
+        # If the qualified name is absent from the symbol table at this point
+        # it means no discovered module exported that symbol.
+        # In standalone mode (no reporter) we skip this check and just
+        # declare the name so MemberAccess resolution can proceed.
+        # ------------------------------------------------------------------
+        already_registered = current_scope is not None and (
+            current_scope.resolve(module_path) is not None
+        )
 
-        if symbol is None:
-            # Module exists but symbol doesn't - MOD004
-            # (The module was discovered, but the specific symbol wasn't found)
-            if self.symbol_table.reporter is not None:
+        if not already_registered and self.symbol_table.reporter is not None:
+            # Check the full scope chain (not just current scope)
+            full_chain_symbol = self.symbol_table.scopes[-1].resolve(module_path)
+            if full_chain_symbol is None:
+                # The symbol was never exported by any module in the session.
                 diagnostic = Diagnostic(
                     Severity.ERROR,
                     MOD004_SYMBOL_NOT_FOUND,
@@ -147,10 +172,42 @@ class SemanticAnalyzer:
                     None,
                 )
                 self.symbol_table.reporter.report(diagnostic)
+                return
+
+        # ------------------------------------------------------------------
+        # Declaration
+        # Only declare the qualified name if it is not already in the symbol
+        # table.  ``_register_export`` pre-registers all exported qualified
+        # names (e.g. ``math.add``) before analysis begins; calling
+        # ``symbol_table.declare`` a second time for the same name would
+        # trigger a spurious "Duplicate declaration" error.
+        # ------------------------------------------------------------------
+        self._imported_names.add(module_path)
+
+        # ``already_registered`` was resolved against the full scope chain
+        # above; only declare when the name is genuinely absent.
+        if not already_registered:
+            self.symbol_table.declare(module_path, node.start_span, node.end_span)
+
+        root = node.module_path[0]
+        if len(node.module_path) > 1 and (
+            current_scope is None or current_scope.resolve(root) is None
+        ):
+            self.symbol_table.declare(root, node.start_span, node.end_span)
+
+        if node.alias is not None:
+            self.symbol_table.declare(node.alias, node.start_span, node.end_span)
 
     def _analyze_MemberAccessNode(self, node: MemberAccessNode) -> None:
+        # When the receiver is a plain identifier that names an imported module
+        # namespace (e.g. "math" in "math.add()") it was already declared by
+        # _analyze_ImportDeclarationNode.  Delegating to the generic
+        # _analyze_IdentifierNode path works correctly because the namespace is
+        # now in the symbol table; we simply recurse normally.
         self.analyze(node.receiver)
-        self.analyze(node.member)
+        # The member identifier is part of the qualified import path and does
+        # not exist as a standalone symbol – skip independent resolution.
+        # (Type-checker / IR builder operate on the full qualified name.)
 
     def _analyze_CallExpressionNode(self, node: CallExpressionNode) -> None:
         self.analyze(node.callee)

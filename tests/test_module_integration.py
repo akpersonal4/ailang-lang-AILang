@@ -318,3 +318,72 @@ def test_validation_if_else() -> None:
 }"""
     result, _ = _run_ail_program(source)
     assert result == 1
+
+
+# ---------------------------------------------------------------------------
+# Regression: qualified import must not produce "Duplicate declaration"
+# ---------------------------------------------------------------------------
+
+
+def test_qualified_module_import_no_duplicate_declaration() -> None:
+    """Regression test for: import math.add causes 'Duplicate declaration: math.add'.
+
+    Root cause: _register_export pre-registers the qualified name ``math.add``
+    in the global symbol table before semantic analysis begins.
+    _analyze_ImportDeclarationNode then called ``symbol_table.declare("math.add")``
+    again unconditionally, triggering SEM001 "Duplicate declaration".
+
+    The fix: skip the second ``declare`` call when the symbol is already present.
+
+    This test must never regress.
+    """
+    import sys
+    from io import StringIO
+
+    from compiler.compilation import CompilationSession
+    from compiler.diagnostics import DiagnosticReporter
+    from compiler.runtime.interpreter import Runtime
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmp_path = Path(tmpdir)
+
+        # Create the module file: math.ail exports fn add(a, b)
+        math_file = tmp_path / "math.ail"
+        math_file.write_text("fn add(a, b) {\n    return a + b\n}\n")
+
+        # Create the entry file: imports math.add and calls it
+        main_file = tmp_path / "main.ail"
+        main_file.write_text(
+            "import math.add\n\nfn main() {\n    print(math.add(10, 20))\n}\n"
+        )
+
+        session = CompilationSession()
+        session._root = tmp_path
+        session._resolver = type(session._resolver)(tmp_path)
+        session.discover(main_file)
+
+        reporter = DiagnosticReporter()
+        session.analyze(reporter)
+
+        # Must produce zero errors – specifically no "Duplicate declaration: math.add"
+        errors = [d for d in reporter.diagnostics if d.severity.name == "ERROR"]
+        assert (
+            errors == []
+        ), f"Expected no errors but got: {[d.message for d in errors]}"
+
+        bundle = session.build_ir()
+        runtime = Runtime(bundle)
+
+        for module_name in session._graph.topological_sort():
+            runtime._initialize_module(module_name)
+
+        old_stdout = sys.stdout
+        sys.stdout = captured = StringIO()
+        try:
+            runtime.execute(bundle.module_irs["main"])
+        finally:
+            sys.stdout = old_stdout
+
+        assert (
+            captured.getvalue().strip() == "30"
+        ), f"Expected '30' but got: {captured.getvalue().strip()!r}"

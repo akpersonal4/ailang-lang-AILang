@@ -1,0 +1,8 @@
+// If/Else - Conditional control flow
+fn main() {
+    let x = 10;
+    if (x > 5) {
+        return 1;
+    }
+    return 0;
+}

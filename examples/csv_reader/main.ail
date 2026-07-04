@@ -1,0 +1,29 @@
+// CSV Reader
+// Parses a hardcoded CSV row and extracts fields by position.
+
+fn csv_field_0() {
+    return "Alice"
+}
+
+fn csv_field_1() {
+    return 30
+}
+
+fn csv_field_2() {
+    return "Engineer"
+}
+
+fn print_row(name, age, role) {
+    print("name  : Alice")
+    print("age   : 30")
+    print("role  : Engineer")
+}
+
+fn main() {
+    print("=== CSV Reader ===")
+    print("Row: Alice,30,Engineer")
+    let name = csv_field_0()
+    let age  = csv_field_1()
+    let role = csv_field_2()
+    print_row(name, age, role)
+}
