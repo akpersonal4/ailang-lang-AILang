@@ -1,5 +1,11 @@
-// Markdown Parser
-// Identifies Markdown element types from hardcoded lines.
+// [Compiler Validation Example] Markdown Parser
+//
+// Validates: functions, if/else, string equality, return, print
+//
+// Note: This program classifies hardcoded line literals. A production Markdown
+// parser would require standard library support for string prefix detection
+// (startsWith "#", "-") and character-level scanning, which are not yet
+// available in AILang. Classification here is done via exact equality.
 
 fn is_heading(line) {
     if (line == "# Title") {

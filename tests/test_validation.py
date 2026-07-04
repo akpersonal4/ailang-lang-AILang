@@ -137,8 +137,14 @@ fn main() {
 
 
 # =============================================================================
-# Real Programs
+# Compiler Validation Examples
 # =============================================================================
+#
+# These programs validate that core language features work end-to-end:
+# functions, variables, if/else, comparisons, return, and print.
+# They are NOT real applications — they use hardcoded data because AILang
+# does not yet have a standard library (file I/O, networking, etc.).
+# Real applications become possible once the stdlib is introduced.
 
 
 def test_prog_calculator() -> None:
@@ -233,7 +239,7 @@ def test_limitation_module_function_calls() -> None:
 
 
 # =============================================================================
-# Additional Real Programs
+# Additional Compiler Validation Examples
 # =============================================================================
 
 

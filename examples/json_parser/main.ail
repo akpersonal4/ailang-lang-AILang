@@ -1,6 +1,11 @@
-// JSON Parser (structural demo)
-// Demonstrates parsing a hardcoded JSON-like structure using functions.
-// Each field is extracted by a dedicated accessor.
+// [Compiler Validation Example] JSON Parser
+//
+// Validates: functions, if/else, comparisons, return, print
+//
+// Note: This program validates field-level logic using hardcoded values.
+// A production JSON parser would require standard library support for
+// string indexing, character scanning, and recursive descent parsing,
+// which are not yet available in AILang.
 
 fn json_get_name() {
     return "Alice"

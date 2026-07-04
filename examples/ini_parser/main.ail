@@ -1,5 +1,11 @@
-// INI Parser
-// Parses a hardcoded INI section and retrieves typed values.
+// [Compiler Validation Example] INI Parser
+//
+// Validates: functions, if/else, comparisons, return, print
+//
+// Note: This program uses hardcoded section values. A production INI parser
+// would require standard library support for file I/O, line reading, string
+// splitting on "=", and section detection via "[", which are not yet available
+// in AILang.
 
 fn ini_section() {
     return "database"

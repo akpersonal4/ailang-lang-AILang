@@ -2,47 +2,64 @@
 
 ## Current Milestone
 
-Semantic Analysis Phase 1
+Validation Sprint 2
 
-## Goal
+## Status
 
-Implement lexical scope analysis, symbol tables, declaration registration, and identifier resolution on the AST.
+Complete
 
-## Acceptance Criteria
+## What Was Validated
 
-- Symbol table with lexical scoping exists in compiler/semantic/symbol_table.py
-- Semantic analyzer exists in compiler/semantic/analyzer.py
-- Duplicate symbol diagnostics (SEM001) are reported
-- Undefined identifier diagnostics (SEM002) are reported
-- Semantic unit tests pass
-- Semantic golden snapshot is generated
-- All quality gates pass
+Ten compiler validation examples were written and executed through the official CLI
+to stress-test the language and surface compiler bugs.
 
-## Tasks
+Each example validates a specific subset of AILang language features:
 
-- [x] Create compiler/semantic/ package with package init
-- [x] Implement Symbol, Scope, and SymbolTable with lexical scoping
-- [x] Implement SemanticAnalyzer with AST visitor pattern
-- [x] Register variable declarations in symbol table
-- [x] Register function declarations in symbol table
-- [x] Register function parameters in symbol table
-- [x] Resolve identifiers with lexical scope lookup
-- [x] Report duplicate declaration diagnostics (SEM001)
-- [x] Report undefined identifier diagnostics (SEM002)
-- [x] Add 15 semantic unit tests
-- [x] Add semantic golden snapshot
-- [x] Pass all quality gates (74 tests, black, ruff, mypy)
+| Example             | Features Validated                                    |
+|---------------------|-------------------------------------------------------|
+| word_counter        | functions, variables, arithmetic, return, print       |
+| text_search         | functions, if/else, string equality, return, print    |
+| config_loader       | functions, variables, return, print                   |
+| json_parser         | functions, if/else, comparisons, return, print        |
+| csv_reader          | functions, variables, return, print                   |
+| ini_parser          | functions, if/else, comparisons, return, print        |
+| markdown_parser     | functions, if/else, string equality, return, print    |
+| file_copy           | functions, if/else, comparisons, return, print        |
+| http_client         | functions, if/else, string equality, return, print    |
+| dir_tree            | functions, if/else, comparisons, return, print        |
 
-## Completion
+## Naming
 
-100%
+These programs are intentionally called **Compiler Validation Examples**, not
+"real applications". They use hardcoded input data because AILang does not yet
+have a standard library.
 
-## Blockers
+Real applications (JSON parsers that read files, HTTP clients that open sockets,
+file copy utilities that read bytes) become possible once the standard library
+is introduced in Phase 2.
 
-None.
+## Bug Found and Fixed
 
-## Next Task
+| Bug | Location | Fix |
+|-----|----------|-----|
+| CLI auto-printed return value of main() | compiler/cli/main.py | Removed print(result); output must come from print() builtins only |
 
-Type Checker.
+Regression test: `test_regression_main_return_value_not_printed_by_cli`
+
+## Quality Gates
+
+- pytest: 158 passed
+- black: clean
+- ruff: clean
+- mypy: clean
+
+## Next Milestone
+
+Standard Library (Phase 2)
+
+Prerequisites for real applications:
+- File I/O: open, read, write, close
+- String operations: len, contains, split, startsWith, charAt
+- Dynamic collections (arrays/lists)
 
 Do NOT start without CTO approval.

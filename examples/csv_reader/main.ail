@@ -1,5 +1,10 @@
-// CSV Reader
-// Parses a hardcoded CSV row and extracts fields by position.
+// [Compiler Validation Example] CSV Reader
+//
+// Validates: functions, variables, return, print
+//
+// Note: This program uses a hardcoded single CSV row. A production CSV reader
+// would require standard library support for file I/O, string splitting on
+// delimiters, and dynamic arrays, which are not yet available in AILang.
 
 fn csv_field_0() {
     return "Alice"

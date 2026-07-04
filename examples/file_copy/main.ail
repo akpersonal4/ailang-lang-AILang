@@ -1,6 +1,11 @@
-// File Copy Utility
-// Demonstrates copy validation logic:
-// checks source != dest, size > 0, then reports success.
+// [Compiler Validation Example] File Copy Utility
+//
+// Validates: functions, if/else, comparisons, return, print
+//
+// Note: This program validates copy pre-condition logic using hardcoded paths
+// and sizes. A production file copy utility would require standard library
+// support for file open/read/write/close operations, which are not yet
+// available in AILang.
 
 fn validate_source(path) {
     if (path == "") {

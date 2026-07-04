@@ -1,6 +1,11 @@
-// HTTP Client (basic)
-// Builds and validates an HTTP request structure using functions.
-// No actual network access -- demonstrates request construction logic.
+// [Compiler Validation Example] HTTP Client
+//
+// Validates: functions, if/else, string equality, return, print
+//
+// Note: This program validates HTTP request construction logic using hardcoded
+// values. No actual network access occurs. A production HTTP client would
+// require standard library support for socket I/O, TCP connections, and
+// byte-level protocol handling, which are not yet available in AILang.
 
 fn make_method() {
     return "GET"

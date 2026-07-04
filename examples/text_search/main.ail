@@ -1,9 +1,13 @@
-// Text Search Tool
-// Searches for a keyword in a set of hardcoded lines.
-// Returns 1 if found in that line, 0 otherwise.
+// [Compiler Validation Example] Text Search Tool
+//
+// Validates: functions, if/else, string equality, return, print
+//
+// Note: This program uses a fixed in-memory corpus. A production text search
+// tool would require standard library support for file I/O and string
+// contains/index operations, which are not yet available in AILang.
+// "Search" here is implemented via exact equality comparison.
 
-fn line_contains_keyword(line, keyword) {
-    // Simulate search: return 1 if line equals keyword (exact match demo)
+fn line_matches(line, keyword) {
     if (line == keyword) {
         return 1
     }
@@ -16,19 +20,19 @@ fn search(keyword) {
     let line3 = "hello world"
     let found = 0
 
-    let r1 = line_contains_keyword(line1, keyword)
+    let r1 = line_matches(line1, keyword)
     if (r1 == 1) {
         found = found + 1
         print("Found in line 1: the quick brown fox")
     }
 
-    let r2 = line_contains_keyword(line2, keyword)
+    let r2 = line_matches(line2, keyword)
     if (r2 == 1) {
         found = found + 1
         print("Found in line 2: jumps over the lazy dog")
     }
 
-    let r3 = line_contains_keyword(line3, keyword)
+    let r3 = line_matches(line3, keyword)
     if (r3 == 1) {
         found = found + 1
         print("Found in line 3: hello world")

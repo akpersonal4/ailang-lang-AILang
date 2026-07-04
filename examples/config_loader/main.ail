@@ -1,5 +1,10 @@
-// Config Loader
-// Parses a hardcoded INI-style config and returns values by key.
+// [Compiler Validation Example] Config Loader
+//
+// Validates: functions, variables, return, print
+//
+// Note: This program uses hardcoded configuration values. A production config
+// loader would require standard library support for file I/O, string splitting,
+// and key/value parsing, which are not yet available in AILang.
 
 fn get_host() {
     return "localhost"
