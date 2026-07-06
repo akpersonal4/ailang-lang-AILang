@@ -7,10 +7,10 @@ Project history, key decisions, and evolution timeline for AI coding assistants.
 ## Project Identity
 
 - **Language:** AILang — AI-first, deterministic, specification-driven
-- **Version:** v0.1.2
-- **Compiler:** 39 Python source files, ~3,949 LOC
+- **Version:** v0.2.0
+- **Compiler:** 40 Python source files, ~4,000 LOC
 - **Standard Library:** 16 `.ail` modules
-- **Test Suite:** 522 passing tests across 27 test files
+- **Test Suite:** 624 passing tests across 28 test files
 - **Applications:** 66+ across `apps/`, `ai_benchmarks/`, `examples/patterns/`
 
 ---
@@ -61,6 +61,20 @@ Project history, key decisions, and evolution timeline for AI coding assistants.
 | Eager `&&`/`\|\|` | Simpler evaluation model | 3/10 benchmarks |
 | `string.concat` 2-arg limit | Forces explicit intermediate steps | 3/10 benchmarks |
 | Shared global scope for `let` | Simpler variable resolution | 2/10 benchmarks |
+
+### Runtime Optimization #001 — Lexical Variable Lookup Cache (v0.2.0)
+
+Feature added to `Environment.resolve()` to cache binding locations
+per-environment after the first successful resolution.
+
+| Aspect | Detail |
+|--------|--------|
+| **Reason** | `Environment.resolve` consumed 85.4% of wall-clock time (1.6M calls, 230M chain walks) in the static analyzer — the primary bottleneck workload |
+| **Solution** | `_resolve_cache: dict[str, Environment]` on each Environment. `resolve()` checks own cache → own values → parent cache shortcut → chain walk. Cache populated with the binding `Environment` pointer on first successful resolution |
+| **Negative caching removed** | Initial implementation cached NameError sentinels, but `assign` can create new bindings in ancestor environments, making negative cache entries stale. Only positive results are cached |
+| **Impact** | Static Analyzer improved ~6× (373s→19.5s without cProfile). Cache hit rate 52–64% across 5 benchmark apps. Memory overhead ~11 KB |
+| **Tests** | 102 new regression tests + 522 existing tests = 624 passing |
+| **Instrumentation** | `_CacheStats` counters (hits/misses/negative_hits) per Environment for profiling; `get_cache_info()` introspection hook; `Runtime.get_cache_info()` aggregation |
 
 ### Known Gaps (Consider Feature Requests)
 

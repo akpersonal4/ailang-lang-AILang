@@ -111,6 +111,22 @@
 - **Error code constants**: Centralized PAR001, PAR002, PAR003, LEX001, LEX002, LEX003 constants in diagnostics.py
 - **Test count corrected**: Updated README.md to show 507 passing tests
 
+## 0.2.0
+
+### Runtime Optimization #001 — Lexical Variable Lookup Cache
+
+- **`Environment.resolve()`** now caches binding locations per-environment in `_resolve_cache: dict[str, Environment]`, eliminating recursive chain walks on repeated variable lookups
+- **~6× speedup** on the static analyzer benchmark (373s → 19.5s, the primary bottleneck workload identified by Python profiling)
+- **52–64% cache hit rate** across all 5 benchmark apps (dice_roller, hangman_game, inventory_mgmt, kanban, static_analyzer)
+- **Negative caching removed**: initial design cached `NameError` sentinels, but `assign` can create new bindings in ancestor environments, making negative entries stale. Only positive results are cached
+- **`get_cache_info()` introspection** added to `Environment` and `Runtime` for testing
+- **`_CacheStats` instrumentation** added to `Environment` (hits/misses/negative_hits counters) — no semantic effect, used exclusively for profiling
+- **102 regression tests** in `tests/test_scope_cache.py` covering basic resolution, shadowing, recursion, reassignment, modules, edge cases, cache introspection, stress, and correctness invariants
+- **624 tests total** (522 existing + 102 new), all passing
+- **Memory overhead**: ~11 KB for the static analyzer workload (98 cache entries across 18 environments)
+- **No semantic changes** — all existing AILang programs remain fully compatible
+- **Runtime frozen** after this release. No further optimizations planned until community feedback identifies new bottlenecks
+
 ## 0.1.2
 
 ### Compiler QA — Bug Fix Sprint #001

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import sys
-from typing import Any
+from typing import Any, Dict
 
 from compiler.ir.nodes import (
     AssignmentIR,
@@ -39,7 +39,7 @@ class Runtime:
     """Execute a lowered IR program with lexical scopes and frames."""
 
     def __init__(self, module_bundle: Any = None) -> None:
-        sys.setrecursionlimit(10000)
+        sys.setrecursionlimit(50000)
         self._global_environment = Environment()
         self._frame_stack: list[StackFrame] = []
         self._functions: dict[str, FunctionIR] = {}
@@ -319,3 +319,14 @@ class Runtime:
 
     def _get_local(self, name: str) -> Any:
         return self._resolve_name(name)
+
+    def get_cache_info(self) -> list[dict[str, Any]]:
+        """Return cache info for all active environments (testing hook)."""
+        infos: list[dict[str, Any]] = []
+        infos.append({"scope": "global", **self._global_environment.get_cache_info()})
+        for frame in self._frame_stack:
+            name = frame.function_name or "anonymous"
+            infos.append(
+                {"scope": f"frame:{name}", **frame.environment.get_cache_info()}
+            )
+        return infos

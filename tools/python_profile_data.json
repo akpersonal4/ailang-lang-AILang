@@ -1,0 +1,974 @@
+[
+  {
+    "app_name": "dice_roller",
+    "runtime_time": 0.1817,
+    "total_calls": 147665,
+    "primitive_calls": 107101,
+    "peak_memory_bytes": 331576,
+    "peak_memory_mb": 0.32,
+    "hotspots_by_internal": [
+      {
+        "function": "resolve",
+        "file": "C:\\Users\\aleckhan\\Projects\\AiLang_New\\compiler\\runtime\\environment.py",
+        "line": 40,
+        "calls": 5063,
+        "internal_time": 0.1003,
+        "cumulative_time": 0.1035
+      },
+      {
+        "function": "_evaluate_expression",
+        "file": "C:\\Users\\aleckhan\\Projects\\AiLang_New\\compiler\\runtime\\interpreter.py",
+        "line": 136,
+        "calls": 19,
+        "internal_time": 0.0191,
+        "cumulative_time": 0.1808
+      },
+      {
+        "function": "_resolve_name",
+        "file": "C:\\Users\\aleckhan\\Projects\\AiLang_New\\compiler\\runtime\\interpreter.py",
+        "line": 280,
+        "calls": 3884,
+        "internal_time": 0.0119,
+        "cumulative_time": 0.1197
+      },
+      {
+        "function": "_call_function",
+        "file": "C:\\Users\\aleckhan\\Projects\\AiLang_New\\compiler\\runtime\\interpreter.py",
+        "line": 115,
+        "calls": 1,
+        "internal_time": 0.0094,
+        "cumulative_time": 0.1809
+      },
+      {
+        "function": "_execute_block",
+        "file": "C:\\Users\\aleckhan\\Projects\\AiLang_New\\compiler\\runtime\\interpreter.py",
+        "line": 100,
+        "calls": 1,
+        "internal_time": 0.0058,
+        "cumulative_time": 0.1809
+      },
+      {
+        "function": "_execute_node",
+        "file": "C:\\Users\\aleckhan\\Projects\\AiLang_New\\compiler\\runtime\\interpreter.py",
+        "line": 58,
+        "calls": 26,
+        "internal_time": 0.0055,
+        "cumulative_time": 0.1809
+      },
+      {
+        "function": "resolve",
+        "file": "C:\\Users\\aleckhan\\Projects\\AiLang_New\\compiler\\runtime\\stack_frame.py",
+        "line": 32,
+        "calls": 3884,
+        "internal_time": 0.0043,
+        "cumulative_time": 0.1048
+      },
+      {
+        "function": "__init__",
+        "file": "C:\\Users\\aleckhan\\Projects\\AiLang_New\\compiler\\runtime\\stack_frame.py",
+        "line": 13,
+        "calls": 1486,
+        "internal_time": 0.0042,
+        "cumulative_time": 0.0083
+      },
+      {
+        "function": "__init__",
+        "file": "C:\\Users\\aleckhan\\Projects\\AiLang_New\\compiler\\runtime\\environment.py",
+        "line": 22,
+        "calls": 1504,
+        "internal_time": 0.0038,
+        "cumulative_time": 0.0041
+      },
+      {
+        "function": "<method 'get' of 'dict' objects>",
+        "file": "~",
+        "line": 0,
+        "calls": 36070,
+        "internal_time": 0.0032,
+        "cumulative_time": 0.0032
+      },
+      {
+        "function": "<built-in method builtins.isinstance>",
+        "file": "~",
+        "line": 0,
+        "calls": 37798,
+        "internal_time": 0.0029,
+        "cumulative_time": 0.0029
+      },
+      {
+        "function": "_get_local",
+        "file": "C:\\Users\\aleckhan\\Projects\\AiLang_New\\compiler\\runtime\\interpreter.py",
+        "line": 320,
+        "calls": 2705,
+        "internal_time": 0.0025,
+        "cumulative_time": 0.0142
+      },
+      {
+        "function": "<genexpr>",
+        "file": "C:\\Users\\aleckhan\\Projects\\AiLang_New\\compiler\\runtime\\interpreter.py",
+        "line": 197,
+        "calls": 898,
+        "internal_time": 0.0023,
+        "cumulative_time": 0.1245
+      },
+      {
+        "function": "define",
+        "file": "C:\\Users\\aleckhan\\Projects\\AiLang_New\\compiler\\runtime\\stack_frame.py",
+        "line": 26,
+        "calls": 1634,
+        "internal_time": 0.0015,
+        "cumulative_time": 0.0018
+      },
+      {
+        "function": "<genexpr>",
+        "file": "C:\\Users\\aleckhan\\Projects\\AiLang_New\\compiler\\runtime\\interpreter.py",
+        "line": 204,
+        "calls": 989,
+        "internal_time": 0.0014,
+        "cumulative_time": 0.0363
+      },
+      {
+        "function": "define",
+        "file": "C:\\Users\\aleckhan\\Projects\\AiLang_New\\compiler\\runtime\\environment.py",
+        "line": 28,
+        "calls": 1902,
+        "internal_time": 0.0004,
+        "cumulative_time": 0.0004
+      },
+      {
+        "function": "__init__",
+        "file": "C:\\Users\\aleckhan\\Projects\\AiLang_New\\compiler\\runtime\\environment.py",
+        "line": 13,
+        "calls": 1504,
+        "internal_time": 0.0003,
+        "cumulative_time": 0.0003
+      },
+      {
+        "function": "_define_local",
+        "file": "C:\\Users\\aleckhan\\Projects\\AiLang_New\\compiler\\runtime\\interpreter.py",
+        "line": 224,
+        "calls": 224,
+        "internal_time": 0.0003,
+        "cumulative_time": 0.0006
+      },
+      {
+        "function": "topological_sort",
+        "file": "C:\\Users\\aleckhan\\Projects\\AiLang_New\\compiler\\compilation\\graph.py",
+        "line": 83,
+        "calls": 2,
+        "internal_time": 0.0003,
+        "cumulative_time": 0.0003
+      },
+      {
+        "function": "<method 'values' of 'dict' objects>",
+        "file": "~",
+        "line": 0,
+        "calls": 461,
+        "internal_time": 0.0003,
+        "cumulative_time": 0.0003
+      }
+    ],
+    "interpreter_calls": {
+      "resolve": {
+        "calls": 3884,
+        "internal_time": 0.0043,
+        "cumulative_time": 0.1048
+      },
+      "_execute_block": {
+        "calls": 1,
+        "internal_time": 0.0058,
+        "cumulative_time": 0.1809
+      },
+      "_initialize_module": {
+        "calls": 17,
+        "internal_time": 0.0001,
+        "cumulative_time": 0.0004
+      },
+      "_execute_node": {
+        "calls": 26,
+        "internal_time": 0.0055,
+        "cumulative_time": 0.1809
+      },
+      "_call_function": {
+        "calls": 1,
+        "internal_time": 0.0094,
+        "cumulative_time": 0.1809
+      },
+      "_evaluate_expression": {
+        "calls": 19,
+        "internal_time": 0.0191,
+        "cumulative_time": 0.1808
+      },
+      "_resolve_name": {
+        "calls": 3884,
+        "internal_time": 0.0119,
+        "cumulative_time": 0.1197
+      },
+      "assign": {
+        "calls": 26,
+        "internal_time": 0.0,
+        "cumulative_time": 0.0001
+      },
+      "execute": {
+        "calls": 1,
+        "internal_time": 0.0,
+        "cumulative_time": 0.1809
+      },
+      "define": {
+        "calls": 1634,
+        "internal_time": 0.0015,
+        "cumulative_time": 0.0018
+      },
+      "_get_local": {
+        "calls": 2705,
+        "internal_time": 0.0025,
+        "cumulative_time": 0.0142
+      },
+      "_define_local": {
+        "calls": 224,
+        "internal_time": 0.0003,
+        "cumulative_time": 0.0006
+      },
+      "_assign_local": {
+        "calls": 26,
+        "internal_time": 0.0,
+        "cumulative_time": 0.0001
+      }
+    },
+    "cache_stats": {
+      "cache_hits": 698,
+      "cache_misses": 481,
+      "cache_negative_hits": 461,
+      "cache_hit_rate": 0.592
+    }
+  },
+  {
+    "app_name": "hangman_game",
+    "runtime_time": 0.4248,
+    "total_calls": 360333,
+    "primitive_calls": 268428,
+    "peak_memory_bytes": 383910,
+    "peak_memory_mb": 0.37,
+    "hotspots_by_internal": [
+      {
+        "function": "resolve",
+        "file": "C:\\Users\\aleckhan\\Projects\\AiLang_New\\compiler\\runtime\\environment.py",
+        "line": 40,
+        "calls": 13216,
+        "internal_time": 0.2277,
+        "cumulative_time": 0.2354
+      },
+      {
+        "function": "_evaluate_expression",
+        "file": "C:\\Users\\aleckhan\\Projects\\AiLang_New\\compiler\\runtime\\interpreter.py",
+        "line": 136,
+        "calls": 9,
+        "internal_time": 0.0465,
+        "cumulative_time": 0.4232
+      },
+      {
+        "function": "_resolve_name",
+        "file": "C:\\Users\\aleckhan\\Projects\\AiLang_New\\compiler\\runtime\\interpreter.py",
+        "line": 280,
+        "calls": 9816,
+        "internal_time": 0.0301,
+        "cumulative_time": 0.2768
+      },
+      {
+        "function": "_call_function",
+        "file": "C:\\Users\\aleckhan\\Projects\\AiLang_New\\compiler\\runtime\\interpreter.py",
+        "line": 115,
+        "calls": 1,
+        "internal_time": 0.0227,
+        "cumulative_time": 0.4233
+      },
+      {
+        "function": "_execute_block",
+        "file": "C:\\Users\\aleckhan\\Projects\\AiLang_New\\compiler\\runtime\\interpreter.py",
+        "line": 100,
+        "calls": 1,
+        "internal_time": 0.0141,
+        "cumulative_time": 0.4233
+      },
+      {
+        "function": "_execute_node",
+        "file": "C:\\Users\\aleckhan\\Projects\\AiLang_New\\compiler\\runtime\\interpreter.py",
+        "line": 58,
+        "calls": 16,
+        "internal_time": 0.0119,
+        "cumulative_time": 0.4233
+      },
+      {
+        "function": "resolve",
+        "file": "C:\\Users\\aleckhan\\Projects\\AiLang_New\\compiler\\runtime\\stack_frame.py",
+        "line": 32,
+        "calls": 10011,
+        "internal_time": 0.0102,
+        "cumulative_time": 0.2372
+      },
+      {
+        "function": "__init__",
+        "file": "C:\\Users\\aleckhan\\Projects\\AiLang_New\\compiler\\runtime\\stack_frame.py",
+        "line": 13,
+        "calls": 3939,
+        "internal_time": 0.0102,
+        "cumulative_time": 0.02
+      },
+      {
+        "function": "__init__",
+        "file": "C:\\Users\\aleckhan\\Projects\\AiLang_New\\compiler\\runtime\\environment.py",
+        "line": 22,
+        "calls": 3957,
+        "internal_time": 0.009,
+        "cumulative_time": 0.0099
+      },
+      {
+        "function": "<method 'get' of 'dict' objects>",
+        "file": "~",
+        "line": 0,
+        "calls": 85092,
+        "internal_time": 0.0078,
+        "cumulative_time": 0.0078
+      },
+      {
+        "function": "<built-in method builtins.isinstance>",
+        "file": "~",
+        "line": 0,
+        "calls": 94377,
+        "internal_time": 0.0076,
+        "cumulative_time": 0.0076
+      },
+      {
+        "function": "<genexpr>",
+        "file": "C:\\Users\\aleckhan\\Projects\\AiLang_New\\compiler\\runtime\\interpreter.py",
+        "line": 197,
+        "calls": 5794,
+        "internal_time": 0.0057,
+        "cumulative_time": 0.0335
+      },
+      {
+        "function": "_get_local",
+        "file": "C:\\Users\\aleckhan\\Projects\\AiLang_New\\compiler\\runtime\\interpreter.py",
+        "line": 320,
+        "calls": 6806,
+        "internal_time": 0.0056,
+        "cumulative_time": 0.0338
+      },
+      {
+        "function": "define",
+        "file": "C:\\Users\\aleckhan\\Projects\\AiLang_New\\compiler\\runtime\\stack_frame.py",
+        "line": 26,
+        "calls": 4183,
+        "internal_time": 0.0035,
+        "cumulative_time": 0.0043
+      },
+      {
+        "function": "<genexpr>",
+        "file": "C:\\Users\\aleckhan\\Projects\\AiLang_New\\compiler\\runtime\\interpreter.py",
+        "line": 204,
+        "calls": 3239,
+        "internal_time": 0.0034,
+        "cumulative_time": 0.019
+      },
+      {
+        "function": "define",
+        "file": "C:\\Users\\aleckhan\\Projects\\AiLang_New\\compiler\\runtime\\environment.py",
+        "line": 28,
+        "calls": 4448,
+        "internal_time": 0.0009,
+        "cumulative_time": 0.0009
+      },
+      {
+        "function": "__init__",
+        "file": "C:\\Users\\aleckhan\\Projects\\AiLang_New\\compiler\\runtime\\environment.py",
+        "line": 13,
+        "calls": 3957,
+        "internal_time": 0.0008,
+        "cumulative_time": 0.0008
+      },
+      {
+        "function": "<method 'values' of 'dict' objects>",
+        "file": "~",
+        "line": 0,
+        "calls": 1309,
+        "internal_time": 0.0007,
+        "cumulative_time": 0.0007
+      },
+      {
+        "function": "topological_sort",
+        "file": "C:\\Users\\aleckhan\\Projects\\AiLang_New\\compiler\\compilation\\graph.py",
+        "line": 83,
+        "calls": 2,
+        "internal_time": 0.0006,
+        "cumulative_time": 0.0006
+      },
+      {
+        "function": "list_append",
+        "file": "C:\\Users\\aleckhan\\Projects\\AiLang_New\\compiler\\runtime\\builtins.py",
+        "line": 32,
+        "calls": 200,
+        "internal_time": 0.0006,
+        "cumulative_time": 0.0006
+      }
+    ],
+    "interpreter_calls": {
+      "resolve": {
+        "calls": 10011,
+        "internal_time": 0.0102,
+        "cumulative_time": 0.2372
+      },
+      "_execute_block": {
+        "calls": 1,
+        "internal_time": 0.0141,
+        "cumulative_time": 0.4233
+      },
+      "_initialize_module": {
+        "calls": 17,
+        "internal_time": 0.0003,
+        "cumulative_time": 0.0008
+      },
+      "_execute_node": {
+        "calls": 16,
+        "internal_time": 0.0119,
+        "cumulative_time": 0.4233
+      },
+      "_call_function": {
+        "calls": 1,
+        "internal_time": 0.0227,
+        "cumulative_time": 0.4233
+      },
+      "_evaluate_expression": {
+        "calls": 9,
+        "internal_time": 0.0465,
+        "cumulative_time": 0.4232
+      },
+      "_resolve_name": {
+        "calls": 9816,
+        "internal_time": 0.0301,
+        "cumulative_time": 0.2768
+      },
+      "assign": {
+        "calls": 8,
+        "internal_time": 0.0,
+        "cumulative_time": 0.0
+      },
+      "execute": {
+        "calls": 1,
+        "internal_time": 0.0,
+        "cumulative_time": 0.4233
+      },
+      "define": {
+        "calls": 4183,
+        "internal_time": 0.0035,
+        "cumulative_time": 0.0043
+      },
+      "_get_local": {
+        "calls": 6806,
+        "internal_time": 0.0056,
+        "cumulative_time": 0.0338
+      },
+      "_define_local": {
+        "calls": 267,
+        "internal_time": 0.0003,
+        "cumulative_time": 0.0006
+      },
+      "_assign_local": {
+        "calls": 8,
+        "internal_time": 0.0,
+        "cumulative_time": 0.0001
+      }
+    },
+    "cache_stats": {
+      "cache_hits": 1879,
+      "cache_misses": 1326,
+      "cache_negative_hits": 1309,
+      "cache_hit_rate": 0.5863
+    }
+  },
+  {
+    "app_name": "inventory_mgmt",
+    "runtime_time": 0.3648,
+    "total_calls": 331353,
+    "primitive_calls": 253451,
+    "peak_memory_bytes": 464143,
+    "peak_memory_mb": 0.44,
+    "hotspots_by_internal": [
+      {
+        "function": "resolve",
+        "file": "C:\\Users\\aleckhan\\Projects\\AiLang_New\\compiler\\runtime\\environment.py",
+        "line": 40,
+        "calls": 12467,
+        "internal_time": 0.1777,
+        "cumulative_time": 0.185
+      },
+      {
+        "function": "_evaluate_expression",
+        "file": "C:\\Users\\aleckhan\\Projects\\AiLang_New\\compiler\\runtime\\interpreter.py",
+        "line": 136,
+        "calls": 10,
+        "internal_time": 0.0404,
+        "cumulative_time": 0.3638
+      },
+      {
+        "function": "_resolve_name",
+        "file": "C:\\Users\\aleckhan\\Projects\\AiLang_New\\compiler\\runtime\\interpreter.py",
+        "line": 280,
+        "calls": 9212,
+        "internal_time": 0.0258,
+        "cumulative_time": 0.2218
+      },
+      {
+        "function": "_call_function",
+        "file": "C:\\Users\\aleckhan\\Projects\\AiLang_New\\compiler\\runtime\\interpreter.py",
+        "line": 115,
+        "calls": 1,
+        "internal_time": 0.0204,
+        "cumulative_time": 0.3638
+      },
+      {
+        "function": "_execute_block",
+        "file": "C:\\Users\\aleckhan\\Projects\\AiLang_New\\compiler\\runtime\\interpreter.py",
+        "line": 100,
+        "calls": 1,
+        "internal_time": 0.0146,
+        "cumulative_time": 0.3638
+      },
+      {
+        "function": "_execute_node",
+        "file": "C:\\Users\\aleckhan\\Projects\\AiLang_New\\compiler\\runtime\\interpreter.py",
+        "line": 58,
+        "calls": 17,
+        "internal_time": 0.0132,
+        "cumulative_time": 0.3638
+      },
+      {
+        "function": "resolve",
+        "file": "C:\\Users\\aleckhan\\Projects\\AiLang_New\\compiler\\runtime\\stack_frame.py",
+        "line": 32,
+        "calls": 9212,
+        "internal_time": 0.011,
+        "cumulative_time": 0.1867
+      },
+      {
+        "function": "__init__",
+        "file": "C:\\Users\\aleckhan\\Projects\\AiLang_New\\compiler\\runtime\\stack_frame.py",
+        "line": 13,
+        "calls": 3847,
+        "internal_time": 0.01,
+        "cumulative_time": 0.0193
+      },
+      {
+        "function": "__init__",
+        "file": "C:\\Users\\aleckhan\\Projects\\AiLang_New\\compiler\\runtime\\environment.py",
+        "line": 22,
+        "calls": 3865,
+        "internal_time": 0.0085,
+        "cumulative_time": 0.0093
+      },
+      {
+        "function": "<built-in method builtins.isinstance>",
+        "file": "~",
+        "line": 0,
+        "calls": 94832,
+        "internal_time": 0.0077,
+        "cumulative_time": 0.0077
+      },
+      {
+        "function": "<method 'get' of 'dict' objects>",
+        "file": "~",
+        "line": 0,
+        "calls": 70885,
+        "internal_time": 0.0073,
+        "cumulative_time": 0.0073
+      },
+      {
+        "function": "<genexpr>",
+        "file": "C:\\Users\\aleckhan\\Projects\\AiLang_New\\compiler\\runtime\\interpreter.py",
+        "line": 197,
+        "calls": 5393,
+        "internal_time": 0.0049,
+        "cumulative_time": 0.0244
+      },
+      {
+        "function": "<genexpr>",
+        "file": "C:\\Users\\aleckhan\\Projects\\AiLang_New\\compiler\\runtime\\interpreter.py",
+        "line": 204,
+        "calls": 4277,
+        "internal_time": 0.0047,
+        "cumulative_time": 0.0294
+      },
+      {
+        "function": "_get_local",
+        "file": "C:\\Users\\aleckhan\\Projects\\AiLang_New\\compiler\\runtime\\interpreter.py",
+        "line": 320,
+        "calls": 5957,
+        "internal_time": 0.0046,
+        "cumulative_time": 0.0317
+      },
+      {
+        "function": "define",
+        "file": "C:\\Users\\aleckhan\\Projects\\AiLang_New\\compiler\\runtime\\stack_frame.py",
+        "line": 26,
+        "calls": 4436,
+        "internal_time": 0.0035,
+        "cumulative_time": 0.0045
+      },
+      {
+        "function": "define",
+        "file": "C:\\Users\\aleckhan\\Projects\\AiLang_New\\compiler\\runtime\\environment.py",
+        "line": 28,
+        "calls": 4899,
+        "internal_time": 0.0011,
+        "cumulative_time": 0.0011
+      },
+      {
+        "function": "__init__",
+        "file": "C:\\Users\\aleckhan\\Projects\\AiLang_New\\compiler\\runtime\\environment.py",
+        "line": 13,
+        "calls": 3865,
+        "internal_time": 0.0009,
+        "cumulative_time": 0.0009
+      },
+      {
+        "function": "_define_local",
+        "file": "C:\\Users\\aleckhan\\Projects\\AiLang_New\\compiler\\runtime\\interpreter.py",
+        "line": 224,
+        "calls": 812,
+        "internal_time": 0.0007,
+        "cumulative_time": 0.0017
+      },
+      {
+        "function": "<method 'values' of 'dict' objects>",
+        "file": "~",
+        "line": 0,
+        "calls": 1473,
+        "internal_time": 0.0007,
+        "cumulative_time": 0.0007
+      },
+      {
+        "function": "<built-in method io.open>",
+        "file": "~",
+        "line": 0,
+        "calls": 1,
+        "internal_time": 0.0007,
+        "cumulative_time": 0.0007
+      }
+    ],
+    "interpreter_calls": {
+      "resolve": {
+        "calls": 9212,
+        "internal_time": 0.011,
+        "cumulative_time": 0.1867
+      },
+      "_execute_block": {
+        "calls": 1,
+        "internal_time": 0.0146,
+        "cumulative_time": 0.3638
+      },
+      "_initialize_module": {
+        "calls": 17,
+        "internal_time": 0.0001,
+        "cumulative_time": 0.0006
+      },
+      "_execute_node": {
+        "calls": 17,
+        "internal_time": 0.0132,
+        "cumulative_time": 0.3638
+      },
+      "_call_function": {
+        "calls": 1,
+        "internal_time": 0.0204,
+        "cumulative_time": 0.3638
+      },
+      "_evaluate_expression": {
+        "calls": 10,
+        "internal_time": 0.0404,
+        "cumulative_time": 0.3638
+      },
+      "_resolve_name": {
+        "calls": 9212,
+        "internal_time": 0.0258,
+        "cumulative_time": 0.2218
+      },
+      "assign": {
+        "calls": 176,
+        "internal_time": 0.0002,
+        "cumulative_time": 0.0005
+      },
+      "execute": {
+        "calls": 1,
+        "internal_time": 0.0,
+        "cumulative_time": 0.3639
+      },
+      "define": {
+        "calls": 4436,
+        "internal_time": 0.0035,
+        "cumulative_time": 0.0045
+      },
+      "_get_local": {
+        "calls": 5957,
+        "internal_time": 0.0046,
+        "cumulative_time": 0.0317
+      },
+      "_define_local": {
+        "calls": 812,
+        "internal_time": 0.0007,
+        "cumulative_time": 0.0017
+      },
+      "_assign_local": {
+        "calls": 176,
+        "internal_time": 0.0002,
+        "cumulative_time": 0.0007
+      }
+    },
+    "cache_stats": {
+      "cache_hits": 1731,
+      "cache_misses": 1524,
+      "cache_negative_hits": 1473,
+      "cache_hit_rate": 0.5318
+    }
+  },
+  {
+    "app_name": "kanban",
+    "runtime_time": 0.1857,
+    "total_calls": 175783,
+    "primitive_calls": 134282,
+    "peak_memory_bytes": 247326,
+    "peak_memory_mb": 0.24,
+    "hotspots_by_internal": [
+      {
+        "function": "resolve",
+        "file": "C:\\Users\\aleckhan\\Projects\\AiLang_New\\compiler\\runtime\\environment.py",
+        "line": 40,
+        "calls": 6847,
+        "internal_time": 0.0789,
+        "cumulative_time": 0.0823
+      },
+      {
+        "function": "_evaluate_expression",
+        "file": "C:\\Users\\aleckhan\\Projects\\AiLang_New\\compiler\\runtime\\interpreter.py",
+        "line": 136,
+        "calls": 15,
+        "internal_time": 0.0205,
+        "cumulative_time": 0.1846
+      },
+      {
+        "function": "<built-in method io.open>",
+        "file": "~",
+        "line": 0,
+        "calls": 2,
+        "internal_time": 0.0145,
+        "cumulative_time": 0.0145
+      },
+      {
+        "function": "_resolve_name",
+        "file": "C:\\Users\\aleckhan\\Projects\\AiLang_New\\compiler\\runtime\\interpreter.py",
+        "line": 280,
+        "calls": 5031,
+        "internal_time": 0.0124,
+        "cumulative_time": 0.0991
+      },
+      {
+        "function": "_call_function",
+        "file": "C:\\Users\\aleckhan\\Projects\\AiLang_New\\compiler\\runtime\\interpreter.py",
+        "line": 115,
+        "calls": 1,
+        "internal_time": 0.0101,
+        "cumulative_time": 0.1847
+      },
+      {
+        "function": "_execute_node",
+        "file": "C:\\Users\\aleckhan\\Projects\\AiLang_New\\compiler\\runtime\\interpreter.py",
+        "line": 58,
+        "calls": 22,
+        "internal_time": 0.007,
+        "cumulative_time": 0.1847
+      },
+      {
+        "function": "_execute_block",
+        "file": "C:\\Users\\aleckhan\\Projects\\AiLang_New\\compiler\\runtime\\interpreter.py",
+        "line": 100,
+        "calls": 1,
+        "internal_time": 0.0066,
+        "cumulative_time": 0.1847
+      },
+      {
+        "function": "__init__",
+        "file": "C:\\Users\\aleckhan\\Projects\\AiLang_New\\compiler\\runtime\\stack_frame.py",
+        "line": 13,
+        "calls": 2133,
+        "internal_time": 0.0049,
+        "cumulative_time": 0.0094
+      },
+      {
+        "function": "resolve",
+        "file": "C:\\Users\\aleckhan\\Projects\\AiLang_New\\compiler\\runtime\\stack_frame.py",
+        "line": 32,
+        "calls": 5031,
+        "internal_time": 0.0044,
+        "cumulative_time": 0.0824
+      },
+      {
+        "function": "__init__",
+        "file": "C:\\Users\\aleckhan\\Projects\\AiLang_New\\compiler\\runtime\\environment.py",
+        "line": 22,
+        "calls": 2151,
+        "internal_time": 0.0042,
+        "cumulative_time": 0.0046
+      },
+      {
+        "function": "<built-in method builtins.isinstance>",
+        "file": "~",
+        "line": 0,
+        "calls": 50320,
+        "internal_time": 0.0038,
+        "cumulative_time": 0.0038
+      },
+      {
+        "function": "<method 'get' of 'dict' objects>",
+        "file": "~",
+        "line": 0,
+        "calls": 36715,
+        "internal_time": 0.0034,
+        "cumulative_time": 0.0034
+      },
+      {
+        "function": "<genexpr>",
+        "file": "C:\\Users\\aleckhan\\Projects\\AiLang_New\\compiler\\runtime\\interpreter.py",
+        "line": 197,
+        "calls": 2280,
+        "internal_time": 0.0026,
+        "cumulative_time": 0.0531
+      },
+      {
+        "function": "_get_local",
+        "file": "C:\\Users\\aleckhan\\Projects\\AiLang_New\\compiler\\runtime\\interpreter.py",
+        "line": 320,
+        "calls": 3219,
+        "internal_time": 0.0023,
+        "cumulative_time": 0.0156
+      },
+      {
+        "function": "<genexpr>",
+        "file": "C:\\Users\\aleckhan\\Projects\\AiLang_New\\compiler\\runtime\\interpreter.py",
+        "line": 204,
+        "calls": 1898,
+        "internal_time": 0.002,
+        "cumulative_time": 0.051
+      },
+      {
+        "function": "define",
+        "file": "C:\\Users\\aleckhan\\Projects\\AiLang_New\\compiler\\runtime\\stack_frame.py",
+        "line": 26,
+        "calls": 2304,
+        "internal_time": 0.0017,
+        "cumulative_time": 0.0021
+      },
+      {
+        "function": "<method '__exit__' of '_io._IOBase' objects>",
+        "file": "~",
+        "line": 0,
+        "calls": 2,
+        "internal_time": 0.0006,
+        "cumulative_time": 0.0006
+      },
+      {
+        "function": "define",
+        "file": "C:\\Users\\aleckhan\\Projects\\AiLang_New\\compiler\\runtime\\environment.py",
+        "line": 28,
+        "calls": 2853,
+        "internal_time": 0.0006,
+        "cumulative_time": 0.0006
+      },
+      {
+        "function": "iterencode",
+        "file": "C:\\Users\\aleckhan\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\Lib\\json\\encoder.py",
+        "line": 205,
+        "calls": 2,
+        "internal_time": 0.0006,
+        "cumulative_time": 0.0006
+      },
+      {
+        "function": "__init__",
+        "file": "C:\\Users\\aleckhan\\Projects\\AiLang_New\\compiler\\runtime\\environment.py",
+        "line": 13,
+        "calls": 2151,
+        "internal_time": 0.0004,
+        "cumulative_time": 0.0004
+      }
+    ],
+    "interpreter_calls": {
+      "resolve": {
+        "calls": 5031,
+        "internal_time": 0.0044,
+        "cumulative_time": 0.0824
+      },
+      "_execute_block": {
+        "calls": 1,
+        "internal_time": 0.0066,
+        "cumulative_time": 0.1847
+      },
+      "_initialize_module": {
+        "calls": 17,
+        "internal_time": 0.0001,
+        "cumulative_time": 0.0007
+      },
+      "_execute_node": {
+        "calls": 22,
+        "internal_time": 0.007,
+        "cumulative_time": 0.1847
+      },
+      "_call_function": {
+        "calls": 1,
+        "internal_time": 0.0101,
+        "cumulative_time": 0.1847
+      },
+      "_evaluate_expression": {
+        "calls": 15,
+        "internal_time": 0.0205,
+        "cumulative_time": 0.1846
+      },
+      "_resolve_name": {
+        "calls": 5031,
+        "internal_time": 0.0124,
+        "cumulative_time": 0.0991
+      },
+      "assign": {
+        "calls": 56,
+        "internal_time": 0.0001,
+        "cumulative_time": 0.0003
+      },
+      "execute": {
+        "calls": 1,
+        "internal_time": 0.0,
+        "cumulative_time": 0.1847
+      },
+      "define": {
+        "calls": 2304,
+        "internal_time": 0.0017,
+        "cumulative_time": 0.0021
+      },
+      "_get_local": {
+        "calls": 3219,
+        "internal_time": 0.0023,
+        "cumulative_time": 0.0156
+      },
+      "_define_local": {
+        "calls": 308,
+        "internal_time": 0.0003,
+        "cumulative_time": 0.0006
+      },
+      "_assign_local": {
+        "calls": 56,
+        "internal_time": 0.0001,
+        "cumulative_time": 0.0003
+      }
+    },
+    "cache_stats": {
+      "cache_hits": 947,
+      "cache_misses": 869,
+      "cache_negative_hits": 821,
+      "cache_hit_rate": 0.5215
+    }
+  }
+]

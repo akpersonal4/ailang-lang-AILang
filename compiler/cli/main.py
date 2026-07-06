@@ -22,7 +22,7 @@ from compiler.runtime import builtins as runtime_builtins
 from compiler.runtime.interpreter import Runtime
 
 PROG = "ail"
-VERSION = "0.1.2"
+VERSION = "0.2.0"
 
 
 def _find_stdlib() -> Path:

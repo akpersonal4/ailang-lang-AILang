@@ -102,7 +102,7 @@ class LspServer:
             "capabilities": self._capabilities,
             "serverInfo": {
                 "name": "ailang-lsp",
-                "version": "0.1.2",
+                "version": "0.2.0",
             },
         }
 

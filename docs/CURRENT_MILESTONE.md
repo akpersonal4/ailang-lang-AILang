@@ -2,39 +2,38 @@
 
 ## Current Milestone
 
-v0.1.2 RC — Release Audit & Bug Fix Sprint
+v0.2.0 — Runtime Optimization #001 (Lexical Variable Lookup Cache)
 
 ## Status
 
-**Completed** — All 6 compiler bugs fixed, 522 tests passing, documentation synchronized for v0.1.2 release.
+**Completed** — Variable lookup cache implemented, benchmarked at ~6× speedup on the primary bottleneck workload (static analyzer). 624 tests passing. Runtime frozen.
 
-## What Was Delivered in v0.1.2
+## What Was Delivered in v0.2.0
 
-### Compiler Bug Fixes (Sprint #001)
+### Variable Lookup Cache
 
-- **BUG-001**: Empty `return;` — now produces clear diagnostic instead of AssertionError crash
-- **BUG-002**: Missing initializer `let x = ;` — now produces clear diagnostic instead of AssertionError crash
-- **BUG-003**: Module bare-name resolution — `_resolve_name` checks `self._modules`; module functions registered at init
-- **BUG-004**: Float literal `3.14` — now emits LEX004 diagnostic at lexer level instead of cryptic parser crash
-- **BUG-005**: Block scope shadowing — `_execute_block` creates a new `StackFrame` per block scope
-- **BUG-006**: Deep recursion — raised recursion limit from 1000 to 10000
+- **`Environment.resolve()`** now caches binding locations per-environment in `_resolve_cache: dict[str, Environment]`, eliminating recursive chain walks on repeated lookups
+- **52–64% cache hit rate** across all 5 benchmark apps (dice_roller, hangman_game, inventory_mgmt, kanban, static_analyzer)
+- **~6× speedup** on static_analyzer (373s → 19.5s, the primary bottleneck identified by Python profiling)
+- **Negative caching removed**: `assign` can create new bindings in ancestor environments, making negative cache entries stale
 
-### Documentation & Version Sync
+### Instrumentation (Profiling Only)
 
-- Version bumped to **0.1.2** across all files
-- LEX004 added to LANGUAGE_SPEC.md §2.8 and Appendix E
-- CHANGELOG.md restructured with proper v0.1.2 section
-- README.md badges and test counts updated (374→522)
-- LANGUAGE_TOUR.md float type example fixed
-- PROJECT_STATE.json, ROADMAP.md, CURRENT_MILESTONE.md, RELEASE_PROCESS.md all updated
+- `_CacheStats` counters (hits/misses/negative_hits) on each Environment
+- `get_cache_info()` on Environment and Runtime for test introspection
 
-## Quality Gates
+### Quality Gates
 
-- pytest: **522 passed**
+- pytest: **624 passed** (522 existing + 102 new cache-specific tests)
 - black: clean
 - ruff: clean
 - mypy: clean
 
+## Runtime Frozen
+
+No further optimizations, runtime architecture changes, or performance work
+until community feedback identifies new bottlenecks.
+
 ## Next Milestone
 
-v0.2.x — Evidence-based improvements (post-freeze).
+v0.2.x — Community feedback collection. Release management.
