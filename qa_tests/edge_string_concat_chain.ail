@@ -1,0 +1,7 @@
+import string;
+
+fn main() {
+    let s = string.concat("a", string.concat("b", "c"));
+    print("s:", s);
+    return 0
+}

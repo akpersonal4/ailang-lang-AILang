@@ -2,6 +2,8 @@
 
 from pathlib import Path
 
+import pytest
+
 from compiler.ast.builder import ASTBuilder
 from compiler.ast.nodes import (
     ASTNode,
@@ -92,6 +94,14 @@ def test_ast_builds_variable_declaration_with_expression() -> None:
     assert isinstance(decl.initializer, BinaryExpressionNode)
 
 
+def test_ast_rejects_missing_initializer() -> None:
+    """Regression: let x = ; must produce diagnostic, not crash."""
+    with pytest.raises(
+        ValueError, match="Variable declaration requires an initializer expression"
+    ):
+        _build("let x = ;")
+
+
 # ------------------------------------------------------------------
 # Function declarations
 # ------------------------------------------------------------------
@@ -133,6 +143,12 @@ def test_ast_builds_return_statement() -> None:
     assert isinstance(ret, ReturnStatementNode)
     assert isinstance(ret.value, NumberLiteralNode)
     assert ret.value.value == "42"
+
+
+def test_ast_rejects_empty_return() -> None:
+    """Regression: empty return must produce diagnostic, not crash."""
+    with pytest.raises(ValueError, match="Return statement requires an expression"):
+        _build("fn f() { return; }")
 
 
 # ------------------------------------------------------------------

@@ -13,6 +13,7 @@ from compiler.ast.nodes import (
     ASTNode,
     BinaryExpressionNode,
     BlockNode,
+    BooleanLiteralNode,
     CallExpressionNode,
     ExpressionStatementNode,
     FunctionDeclarationNode,
@@ -150,6 +151,11 @@ class IRBuilder:
         )
 
     def _build_expr_StringLiteralNode(self, node: StringLiteralNode) -> LiteralIR:
+        return LiteralIR(
+            value=node.value, start_span=node.start_span, end_span=node.end_span
+        )
+
+    def _build_expr_BooleanLiteralNode(self, node: BooleanLiteralNode) -> LiteralIR:
         return LiteralIR(
             value=node.value, start_span=node.start_span, end_span=node.end_span
         )

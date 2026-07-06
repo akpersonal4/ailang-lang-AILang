@@ -1,0 +1,45 @@
+import random;
+import list;
+
+fn random_char() {
+    let chars = list.new();
+    list.append(chars, "a"); list.append(chars, "b"); list.append(chars, "c");
+    list.append(chars, "d"); list.append(chars, "e"); list.append(chars, "f");
+    list.append(chars, "g"); list.append(chars, "h"); list.append(chars, "i");
+    list.append(chars, "j"); list.append(chars, "k"); list.append(chars, "l");
+    list.append(chars, "m"); list.append(chars, "n"); list.append(chars, "o");
+    list.append(chars, "p"); list.append(chars, "q"); list.append(chars, "r");
+    list.append(chars, "s"); list.append(chars, "t"); list.append(chars, "u");
+    list.append(chars, "v"); list.append(chars, "w"); list.append(chars, "x");
+    list.append(chars, "y"); list.append(chars, "z");
+    list.append(chars, "A"); list.append(chars, "B"); list.append(chars, "C");
+    list.append(chars, "D"); list.append(chars, "E"); list.append(chars, "F");
+    list.append(chars, "G"); list.append(chars, "H"); list.append(chars, "I");
+    list.append(chars, "J"); list.append(chars, "K"); list.append(chars, "L");
+    list.append(chars, "M"); list.append(chars, "N"); list.append(chars, "O");
+    list.append(chars, "P"); list.append(chars, "Q"); list.append(chars, "R");
+    list.append(chars, "S"); list.append(chars, "T"); list.append(chars, "U");
+    list.append(chars, "V"); list.append(chars, "W"); list.append(chars, "X");
+    list.append(chars, "Y"); list.append(chars, "Z");
+    list.append(chars, "0"); list.append(chars, "1"); list.append(chars, "2");
+    list.append(chars, "3"); list.append(chars, "4"); list.append(chars, "5");
+    list.append(chars, "6"); list.append(chars, "7"); list.append(chars, "8");
+    list.append(chars, "9");
+    return random.choice(chars)
+}
+
+fn generate_password_helper(acc, remaining) {
+    if (remaining <= 0) { return acc }
+    return generate_password_helper(acc + random_char(), remaining - 1)
+}
+
+fn generate_password(length) {
+    return generate_password_helper("", length)
+}
+
+fn main() {
+    print("=== Password Generator ===");
+    print("8-char password:", generate_password(8));
+    print("12-char password:", generate_password(12));
+    print("16-char password:", generate_password(16))
+}

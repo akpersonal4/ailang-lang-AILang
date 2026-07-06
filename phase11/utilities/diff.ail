@@ -1,0 +1,54 @@
+import file;
+import environment;
+import list;
+import io;
+
+fn compare_lines(lines_a, lines_b, index, max_len) {
+    if (index < max_len) {
+        let in_a = index < list.len(lines_a);
+        let in_b = index < list.len(lines_b);
+        if (in_a && in_b) {
+            let line_a = list.get(lines_a, index);
+            let line_b = list.get(lines_b, index);
+            if (line_a != line_b) {
+                io.println("< " + line_a);
+                io.println("> " + line_b);
+            }
+        } else {
+            if (in_a) {
+                io.println("< " + list.get(lines_a, index));
+            }
+            if (in_b) {
+                io.println("> " + list.get(lines_b, index));
+            }
+        }
+        compare_lines(lines_a, lines_b, index + 1, max_len);
+    }
+}
+
+fn main() {
+    let args = environment.args();
+    let num_args = list.len(args);
+    if (num_args < 2) {
+        io.println("Usage: diff <file1> <file2>");
+        return 1;
+    }
+    let file_a = list.get(args, num_args - 2);
+    let file_b = list.get(args, num_args - 1);
+    let content_a = file.read(file_a);
+    let content_b = file.read(file_b);
+    if (content_a == content_b) {
+        io.println("Files are identical");
+        return 0;
+    }
+    let lines_a = content_a.split("\n");
+    let lines_b = content_b.split("\n");
+    let len_a = list.len(lines_a);
+    let len_b = list.len(lines_b);
+    let max_len = len_a;
+    if (len_b > max_len) {
+        max_len = len_b;
+    }
+    compare_lines(lines_a, lines_b, 0, max_len);
+    return 0;
+}

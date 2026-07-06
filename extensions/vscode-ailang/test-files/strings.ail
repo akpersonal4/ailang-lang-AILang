@@ -1,0 +1,23 @@
+// === AILang strings test file ===
+
+import string;
+
+fn main() {
+    let s1 = "hello";
+    let s2 = "world";
+    let escaped = "line1\nline2\ttab";
+    let quote = "she said \"hello\"";
+    let empty = "";
+
+    let upper = string.uppercase(s1);
+    let lower = string.lowercase(s2);
+    let len = string.length("ailang");
+    let contains = string.contains("hello world", "world");
+
+    print(s1, s2);
+    print(escaped);
+    print(quote);
+    print(upper, lower, len, contains);
+
+    return 0
+}

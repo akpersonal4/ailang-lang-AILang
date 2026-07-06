@@ -19,31 +19,31 @@ def _write_tmp(content: str) -> str:
 
 
 class TestCompilationSession:
-    def test_single_source(self):
+    def test_single_source(self) -> None:
         path = _write_tmp("let x = 5;")
         session = CompilationSession([path])
         assert session.source_count() == 1
         assert session.sources[0].text == "let x = 5;"
 
-    def test_multiple_sources(self):
+    def test_multiple_sources(self) -> None:
         p1 = _write_tmp("let a = 1;")
         p2 = _write_tmp("let b = 2;")
         session = CompilationSession([p1, p2])
         assert session.source_count() == 2
 
-    def test_deterministic_order(self):
+    def test_deterministic_order(self) -> None:
         p1 = _write_tmp("first;")
         p2 = _write_tmp("second;")
         session = CompilationSession([p1, p2])
         assert session.sources[0].text == "first;"
         assert session.sources[1].text == "second;"
 
-    def test_duplicate_source(self):
+    def test_duplicate_source(self) -> None:
         path = _write_tmp("data;")
         with pytest.raises(ValueError, match="Duplicate"):
             CompilationSession([path, path])
 
-    def test_empty_compile(self):
+    def test_empty_compile(self) -> None:
         session = CompilationSession()
         with pytest.raises(RuntimeError, match="No source files"):
             session.compile()

@@ -1,0 +1,74 @@
+import environment;
+import list;
+import map;
+
+fn build_graph() {
+    let graph = map.new();
+    let a_nb = list.new();
+    list.append(a_nb, "b");
+    list.append(a_nb, "c");
+    map.set(graph, "a", a_nb);
+    let b_nb = list.new();
+    list.append(b_nb, "d");
+    list.append(b_nb, "e");
+    map.set(graph, "b", b_nb);
+    let c_nb = list.new();
+    list.append(c_nb, "f");
+    map.set(graph, "c", c_nb);
+    let d_nb = list.new();
+    map.set(graph, "d", d_nb);
+    let e_nb = list.new();
+    map.set(graph, "e", e_nb);
+    let f_nb = list.new();
+    map.set(graph, "f", f_nb);
+    return graph;
+}
+
+fn dfs_step(mode, node, neighbors, idx, graph, visited, result) {
+    if (mode == "node") {
+        if (map.has(visited, node)) {
+            return result;
+        }
+        map.set(visited, node, true);
+        list.append(result, node);
+        let nbrs = map.get(graph, node);
+        return dfs_step("neighbors", node, nbrs, 0, graph, visited, result);
+    }
+    if (idx >= list.len(neighbors)) {
+        return result;
+    }
+    let neighbor = list.get(neighbors, idx);
+    dfs_step("node", neighbor, neighbors, idx + 1, graph, visited, result);
+    return dfs_step("neighbors", node, neighbors, idx + 1, graph, visited, result);
+}
+
+fn dfs(start, graph) {
+    let visited = map.new();
+    let result = list.new();
+    dfs_step("node", start, list.new(), 0, graph, visited, result);
+    return result;
+}
+
+fn list_to_string_acc(lst, idx, n, acc) {
+    if (idx >= n) {
+        return acc;
+    }
+    let val = list.get(lst, idx);
+    if (acc == "") {
+        return list_to_string_acc(lst, idx + 1, n, val);
+    }
+    return list_to_string_acc(lst, idx + 1, n, acc + " " + val);
+}
+
+fn list_to_string(lst) {
+    return list_to_string_acc(lst, 0, list.len(lst), "");
+}
+
+fn main() {
+    let args = environment.args();
+    let start = list.get(args, 0);
+    let graph = build_graph();
+    let result = dfs(start, graph);
+    print("DFS from " + start + ": " + list_to_string(result));
+    return 0;
+}

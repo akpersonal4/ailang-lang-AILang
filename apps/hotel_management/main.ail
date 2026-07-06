@@ -1,0 +1,1691 @@
+// Hotel Management System for AILang
+// Production-quality hotel operations: rooms, guests, bookings, payments, invoices, reports
+// CLI-driven via environment.args()
+
+import string;
+import list;
+import map;
+import convert;
+import json;
+import file;
+import io;
+import math;
+import system;
+
+// ============================================================
+// Level 0: Leaf utilities — no dependencies on other AILang fns
+// ============================================================
+
+fn is_digit_char(ch) {
+    if (string.equals(ch, "0")) { return true }
+    if (string.equals(ch, "1")) { return true }
+    if (string.equals(ch, "2")) { return true }
+    if (string.equals(ch, "3")) { return true }
+    if (string.equals(ch, "4")) { return true }
+    if (string.equals(ch, "5")) { return true }
+    if (string.equals(ch, "6")) { return true }
+    if (string.equals(ch, "7")) { return true }
+    if (string.equals(ch, "8")) { return true }
+    if (string.equals(ch, "9")) { return true }
+    return false
+}
+
+fn is_letter_char(ch) {
+    if (string.equals(ch, "a")) { return true }
+    if (string.equals(ch, "b")) { return true }
+    if (string.equals(ch, "c")) { return true }
+    if (string.equals(ch, "d")) { return true }
+    if (string.equals(ch, "e")) { return true }
+    if (string.equals(ch, "f")) { return true }
+    if (string.equals(ch, "g")) { return true }
+    if (string.equals(ch, "h")) { return true }
+    if (string.equals(ch, "i")) { return true }
+    if (string.equals(ch, "j")) { return true }
+    if (string.equals(ch, "k")) { return true }
+    if (string.equals(ch, "l")) { return true }
+    if (string.equals(ch, "m")) { return true }
+    if (string.equals(ch, "n")) { return true }
+    if (string.equals(ch, "o")) { return true }
+    if (string.equals(ch, "p")) { return true }
+    if (string.equals(ch, "q")) { return true }
+    if (string.equals(ch, "r")) { return true }
+    if (string.equals(ch, "s")) { return true }
+    if (string.equals(ch, "t")) { return true }
+    if (string.equals(ch, "u")) { return true }
+    if (string.equals(ch, "v")) { return true }
+    if (string.equals(ch, "w")) { return true }
+    if (string.equals(ch, "x")) { return true }
+    if (string.equals(ch, "y")) { return true }
+    if (string.equals(ch, "z")) { return true }
+    if (string.equals(ch, "A")) { return true }
+    if (string.equals(ch, "B")) { return true }
+    if (string.equals(ch, "C")) { return true }
+    if (string.equals(ch, "D")) { return true }
+    if (string.equals(ch, "E")) { return true }
+    if (string.equals(ch, "F")) { return true }
+    if (string.equals(ch, "G")) { return true }
+    if (string.equals(ch, "H")) { return true }
+    if (string.equals(ch, "I")) { return true }
+    if (string.equals(ch, "J")) { return true }
+    if (string.equals(ch, "K")) { return true }
+    if (string.equals(ch, "L")) { return true }
+    if (string.equals(ch, "M")) { return true }
+    if (string.equals(ch, "N")) { return true }
+    if (string.equals(ch, "O")) { return true }
+    if (string.equals(ch, "P")) { return true }
+    if (string.equals(ch, "Q")) { return true }
+    if (string.equals(ch, "R")) { return true }
+    if (string.equals(ch, "S")) { return true }
+    if (string.equals(ch, "T")) { return true }
+    if (string.equals(ch, "U")) { return true }
+    if (string.equals(ch, "V")) { return true }
+    if (string.equals(ch, "W")) { return true }
+    if (string.equals(ch, "X")) { return true }
+    if (string.equals(ch, "Y")) { return true }
+    if (string.equals(ch, "Z")) { return true }
+    return false
+}
+
+fn is_alphanum_char(ch) {
+    if (is_letter_char(ch)) { return true }
+    if (is_digit_char(ch)) { return true }
+    return false
+}
+
+fn is_whitespace_char(ch) {
+    if (string.equals(ch, " ")) { return true }
+    if (string.equals(ch, "\n")) { return true }
+    if (string.equals(ch, "\t")) { return true }
+    if (string.equals(ch, "\r")) { return true }
+    return false
+}
+
+fn char_to_int(ch) {
+    if (string.equals(ch, "0")) { return 0 }
+    if (string.equals(ch, "1")) { return 1 }
+    if (string.equals(ch, "2")) { return 2 }
+    if (string.equals(ch, "3")) { return 3 }
+    if (string.equals(ch, "4")) { return 4 }
+    if (string.equals(ch, "5")) { return 5 }
+    if (string.equals(ch, "6")) { return 6 }
+    if (string.equals(ch, "7")) { return 7 }
+    if (string.equals(ch, "8")) { return 8 }
+    if (string.equals(ch, "9")) { return 9 }
+    return 0
+}
+
+fn to_upper(s) { return string.uppercase(s) }
+
+fn to_lower(s) { return string.lowercase(s) }
+
+fn trim_str(s) { return string.trim(s) }
+
+fn str_to_int(s) {
+    return convert.to_int(s)
+}
+
+fn str_to_string(v) {
+    return convert.to_string(v)
+}
+
+fn find_substring(text, start, pattern) {
+    let tlen = string.length(text);
+    let plen = string.length(pattern);
+    if (start >= tlen) { return -1 }
+    if (tlen - start < plen) { return -1 }
+    let chunk = string.substring(text, start, start + plen);
+    if (string.equals(chunk, pattern)) { return start }
+    return find_substring(text, start + 1, pattern)
+}
+
+fn is_numeric_string_helper(s, i) {
+    if (i >= string.length(s)) { return true }
+    let ch = string.substring(s, i, i + 1);
+    if (is_digit_char(ch)) { return is_numeric_string_helper(s, i + 1) }
+    return false
+}
+
+fn is_numeric_string(s) {
+    let len = string.length(s);
+    if (len == 0) { return false }
+    return is_numeric_string_helper(s, 0)
+}
+
+fn string_to_int_safe(s) {
+    if (is_numeric_string(s)) { return str_to_int(s) }
+    return 0
+}
+
+fn compare_strings_ci(a, b) {
+    return string.equals(to_upper(a), to_upper(b))
+}
+
+// ============================================================
+// Level 1: String/list helpers — depend on Level 0
+// ============================================================
+
+fn split_string_helper(text, delim, start, result) {
+    let len = string.length(text);
+    if (start >= len) { return result }
+    let pos = find_substring(text, start, delim);
+    if (pos == -1) {
+        list.append(result, string.substring(text, start, len));
+        return result
+    }
+    list.append(result, string.substring(text, start, pos));
+    return split_string_helper(text, delim, pos + string.length(delim), result)
+}
+
+fn split_string(text, delim) {
+    let result = list.new();
+    return split_string_helper(text, delim, 0, result)
+}
+
+fn join_list_helper(items, sep, i, acc) {
+    if (i >= list.len(items)) { return acc }
+    if (i > 0) { acc = string.concat(acc, sep) }
+    acc = string.concat(acc, str_to_string(list.get(items, i)));
+    return join_list_helper(items, sep, i + 1, acc)
+}
+
+fn join_list(items, sep) {
+    return join_list_helper(items, sep, 0, "")
+}
+
+fn list_append_all_helper(target, source, i) {
+    if (i >= list.len(source)) { return target }
+    list.append(target, list.get(source, i));
+    return list_append_all_helper(target, source, i + 1)
+}
+
+fn list_append_all(target, source) {
+    return list_append_all_helper(target, source, 0)
+}
+
+fn list_clone(source) {
+    let result = list.new();
+    return list_append_all_helper(result, source, 0)
+}
+
+fn list_find_by_key_step(items, key, value, i) {
+    if (i >= list.len(items)) { return -1 }
+    let item = list.get(items, i);
+    if (map.has(item, key)) {
+        let ival = map.get(item, key);
+        let sval = str_to_string(ival);
+        let sval2 = str_to_string(value);
+        if (string.equals(sval, sval2)) { return i }
+    }
+    return list_find_by_key_step(items, key, value, i + 1)
+}
+
+fn list_find_by_key(items, key, value) {
+    return list_find_by_key_step(items, key, value, 0)
+}
+
+fn list_filter_by_key(items, key, value, i, result) {
+    if (i >= list.len(items)) { return result }
+    let item = list.get(items, i);
+    if (map.has(item, key)) {
+        let ival = map.get(item, key);
+        let sval = str_to_string(ival);
+        let sval2 = str_to_string(value);
+        if (string.equals(sval, sval2)) {
+            list.append(result, item)
+        }
+    }
+    return list_filter_by_key(items, key, value, i + 1, result)
+}
+
+fn list_filter_by_contains(items, key, substr, i, result) {
+    if (i >= list.len(items)) { return result }
+    let item = list.get(items, i);
+    if (map.has(item, key)) {
+        let ival = map.get(item, key);
+        let sval = str_to_string(ival);
+        if (string.contains(to_upper(sval), to_upper(substr))) {
+            list.append(result, item)
+        }
+    }
+    return list_filter_by_contains(items, key, substr, i + 1, result)
+}
+
+fn map_keys_to_list(m, i, result) {
+    let keys = map.keys(m);
+    if (i >= list.len(keys)) { return result }
+    list.append(result, list.get(keys, i));
+    return map_keys_to_list(m, i + 1, result)
+}
+
+fn list_count(items, i) {
+    return list.len(items)
+}
+
+// ============================================================
+// Level 2: Date utilities — no storage dependencies
+// ============================================================
+
+fn is_leap_year(year_val) {
+    if (year_val % 400 == 0) { return true }
+    if (year_val % 100 == 0) { return false }
+    if (year_val % 4 == 0) { return true }
+    return false
+}
+
+fn days_in_month(month_val, year_val) {
+    if (month_val == 1) { return 31 }
+    if (month_val == 2) {
+        if (is_leap_year(year_val)) { return 29 }
+        return 28
+    }
+    if (month_val == 3) { return 31 }
+    if (month_val == 4) { return 30 }
+    if (month_val == 5) { return 31 }
+    if (month_val == 6) { return 30 }
+    if (month_val == 7) { return 31 }
+    if (month_val == 8) { return 31 }
+    if (month_val == 9) { return 30 }
+    if (month_val == 10) { return 31 }
+    if (month_val == 11) { return 30 }
+    if (month_val == 12) { return 31 }
+    return 0
+}
+
+fn days_in_months_up_to(month_val, year_val, m, acc) {
+    if (m >= month_val) { return acc }
+    let dm = days_in_month(m, year_val);
+    return days_in_months_up_to(month_val, year_val, m + 1, acc + dm)
+}
+
+fn days_in_year_before_month(month_val, year_val) {
+    return days_in_months_up_to(month_val, year_val, 1, 0)
+}
+
+fn count_leap_years_up_to(year_val) {
+    let y = year_val - 1;
+    let by4 = convert.to_int(y / 4);
+    let by100 = convert.to_int(y / 100);
+    let by400 = convert.to_int(y / 400);
+    return by4 - by100 + by400
+}
+
+fn date_to_days(date_str) {
+    let parts = split_string(date_str, "-");
+    let y = string_to_int_safe(list.get(parts, 0));
+    let m = string_to_int_safe(list.get(parts, 1));
+    let d = string_to_int_safe(list.get(parts, 2));
+    let year_days = (y - 1) * 365 + count_leap_years_up_to(y);
+    let month_days = days_in_year_before_month(m, y);
+    return year_days + month_days + d
+}
+
+fn parse_date_parts(date_str) {
+    let parts = split_string(date_str, "-");
+    let result = map.new();
+    map.set(result, "year", string_to_int_safe(list.get(parts, 0)));
+    map.set(result, "month", string_to_int_safe(list.get(parts, 1)));
+    map.set(result, "day", string_to_int_safe(list.get(parts, 2)));
+    return result
+}
+
+fn validate_date_format(date_str) {
+    let len = string.length(date_str);
+    if (len != 10) { return false }
+    if (!string.equals(string.substring(date_str, 4, 5), "-")) { return false }
+    if (!string.equals(string.substring(date_str, 7, 8), "-")) { return false }
+    let ystr = string.substring(date_str, 0, 4);
+    let mstr = string.substring(date_str, 5, 7);
+    let dstr = string.substring(date_str, 8, 10);
+    if (!is_numeric_string(ystr)) { return false }
+    if (!is_numeric_string(mstr)) { return false }
+    if (!is_numeric_string(dstr)) { return false }
+    let m = string_to_int_safe(mstr);
+    let d = string_to_int_safe(dstr);
+    let y = string_to_int_safe(ystr);
+    if (m < 1 || m > 12) { return false }
+    if (d < 1 || d > days_in_month(m, y)) { return false }
+    return true
+}
+
+fn date_diff_days(start_str, end_str) {
+    let s = date_to_days(start_str);
+    let e = date_to_days(end_str);
+    return e - s
+}
+
+fn date_compare(start_str, end_str) {
+    let s = date_to_days(start_str);
+    let e = date_to_days(end_str);
+    if (s < e) { return -1 }
+    if (s > e) { return 1 }
+    return 0
+}
+
+fn is_date_before(a, b) {
+    let cmp = date_compare(a, b);
+    return cmp < 0
+}
+
+fn is_date_after(a, b) {
+    let cmp = date_compare(a, b);
+    return cmp > 0
+}
+
+fn dates_overlap(a_start, a_end, b_start, b_end) {
+    // Two date ranges overlap if a_start < b_end AND a_end > b_start
+    let cmp1 = date_compare(a_start, b_end);
+    let cmp2 = date_compare(a_end, b_start);
+    return cmp1 < 0 && cmp2 > 0
+}
+
+fn format_date(date_str) {
+    return date_str
+}
+
+// ============================================================
+// Level 3: Storage — JSON file persistence
+// ============================================================
+
+fn make_data_path(filename) {
+    return string.concat("apps/hotel_management/data/", filename)
+}
+
+fn load_json_list(filename) {
+    let path = make_data_path(filename);
+    if (!file.exists(path)) {
+        let empty = list.new();
+        return empty
+    }
+    let content = file.read(path);
+    if (string.equals(content, "")) {
+        let empty = list.new();
+        return empty
+    }
+    let parsed = json.parse(content);
+    return parsed
+}
+
+fn save_json_list(filename, items) {
+    let path = make_data_path(filename);
+    let content = json.stringify(items);
+    file.write(path, content);
+    return 0
+}
+
+fn gen_id_helper(prefix, items, i, max_num) {
+    if (i >= list.len(items)) {
+        let next = max_num + 1;
+        let num_str = str_to_string(next);
+        let padded = "";
+        if (next < 10) { padded = string.concat("00", num_str) }
+        else if (next < 100) { padded = string.concat("0", num_str) }
+        else { padded = num_str }
+        return string.concat(prefix, padded)
+    }
+    let item = list.get(items, i);
+    if (map.has(item, "id")) {
+        let id_str = str_to_string(map.get(item, "id"));
+        let id_len = string.length(id_str);
+        if (id_len > string.length(prefix)) {
+            let num_part = string.substring(id_str, string.length(prefix), id_len);
+            if (is_numeric_string(num_part)) {
+                let num_val = string_to_int_safe(num_part);
+                if (num_val > max_num) {
+                    return gen_id_helper(prefix, items, i + 1, num_val)
+                }
+            }
+        }
+    }
+    return gen_id_helper(prefix, items, i + 1, max_num)
+}
+
+fn generate_id(prefix, items) {
+    return gen_id_helper(prefix, items, 0, 0)
+}
+
+fn load_rooms() {
+    return load_json_list("rooms.json")
+}
+
+fn save_rooms(rooms) {
+    return save_json_list("rooms.json", rooms)
+}
+
+fn load_guests() {
+    return load_json_list("guests.json")
+}
+
+fn save_guests(guests) {
+    return save_json_list("guests.json", guests)
+}
+
+fn load_bookings() {
+    return load_json_list("bookings.json")
+}
+
+fn save_bookings(bookings) {
+    return save_json_list("bookings.json", bookings)
+}
+
+fn load_payments() {
+    return load_json_list("payments.json")
+}
+
+fn save_payments(payments) {
+    return save_json_list("payments.json", payments)
+}
+
+// ============================================================
+// Level 4: Room module — CRUD, availability, status
+// ============================================================
+
+fn make_room(id_val, type_val, rate_val, capacity_val) {
+    let r = map.new();
+    map.set(r, "id", id_val);
+    map.set(r, "type", type_val);
+    map.set(r, "rate", rate_val);
+    map.set(r, "capacity", capacity_val);
+    map.set(r, "status", "AVAILABLE");
+    return r
+}
+
+fn room_create(id_val, type_val, rate_val, capacity_val) {
+    let rooms = load_rooms();
+    let idx = list_find_by_key(rooms, "id", id_val);
+    if (idx >= 0) { return "Error: Room already exists" }
+    let room = make_room(id_val, type_val, rate_val, capacity_val);
+    list.append(rooms, room);
+    save_rooms(rooms);
+    return string.concat("Room ", string.concat(id_val, " created"))
+}
+
+fn room_list_all() {
+    return load_rooms()
+}
+
+fn room_find_by_id(room_id) {
+    let rooms = load_rooms();
+    let idx = list_find_by_key(rooms, "id", room_id);
+    if (idx < 0) {
+        let none = json.parse("null");
+        return none
+    }
+    return list.get(rooms, idx)
+}
+
+fn room_update_rate(room_id, new_rate) {
+    let rooms = load_rooms();
+    let idx = list_find_by_key(rooms, "id", room_id);
+    if (idx < 0) { return "Error: Room not found" }
+    let room = list.get(rooms, idx);
+    map.set(room, "rate", new_rate);
+    save_rooms(rooms);
+    return string.concat("Room ", string.concat(room_id, " rate updated"))
+}
+
+fn room_set_status(room_id, status) {
+    let rooms = load_rooms();
+    let idx = list_find_by_key(rooms, "id", room_id);
+    if (idx < 0) { return "Error: Room not found" }
+    let room = list.get(rooms, idx);
+    map.set(room, "status", status);
+    save_rooms(rooms);
+    return string.concat("Room ", string.concat(room_id, string.concat(" status set to ", status)))
+}
+
+fn room_get_rate(room_id) {
+    let room = room_find_by_id(room_id);
+    let none = json.parse("null");
+    if (string.equals(str_to_string(room), str_to_string(none))) { return 0 }
+    if (map.has(room, "rate")) { return map.get(room, "rate") }
+    return 0
+}
+
+fn room_get_status(room_id) {
+    let room = room_find_by_id(room_id);
+    let none = json.parse("null");
+    if (string.equals(str_to_string(room), str_to_string(none))) { return "" }
+    if (map.has(room, "status")) { return map.get(room, "status") }
+    return ""
+}
+
+fn room_get_type(room_id) {
+    let room = room_find_by_id(room_id);
+    let none = json.parse("null");
+    if (string.equals(str_to_string(room), str_to_string(none))) { return "" }
+    if (map.has(room, "type")) { return map.get(room, "type") }
+    return ""
+}
+
+fn room_get_capacity(room_id) {
+    let room = room_find_by_id(room_id);
+    let none = json.parse("null");
+    if (string.equals(str_to_string(room), str_to_string(none))) { return 0 }
+    if (map.has(room, "capacity")) { return map.get(room, "capacity") }
+    return 0
+}
+
+fn room_filter_by_status(rooms, status, i, result) {
+    if (i >= list.len(rooms)) { return result }
+    let room = list.get(rooms, i);
+    if (map.has(room, "status")) {
+        if (string.equals(map.get(room, "status"), status)) {
+            list.append(result, room)
+        }
+    }
+    return room_filter_by_status(rooms, status, i + 1, result)
+}
+
+fn room_filter_by_type(rooms, type_val, i, result) {
+    if (i >= list.len(rooms)) { return result }
+    let room = list.get(rooms, i);
+    if (map.has(room, "type")) {
+        if (string.equals(map.get(room, "type"), type_val)) {
+            list.append(result, room)
+        }
+    }
+    return room_filter_by_type(rooms, type_val, i + 1, result)
+}
+
+fn room_filter_available(rooms, i, result) {
+    if (i >= list.len(rooms)) { return result }
+    let room = list.get(rooms, i);
+    if (map.has(room, "status")) {
+        let status = map.get(room, "status");
+        if (string.equals(status, "AVAILABLE")) {
+            list.append(result, room)
+        }
+    }
+    return room_filter_available(rooms, i + 1, result)
+}
+
+fn booking_filter_by_room_on_dates(bookings, room_id, check_in, check_out, i, result) {
+    if (i >= list.len(bookings)) { return result }
+    let bk = list.get(bookings, i);
+    if (map.has(bk, "room_id") && map.has(bk, "status")
+        && map.has(bk, "check_in") && map.has(bk, "check_out")) {
+        let b_room = str_to_string(map.get(bk, "room_id"));
+        let b_status = str_to_string(map.get(bk, "status"));
+        if (string.equals(b_room, room_id)) {
+            if (string.equals(b_status, "RESERVED") || string.equals(b_status, "CHECKED_IN")) {
+                let b_in = str_to_string(map.get(bk, "check_in"));
+                let b_out = str_to_string(map.get(bk, "check_out"));
+                if (dates_overlap(check_in, check_out, b_in, b_out)) {
+                    list.append(result, bk)
+                }
+            }
+        }
+    }
+    return booking_filter_by_room_on_dates(bookings, room_id, check_in, check_out, i + 1, result)
+}
+
+fn room_is_available_on_dates(room_id, check_in, check_out) {
+    let bookings = load_bookings();
+    let conflicting = booking_filter_by_room_on_dates(bookings, room_id, check_in, check_out, 0, list.new());
+    if (list.len(conflicting) > 0) { return false }
+    let status = room_get_status(room_id);
+    if (string.equals(status, "MAINTENANCE")) { return false }
+    return true
+}
+
+fn room_available_on_dates(rooms, check_in, check_out, i, result) {
+    if (i >= list.len(rooms)) { return result }
+    let room = list.get(rooms, i);
+    if (map.has(room, "id")) {
+        let room_id = map.get(room, "id");
+        if (room_is_available_on_dates(room_id, check_in, check_out)) {
+            list.append(result, room)
+        }
+    }
+    return room_available_on_dates(rooms, check_in, check_out, i + 1, result)
+}
+
+// ============================================================
+// Level 5: Guest module — CRUD, search
+// ============================================================
+
+fn make_guest(id_val, name_val, phone_val, email_val) {
+    let g = map.new();
+    map.set(g, "id", id_val);
+    map.set(g, "name", name_val);
+    map.set(g, "phone", phone_val);
+    map.set(g, "email", email_val);
+    map.set(g, "created", time.now());
+    return g
+}
+
+fn guest_create(name_val, phone_val, email_val) {
+    let guests = load_guests();
+    let id_val = generate_id("G", guests);
+    let guest = make_guest(id_val, name_val, phone_val, email_val);
+    list.append(guests, guest);
+    save_guests(guests);
+    return string.concat("Guest created: ", id_val)
+}
+
+fn guest_list_all() {
+    return load_guests()
+}
+
+fn guest_find_by_id(guest_id) {
+    let guests = load_guests();
+    let idx = list_find_by_key(guests, "id", guest_id);
+    if (idx < 0) { return json.parse("null") }
+    return list.get(guests, idx)
+}
+
+fn guest_search_by_name(name_substr) {
+    let guests = load_guests();
+    return list_filter_by_contains(guests, "name", name_substr, 0, list.new())
+}
+
+fn guest_search_by_phone(phone_substr) {
+    let guests = load_guests();
+    return list_filter_by_contains(guests, "phone", phone_substr, 0, list.new())
+}
+
+fn guest_get_name(guest_id) {
+    let guest = guest_find_by_id(guest_id);
+    let none = json.parse("null");
+    if (string.equals(str_to_string(guest), str_to_string(none))) { return "" }
+    if (map.has(guest, "name")) { return map.get(guest, "name") }
+    return ""
+}
+
+// ============================================================
+// Level 6: Booking module — lifecycle, conflicts, dates
+// ============================================================
+
+fn make_booking(id_val, guest_id, room_id, check_in, check_out, guests_count) {
+    let rate = room_get_rate(room_id);
+    let nights = date_diff_days(check_in, check_out);
+    let total = rate * nights;
+    let b = map.new();
+    map.set(b, "id", id_val);
+    map.set(b, "guest_id", guest_id);
+    map.set(b, "room_id", room_id);
+    map.set(b, "check_in", check_in);
+    map.set(b, "check_out", check_out);
+    map.set(b, "status", "RESERVED");
+    map.set(b, "total", total);
+    map.set(b, "guests", guests_count);
+    map.set(b, "created", time.now());
+    return b
+}
+
+fn booking_check_conflict(room_id, check_in, check_out) {
+    let bookings = load_bookings();
+    let conflicts = booking_filter_by_room_on_dates(bookings, room_id, check_in, check_out, 0, list.new());
+    if (list.len(conflicts) > 0) {
+        let conflict = list.get(conflicts, 0);
+        let msg = string.concat("Conflict: Room ", room_id);
+        msg = string.concat(msg, " is already booked ");
+        if (map.has(conflict, "check_in") && map.has(conflict, "check_out")) {
+            msg = string.concat(msg, str_to_string(map.get(conflict, "check_in")));
+            msg = string.concat(msg, " to ");
+            msg = string.concat(msg, str_to_string(map.get(conflict, "check_out")));
+        }
+        return msg
+    }
+    return ""
+}
+
+fn booking_create(guest_id, room_id, check_in, check_out, guests_count) {
+    let room = room_find_by_id(room_id);
+    let none = json.parse("null");
+    if (string.equals(str_to_string(room), str_to_string(none))) {
+        return string.concat("Error: Room ", string.concat(room_id, " not found"))
+    }
+    let guest = guest_find_by_id(guest_id);
+    if (string.equals(str_to_string(guest), str_to_string(none))) {
+        return string.concat("Error: Guest ", string.concat(guest_id, " not found"))
+    }
+    if (!is_date_before(check_in, check_out)) {
+        return "Error: Check-in must be before check-out"
+    }
+    if (guests_count <= 0) {
+        return "Error: Guest count must be positive"
+    }
+    let capacity = room_get_capacity(room_id);
+    if (guests_count > capacity) {
+        return string.concat("Error: Room capacity (", string.concat(str_to_string(capacity), ") exceeded"))
+    }
+    let conflict_msg = booking_check_conflict(room_id, check_in, check_out);
+    if (!string.equals(conflict_msg, "")) { return conflict_msg }
+    let bookings = load_bookings();
+    let id_val = generate_id("B", bookings);
+    let booking = make_booking(id_val, guest_id, room_id, check_in, check_out, guests_count);
+    list.append(bookings, booking);
+    save_bookings(bookings);
+    room_set_status(room_id, "RESERVED");
+    return string.concat("Booking created: ", id_val)
+}
+
+fn booking_find_by_id(booking_id) {
+    let bookings = load_bookings();
+    let idx = list_find_by_key(bookings, "id", booking_id);
+    if (idx < 0) { return json.parse("null") }
+    return list.get(bookings, idx)
+}
+
+fn booking_update_status(booking_id, new_status) {
+    let bookings = load_bookings();
+    let idx = list_find_by_key(bookings, "id", booking_id);
+    if (idx < 0) { return "Error: Booking not found" }
+    let bk = list.get(bookings, idx);
+    let old_status = "";
+    if (map.has(bk, "status")) { old_status = str_to_string(map.get(bk, "status")) }
+    map.set(bk, "status", new_status);
+    save_bookings(bookings);
+    if (string.equals(new_status, "CHECKED_IN")) {
+        if (map.has(bk, "room_id")) {
+            room_set_status(str_to_string(map.get(bk, "room_id")), "OCCUPIED")
+        }
+    }
+    if (string.equals(new_status, "CHECKED_OUT")) {
+        if (map.has(bk, "room_id")) {
+            room_set_status(str_to_string(map.get(bk, "room_id")), "AVAILABLE")
+        }
+    }
+    return string.concat("Booking ", string.concat(booking_id, string.concat(" status: ", new_status)))
+}
+
+fn booking_check_in(booking_id) {
+    return booking_update_status(booking_id, "CHECKED_IN")
+}
+
+fn booking_check_out(booking_id) {
+    return booking_update_status(booking_id, "CHECKED_OUT")
+}
+
+fn booking_cancel(booking_id) {
+    let bookings = load_bookings();
+    let idx = list_find_by_key(bookings, "id", booking_id);
+    if (idx < 0) { return "Error: Booking not found" }
+    let bk = list.get(bookings, idx);
+    if (map.has(bk, "status")) {
+        let status = str_to_string(map.get(bk, "status"));
+        if (string.equals(status, "CHECKED_OUT")) {
+            return "Error: Cannot cancel a checked-out booking"
+        }
+    }
+    map.set(bk, "status", "CANCELLED");
+    save_bookings(bookings);
+    if (map.has(bk, "room_id")) {
+        room_set_status(str_to_string(map.get(bk, "room_id")), "AVAILABLE")
+    }
+    return string.concat("Booking ", string.concat(booking_id, " cancelled"))
+}
+
+fn booking_list_all() {
+    return load_bookings()
+}
+
+fn booking_list_by_guest(guest_id) {
+    let bookings = load_bookings();
+    return list_filter_by_key(bookings, "guest_id", guest_id, 0, list.new())
+}
+
+fn booking_list_by_status(status_val) {
+    let bookings = load_bookings();
+    return list_filter_by_key(bookings, "status", status_val, 0, list.new())
+}
+
+fn booking_list_by_room(room_id) {
+    let bookings = load_bookings();
+    return list_filter_by_key(bookings, "room_id", room_id, 0, list.new())
+}
+
+fn booking_list_by_date_range(start_date, end_date, i, result) {
+    let bookings = load_bookings();
+    if (i >= list.len(bookings)) { return result }
+    let bk = list.get(bookings, i);
+    if (map.has(bk, "check_in")) {
+        let b_in = str_to_string(map.get(bk, "check_in"));
+        let cmp1 = date_compare(b_in, start_date);
+        let cmp2 = date_compare(b_in, end_date);
+        if (cmp1 >= 0 && cmp2 <= 0) {
+            list.append(result, bk)
+        }
+    }
+    return booking_list_by_date_range(start_date, end_date, i + 1, result)
+}
+
+fn booking_get_total(booking_id) {
+    let bk = booking_find_by_id(booking_id);
+    let none = json.parse("null");
+    if (string.equals(str_to_string(bk), str_to_string(none))) { return 0 }
+    if (map.has(bk, "total")) { return map.get(bk, "total") }
+    return 0
+}
+
+fn booking_get_nights(booking_id) {
+    let bk = booking_find_by_id(booking_id);
+    let none = json.parse("null");
+    if (string.equals(str_to_string(bk), str_to_string(none))) { return 0 }
+    if (map.has(bk, "check_in") && map.has(bk, "check_out")) {
+        let ci = str_to_string(map.get(bk, "check_in"));
+        let co = str_to_string(map.get(bk, "check_out"));
+        return date_diff_days(ci, co)
+    }
+    return 0
+}
+
+fn booking_get_room_id(booking_id) {
+    let bk = booking_find_by_id(booking_id);
+    let none = json.parse("null");
+    if (string.equals(str_to_string(bk), str_to_string(none))) { return "" }
+    if (map.has(bk, "room_id")) { return str_to_string(map.get(bk, "room_id")) }
+    return ""
+}
+
+fn booking_get_guest_id(booking_id) {
+    let bk = booking_find_by_id(booking_id);
+    let none = json.parse("null");
+    if (string.equals(str_to_string(bk), str_to_string(none))) { return "" }
+    if (map.has(bk, "guest_id")) { return str_to_string(map.get(bk, "guest_id")) }
+    return ""
+}
+
+// ============================================================
+// Level 7: Payment module
+// ============================================================
+
+fn make_payment(id_val, booking_id, guest_id, amount_val, method_val) {
+    let p = map.new();
+    map.set(p, "id", id_val);
+    map.set(p, "booking_id", booking_id);
+    map.set(p, "guest_id", guest_id);
+    map.set(p, "amount", amount_val);
+    map.set(p, "method", method_val);
+    map.set(p, "status", "COMPLETED");
+    map.set(p, "date", time.now());
+    return p
+}
+
+fn payment_record(booking_id, amount_val, method_val) {
+    let bk = booking_find_by_id(booking_id);
+    let none = json.parse("null");
+    if (string.equals(str_to_string(bk), str_to_string(none))) {
+        return string.concat("Error: Booking ", string.concat(booking_id, " not found"))
+    }
+    let guest_id = "";
+    if (map.has(bk, "guest_id")) { guest_id = str_to_string(map.get(bk, "guest_id")) }
+    let payments = load_payments();
+    let id_val = generate_id("P", payments);
+    let payment = make_payment(id_val, booking_id, guest_id, amount_val, method_val);
+    list.append(payments, payment);
+    save_payments(payments);
+    return string.concat("Payment recorded: ", id_val)
+}
+
+fn payment_find_by_id(payment_id) {
+    let payments = load_payments();
+    let idx = list_find_by_key(payments, "id", payment_id);
+    if (idx < 0) { return json.parse("null") }
+    return list.get(payments, idx)
+}
+
+fn payment_list_by_booking(booking_id) {
+    let payments = load_payments();
+    return list_filter_by_key(payments, "booking_id", booking_id, 0, list.new())
+}
+
+fn payment_list_by_guest(guest_id) {
+    let payments = load_payments();
+    return list_filter_by_key(payments, "guest_id", guest_id, 0, list.new())
+}
+
+fn payment_sum_helper(payments, i, acc) {
+    if (i >= list.len(payments)) { return acc }
+    let p = list.get(payments, i);
+    if (map.has(p, "amount")) {
+        let amt = map.get(p, "amount");
+        return payment_sum_helper(payments, i + 1, acc + amt)
+    }
+    return payment_sum_helper(payments, i + 1, acc)
+}
+
+fn payment_sum_for_booking(booking_id) {
+    let payments = payment_list_by_booking(booking_id);
+    return payment_sum_helper(payments, 0, 0)
+}
+
+fn payment_refund(payment_id) {
+    let payments = load_payments();
+    let idx = list_find_by_key(payments, "id", payment_id);
+    if (idx < 0) { return string.concat("Error: Payment ", string.concat(payment_id, " not found")) }
+    let p = list.get(payments, idx);
+    if (map.has(p, "status")) {
+        if (string.equals(str_to_string(map.get(p, "status")), "REFUNDED")) {
+            return string.concat("Error: Payment ", string.concat(payment_id, " already refunded"))
+        }
+    }
+    map.set(p, "status", "REFUNDED");
+    save_payments(payments);
+    return string.concat("Payment ", string.concat(payment_id, " refunded"))
+}
+
+fn payment_list_all() {
+    return load_payments()
+}
+
+// ============================================================
+// Level 8: Invoice module — generation from booking + payments
+// ============================================================
+
+fn invoice_generate(booking_id) {
+    let bk = booking_find_by_id(booking_id);
+    let none = json.parse("null");
+    if (string.equals(str_to_string(bk), str_to_string(none))) {
+        return string.concat("Error: Booking ", string.concat(booking_id, " not found"))
+    }
+    let invoice = map.new();
+    map.set(invoice, "booking_id", booking_id);
+
+    let guest_id = "";
+    if (map.has(bk, "guest_id")) { guest_id = str_to_string(map.get(bk, "guest_id")) }
+    map.set(invoice, "guest_id", guest_id);
+    let guest_name = guest_get_name(guest_id);
+    map.set(invoice, "guest_name", guest_name);
+
+    let room_id = "";
+    if (map.has(bk, "room_id")) { room_id = str_to_string(map.get(bk, "room_id")) }
+    map.set(invoice, "room_id", room_id);
+    let room_type = room_get_type(room_id);
+    map.set(invoice, "room_type", room_type);
+    let rate = room_get_rate(room_id);
+    map.set(invoice, "rate_per_night", rate);
+
+    let check_in = "";
+    let check_out = "";
+    if (map.has(bk, "check_in")) { check_in = str_to_string(map.get(bk, "check_in")) }
+    if (map.has(bk, "check_out")) { check_out = str_to_string(map.get(bk, "check_out")) }
+    map.set(invoice, "check_in", check_in);
+    map.set(invoice, "check_out", check_out);
+
+    let nights = date_diff_days(check_in, check_out);
+    map.set(invoice, "nights", nights);
+    let subtotal = rate * nights;
+    map.set(invoice, "subtotal", subtotal);
+
+    let total_paid = payment_sum_for_booking(booking_id);
+    map.set(invoice, "total_paid", total_paid);
+    let balance = subtotal - total_paid;
+    map.set(invoice, "balance", balance);
+
+    let inv_status = "UNPAID";
+    if (balance <= 0 && total_paid > 0) { inv_status = "PAID" }
+    else if (total_paid > 0 && balance > 0) { inv_status = "PARTIAL" }
+    map.set(invoice, "status", inv_status);
+
+    return invoice
+}
+
+fn invoice_build_list(bookings, i, result) {
+    if (i >= list.len(bookings)) { return result }
+    let bk = list.get(bookings, i);
+    if (map.has(bk, "id")) {
+        let bk_id = str_to_string(map.get(bk, "id"));
+        let inv = invoice_generate(bk_id);
+        list.append(result, inv)
+    }
+    return invoice_build_list(bookings, i + 1, result)
+}
+
+fn invoice_list_by_guest(guest_id) {
+    let bookings = booking_list_by_guest(guest_id);
+    let invoices = list.new();
+    return invoice_build_list(bookings, 0, invoices)
+}
+
+fn invoice_display(inv) {
+    let name = "Unknown";
+    if (map.has(inv, "guest_name")) { name = str_to_string(map.get(inv, "guest_name")) }
+    let room = "";
+    if (map.has(inv, "room_id")) { room = str_to_string(map.get(inv, "room_id")) }
+    let rtype = "";
+    if (map.has(inv, "room_type")) { rtype = str_to_string(map.get(inv, "room_type")) }
+    let ci = "";
+    if (map.has(inv, "check_in")) { ci = str_to_string(map.get(inv, "check_in")) }
+    let co = "";
+    if (map.has(inv, "check_out")) { co = str_to_string(map.get(inv, "check_out")) }
+    let rate_val = 0;
+    if (map.has(inv, "rate_per_night")) { rate_val = map.get(inv, "rate_per_night") }
+    let nights = 0;
+    if (map.has(inv, "nights")) { nights = map.get(inv, "nights") }
+    let subtotal = 0;
+    if (map.has(inv, "subtotal")) { subtotal = map.get(inv, "subtotal") }
+    let paid = 0;
+    if (map.has(inv, "total_paid")) { paid = map.get(inv, "total_paid") }
+    let bal = 0;
+    if (map.has(inv, "balance")) { bal = map.get(inv, "balance") }
+    let inv_st = "";
+    if (map.has(inv, "status")) { inv_st = str_to_string(map.get(inv, "status")) }
+
+    io.writeln("============================================");
+    io.writeln(string.concat("INVOICE — Guest: ", name));
+    io.writeln("============================================");
+    io.writeln(string.concat("Room: ", string.concat(room, string.concat(" (", string.concat(rtype, ")")))));
+    io.writeln(string.concat("Check-in:  ", ci));
+    io.writeln(string.concat("Check-out: ", co));
+    io.writeln(string.concat("Nights:    ", str_to_string(nights)));
+    io.writeln(string.concat("Rate:      ", str_to_string(rate_val)));
+    io.writeln("--------------------------------------------");
+    io.writeln(string.concat("Subtotal:  ", str_to_string(subtotal)));
+    io.writeln(string.concat("Paid:      ", str_to_string(paid)));
+    io.writeln(string.concat("Balance:   ", str_to_string(bal)));
+    io.writeln(string.concat("Status:    ", inv_st));
+    io.writeln("============================================");
+    return 0
+}
+
+// ============================================================
+// Level 9: Report module — aggregation and statistics
+// ============================================================
+
+fn report_occupied_rooms(bookings, i, result) {
+    if (i >= list.len(bookings)) { return result }
+    let bk = list.get(bookings, i);
+    if (map.has(bk, "room_id")) {
+        let rid = str_to_string(map.get(bk, "room_id"));
+        let idx = list_find_by_key(result, "id", rid);
+        if (idx < 0) {
+            let rm = room_find_by_id(rid);
+            let none = json.parse("null");
+            if (!string.equals(str_to_string(rm), str_to_string(none))) {
+                list.append(result, rm)
+            }
+        }
+    }
+    return report_occupied_rooms(bookings, i + 1, result)
+}
+
+fn report_occupancy(start_date, end_date) {
+    let rooms = load_rooms();
+    let total_rooms = list.len(rooms);
+    let bookings = booking_list_by_date_range(start_date, end_date, 0, list.new());
+    let occupied_rooms = report_occupied_rooms(bookings, 0, list.new());
+    let occupied_count = list.len(occupied_rooms);
+    let pct = 0;
+    if (total_rooms > 0) {
+        pct = convert.to_int(occupied_count * 100 / total_rooms)
+    }
+    let result = map.new();
+    map.set(result, "total_rooms", total_rooms);
+    map.set(result, "occupied_rooms", occupied_count);
+    map.set(result, "occupancy_pct", pct);
+    map.set(result, "start_date", start_date);
+    map.set(result, "end_date", end_date);
+    return result
+}
+
+fn report_occupancy_display(report_map) {
+    let start = "?";
+    let end = "?";
+    if (map.has(report_map, "start_date")) { start = str_to_string(map.get(report_map, "start_date")) }
+    if (map.has(report_map, "end_date")) { end = str_to_string(map.get(report_map, "end_date")) }
+    let total = 0;
+    let occ = 0;
+    let pct = 0;
+    if (map.has(report_map, "total_rooms")) { total = map.get(report_map, "total_rooms") }
+    if (map.has(report_map, "occupied_rooms")) { occ = map.get(report_map, "occupied_rooms") }
+    if (map.has(report_map, "occupancy_pct")) { pct = map.get(report_map, "occupancy_pct") }
+
+    io.writeln("=== Occupancy Report ===");
+    io.writeln(string.concat("Period: ", string.concat(start, string.concat(" to ", end))));
+    io.writeln(string.concat("Total Rooms:  ", str_to_string(total)));
+    io.writeln(string.concat("Occupied:     ", str_to_string(occ)));
+    io.writeln(string.concat("Occupancy:    ", string.concat(str_to_string(pct), "%")));
+    return 0
+}
+
+fn report_sum_revenue(bookings, i, acc) {
+    if (i >= list.len(bookings)) { return acc }
+    let bk = list.get(bookings, i);
+    if (map.has(bk, "total")) {
+        let total = map.get(bk, "total");
+        let status = "";
+        if (map.has(bk, "status")) { status = str_to_string(map.get(bk, "status")) }
+        if (!string.equals(status, "CANCELLED")) {
+            return report_sum_revenue(bookings, i + 1, acc + total)
+        }
+    }
+    return report_sum_revenue(bookings, i + 1, acc)
+}
+
+fn report_revenue(start_date, end_date) {
+    let bookings = booking_list_by_date_range(start_date, end_date, 0, list.new());
+    let total_rev = report_sum_revenue(bookings, 0, 0);
+    let booking_count = list.len(bookings);
+    let avg_rev = 0;
+    if (booking_count > 0) {
+        avg_rev = convert.to_int(total_rev / booking_count)
+    }
+    let result = map.new();
+    map.set(result, "total_revenue", total_rev);
+    map.set(result, "booking_count", booking_count);
+    map.set(result, "avg_revenue", avg_rev);
+    map.set(result, "start_date", start_date);
+    map.set(result, "end_date", end_date);
+    return result
+}
+
+fn report_revenue_display(report_map) {
+    let start = "?";
+    let end = "?";
+    if (map.has(report_map, "start_date")) { start = str_to_string(map.get(report_map, "start_date")) }
+    if (map.has(report_map, "end_date")) { end = str_to_string(map.get(report_map, "end_date")) }
+    let rev = 0;
+    let cnt = 0;
+    let avg = 0;
+    if (map.has(report_map, "total_revenue")) { rev = map.get(report_map, "total_revenue") }
+    if (map.has(report_map, "booking_count")) { cnt = map.get(report_map, "booking_count") }
+    if (map.has(report_map, "avg_revenue")) { avg = map.get(report_map, "avg_revenue") }
+
+    io.writeln("=== Revenue Report ===");
+    io.writeln(string.concat("Period: ", string.concat(start, string.concat(" to ", end))));
+    io.writeln(string.concat("Total Revenue: ", str_to_string(rev)));
+    io.writeln(string.concat("Bookings:      ", str_to_string(cnt)));
+    io.writeln(string.concat("Avg/Booking:   ", str_to_string(avg)));
+    return 0
+}
+
+fn report_booking_summary() {
+    let bookings = load_bookings();
+    let reserved = booking_list_by_status("RESERVED");
+    let checked_in = booking_list_by_status("CHECKED_IN");
+    let checked_out = booking_list_by_status("CHECKED_OUT");
+    let cancelled = booking_list_by_status("CANCELLED");
+    let result = map.new();
+    map.set(result, "total", list.len(bookings));
+    map.set(result, "reserved", list.len(reserved));
+    map.set(result, "checked_in", list.len(checked_in));
+    map.set(result, "checked_out", list.len(checked_out));
+    map.set(result, "cancelled", list.len(cancelled));
+    return result
+}
+
+fn report_booking_summary_display(report_map) {
+    let total = 0;
+    let res = 0;
+    let cin = 0;
+    let cout = 0;
+    let can = 0;
+    if (map.has(report_map, "total")) { total = map.get(report_map, "total") }
+    if (map.has(report_map, "reserved")) { res = map.get(report_map, "reserved") }
+    if (map.has(report_map, "checked_in")) { cin = map.get(report_map, "checked_in") }
+    if (map.has(report_map, "checked_out")) { cout = map.get(report_map, "checked_out") }
+    if (map.has(report_map, "cancelled")) { can = map.get(report_map, "cancelled") }
+
+    io.writeln("=== Booking Summary ===");
+    io.writeln(string.concat("Total:       ", str_to_string(total)));
+    io.writeln(string.concat("Reserved:    ", str_to_string(res)));
+    io.writeln(string.concat("Checked In:  ", str_to_string(cin)));
+    io.writeln(string.concat("Checked Out: ", str_to_string(cout)));
+    io.writeln(string.concat("Cancelled:   ", str_to_string(can)));
+    return 0
+}
+
+fn report_utilization() {
+    let rooms = load_rooms();
+    let total_rooms = list.len(rooms);
+    let available = room_filter_by_status(rooms, "AVAILABLE", 0, list.new());
+    let occupied = room_filter_by_status(rooms, "OCCUPIED", 0, list.new());
+    let maintenance = room_filter_by_status(rooms, "MAINTENANCE", 0, list.new());
+    let reserved = room_filter_by_status(rooms, "RESERVED", 0, list.new());
+    let result = map.new();
+    map.set(result, "total", total_rooms);
+    map.set(result, "available", list.len(available));
+    map.set(result, "occupied", list.len(occupied));
+    map.set(result, "maintenance", list.len(maintenance));
+    map.set(result, "reserved", list.len(reserved));
+    return result
+}
+
+fn report_utilization_display(report_map) {
+    let total = 0;
+    let avail = 0;
+    let occ = 0;
+    let maint = 0;
+    let res = 0;
+    if (map.has(report_map, "total")) { total = map.get(report_map, "total") }
+    if (map.has(report_map, "available")) { avail = map.get(report_map, "available") }
+    if (map.has(report_map, "occupied")) { occ = map.get(report_map, "occupied") }
+    if (map.has(report_map, "maintenance")) { maint = map.get(report_map, "maintenance") }
+    if (map.has(report_map, "reserved")) { res = map.get(report_map, "reserved") }
+
+    io.writeln("=== Room Utilization ===");
+    io.writeln(string.concat("Total:       ", str_to_string(total)));
+    io.writeln(string.concat("Available:   ", str_to_string(avail)));
+    io.writeln(string.concat("Occupied:    ", str_to_string(occ)));
+    io.writeln(string.concat("Reserved:    ", str_to_string(res)));
+    io.writeln(string.concat("Maintenance: ", str_to_string(maint)));
+    return 0
+}
+
+// ============================================================
+// Level 10: Display utilities for list display
+// ============================================================
+
+fn display_room_list(rooms, i) {
+    if (i >= list.len(rooms)) { return 0 }
+    let r = list.get(rooms, i);
+    let id = "?";
+    let type_val = "?";
+    let rate_val = "?";
+    let cap_val = "?";
+    let status_val = "?";
+    if (map.has(r, "id")) { id = str_to_string(map.get(r, "id")) }
+    if (map.has(r, "type")) { type_val = str_to_string(map.get(r, "type")) }
+    if (map.has(r, "rate")) { rate_val = str_to_string(map.get(r, "rate")) }
+    if (map.has(r, "capacity")) { cap_val = str_to_string(map.get(r, "capacity")) }
+    if (map.has(r, "status")) { status_val = str_to_string(map.get(r, "status")) }
+    io.writeln(string.concat(id, string.concat(" | ", string.concat(type_val, string.concat(" | Rate: ", string.concat(rate_val, string.concat(" | Cap: ", string.concat(cap_val, string.concat(" | ", status_val)))))))));
+    return display_room_list(rooms, i + 1)
+}
+
+fn display_guest_list(guests, i) {
+    if (i >= list.len(guests)) { return 0 }
+    let g = list.get(guests, i);
+    let id = "?";
+    let name = "?";
+    let phone = "?";
+    let email = "?";
+    if (map.has(g, "id")) { id = str_to_string(map.get(g, "id")) }
+    if (map.has(g, "name")) { name = str_to_string(map.get(g, "name")) }
+    if (map.has(g, "phone")) { phone = str_to_string(map.get(g, "phone")) }
+    if (map.has(g, "email")) { email = str_to_string(map.get(g, "email")) }
+    io.writeln(string.concat(id, string.concat(" | ", string.concat(name, string.concat(" | ", string.concat(phone, string.concat(" | ", email)))))));
+    return display_guest_list(guests, i + 1)
+}
+
+fn display_booking_list(bookings, i) {
+    if (i >= list.len(bookings)) { return 0 }
+    let b = list.get(bookings, i);
+    let id = "?";
+    let gid = "?";
+    let rid = "?";
+    let ci = "?";
+    let co = "?";
+    let st = "?";
+    let total = "?";
+    if (map.has(b, "id")) { id = str_to_string(map.get(b, "id")) }
+    if (map.has(b, "guest_id")) { gid = str_to_string(map.get(b, "guest_id")) }
+    if (map.has(b, "room_id")) { rid = str_to_string(map.get(b, "room_id")) }
+    if (map.has(b, "check_in")) { ci = str_to_string(map.get(b, "check_in")) }
+    if (map.has(b, "check_out")) { co = str_to_string(map.get(b, "check_out")) }
+    if (map.has(b, "status")) { st = str_to_string(map.get(b, "status")) }
+    if (map.has(b, "total")) { total = str_to_string(map.get(b, "total")) }
+    io.writeln(string.concat(id, string.concat(" | G:", string.concat(gid, string.concat(" R:", string.concat(rid, string.concat(" | ", string.concat(ci, string.concat(" to ", string.concat(co, string.concat(" | ", string.concat(st, string.concat(" | $", total)))))))))))));
+    return display_booking_list(bookings, i + 1)
+}
+
+fn display_payment_list(payments, i) {
+    if (i >= list.len(payments)) { return 0 }
+    let p = list.get(payments, i);
+    let id = "?";
+    let bid = "?";
+    let amt = "?";
+    let method_val = "?";
+    let st = "?";
+    if (map.has(p, "id")) { id = str_to_string(map.get(p, "id")) }
+    if (map.has(p, "booking_id")) { bid = str_to_string(map.get(p, "booking_id")) }
+    if (map.has(p, "amount")) { amt = str_to_string(map.get(p, "amount")) }
+    if (map.has(p, "method")) { method_val = str_to_string(map.get(p, "method")) }
+    if (map.has(p, "status")) { st = str_to_string(map.get(p, "status")) }
+    io.writeln(string.concat(id, string.concat(" | B:", string.concat(bid, string.concat(" | $", string.concat(amt, string.concat(" | ", string.concat(method_val, string.concat(" | ", st)))))))));
+    return display_payment_list(payments, i + 1)
+}
+
+fn display_room_header() {
+    io.writeln("ID    | Type       | Rate   | Cap | Status");
+    io.writeln("------+------------+--------+-----+--------");
+    return 0
+}
+
+fn display_guest_header() {
+    io.writeln("ID    | Name               | Phone      | Email");
+    io.writeln("------+--------------------+------------+------------------");
+    return 0
+}
+
+fn display_booking_header() {
+    io.writeln("ID    | Guest | Room | Check In   | Check Out  | Status        | Total");
+    io.writeln("------+-------+------+------------+------------+---------------+-------");
+    return 0
+}
+
+fn display_payment_header() {
+    io.writeln("ID    | Booking | Amount | Method | Status");
+    io.writeln("------+---------+--------+--------+--------");
+    return 0
+}
+
+// ============================================================
+// Level 11: Main — CLI entry point and command routing
+// ============================================================
+
+fn cmd_room_add(args, arg_idx) {
+    if (list.len(args) < arg_idx + 3) { return "Usage: room add <id> <type> <rate> <capacity>" }
+    let id_val = list.get(args, arg_idx);
+    let type_val = to_upper(list.get(args, arg_idx + 1));
+    let rate_val = string_to_int_safe(list.get(args, arg_idx + 2));
+    let cap_val = 2;
+    if (list.len(args) > arg_idx + 3) { cap_val = string_to_int_safe(list.get(args, arg_idx + 3)) }
+    return room_create(id_val, type_val, rate_val, cap_val)
+}
+
+fn cmd_room_list() {
+    let rooms = room_list_all();
+    if (list.len(rooms) == 0) { return "No rooms found" }
+    display_room_header();
+    display_room_list(rooms, 0);
+    return string.concat(str_to_string(list.len(rooms)), " room(s)")
+}
+
+fn cmd_room_update_rate(args, arg_idx) {
+    if (list.len(args) < arg_idx + 2) { return "Usage: room update-rate <id> <new_rate>" }
+    let id_val = list.get(args, arg_idx);
+    let rate_val = string_to_int_safe(list.get(args, arg_idx + 1));
+    return room_update_rate(id_val, rate_val)
+}
+
+fn cmd_room_set_status(args, arg_idx) {
+    if (list.len(args) < arg_idx + 2) { return "Usage: room set-status <id> <status>" }
+    let id_val = list.get(args, arg_idx);
+    let status_val = to_upper(list.get(args, arg_idx + 1));
+    return room_set_status(id_val, status_val)
+}
+
+fn cmd_room_available(args, arg_idx) {
+    if (list.len(args) < arg_idx + 2) { return "Usage: room available <check_in> <check_out>" }
+    let ci = list.get(args, arg_idx);
+    let co = list.get(args, arg_idx + 1);
+    if (!validate_date_format(ci)) { return "Error: Invalid check-in date (use YYYY-MM-DD)" }
+    if (!validate_date_format(co)) { return "Error: Invalid check-out date (use YYYY-MM-DD)" }
+    if (!is_date_before(ci, co)) { return "Error: Check-in must be before check-out" }
+    let rooms = load_rooms();
+    let available = room_available_on_dates(rooms, ci, co, 0, list.new());
+    if (list.len(available) == 0) { return "No available rooms for those dates" }
+    display_room_header();
+    display_room_list(available, 0);
+    return string.concat(str_to_string(list.len(available)), " available room(s)")
+}
+
+fn cmd_room_dispatch(args, arg_idx) {
+    if (arg_idx >= list.len(args)) { return "Error: Missing room subcommand" }
+    let sub = to_upper(list.get(args, arg_idx));
+    if (string.equals(sub, "ADD")) { return cmd_room_add(args, arg_idx + 1) }
+    if (string.equals(sub, "LIST")) { return cmd_room_list() }
+    if (string.equals(sub, "UPDATE-RATE") || string.equals(sub, "UPDATERATE")) {
+        return cmd_room_update_rate(args, arg_idx + 1)
+    }
+    if (string.equals(sub, "SET-STATUS") || string.equals(sub, "SETSTATUS")) {
+        return cmd_room_set_status(args, arg_idx + 1)
+    }
+    if (string.equals(sub, "AVAILABLE")) { return cmd_room_available(args, arg_idx + 1) }
+    return string.concat("Error: Unknown room subcommand: ", sub)
+}
+
+fn cmd_guest_add(args, arg_idx) {
+    if (list.len(args) < arg_idx + 2) { return "Usage: guest add <name> <phone> [email]" }
+    let name_val = list.get(args, arg_idx);
+    let phone_val = list.get(args, arg_idx + 1);
+    let email_val = "";
+    if (list.len(args) > arg_idx + 2) { email_val = list.get(args, arg_idx + 2) }
+    return guest_create(name_val, phone_val, email_val)
+}
+
+fn cmd_guest_search(args, arg_idx) {
+    if (arg_idx >= list.len(args)) { return "Usage: guest search <name>" }
+    let query = list.get(args, arg_idx);
+    let results = guest_search_by_name(query);
+    if (list.len(results) == 0) { return "No guests found matching that name" }
+    display_guest_header();
+    display_guest_list(results, 0);
+    return string.concat(str_to_string(list.len(results)), " guest(s) found")
+}
+
+fn cmd_guest_list() {
+    let guests = guest_list_all();
+    if (list.len(guests) == 0) { return "No guests registered" }
+    display_guest_header();
+    display_guest_list(guests, 0);
+    return string.concat(str_to_string(list.len(guests)), " guest(s)")
+}
+
+fn cmd_guest_dispatch(args, arg_idx) {
+    if (arg_idx >= list.len(args)) { return "Error: Missing guest subcommand" }
+    let sub = to_upper(list.get(args, arg_idx));
+    if (string.equals(sub, "ADD")) { return cmd_guest_add(args, arg_idx + 1) }
+    if (string.equals(sub, "SEARCH")) { return cmd_guest_search(args, arg_idx + 1) }
+    if (string.equals(sub, "LIST")) { return cmd_guest_list() }
+    return string.concat("Error: Unknown guest subcommand: ", sub)
+}
+
+fn cmd_booking_create(args, arg_idx) {
+    if (list.len(args) < arg_idx + 4) {
+        return "Usage: booking create <guest_id> <room_id> <check_in> <check_out> [guests]"
+    }
+    let guest_id = list.get(args, arg_idx);
+    let room_id = list.get(args, arg_idx + 1);
+    let check_in = list.get(args, arg_idx + 2);
+    let check_out = list.get(args, arg_idx + 3);
+    let guests_count = 1;
+    if (list.len(args) > arg_idx + 4) { guests_count = string_to_int_safe(list.get(args, arg_idx + 4)) }
+
+    if (!validate_date_format(check_in)) { return "Error: Invalid check-in date (use YYYY-MM-DD)" }
+    if (!validate_date_format(check_out)) { return "Error: Invalid check-out date (use YYYY-MM-DD)" }
+
+    return booking_create(guest_id, room_id, check_in, check_out, guests_count)
+}
+
+fn cmd_booking_checkin(args, arg_idx) {
+    if (arg_idx >= list.len(args)) { return "Usage: booking checkin <booking_id>" }
+    return booking_check_in(list.get(args, arg_idx))
+}
+
+fn cmd_booking_checkout(args, arg_idx) {
+    if (arg_idx >= list.len(args)) { return "Usage: booking checkout <booking_id>" }
+    return booking_check_out(list.get(args, arg_idx))
+}
+
+fn cmd_booking_cancel(args, arg_idx) {
+    if (arg_idx >= list.len(args)) { return "Usage: booking cancel <booking_id>" }
+    return booking_cancel(list.get(args, arg_idx))
+}
+
+fn cmd_booking_detail(args, arg_idx) {
+    if (arg_idx >= list.len(args)) { return "Usage: booking detail <booking_id>" }
+    let bk = booking_find_by_id(list.get(args, arg_idx));
+    let none = json.parse("null");
+    if (string.equals(str_to_string(bk), str_to_string(none))) { return "Error: Booking not found" }
+    let display_list = list.new();
+    list.append(display_list, bk);
+    display_booking_header();
+    display_booking_list(display_list, 0);
+    let inv = invoice_generate(list.get(args, arg_idx));
+    invoice_display(inv);
+    return ""
+}
+
+fn cmd_booking_list() {
+    let bookings = booking_list_all();
+    if (list.len(bookings) == 0) { return "No bookings" }
+    display_booking_header();
+    display_booking_list(bookings, 0);
+    return string.concat(str_to_string(list.len(bookings)), " booking(s)")
+}
+
+fn cmd_booking_dispatch(args, arg_idx) {
+    if (arg_idx >= list.len(args)) { return "Error: Missing booking subcommand" }
+    let sub = to_upper(list.get(args, arg_idx));
+    if (string.equals(sub, "CREATE")) { return cmd_booking_create(args, arg_idx + 1) }
+    if (string.equals(sub, "CHECKIN") || string.equals(sub, "CHECK-IN")) {
+        return cmd_booking_checkin(args, arg_idx + 1)
+    }
+    if (string.equals(sub, "CHECKOUT") || string.equals(sub, "CHECK-OUT")) {
+        return cmd_booking_checkout(args, arg_idx + 1)
+    }
+    if (string.equals(sub, "CANCEL")) { return cmd_booking_cancel(args, arg_idx + 1) }
+    if (string.equals(sub, "DETAIL")) { return cmd_booking_detail(args, arg_idx + 1) }
+    if (string.equals(sub, "LIST")) { return cmd_booking_list() }
+    return string.concat("Error: Unknown booking subcommand: ", sub)
+}
+
+fn cmd_payment_record(args, arg_idx) {
+    if (list.len(args) < arg_idx + 2) {
+        return "Usage: payment record <booking_id> <amount> [method]"
+    }
+    let booking_id = list.get(args, arg_idx);
+    let amount_val = string_to_int_safe(list.get(args, arg_idx + 1));
+    let method_val = "CASH";
+    if (list.len(args) > arg_idx + 2) { method_val = to_upper(list.get(args, arg_idx + 2)) }
+    return payment_record(booking_id, amount_val, method_val)
+}
+
+fn cmd_payment_view(args, arg_idx) {
+    if (arg_idx >= list.len(args)) { return "Usage: payment view <booking_id>" }
+    let payments = payment_list_by_booking(list.get(args, arg_idx));
+    if (list.len(payments) == 0) { return "No payments for this booking" }
+    display_payment_header();
+    display_payment_list(payments, 0);
+    let sum = payment_sum_for_booking(list.get(args, arg_idx));
+    return string.concat("Total payments: ", str_to_string(sum))
+}
+
+fn cmd_payment_dispatch(args, arg_idx) {
+    if (arg_idx >= list.len(args)) { return "Error: Missing payment subcommand" }
+    let sub = to_upper(list.get(args, arg_idx));
+    if (string.equals(sub, "RECORD")) { return cmd_payment_record(args, arg_idx + 1) }
+    if (string.equals(sub, "VIEW")) { return cmd_payment_view(args, arg_idx + 1) }
+    return string.concat("Error: Unknown payment subcommand: ", sub)
+}
+
+fn cmd_report_occupancy(args, arg_idx) {
+    if (list.len(args) < arg_idx + 2) {
+        return "Usage: report occupancy <start_date> <end_date>"
+    }
+    let start = list.get(args, arg_idx);
+    let end = list.get(args, arg_idx + 1);
+    if (!validate_date_format(start)) { return "Error: Invalid start date" }
+    if (!validate_date_format(end)) { return "Error: Invalid end date" }
+    let r = report_occupancy(start, end);
+    report_occupancy_display(r);
+    return ""
+}
+
+fn cmd_report_revenue(args, arg_idx) {
+    if (list.len(args) < arg_idx + 2) {
+        return "Usage: report revenue <start_date> <end_date>"
+    }
+    let start = list.get(args, arg_idx);
+    let end = list.get(args, arg_idx + 1);
+    if (!validate_date_format(start)) { return "Error: Invalid start date" }
+    if (!validate_date_format(end)) { return "Error: Invalid end date" }
+    let r = report_revenue(start, end);
+    report_revenue_display(r);
+    return ""
+}
+
+fn cmd_report_bookings() {
+    let r = report_booking_summary();
+    report_booking_summary_display(r);
+    return ""
+}
+
+fn cmd_report_utilization() {
+    let r = report_utilization();
+    report_utilization_display(r);
+    return ""
+}
+
+fn cmd_report_dispatch(args, arg_idx) {
+    if (arg_idx >= list.len(args)) { return "Error: Missing report subcommand" }
+    let sub = to_upper(list.get(args, arg_idx));
+    if (string.equals(sub, "OCCUPANCY")) { return cmd_report_occupancy(args, arg_idx + 1) }
+    if (string.equals(sub, "REVENUE")) { return cmd_report_revenue(args, arg_idx + 1) }
+    if (string.equals(sub, "BOOKINGS") || string.equals(sub, "SUMMARY")) {
+        return cmd_report_bookings()
+    }
+    if (string.equals(sub, "UTILIZATION")) { return cmd_report_utilization() }
+    return string.concat("Error: Unknown report subcommand: ", sub)
+}
+
+fn cmd_invoice_dispatch(args, arg_idx) {
+    if (arg_idx >= list.len(args)) { return "Usage: invoice <booking_id>" }
+    let booking_id = list.get(args, arg_idx);
+    let inv = invoice_generate(booking_id);
+    if (map.has(inv, "guest_name")) {
+        invoice_display(inv);
+        return ""
+    }
+    return str_to_string(inv)
+}
+
+fn show_usage() {
+    io.writeln("Hotel Management System for AILang");
+    io.writeln("");
+    io.writeln("Room Commands:");
+    io.writeln("  room add <id> <type> <rate> [capacity]");
+    io.writeln("  room list");
+    io.writeln("  room update-rate <id> <new_rate>");
+    io.writeln("  room set-status <id> <status>");
+    io.writeln("  room available <check_in> <check_out>");
+    io.writeln("");
+    io.writeln("Guest Commands:");
+    io.writeln("  guest add <name> <phone> [email]");
+    io.writeln("  guest search <name>");
+    io.writeln("  guest list");
+    io.writeln("");
+    io.writeln("Booking Commands:");
+    io.writeln("  booking create <guest_id> <room_id> <check_in> <check_out> [guests]");
+    io.writeln("  booking checkin <id>");
+    io.writeln("  booking checkout <id>");
+    io.writeln("  booking cancel <id>");
+    io.writeln("  booking detail <id>");
+    io.writeln("  booking list");
+    io.writeln("");
+    io.writeln("Payment Commands:");
+    io.writeln("  payment record <booking_id> <amount> [method]");
+    io.writeln("  payment view <booking_id>");
+    io.writeln("");
+    io.writeln("Report Commands:");
+    io.writeln("  report occupancy <start_date> <end_date>");
+    io.writeln("  report revenue <start_date> <end_date>");
+    io.writeln("  report bookings");
+    io.writeln("  report utilization");
+    io.writeln("");
+    io.writeln("Invoice Commands:");
+    io.writeln("  invoice <booking_id>");
+    return 0
+}
+
+fn main() {
+    let args = environment.args();
+    if (list.len(args) < 1) {
+        show_usage();
+        return 0
+    }
+    let cmd = to_upper(list.get(args, 0));
+    let result = "";
+    if (string.equals(cmd, "ROOM")) { result = cmd_room_dispatch(args, 1) }
+    else if (string.equals(cmd, "GUEST")) { result = cmd_guest_dispatch(args, 1) }
+    else if (string.equals(cmd, "BOOKING")) { result = cmd_booking_dispatch(args, 1) }
+    else if (string.equals(cmd, "PAYMENT")) { result = cmd_payment_dispatch(args, 1) }
+    else if (string.equals(cmd, "REPORT")) { result = cmd_report_dispatch(args, 1) }
+    else if (string.equals(cmd, "INVOICE")) { result = cmd_invoice_dispatch(args, 1) }
+    else if (string.equals(cmd, "HELP") || string.equals(cmd, "--HELP") || string.equals(cmd, "-H")) {
+        show_usage();
+        return 0
+    }
+    else {
+        show_usage();
+        return 0
+    }
+    if (!string.equals(result, "")) {
+        io.writeln(result)
+    }
+    return 0
+}

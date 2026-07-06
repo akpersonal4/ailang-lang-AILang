@@ -10,6 +10,7 @@ from compiler.ast.nodes import (
     ASTNode,
     BinaryExpressionNode,
     BlockNode,
+    BooleanLiteralNode,
     CallExpressionNode,
     ExpressionStatementNode,
     FunctionDeclarationNode,
@@ -48,6 +49,14 @@ class SemanticAnalyzer:
         method = getattr(self, method_name, None)
         if method is not None:
             method(node)
+
+    def analyze_module(self, node: ProgramNode) -> None:
+        """Analyze a module's program node in its own scope."""
+        self.symbol_table.enter_scope(node)
+        try:
+            self.analyze(node)
+        finally:
+            self.symbol_table.exit_scope()
 
     # ------------------------------------------------------------------
     # Top-level
@@ -225,6 +234,9 @@ class SemanticAnalyzer:
         return
 
     def _analyze_StringLiteralNode(self, node: StringLiteralNode) -> None:
+        return
+
+    def _analyze_BooleanLiteralNode(self, node: BooleanLiteralNode) -> None:
         return
 
     def _analyze_BlockNode(self, node: BlockNode) -> None:

@@ -1,0 +1,20 @@
+import json;
+import file;
+import path;
+
+fn main() {
+    print("=== JSON Formatter ===");
+    let raw = "{\"name\": \"Alice\", \"age\": 30, \"active\": true, \"scores\": [85, 92, 78]}";
+    let data = json.parse(raw);
+    let formatted = json.stringify(data);
+    file.write("data.json", formatted);
+    print("Written to data.json");
+    let read_back = file.read("data.json");
+    print("Read back:", read_back);
+    let parsed_again = json.parse(read_back);
+    let name = json.stringify(parsed_again);
+    print("Roundtrip OK:", name);
+    let p = path.join(".", "data.json");
+    print("Path to file:", p);
+    print("Extension:", path.extension(p))
+}

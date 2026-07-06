@@ -1,0 +1,49 @@
+// CSV Reader Pattern
+// Parses CSV text into a list of maps (headers as keys)
+// Uses file module for reading, string module for splitting
+// Note: string.split is NOT in stdlib — this uses csv module instead
+//
+// fn read_csv(filepath) { ... }
+// fn get_column(rows, col_name, i, acc) { ... }
+
+import csv;
+import file;
+import list;
+import map;
+import string;
+
+fn read_csv(filepath) {
+    if (!file.exists(filepath)) {
+        print("File not found:", filepath);
+        return list.new()
+    }
+    let content = file.read(filepath);
+    if (string.length(content) == 0) { return list.new() }
+    return csv.parse_header(content)
+}
+
+fn get_column(rows, col_name, i, acc) {
+    if (i >= list.len(rows)) { return acc }
+    let row = list.get(rows, i);
+    if (map.has(row, col_name)) {
+        list.append(acc, map.get(row, col_name))
+    }
+    return get_column(rows, col_name, i + 1, acc)
+}
+
+fn print_rows(rows, i) {
+    if (i >= list.len(rows)) { return 0 }
+    let row = list.get(rows, i);
+    let keys = map.keys(row);
+    print("Row", i + 1, ":", map.get(row, list.get(keys, 0)), "|", map.get(row, list.get(keys, 1)));
+    return print_rows(rows, i + 1)
+}
+
+fn main() {
+    let csv_text = "name,age\nAlice,30\nBob,25\nCharlie,35";
+    let rows = csv.parse_header(csv_text);
+    print("CSV rows:", list.len(rows));
+    print_rows(rows, 0);
+    let ages = get_column(rows, "age", 0, list.new());
+    print("Ages:", ages)
+}

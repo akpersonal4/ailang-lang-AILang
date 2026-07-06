@@ -1,0 +1,89 @@
+import file;
+import environment;
+import string;
+import list;
+import io;
+import convert;
+
+fn lint_lines(lines, idx, issues) {
+    if (idx >= list.len(lines)) {
+        return issues;
+    }
+    let line = list.get(lines, idx);
+    let line_num = convert.to_string(idx + 1);
+    let line_len = string.length(line);
+    if (line_len > 80) {
+        let msg = "line " + line_num + ": Line too long (" + convert.to_string(line_len) + " characters)";
+        list.append(issues, msg);
+    }
+    let stripped_r = line.rstrip();
+    if (line_len > 0 && stripped_r != line) {
+        let msg = "line " + line_num + ": Trailing whitespace";
+        list.append(issues, msg);
+    }
+    if (idx > 0) {
+        let prev_line = list.get(lines, idx - 1);
+        if (line.strip() == "" && prev_line.strip() == "") {
+            let msg = "line " + line_num + ": Multiple consecutive blank lines";
+            list.append(issues, msg);
+        }
+    }
+    let stripped_len = string.length(line.lstrip());
+    let leading = line_len - stripped_len;
+    if (leading > 0 && leading % 4 != 0 && line.strip() != "") {
+        let msg = "line " + line_num + ": Inconsistent indentation (not multiple of 4)";
+        list.append(issues, msg);
+    }
+    return lint_lines(lines, idx + 1, issues);
+}
+
+fn print_issues(issues, idx) {
+    if (idx >= list.len(issues)) {
+        return 0;
+    }
+    let issue = list.get(issues, idx);
+    io.println(issue);
+    return print_issues(issues, idx + 1);
+}
+
+fn check_eof_newline(content) {
+    if (string.length(content) == 0) {
+        return "";
+    }
+    if (!content.endswith("\n")) {
+        return "Missing newline at end of file";
+    }
+    return "";
+}
+
+fn collect_args(args, idx, result) {
+    if (idx >= list.len(args)) {
+        return result;
+    }
+    let val = list.get(args, idx);
+    if (val != "--") {
+        list.append(result, val);
+    }
+    return collect_args(args, idx + 1, result);
+}
+
+fn main() {
+    let raw = environment.args();
+    let all_args = list.new();
+    let user_args = collect_args(raw, 0, all_args);
+    let file_path = list.get(user_args, 0);
+    let content = file.read(file_path);
+    let issues_list = list.new();
+    let lines = content.split("\n");
+    let issues = lint_lines(lines, 0, issues_list);
+    let eof_issue = check_eof_newline(content);
+    if (eof_issue != "") {
+        list.append(issues, eof_issue);
+    }
+    if (list.len(issues) == 0) {
+        io.println("No style issues found.");
+    } else {
+        let print_result = print_issues(issues, 0);
+    }
+    return 0;
+}

@@ -1,0 +1,15 @@
+fn now() {
+    return time_now()
+}
+
+fn timestamp() {
+    return time_timestamp()
+}
+
+fn sleep(milliseconds) {
+    return time_sleep(milliseconds)
+}
+
+fn format(timestamp) {
+    return time_format(timestamp)
+}

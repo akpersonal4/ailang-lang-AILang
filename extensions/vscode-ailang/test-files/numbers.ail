@@ -1,0 +1,16 @@
+// === AILang numbers test file ===
+
+fn main() {
+    let integer = 42;
+    let zero = 0;
+    let negative = -1;
+    let large = 999999;
+
+    // Float values come from division
+    let quotient = 22 / 7;
+
+    print(integer, zero, negative, large);
+    print(quotient);
+
+    return 0
+}

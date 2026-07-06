@@ -2,6 +2,38 @@ __pycache__/
 *.py[cod]
 *.egg-info/
 .venv/
+.venv_test/
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
+*.vsix
+dist/
+build/
+*.log
+output.txt
+.DS_Store
+Thumbs.db
+extensions/vscode-ailang/node_modules/
+extensions/vscode-ailang/*.vsix
+
+# Coverage
+.coverage
+htmlcov/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Environment
+.env
+.env.*
+.venv*/
+*.venv
+
+# Compiled extensions (not used currently, but defensive)
+*.so
+*.dll
+*.dylib

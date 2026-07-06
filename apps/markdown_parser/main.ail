@@ -1,0 +1,587 @@
+// Markdown to HTML Converter
+// Converts markdown text to HTML using only documented AILang features
+
+import list;
+import map;
+import string;
+import file;
+import convert;
+
+// ============================================================
+// Level 0: No-dependency utilities
+// ============================================================
+
+fn find_substring(text, start, pattern) {
+    if (start >= string.length(text)) { return -1 }
+    let remaining = string.length(text) - start;
+    let pat_len = string.length(pattern);
+    if (remaining < pat_len) { return -1 }
+    let chunk = string.substring(text, start, start + pat_len);
+    if (string.equals(chunk, pattern)) { return start }
+    return find_substring(text, start + 1, pattern)
+}
+
+fn is_empty_line(line) {
+    if (string.length(string.trim(line)) == 0) { return true }
+    return false
+}
+
+fn split_lines_helper(text, start, lines) {
+    let len = string.length(text);
+    if (start >= len) { return lines }
+    let nl_pos = find_substring(text, start, "\n");
+    if (nl_pos == -1) {
+        list.append(lines, string.substring(text, start, len));
+        return lines
+    }
+    list.append(lines, string.substring(text, start, nl_pos));
+    return split_lines_helper(text, nl_pos + 1, lines)
+}
+
+fn split_lines(text) {
+    let lines = list.new();
+    return split_lines_helper(text, 0, lines)
+}
+
+fn escape_html_char(c) {
+    if (string.equals(c, "&")) { return "&amp;" }
+    if (string.equals(c, "<")) { return "&lt;" }
+    if (string.equals(c, ">")) { return "&gt;" }
+    if (string.equals(c, "\"")) { return "&quot;" }
+    return c
+}
+
+fn count_heading_marks(text, count) {
+    if (count >= string.length(text)) { return count }
+    let char = string.substring(text, count, count + 1);
+    if (string.equals(char, "#")) {
+        return count_heading_marks(text, count + 1)
+    }
+    return count
+}
+
+fn is_all_digits(text, i) {
+    if (i >= string.length(text)) { return true }
+    let char = string.substring(text, i, i + 1);
+    if (string.equals(char, "0")) { return is_all_digits(text, i + 1) }
+    if (string.equals(char, "1")) { return is_all_digits(text, i + 1) }
+    if (string.equals(char, "2")) { return is_all_digits(text, i + 1) }
+    if (string.equals(char, "3")) { return is_all_digits(text, i + 1) }
+    if (string.equals(char, "4")) { return is_all_digits(text, i + 1) }
+    if (string.equals(char, "5")) { return is_all_digits(text, i + 1) }
+    if (string.equals(char, "6")) { return is_all_digits(text, i + 1) }
+    if (string.equals(char, "7")) { return is_all_digits(text, i + 1) }
+    if (string.equals(char, "8")) { return is_all_digits(text, i + 1) }
+    if (string.equals(char, "9")) { return is_all_digits(text, i + 1) }
+    return false
+}
+
+fn count_same_chars(text, i, char, count) {
+    if (i >= string.length(text)) { return count }
+    let c = string.substring(text, i, i + 1);
+    if (string.equals(c, char)) {
+        return count_same_chars(text, i + 1, char, count + 1)
+    }
+    return count
+}
+
+fn is_hr_char(c) {
+    if (string.equals(c, "-")) { return true }
+    if (string.equals(c, "*")) { return true }
+    if (string.equals(c, "_")) { return true }
+    return false
+}
+
+// ============================================================
+// Level 1: Depends on Level 0 utilities
+// ============================================================
+
+fn escape_html_helper(text, i, result) {
+    if (i >= string.length(text)) { return result }
+    let char = string.substring(text, i, i + 1);
+    let escaped = escape_html_char(char);
+    return escape_html_helper(text, i + 1, string.concat(result, escaped))
+}
+
+fn escape_html(text) {
+    return escape_html_helper(text, 0, "")
+}
+
+fn get_heading_level(line) {
+    let trimmed = string.trim(line);
+    if (!string.starts_with(trimmed, "#")) { return 0 }
+    let level = count_heading_marks(trimmed, 0);
+    if (level < 1) { return 0 }
+    if (level > 6) { level = 6 }
+    let after_marks = string.substring(trimmed, level, string.length(trimmed));
+    if (string.length(after_marks) == 0) { return 0 }
+    if (!string.starts_with(string.trim(after_marks), "#")) {
+        return level
+    }
+    return 0
+}
+
+fn is_unordered_list_item(line) {
+    let trimmed = string.trim(line);
+    if (string.starts_with(trimmed, "- ")) { return true }
+    if (string.starts_with(trimmed, "* ")) { return true }
+    return false
+}
+
+fn is_ordered_list_item(line) {
+    let trimmed = string.trim(line);
+    let dot_pos = find_substring(trimmed, 0, ". ");
+    if (dot_pos == -1) { return false }
+    if (dot_pos == 0) { return false }
+    let num_part = string.substring(trimmed, 0, dot_pos);
+    let num_len = string.length(num_part);
+    if (num_len < 1) { return false }
+    if (num_len > 3) { return false }
+    return is_all_digits(num_part, 0)
+}
+
+fn is_hr_line_valid(trimmed, first) {
+    if (count_same_chars(trimmed, 0, first, 0) == string.length(trimmed)) {
+        return true
+    }
+    let remaining = string.trim(string.substring(trimmed, count_same_chars(trimmed, 0, first, 0), string.length(trimmed)));
+    if (string.length(remaining) == 0) { return true }
+    let remaining_first = string.substring(remaining, 0, 1);
+    if (!is_hr_char(remaining_first)) { return false }
+    return is_hr_line_valid(remaining, remaining_first)
+}
+
+fn is_horizontal_rule(line) {
+    let trimmed = string.trim(line);
+    let first = string.substring(trimmed, 0, 1);
+    if (!is_hr_char(first)) { return false }
+    let count = count_same_chars(trimmed, 0, first, 0);
+    if (count < 3) { return false }
+    return is_hr_line_valid(trimmed, first)
+}
+
+fn is_blockquote(line) {
+    let trimmed = string.trim(line);
+    if (string.starts_with(trimmed, "> ")) { return true }
+    if (string.equals(trimmed, ">")) { return true }
+    return false
+}
+
+fn is_code_fence(line) {
+    let trimmed = string.trim(line);
+    if (string.equals(trimmed, "```")) { return true }
+    if (string.starts_with(trimmed, "```")) { return true }
+    return false
+}
+
+// ============================================================
+// Level 2: Line content extraction
+// ============================================================
+
+fn get_unordered_list_content(line) {
+    let trimmed = string.trim(line);
+    return string.substring(trimmed, 2, string.length(trimmed))
+}
+
+fn get_ordered_list_content(line) {
+    let trimmed = string.trim(line);
+    let dot_pos = find_substring(trimmed, 0, ". ");
+    if (dot_pos == -1) { return trimmed }
+    return string.substring(trimmed, dot_pos + 2, string.length(trimmed))
+}
+
+fn get_blockquote_content(line) {
+    let trimmed = string.trim(line);
+    if (string.starts_with(trimmed, "> ")) {
+        return string.substring(trimmed, 2, string.length(trimmed))
+    }
+    if (string.equals(trimmed, ">")) { return "" }
+    return trimmed
+}
+
+fn get_heading_content(line, level) {
+    let trimmed = string.trim(line);
+    return string.trim(string.substring(trimmed, level, string.length(trimmed)))
+}
+
+fn get_heading_tag(level) {
+    if (level == 1) { return "h1" }
+    if (level == 2) { return "h2" }
+    if (level == 3) { return "h3" }
+    if (level == 4) { return "h4" }
+    if (level == 5) { return "h5" }
+    return "h6"
+}
+
+// ============================================================
+// Level 3: Inline processing (recursive, depends on find_substring, escape_html_char)
+// ============================================================
+
+fn process_inline_helper(text, i, result) {
+    if (i >= string.length(text)) { return result }
+    let remaining = string.substring(text, i, string.length(text));
+    let len = string.length(text);
+
+    // Image: ![alt](url)
+    if (string.starts_with(remaining, "![")) {
+        let bracket_close = find_substring(text, i + 2, "]");
+        if (bracket_close != -1) {
+            let after_bracket = bracket_close + 1;
+            if (after_bracket < len) {
+                let paren_part = string.substring(text, after_bracket, len);
+                if (string.starts_with(paren_part, "(")) {
+                    let paren_close = find_substring(text, after_bracket + 1, ")");
+                    if (paren_close != -1) {
+                        let alt = string.substring(text, i + 2, bracket_close);
+                        let url = string.substring(text, after_bracket + 1, paren_close);
+                        let img_html = string.concat(
+                            string.concat("<img src=\"", string.concat(url, "\" alt=\"")),
+                            string.concat(alt, "\"/>"));
+                        return process_inline_helper(text, paren_close + 1,
+                            string.concat(result, img_html))
+                    }
+                }
+            }
+        }
+    }
+
+    // Link: [text](url)
+    if (string.starts_with(remaining, "[")) {
+        let bracket_close = find_substring(text, i + 1, "]");
+        if (bracket_close != -1) {
+            let after_bracket = bracket_close + 1;
+            if (after_bracket < len) {
+                let paren_part = string.substring(text, after_bracket, len);
+                if (string.starts_with(paren_part, "(")) {
+                    let paren_close = find_substring(text, after_bracket + 1, ")");
+                    if (paren_close != -1) {
+                        let link_text = string.substring(text, i + 1, bracket_close);
+                        let url = string.substring(text, after_bracket + 1, paren_close);
+                        let a_html = string.concat(
+                            string.concat("<a href=\"", string.concat(url, "\">")),
+                            string.concat(process_inline_helper(link_text, 0, ""), "</a>"));
+                        return process_inline_helper(text, paren_close + 1,
+                            string.concat(result, a_html))
+                    }
+                }
+            }
+        }
+    }
+
+    // Bold-italic: ***text***
+    if (string.starts_with(remaining, "***")) {
+        let close_pos = find_substring(text, i + 3, "***");
+        if (close_pos != -1) {
+            let content = string.substring(text, i + 3, close_pos);
+            let html = string.concat("<em><strong>",
+                string.concat(process_inline_helper(content, 0, ""), "</strong></em>"));
+            return process_inline_helper(text, close_pos + 3,
+                string.concat(result, html))
+        }
+    }
+
+    // Bold: **text**
+    if (string.starts_with(remaining, "**")) {
+        let close_pos = find_substring(text, i + 2, "**");
+        if (close_pos != -1) {
+            let content = string.substring(text, i + 2, close_pos);
+            let html = string.concat("<strong>",
+                string.concat(process_inline_helper(content, 0, ""), "</strong>"));
+            return process_inline_helper(text, close_pos + 2,
+                string.concat(result, html))
+        }
+    }
+
+    // Italic: *text*
+    if (string.starts_with(remaining, "*")) {
+        let close_pos = find_substring(text, i + 1, "*");
+        if (close_pos != -1) {
+            let content = string.substring(text, i + 1, close_pos);
+            let html = string.concat("<em>",
+                string.concat(process_inline_helper(content, 0, ""), "</em>"));
+            return process_inline_helper(text, close_pos + 1,
+                string.concat(result, html))
+        }
+    }
+
+    // Inline code: `text`
+    if (string.starts_with(remaining, "`")) {
+        let close_pos = find_substring(text, i + 1, "`");
+        if (close_pos != -1) {
+            let content = string.substring(text, i + 1, close_pos);
+            let html = string.concat("<code>",
+                string.concat(escape_html(content), "</code>"));
+            return process_inline_helper(text, close_pos + 1,
+                string.concat(result, html))
+        }
+    }
+
+    // Regular character
+    let char = string.substring(text, i, i + 1);
+    return process_inline_helper(text, i + 1,
+        string.concat(result, escape_html_char(char)))
+}
+
+fn process_inline(text) {
+    return process_inline_helper(text, 0, "")
+}
+
+// ============================================================
+// Level 4: Line HTML processing
+// ============================================================
+
+fn process_line_content(line) {
+    return process_inline(line)
+}
+
+fn process_heading(line) {
+    let level = get_heading_level(line);
+    if (level == 0) { return line }
+    let content = get_heading_content(line, level);
+    let inner = process_inline(content);
+    let tag = get_heading_tag(level);
+    return string.concat(string.concat("<", string.concat(tag, ">")),
+        string.concat(inner, string.concat("</", string.concat(tag, ">"))))
+}
+
+fn process_blockquote(line) {
+    let content = get_blockquote_content(line);
+    let inner = process_inline(content);
+    return string.concat("<blockquote>",
+        string.concat(inner, "</blockquote>"))
+}
+
+fn process_unordered_list_item(line) {
+    let content = get_unordered_list_content(line);
+    let inner = process_inline(content);
+    return string.concat("<li>", string.concat(inner, "</li>"))
+}
+
+fn process_ordered_list_item(line) {
+    let content = get_ordered_list_content(line);
+    let inner = process_inline(content);
+    return string.concat("<li>", string.concat(inner, "</li>"))
+}
+
+// ============================================================
+// Level 5: State management
+// ============================================================
+
+fn create_initial_state() {
+    let state = map.new();
+    map.set(state, "in_code_block", false);
+    map.set(state, "in_unordered_list", false);
+    map.set(state, "in_ordered_list", false);
+    return state
+}
+
+fn close_open_tags(html_lines, state) {
+    if (map.get(state, "in_unordered_list")) {
+        list.append(html_lines, "</ul>");
+        map.set(state, "in_unordered_list", false)
+    }
+    if (map.get(state, "in_ordered_list")) {
+        list.append(html_lines, "</ol>");
+        map.set(state, "in_ordered_list", false)
+    }
+    return html_lines
+}
+
+fn process_lines_with_state(lines, i, state, html_lines) {
+    if (i >= list.len(lines)) { return html_lines }
+    let line = list.get(lines, i);
+
+    // Code fence handling
+    if (is_code_fence(line)) {
+        let in_code = map.get(state, "in_code_block");
+        if (in_code) {
+            list.append(html_lines, "</pre>");
+            map.set(state, "in_code_block", false)
+        } else {
+            html_lines = close_open_tags(html_lines, state);
+            list.append(html_lines, "<pre>");
+            map.set(state, "in_code_block", true)
+        }
+        return process_lines_with_state(lines, i + 1, state, html_lines)
+    }
+
+    // Inside code block
+    if (map.get(state, "in_code_block")) {
+        list.append(html_lines, escape_html(line));
+        return process_lines_with_state(lines, i + 1, state, html_lines)
+    }
+
+    // Empty line
+    if (is_empty_line(line)) {
+        html_lines = close_open_tags(html_lines, state);
+        return process_lines_with_state(lines, i + 1, state, html_lines)
+    }
+
+    // Heading
+    let heading_level = get_heading_level(line);
+    if (heading_level > 0) {
+        html_lines = close_open_tags(html_lines, state);
+        list.append(html_lines, process_heading(line));
+        return process_lines_with_state(lines, i + 1, state, html_lines)
+    }
+
+    // Horizontal rule
+    if (is_horizontal_rule(line)) {
+        html_lines = close_open_tags(html_lines, state);
+        list.append(html_lines, "<hr/>");
+        return process_lines_with_state(lines, i + 1, state, html_lines)
+    }
+
+    // Blockquote
+    if (is_blockquote(line)) {
+        html_lines = close_open_tags(html_lines, state);
+        list.append(html_lines, process_blockquote(line));
+        return process_lines_with_state(lines, i + 1, state, html_lines)
+    }
+
+    // Unordered list
+    if (is_unordered_list_item(line)) {
+        if (map.get(state, "in_ordered_list")) {
+            list.append(html_lines, "</ol>");
+            map.set(state, "in_ordered_list", false)
+        }
+        if (!map.get(state, "in_unordered_list")) {
+            html_lines = close_open_tags(html_lines, state);
+            list.append(html_lines, "<ul>");
+            map.set(state, "in_unordered_list", true)
+        }
+        list.append(html_lines, process_unordered_list_item(line));
+        return process_lines_with_state(lines, i + 1, state, html_lines)
+    }
+
+    // Ordered list
+    if (is_ordered_list_item(line)) {
+        if (map.get(state, "in_unordered_list")) {
+            list.append(html_lines, "</ul>");
+            map.set(state, "in_unordered_list", false)
+        }
+        if (!map.get(state, "in_ordered_list")) {
+            html_lines = close_open_tags(html_lines, state);
+            list.append(html_lines, "<ol>");
+            map.set(state, "in_ordered_list", true)
+        }
+        list.append(html_lines, process_ordered_list_item(line));
+        return process_lines_with_state(lines, i + 1, state, html_lines)
+    }
+
+    // Regular paragraph
+    html_lines = close_open_tags(html_lines, state);
+    list.append(html_lines, string.concat("<p>",
+        string.concat(process_line_content(line), "</p>")));
+    return process_lines_with_state(lines, i + 1, state, html_lines)
+}
+
+// ============================================================
+// Level 6: Document assembly
+// ============================================================
+
+fn join_lines(lines, i, result) {
+    if (i >= list.len(lines)) { return result }
+    let line = list.get(lines, i);
+    let new_result = string.concat(result, line);
+    if (i < list.len(lines) - 1) {
+        new_result = string.concat(new_result, "\n")
+    }
+    return join_lines(lines, i + 1, new_result)
+}
+
+fn wrap_html_document(body) {
+    let result = "<!DOCTYPE html>\n<html>\n<head>\n";
+    result = string.concat(result, "<meta charset=\"UTF-8\">\n");
+    result = string.concat(result, "<title>Markdown</title>\n");
+    result = string.concat(result, "</head>\n<body>\n");
+    result = string.concat(result, body);
+    result = string.concat(result, "\n</body>\n</html>");
+    return result
+}
+
+fn process_document(markdown_text) {
+    let lines = split_lines(markdown_text);
+    let html_lines = list.new();
+    let state = create_initial_state();
+    html_lines = process_lines_with_state(lines, 0, state, html_lines);
+    html_lines = close_open_tags(html_lines, state);
+    let body = join_lines(html_lines, 0, "");
+    return wrap_html_document(body)
+}
+
+// ============================================================
+// Level 7: Sample data and output
+// ============================================================
+
+fn print_lines(lines, i) {
+    if (i >= list.len(lines)) { return true }
+    print(list.get(lines, i));
+    return print_lines(lines, i + 1)
+}
+
+// ============================================================
+// Main
+// ============================================================
+
+fn main() {
+    print("=== Markdown to HTML Converter ===\n");
+
+    let md = "# Markdown Demo\n";
+    md = string.concat(md, "\n");
+    md = string.concat(md, "This is a **paragraph** with *formatting* and `inline code`.\n");
+    md = string.concat(md, "\n");
+    md = string.concat(md, "## Headings\n");
+    md = string.concat(md, "\n");
+    md = string.concat(md, "### Level 3 Heading\n");
+    md = string.concat(md, "\n");
+    md = string.concat(md, "> This is a blockquote.\n");
+    md = string.concat(md, "> It spans multiple lines.\n");
+    md = string.concat(md, "\n");
+    md = string.concat(md, "### Lists\n");
+    md = string.concat(md, "\n");
+    md = string.concat(md, "Unordered list:\n");
+    md = string.concat(md, "\n");
+    md = string.concat(md, "- Item one\n");
+    md = string.concat(md, "- Item two\n");
+    md = string.concat(md, "- Item three\n");
+    md = string.concat(md, "\n");
+    md = string.concat(md, "Ordered list:\n");
+    md = string.concat(md, "\n");
+    md = string.concat(md, "1. First item\n");
+    md = string.concat(md, "2. Second item\n");
+    md = string.concat(md, "3. Third item\n");
+    md = string.concat(md, "\n");
+    md = string.concat(md, "### Links and Images\n");
+    md = string.concat(md, "\n");
+    md = string.concat(md, "This is a [link to AILang](https://ailang.ai).\n");
+    md = string.concat(md, "\n");
+    md = string.concat(md, "### Code Block\n");
+    md = string.concat(md, "\n");
+    md = string.concat(md, "```\n");
+    md = string.concat(md, "fn hello() {\n");
+    md = string.concat(md, "    print(\"Hello, World!\");\n");
+    md = string.concat(md, "    return 0\n");
+    md = string.concat(md, "}\n");
+    md = string.concat(md, "```\n");
+    md = string.concat(md, "\n");
+    md = string.concat(md, "### Horizontal Rule\n");
+    md = string.concat(md, "\n");
+    md = string.concat(md, "---\n");
+    md = string.concat(md, "\n");
+    md = string.concat(md, "Final paragraph with **bold**, *italic*, and ***bold-italic*** text.\n");
+
+    print("--- Input ---");
+    let md_lines = split_lines(md);
+    print_lines(md_lines, 0);
+
+    print("\n--- Output HTML ---");
+    let html = process_document(md);
+    let html_lines = split_lines(html);
+    print_lines(html_lines, 0);
+
+    file.write("sample_output.html", html);
+    print("\nHTML saved to sample_output.html");
+
+    return 0
+}

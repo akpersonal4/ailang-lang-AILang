@@ -1,0 +1,13 @@
+import csv;
+import string;
+
+fn main() {
+    let raw = "name,age\nAlice,30\nBob,25\n";
+    let data = csv.parse(raw);
+    print("parsed:", data);
+    let header = csv.parse_header(raw);
+    print("header:", header);
+    let out = csv.stringify(data);
+    print("output:", out);
+    return 0
+}

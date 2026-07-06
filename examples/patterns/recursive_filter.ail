@@ -1,0 +1,45 @@
+// Recursive Filter Pattern
+// Filters a list by a predicate function
+// Use: fn predicate(item) { return condition }
+//
+// fn filter_helper(coll, i, pred, acc) {
+//     if (i >= list.len(coll)) { return acc }
+//     let item = list.get(coll, i);
+//     if (pred(item)) { list.append(acc, item) }
+//     return filter_helper(coll, i + 1, pred, acc)
+// }
+// fn filter(coll, pred) {
+//     return filter_helper(coll, 0, pred, list.new())
+// }
+
+import list;
+
+fn is_even(n) { return n % 2 == 0 }
+
+fn filter_helper(coll, i, pred, acc) {
+    if (i >= list.len(coll)) { return acc }
+    let item = list.get(coll, i);
+    if (pred(item)) { list.append(acc, item) }
+    return filter_helper(coll, i + 1, pred, acc)
+}
+
+fn filter(coll, pred) {
+    return filter_helper(coll, 0, pred, list.new())
+}
+
+fn print_items(items, i) {
+    if (i >= list.len(items)) { return 0 }
+    print(" ", list.get(items, i));
+    return print_items(items, i + 1)
+}
+
+fn main() {
+    let nums = list.new();
+    list.append(nums, 1); list.append(nums, 2);
+    list.append(nums, 3); list.append(nums, 4);
+    list.append(nums, 5); list.append(nums, 6);
+    let evens = filter(nums, is_even);
+    print("Evens:");
+    print_items(evens, 0);
+    print("")
+}

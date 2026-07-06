@@ -1,0 +1,70 @@
+import environment;
+import string;
+import list;
+import map;
+
+fn bool_to_string(b) {
+    if (b) {
+        return "true";
+    }
+    return "false";
+}
+
+fn check_prefix(keys, idx, n, prefix) {
+    if (idx >= n) {
+        return false;
+    }
+    let key = list.get(keys, idx);
+    if (string.starts_with(key, prefix)) {
+        return true;
+    }
+    return check_prefix(keys, idx + 1, n, prefix);
+}
+
+fn trie_insert(root, word) {
+    let children = map.get(root, "children");
+    map.set(children, word, true);
+    return root;
+}
+
+fn trie_search(root, word) {
+    let children = map.get(root, "children");
+    return map.has(children, word);
+}
+
+fn trie_starts_with(root, prefix) {
+    let children = map.get(root, "children");
+    let keys = map.keys(children);
+    return check_prefix(keys, 0, list.len(keys), prefix);
+}
+
+fn build_trie() {
+    let root = map.new();
+    map.set(root, "children", map.new());
+    map.set(root, "end", false);
+    trie_insert(root, "hello");
+    trie_insert(root, "help");
+    trie_insert(root, "world");
+    trie_insert(root, "hi");
+    trie_insert(root, "her");
+    trie_insert(root, "hero");
+    return root;
+}
+
+fn main_loop(args, idx, n, root) {
+    if (idx >= n) {
+        return 0;
+    }
+    let word = list.get(args, idx);
+    let found = trie_search(root, word);
+    let has_prefix = trie_starts_with(root, word);
+    print(word + ": search=" + bool_to_string(found) + ", starts_with=" + bool_to_string(has_prefix));
+    return main_loop(args, idx + 1, n, root);
+}
+
+fn main() {
+    let args = environment.args();
+    let root = build_trie();
+    let n = list.len(args);
+    return main_loop(args, 0, n, root);
+}

@@ -1,0 +1,43 @@
+import math;
+
+fn test_abs_neg() {
+    print("abs -5:", math.abs(-5));
+    return 0
+}
+
+fn test_abs_pos() {
+    print("abs 5:", math.abs(5));
+    return 0
+}
+
+fn test_abs_zero() {
+    print("abs 0:", math.abs(0));
+    return 0
+}
+
+fn test_string_add() {
+    let s = "hello" + " world";
+    print("s:", s);
+    return 0
+}
+
+fn test_true_false_ops() {
+    let t = true;
+    let f = false;
+    print("t:", t);
+    print("f:", f);
+    print("!t:", !t);
+    print("!f:", !f);
+    if (t) { print("true branch") }
+    if (!f) { print("!false branch") }
+    return 0
+}
+
+fn main() {
+    test_abs_neg();
+    test_abs_pos();
+    test_abs_zero();
+    test_string_add();
+    test_true_false_ops();
+    return 0
+}

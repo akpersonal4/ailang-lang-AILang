@@ -1,0 +1,20 @@
+fn calc_bmi_x100(weight_kg, height_cm) {
+    return weight_kg * 1000000 / (height_cm * height_cm)
+}
+
+fn bmi_category(bmi_x100) {
+    if (bmi_x100 < 1850) { return "Underweight" }
+    if (bmi_x100 < 2500) { return "Normal" }
+    if (bmi_x100 < 3000) { return "Overweight" }
+    return "Obese"
+}
+
+fn main() {
+    print("=== BMI Calculator ===");
+    let bmi1 = calc_bmi_x100(70, 175);
+    print("70kg, 175cm: BMI*100 =", bmi1, "-", bmi_category(bmi1));
+    let bmi2 = calc_bmi_x100(90, 180);
+    print("90kg, 180cm: BMI*100 =", bmi2, "-", bmi_category(bmi2));
+    let bmi3 = calc_bmi_x100(50, 165);
+    print("50kg, 165cm: BMI*100 =", bmi3, "-", bmi_category(bmi3))
+}

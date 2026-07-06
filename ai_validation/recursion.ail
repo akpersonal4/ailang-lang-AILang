@@ -1,0 +1,31 @@
+fn factorial(n) {
+    if (n == 0) {
+        return 1
+    }
+    return n * factorial(n - 1)
+}
+
+fn fib(n) {
+    if (n == 0) {
+        return 0
+    }
+    if (n == 1) {
+        return 1
+    }
+    return fib(n - 1) + fib(n - 2)
+}
+
+fn countdown(n) {
+    if (n == 0) {
+        return 0
+    }
+    print(n);
+    return countdown(n - 1)
+}
+
+fn main() {
+    print("5! =", factorial(5));
+    print("fib(10) =", fib(10));
+    countdown(5);
+    return 0
+}

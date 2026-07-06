@@ -1,0 +1,127 @@
+import random;
+import list;
+import string;
+
+fn find_substring(text, pattern, start) {
+    let tlen = string.length(text);
+    let plen = string.length(pattern);
+    if (start + plen > tlen) { return -1 }
+    let segment = string.substring(text, start, start + plen);
+    if (string.equals(segment, pattern)) { return start }
+    return find_substring(text, pattern, start + 1)
+}
+
+fn string_contains(text, pattern) {
+    if (find_substring(text, pattern, 0) >= 0) { return true }
+    return false
+}
+
+fn char_at(s, pos) {
+    return string.substring(s, pos, pos + 1)
+}
+
+fn count_green_at_pos(guess, word, pos, already_green) {
+    if (pos < 0) { return already_green }
+    let gc = char_at(guess, pos);
+    let wc = char_at(word, pos);
+    if (gc == wc) {
+        list.append(already_green, gc)
+    }
+    return count_green_at_pos(guess, word, pos - 1, already_green)
+}
+
+fn count_in_list(items, target, i) {
+    if (i >= list.len(items)) { return 0 }
+    let c = 1;
+    if (list.get(items, i) == target) {
+        return c + count_in_list(items, target, i + 1)
+    }
+    return count_in_list(items, target, i + 1)
+}
+
+fn feedback_char(guess, word, pos, greens) {
+    let gc = char_at(guess, pos);
+    let wc = char_at(word, pos);
+    if (gc == wc) { return "G" }
+    if (!string_contains(word, gc)) { return "-" }
+    let word_count = count_green_at_pos(word, word, string.length(word) - 1, list.new());
+    let gc_in_word = 0;
+    if (string_contains(word, gc)) { gc_in_word = 1 }
+    let green_count = count_in_list(greens, gc, 0);
+    if (gc_in_word > green_count) { return "Y" }
+    return "-"
+}
+
+fn build_feedback(guess, word, pos, greens, acc) {
+    if (pos >= string.length(guess)) { return acc }
+    let fc = feedback_char(guess, word, pos, greens);
+    return build_feedback(guess, word, pos + 1, greens, acc + fc + " ")
+}
+
+fn get_feedback(guess, word) {
+    let greens = count_green_at_pos(guess, word, string.length(guess) - 1, list.new());
+    return build_feedback(guess, word, 0, greens, "")
+}
+
+fn is_correct(guess, word, pos) {
+    if (pos >= string.length(guess)) { return true }
+    if (char_at(guess, pos) != char_at(word, pos)) { return false }
+    return is_correct(guess, word, pos + 1)
+}
+
+fn get_words() {
+    let w = list.new();
+    list.append(w, "apple");
+    list.append(w, "crane");
+    list.append(w, "house");
+    list.append(w, "music");
+    list.append(w, "piano");
+    list.append(w, "river");
+    list.append(w, "stone");
+    list.append(w, "table");
+    list.append(w, "vivid");
+    list.append(w, "watch");
+    return w
+}
+
+fn pick_guess(attempt) {
+    let guesses = list.new();
+    list.append(guesses, "crane");
+    list.append(guesses, "stone");
+    list.append(guesses, "music");
+    list.append(guesses, "table");
+    list.append(guesses, "river");
+    list.append(guesses, "piano");
+    list.append(guesses, "house");
+    list.append(guesses, "watch");
+    list.append(guesses, "apple");
+    list.append(guesses, "vivid");
+    if (attempt <= list.len(guesses)) {
+        return list.get(guesses, attempt - 1)
+    }
+    return random.choice(guesses)
+}
+
+fn play_wordle(word, attempt) {
+    if (attempt > 6) {
+        print("Game over! The word was:", word);
+        return 0
+    }
+    let guess = pick_guess(attempt);
+    let feedback = get_feedback(guess, word);
+    print("Attempt", attempt, ":", guess, "=>", feedback);
+    if (is_correct(guess, word, 0)) {
+        print("You guessed it in", attempt, "attempts!");
+        return 0
+    }
+    return play_wordle(word, attempt + 1)
+}
+
+fn main() {
+    print("=== Wordle ===");
+    print("Guess the 5-letter word in 6 attempts");
+    let words = get_words();
+    let word = random.choice(words);
+    print("(Word is:", word, ")");
+    play_wordle(word, 1)
+}

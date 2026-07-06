@@ -124,5 +124,9 @@ class DependencyGraph:
         """Get all direct dependencies of a module."""
         return self._edges.get(module, set())
 
+    def topological_order(self) -> list[str]:
+        """Return modules in compilation order."""
+        return self.topological_sort()
+
     def __iter__(self) -> Iterator[ModuleNode]:
         return iter(self._nodes.values())

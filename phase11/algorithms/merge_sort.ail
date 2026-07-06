@@ -1,0 +1,104 @@
+import environment;
+import convert;
+import list;
+
+fn make_list_acc(args, idx, n, acc) {
+    if (idx >= n) {
+        return acc;
+    }
+    let val = convert.to_int(list.get(args, idx));
+    list.append(acc, val);
+    return make_list_acc(args, idx + 1, n, acc);
+}
+
+fn make_list(args, start) {
+    return make_list_acc(args, start, list.len(args), list.new());
+}
+
+fn sublist_acc(lst, idx, end, acc) {
+    if (idx > end) {
+        return acc;
+    }
+    list.append(acc, list.get(lst, idx));
+    return sublist_acc(lst, idx + 1, end, acc);
+}
+
+fn sublist(lst, start, end) {
+    if (start > end) {
+        return list.new();
+    }
+    return sublist_acc(lst, start, end, list.new());
+}
+
+fn list_rest(lst) {
+    let n = list.len(lst);
+    if (n <= 1) {
+        return list.new();
+    }
+    return sublist(lst, 1, n - 1);
+}
+
+fn append_all(acc, lst) {
+    if (list.len(lst) == 0) {
+        return acc;
+    }
+    list.append(acc, list.get(lst, 0));
+    return append_all(acc, list_rest(lst));
+}
+
+fn merge_acc(left, right, acc) {
+    if (list.len(left) == 0) {
+        return append_all(acc, right);
+    }
+    if (list.len(right) == 0) {
+        return append_all(acc, left);
+    }
+    let l0 = list.get(left, 0);
+    let r0 = list.get(right, 0);
+    if (l0 <= r0) {
+        list.append(acc, l0);
+        return merge_acc(list_rest(left), right, acc);
+    } else {
+        list.append(acc, r0);
+        return merge_acc(left, list_rest(right), acc);
+    }
+}
+
+fn merge(left, right) {
+    return merge_acc(left, right, list.new());
+}
+
+fn merge_sort(lst) {
+    let n = list.len(lst);
+    if (n <= 1) {
+        return lst;
+    }
+    let mid = convert.to_int(n / 2);
+    let left = merge_sort(sublist(lst, 0, mid - 1));
+    let right = merge_sort(sublist(lst, mid, n - 1));
+    return merge(left, right);
+}
+
+fn list_to_string_acc(lst, idx, n, acc) {
+    if (idx >= n) {
+        return acc;
+    }
+    let val_str = convert.to_string(list.get(lst, idx));
+    if (acc == "") {
+        return list_to_string_acc(lst, idx + 1, n, val_str);
+    }
+    return list_to_string_acc(lst, idx + 1, n, acc + " " + val_str);
+}
+
+fn list_to_string(lst) {
+    return list_to_string_acc(lst, 0, list.len(lst), "");
+}
+
+fn main() {
+    let args = environment.args();
+    let lst = make_list(args, 0);
+    print("Original: " + list_to_string(lst));
+    let sorted = merge_sort(lst);
+    print("Sorted: " + list_to_string(sorted));
+    return 0;
+}

@@ -1,0 +1,55 @@
+import list;
+import map;
+
+fn test_list_empty_remove() {
+    let l = list.new();
+    list.remove(l, "a");
+    print("removed from empty list (no crash)");
+    return 0
+}
+
+fn test_map_delete_missing() {
+    let m = map.new();
+    map.set(m, "k", "v");
+    map.delete(m, "missing");
+    print("deleted missing key (no crash)");
+    return 0
+}
+
+fn test_list_contains_empty() {
+    let l = list.new();
+    let c = list.contains(l, "x");
+    print("contains on empty:", c);
+    return 0
+}
+
+fn test_list_len_empty() {
+    let l = list.new();
+    let n = list.len(l);
+    print("len of empty:", n);
+    return 0
+}
+
+fn test_map_has_empty() {
+    let m = map.new();
+    let h = map.has(m, "x");
+    print("has on empty:", h);
+    return 0
+}
+
+fn test_map_keys_empty() {
+    let m = map.new();
+    let k = map.keys(m);
+    print("keys of empty:", k);
+    return 0
+}
+
+fn main() {
+    test_list_empty_remove();
+    test_map_delete_missing();
+    test_list_contains_empty();
+    test_list_len_empty();
+    test_map_has_empty();
+    test_map_keys_empty();
+    return 0
+}

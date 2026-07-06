@@ -11,6 +11,7 @@ from compiler.ast.nodes import (
     ASTNode,
     BinaryExpressionNode,
     BlockNode,
+    BooleanLiteralNode,
     CallExpressionNode,
     ExpressionStatementNode,
     FunctionDeclarationNode,
@@ -42,10 +43,14 @@ class TypeChecker:
     """Type checks an AST."""
 
     def __init__(
-        self, symbol_table: SymbolTable, reporter: DiagnosticReporter | None = None
+        self,
+        symbol_table: SymbolTable,
+        reporter: DiagnosticReporter | None = None,
+        source_text: str | None = None,
     ) -> None:
         self.symbol_table = symbol_table
         self.reporter = reporter or DiagnosticReporter()
+        self._source_lines = source_text.split("\n") if source_text else None
         self.current_function_return_type: Type | None = None
 
     def check(self, node: ASTNode) -> None:
@@ -348,6 +353,9 @@ class TypeChecker:
     def _infer_StringLiteralNode(self, node: StringLiteralNode) -> Type:
         return STRING_TYPE
 
+    def _infer_BooleanLiteralNode(self, node: BooleanLiteralNode) -> Type:
+        return BOOL_TYPE
+
     # ------------------------------------------------------------------
     # Helpers
     # ------------------------------------------------------------------
@@ -357,7 +365,16 @@ class TypeChecker:
     ) -> None:
         line = None
         column = None
-        if start_span is not None:
+        if start_span is not None and self._source_lines is not None:
+            line = 1
+            col_offset = start_span
+            for lineno, src_line in enumerate(self._source_lines, 1):
+                if col_offset <= len(src_line):
+                    line = lineno
+                    column = col_offset + 1
+                    break
+                col_offset -= len(src_line) + 1
+        elif start_span is not None:
             line = 1
             column = start_span + 1
         diagnostic = Diagnostic(

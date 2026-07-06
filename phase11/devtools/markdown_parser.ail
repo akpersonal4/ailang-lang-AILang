@@ -1,0 +1,91 @@
+import file;
+import environment;
+import list;
+import io;
+import convert;
+import string;
+
+fn process_line(line) {
+    let trimmed = line.strip();
+    if (trimmed == "") {
+        return "empty";
+    }
+    if (trimmed.startswith("### ")) {
+        return "h3";
+    }
+    if (trimmed.startswith("## ")) {
+        return "h2";
+    }
+    if (trimmed.startswith("# ")) {
+        return "h1";
+    }
+    if (trimmed.startswith("- ") || trimmed.startswith("* ")) {
+        return "li";
+    }
+    if (trimmed.startswith("> ")) {
+        return "bq";
+    }
+    return "p";
+}
+
+fn extract_content(trimmed, type) {
+    if (type == "h1") {
+        return trimmed.substring(2, string.length(trimmed));
+    }
+    if (type == "h2") {
+        return trimmed.substring(3, string.length(trimmed));
+    }
+    if (type == "h3") {
+        return trimmed.substring(4, string.length(trimmed));
+    }
+    if (type == "li") {
+        return trimmed.substring(2, string.length(trimmed));
+    }
+    if (type == "bq") {
+        return trimmed.substring(2, string.length(trimmed));
+    }
+    return trimmed;
+}
+
+fn render_html(lines, idx, result) {
+    if (idx >= list.len(lines)) {
+        return result;
+    }
+    let line = list.get(lines, idx);
+    let trimmed = line.strip();
+    let type = process_line(line);
+    let content = extract_content(trimmed, type);
+    if (type == "empty") {
+        return render_html(lines, idx + 1, result);
+    }
+    if (type == "h1") {
+        return render_html(lines, idx + 1, result + "<h1>" + content + "</h1>\n");
+    }
+    if (type == "h2") {
+        return render_html(lines, idx + 1, result + "<h2>" + content + "</h2>\n");
+    }
+    if (type == "h3") {
+        return render_html(lines, idx + 1, result + "<h3>" + content + "</h3>\n");
+    }
+    if (type == "li") {
+        return render_html(lines, idx + 1, result + "<li>" + content + "</li>\n");
+    }
+    if (type == "bq") {
+        return render_html(lines, idx + 1, result + "<blockquote>" + content + "</blockquote>\n");
+    }
+    return render_html(lines, idx + 1, result + "<p>" + content + "</p>\n");
+}
+
+fn main() {
+    let args = environment.args();
+    if (list.len(args) < 1) {
+        io.println("Usage: markdown_parser <file>");
+        return 1;
+    }
+    let file_path = list.get(args, 0);
+    let content = file.read(file_path);
+    let lines = content.split("\n");
+    let result = render_html(lines, 0, "");
+    io.println(result);
+    return 0;
+}

@@ -1,0 +1,15 @@
+import math;
+
+fn main() {
+    print("add:", math.add(10, 20));
+    print("sub:", math.sub(20, 10));
+    print("mul:", math.mul(5, 6));
+    print("div:", math.div(100, 3));
+    print("pow:", math.pow(2, 10));
+    print("sqrt:", math.sqrt(100));
+    print("abs:", math.abs(-42));
+    print("floor:", math.floor(3.7));
+    print("ceil:", math.ceil(3.2));
+    print("round:", math.round(3.5));
+    return 0
+}

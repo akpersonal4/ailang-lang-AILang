@@ -1,0 +1,13 @@
+import list;
+
+fn main() {
+    let inner = list.new();
+    list.append(inner, "a");
+    list.append(inner, "b");
+    let outer = list.new();
+    list.append(outer, inner);
+    let retrieved = list.get(outer, 0);
+    print("inner get 0:", list.get(retrieved, 0));
+    print("inner get 1:", list.get(retrieved, 1));
+    return 0
+}

@@ -1,0 +1,74 @@
+import file;
+import environment;
+import list;
+import io;
+import convert;
+import map;
+
+fn starts_with(text, prefix) {
+    return text.startswith(prefix);
+}
+
+fn init_metrics() {
+    let m = map.new();
+    map.set(m, "total", 0);
+    map.set(m, "code", 0);
+    map.set(m, "comments", 0);
+    map.set(m, "blank", 0);
+    map.set(m, "functions", 0);
+    map.set(m, "imports", 0);
+    return m;
+}
+
+fn analyze_lines(lines, idx, metrics) {
+    if (idx >= list.len(lines)) {
+        return metrics;
+    }
+    let line = list.get(lines, idx);
+    let trimmed = line.strip();
+    map.set(metrics, "total", map.get(metrics, "total") + 1);
+    if (trimmed == "") {
+        map.set(metrics, "blank", map.get(metrics, "blank") + 1);
+    } else if (starts_with(trimmed, "//")) {
+        map.set(metrics, "comments", map.get(metrics, "comments") + 1);
+    } else {
+        map.set(metrics, "code", map.get(metrics, "code") + 1);
+    }
+    if (line.find("fn ") >= 0) {
+        map.set(metrics, "functions", map.get(metrics, "functions") + 1);
+    }
+    if (line.find("import ") >= 0) {
+        map.set(metrics, "imports", map.get(metrics, "imports") + 1);
+    }
+    return analyze_lines(lines, idx + 1, metrics);
+}
+
+fn collect_args(args, idx, result) {
+    if (idx >= list.len(args)) {
+        return result;
+    }
+    let val = list.get(args, idx);
+    if (val != "--") {
+        list.append(result, val);
+    }
+    return collect_args(args, idx + 1, result);
+}
+
+fn main() {
+    let raw = environment.args();
+    let all_args = list.new();
+    let user_args = collect_args(raw, 0, all_args);
+    let file_path = list.get(user_args, 0);
+    let content = file.read(file_path);
+    let lines = content.split("\n");
+    let metrics = init_metrics();
+    let result = analyze_lines(lines, 0, metrics);
+    io.println("Metrics for: " + file_path);
+    io.println("  Total lines: " + convert.to_string(map.get(result, "total")));
+    io.println("  Code lines: " + convert.to_string(map.get(result, "code")));
+    io.println("  Comment lines: " + convert.to_string(map.get(result, "comments")));
+    io.println("  Blank lines: " + convert.to_string(map.get(result, "blank")));
+    io.println("  Functions: " + convert.to_string(map.get(result, "functions")));
+    io.println("  Imports: " + convert.to_string(map.get(result, "imports")));
+    return 0;
+}

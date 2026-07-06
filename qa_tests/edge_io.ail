@@ -1,0 +1,8 @@
+import io;
+
+fn main() {
+    print("reading stdin...");
+    let line = io.readln();
+    print("got:", line);
+    return 0
+}

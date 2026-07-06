@@ -2,64 +2,39 @@
 
 ## Current Milestone
 
-Validation Sprint 2
+v0.1.2 RC — Release Audit & Bug Fix Sprint
 
 ## Status
 
-Complete
+**Completed** — All 6 compiler bugs fixed, 522 tests passing, documentation synchronized for v0.1.2 release.
 
-## What Was Validated
+## What Was Delivered in v0.1.2
 
-Ten compiler validation examples were written and executed through the official CLI
-to stress-test the language and surface compiler bugs.
+### Compiler Bug Fixes (Sprint #001)
 
-Each example validates a specific subset of AILang language features:
+- **BUG-001**: Empty `return;` — now produces clear diagnostic instead of AssertionError crash
+- **BUG-002**: Missing initializer `let x = ;` — now produces clear diagnostic instead of AssertionError crash
+- **BUG-003**: Module bare-name resolution — `_resolve_name` checks `self._modules`; module functions registered at init
+- **BUG-004**: Float literal `3.14` — now emits LEX004 diagnostic at lexer level instead of cryptic parser crash
+- **BUG-005**: Block scope shadowing — `_execute_block` creates a new `StackFrame` per block scope
+- **BUG-006**: Deep recursion — raised recursion limit from 1000 to 10000
 
-| Example             | Features Validated                                    |
-|---------------------|-------------------------------------------------------|
-| word_counter        | functions, variables, arithmetic, return, print       |
-| text_search         | functions, if/else, string equality, return, print    |
-| config_loader       | functions, variables, return, print                   |
-| json_parser         | functions, if/else, comparisons, return, print        |
-| csv_reader          | functions, variables, return, print                   |
-| ini_parser          | functions, if/else, comparisons, return, print        |
-| markdown_parser     | functions, if/else, string equality, return, print    |
-| file_copy           | functions, if/else, comparisons, return, print        |
-| http_client         | functions, if/else, string equality, return, print    |
-| dir_tree            | functions, if/else, comparisons, return, print        |
+### Documentation & Version Sync
 
-## Naming
-
-These programs are intentionally called **Compiler Validation Examples**, not
-"real applications". They use hardcoded input data because AILang does not yet
-have a standard library.
-
-Real applications (JSON parsers that read files, HTTP clients that open sockets,
-file copy utilities that read bytes) become possible once the standard library
-is introduced in Phase 2.
-
-## Bug Found and Fixed
-
-| Bug | Location | Fix |
-|-----|----------|-----|
-| CLI auto-printed return value of main() | compiler/cli/main.py | Removed print(result); output must come from print() builtins only |
-
-Regression test: `test_regression_main_return_value_not_printed_by_cli`
+- Version bumped to **0.1.2** across all files
+- LEX004 added to LANGUAGE_SPEC.md §2.8 and Appendix E
+- CHANGELOG.md restructured with proper v0.1.2 section
+- README.md badges and test counts updated (374→522)
+- LANGUAGE_TOUR.md float type example fixed
+- PROJECT_STATE.json, ROADMAP.md, CURRENT_MILESTONE.md, RELEASE_PROCESS.md all updated
 
 ## Quality Gates
 
-- pytest: 158 passed
+- pytest: **522 passed**
 - black: clean
 - ruff: clean
 - mypy: clean
 
 ## Next Milestone
 
-Standard Library (Phase 2)
-
-Prerequisites for real applications:
-- File I/O: open, read, write, close
-- String operations: len, contains, split, startsWith, charAt
-- Dynamic collections (arrays/lists)
-
-Do NOT start without CTO approval.
+v0.2.x — Evidence-based improvements (post-freeze).

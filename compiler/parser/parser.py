@@ -103,6 +103,8 @@ class Parser:
                 TokenKind.IDENTIFIER,
                 TokenKind.NUMBER,
                 TokenKind.STRING,
+                TokenKind.TRUE,
+                TokenKind.FALSE,
                 TokenKind.LPAREN,
                 TokenKind.MINUS,
                 TokenKind.BANG,
@@ -147,7 +149,10 @@ class Parser:
             module_path.children.append(
                 CSTNode("Alias", token=Token(TokenKind.IDENTIFIER, alias, 0, 0))
             )
-        return CSTNode("ImportDeclaration", [module_path])
+        import_decl = CSTNode("ImportDeclaration", [module_path])
+        import_decl.start_span = import_token.start_offset
+        import_decl.end_span = module_path.end_span
+        return import_decl
 
     def parse_expression(self) -> CSTNode:
         return _parse_expression(self.stream)

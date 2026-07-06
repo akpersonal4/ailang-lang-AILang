@@ -1,0 +1,11 @@
+fn int(min, max) {
+    return random_int(min, max)
+}
+
+fn float() {
+    return random_float()
+}
+
+fn choice(collection) {
+    return random_choice(collection)
+}

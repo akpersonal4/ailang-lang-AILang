@@ -1,0 +1,405 @@
+// HTTP Request Parser
+// Parses HTTP/1.1 request strings into structured AILang data
+
+import list;
+import map;
+import string;
+import convert;
+
+// ============================================================
+// Level 0: No-dependency utilities
+// ============================================================
+
+fn find_substring(text, start, pattern) {
+    if (start >= string.length(text)) { return -1 }
+    let remaining = string.length(text) - start;
+    let pat_len = string.length(pattern);
+    if (remaining < pat_len) { return -1 }
+    let chunk = string.substring(text, start, start + pat_len);
+    if (string.equals(chunk, pattern)) { return start }
+    return find_substring(text, start + 1, pattern)
+}
+
+fn is_empty_line(line) {
+    if (string.length(string.trim(line)) == 0) { return true }
+    return false
+}
+
+fn trim_cr(line) {
+    if (string.length(line) == 0) { return line }
+    let last_char = string.substring(line, string.length(line) - 1, string.length(line));
+    if (string.equals(last_char, "\r")) {
+        return string.substring(line, 0, string.length(line) - 1)
+    }
+    return line
+}
+
+// ============================================================
+// Level 1: String splitting
+// ============================================================
+
+fn split_string_helper(text, delim, start, result) {
+    let len = string.length(text);
+    let delim_len = string.length(delim);
+    if (start >= len) { return result }
+    let pos = find_substring(text, start, delim);
+    if (pos == -1) {
+        list.append(result, string.substring(text, start, len));
+        return result
+    }
+    list.append(result, string.substring(text, start, pos));
+    return split_string_helper(text, delim, pos + delim_len, result)
+}
+
+fn normalize_line_endings_helper(text, i, result) {
+    if (i >= string.length(text)) { return result }
+    let remaining = string.substring(text, i, string.length(text));
+    if (string.starts_with(remaining, "\r\n")) {
+        return normalize_line_endings_helper(text, i + 2, string.concat(result, "\n"))
+    }
+    let char = string.substring(text, i, i + 1);
+    return normalize_line_endings_helper(text, i + 1, string.concat(result, char))
+}
+
+fn normalize_line_endings(text) {
+    return normalize_line_endings_helper(text, 0, "")
+}
+
+fn split_string(text, delim) {
+    let result = list.new();
+    return split_string_helper(text, delim, 0, result)
+}
+
+fn split_lines(text) {
+    let normalized = normalize_line_endings(text);
+    return split_string(normalized, "\n")
+}
+
+// ============================================================
+// Level 2: Parsing primitives
+// ============================================================
+
+fn parse_query_pairs(pairs, i, params) {
+    if (i >= list.len(pairs)) { return params }
+    let pair = list.get(pairs, i);
+    let eq_pos = find_substring(pair, 0, "=");
+    if (eq_pos != -1) {
+        let key = string.substring(pair, 0, eq_pos);
+        let value = string.substring(pair, eq_pos + 1, string.length(pair));
+        map.set(params, key, value)
+    }
+    return parse_query_pairs(pairs, i + 1, params)
+}
+
+fn parse_query_string(qs) {
+    let params = map.new();
+    if (string.length(qs) == 0) { return params }
+    let pairs = split_string(qs, "&");
+    return parse_query_pairs(pairs, 0, params)
+}
+
+fn parse_request_line(line) {
+    let result = map.new();
+    let trimmed = string.trim(line);
+    let parts = split_string(trimmed, " ");
+    if (list.len(parts) < 3) {
+        map.set(result, "error", "Invalid request line");
+        return result
+    }
+    let method = list.get(parts, 0);
+    let full_uri = list.get(parts, 1);
+    let version = list.get(parts, 2);
+    map.set(result, "method", method);
+    map.set(result, "http_version", version);
+    let qmark_pos = find_substring(full_uri, 0, "?");
+    if (qmark_pos == -1) {
+        map.set(result, "uri", full_uri);
+        map.set(result, "query_string", "");
+        map.set(result, "query_params", map.new())
+    } else {
+        let path = string.substring(full_uri, 0, qmark_pos);
+        let qs = string.substring(full_uri, qmark_pos + 1, string.length(full_uri));
+        map.set(result, "uri", path);
+        map.set(result, "query_string", qs);
+        map.set(result, "query_params", parse_query_string(qs))
+    }
+    return result
+}
+
+fn parse_header_line(line) {
+    let result = map.new();
+    let colon_pos = find_substring(line, 0, ": ");
+    if (colon_pos == -1) {
+        colon_pos = find_substring(line, 0, ":");
+        if (colon_pos == -1) {
+            map.set(result, "key", "");
+            map.set(result, "value", line);
+            return result
+        }
+        let key = string.substring(line, 0, colon_pos);
+        let value = string.trim(string.substring(line, colon_pos + 1, string.length(line)));
+        map.set(result, "key", key);
+        map.set(result, "value", value);
+        return result
+    }
+    let key = string.substring(line, 0, colon_pos);
+    let value = string.trim(string.substring(line, colon_pos + 2, string.length(line)));
+    map.set(result, "key", key);
+    map.set(result, "value", value);
+    return result
+}
+
+// ============================================================
+// Level 3: Header parsing
+// ============================================================
+
+fn parse_headers_helper(lines, i, headers) {
+    if (i >= list.len(lines)) {
+        let result = map.new();
+        map.set(result, "headers", headers);
+        map.set(result, "body_start", i);
+        return result
+    }
+    let line = trim_cr(list.get(lines, i));
+    if (is_empty_line(line)) {
+        let result = map.new();
+        map.set(result, "headers", headers);
+        map.set(result, "body_start", i + 1);
+        return result
+    }
+    let parsed = parse_header_line(line);
+    let key = map.get(parsed, "key");
+    if (string.length(key) > 0) {
+        map.set(headers, key, map.get(parsed, "value"))
+    }
+    return parse_headers_helper(lines, i + 1, headers)
+}
+
+fn parse_headers_from_lines(lines, start_idx) {
+    let headers = map.new();
+    let parsed = parse_headers_helper(lines, start_idx, headers);
+    return parsed
+}
+
+// ============================================================
+// Level 4: Full request parsing
+// ============================================================
+
+fn get_body_helper(lines, i, bytes_read, content_length, result) {
+    if (i >= list.len(lines)) { return result }
+    if (content_length > 0 && bytes_read >= content_length) { return result }
+    let line = list.get(lines, i);
+    let line_len = string.length(line);
+    let new_bytes = bytes_read + line_len;
+    if (i < list.len(lines) - 1) {
+        new_bytes = new_bytes + 1
+    }
+    let new_result = string.concat(result, line);
+    if (i < list.len(lines) - 1) {
+        new_result = string.concat(new_result, "\n")
+    }
+    if (new_bytes >= content_length) {
+        return new_result
+    }
+    return get_body_helper(lines, i + 1, new_bytes, content_length, new_result)
+}
+
+fn get_body_from_lines(lines, start_idx, content_length) {
+    return get_body_helper(lines, start_idx, 0, content_length, "")
+}
+
+fn get_content_length(headers) {
+    let cl_key = "Content-Length";
+    if (map.has(headers, cl_key)) {
+        let val = map.get(headers, cl_key);
+        return convert.to_int(val)
+    }
+    // Try lowercase variant
+    let cl_key_lower = "content-length";
+    if (map.has(headers, cl_key_lower)) {
+        let val = map.get(headers, cl_key_lower);
+        return convert.to_int(val)
+    }
+    return 0
+}
+
+fn parse_http_request(text) {
+    let result = map.new();
+    let lines = split_lines(text);
+
+    if (list.len(lines) == 0) {
+        map.set(result, "error", "Empty request");
+        return result
+    }
+
+    // Parse request line (first non-empty line)
+    let request_line = trim_cr(list.get(lines, 0));
+    let request_info = parse_request_line(request_line);
+    map.set(result, "method", map.get(request_info, "method"));
+    map.set(result, "uri", map.get(request_info, "uri"));
+    map.set(result, "query_string", map.get(request_info, "query_string"));
+    map.set(result, "query_params", map.get(request_info, "query_params"));
+    map.set(result, "http_version", map.get(request_info, "http_version"));
+
+    // Parse headers (starting from line 1)
+    let header_result = parse_headers_from_lines(lines, 1);
+    let headers = map.get(header_result, "headers");
+    let body_start = map.get(header_result, "body_start");
+    map.set(result, "headers", headers);
+
+    // Parse body
+    let content_length = get_content_length(headers);
+    map.set(result, "content_length", content_length);
+    let body = get_body_from_lines(lines, body_start, content_length);
+    map.set(result, "body", body);
+
+    // Extract commonly requested fields
+    if (map.has(headers, "Host")) {
+        map.set(result, "host", map.get(headers, "Host"))
+    }
+    if (map.has(headers, "User-Agent")) {
+        map.set(result, "user_agent", map.get(headers, "User-Agent"))
+    }
+    if (map.has(headers, "Content-Type")) {
+        map.set(result, "content_type", map.get(headers, "Content-Type"))
+    }
+
+    return result
+}
+
+// ============================================================
+// Level 5: Display
+// ============================================================
+
+fn print_map_items(map_data, i, keys) {
+    if (i >= list.len(keys)) { return true }
+    let key = list.get(keys, i);
+    let value = map.get(map_data, key);
+    print("    ", key, ":", value);
+    return print_map_items(map_data, i + 1, keys)
+}
+
+fn print_map(m, label) {
+    print("  ", label, ":");
+    let keys = map.keys(m);
+    if (list.len(keys) == 0) {
+        print("    (empty)");
+        return true
+    }
+    return print_map_items(m, 0, keys)
+}
+
+fn print_request(req) {
+    print("=== Parsed HTTP Request ===");
+    print("Method:", map.get(req, "method"));
+    print("URI:", map.get(req, "uri"));
+    print("Query String:", map.get(req, "query_string"));
+    print("HTTP Version:", map.get(req, "http_version"));
+    print("");
+
+    print("Query Parameters:");
+    let qp = map.get(req, "query_params");
+    let qp_keys = map.keys(qp);
+    if (list.len(qp_keys) > 0) {
+        print_map_items(qp, 0, qp_keys)
+    } else {
+        print("  (none)")
+    }
+
+    print("");
+    print("Headers:");
+    let headers = map.get(req, "headers");
+    let h_keys = map.keys(headers);
+    if (list.len(h_keys) > 0) {
+        print_map_items(headers, 0, h_keys)
+    } else {
+        print("  (none)")
+    }
+
+    print("");
+    print("Content-Length:", map.get(req, "content_length"));
+    let body = map.get(req, "body");
+    if (string.length(body) > 0) {
+        print("Body:");
+        print("  ", body)
+    } else {
+        print("Body: (empty)")
+    }
+    print("================================")
+}
+
+// ============================================================
+// Level 6: Sample data and main
+// ============================================================
+
+fn print_lines(lines, i) {
+    if (i >= list.len(lines)) { return true }
+    print("  ", list.get(lines, i));
+    return print_lines(lines, i + 1)
+}
+
+fn main() {
+    print("=== HTTP Request Parser ===\n");
+
+    // Sample 1: Simple GET request
+    print("--- Sample 1: Simple GET ---");
+    let get_request = "GET /index.html HTTP/1.1\r\n";
+    get_request = string.concat(get_request, "Host: example.com\r\n");
+    get_request = string.concat(get_request, "User-Agent: AILang/0.1\r\n");
+    get_request = string.concat(get_request, "Accept: text/html\r\n");
+    get_request = string.concat(get_request, "\r\n");
+
+    let req_lines = split_lines(get_request);
+    print_lines(req_lines, 0);
+    print("");
+    let parsed1 = parse_http_request(get_request);
+    print_request(parsed1);
+    print("");
+
+    // Sample 2: GET with query parameters
+    print("--- Sample 2: GET with Query ---");
+    let query_request = "GET /search?q=ailang&page=1&lang=en HTTP/1.1\r\n";
+    query_request = string.concat(query_request, "Host: api.example.com\r\n");
+    query_request = string.concat(query_request, "User-Agent: curl/8.0\r\n");
+    query_request = string.concat(query_request, "\r\n");
+
+    let parsed2 = parse_http_request(query_request);
+    print_request(parsed2);
+    print("");
+
+    // Sample 3: POST with JSON body
+    print("--- Sample 3: POST with Body ---");
+    let body_text = "{\"name\": \"test\", \"value\": 42}";
+    let cl = convert.to_string(string.length(body_text));
+    let post_request = "POST /api/data HTTP/1.1\r\n";
+    post_request = string.concat(post_request, "Host: api.example.com\r\n");
+    post_request = string.concat(post_request, "Content-Type: application/json\r\n");
+    post_request = string.concat(post_request, "Content-Length: ");
+    post_request = string.concat(post_request, cl);
+    post_request = string.concat(post_request, "\r\n");
+    post_request = string.concat(post_request, "\r\n");
+    post_request = string.concat(post_request, body_text);
+
+    let parsed3 = parse_http_request(post_request);
+    print_request(parsed3);
+    print("");
+
+    // Sample 4: PUT request
+    print("--- Sample 4: PUT Request ---");
+    let put_body = "title=Hello&content=World";
+    let put_cl = convert.to_string(string.length(put_body));
+    let put_request = "PUT /notes/1 HTTP/1.1\r\n";
+    put_request = string.concat(put_request, "Host: localhost:8080\r\n");
+    put_request = string.concat(put_request, "Content-Type: application/x-www-form-urlencoded\r\n");
+    put_request = string.concat(put_request, "Content-Length: ");
+    put_request = string.concat(put_request, put_cl);
+    put_request = string.concat(put_request, "\r\n");
+    put_request = string.concat(put_request, "\r\n");
+    put_request = string.concat(put_request, put_body);
+
+    let parsed4 = parse_http_request(put_request);
+    print_request(parsed4);
+
+    print("\n=== Demo Complete ===");
+    return 0
+}

@@ -1,0 +1,38 @@
+// Recursive Reduce Pattern
+// Accumulates a value across all list elements
+// Use: fn combine(acc, item) { return new_acc }
+//
+// fn reduce_helper(coll, i, acc, combiner) {
+//     if (i >= list.len(coll)) { return acc }
+//     acc = combiner(acc, list.get(coll, i));
+//     return reduce_helper(coll, i + 1, acc, combiner)
+// }
+// fn reduce(coll, initial, combiner) {
+//     return reduce_helper(coll, 0, initial, combiner)
+// }
+
+import list;
+
+fn sum(acc, n) { return acc + n }
+fn product(acc, n) { return acc * n }
+
+fn reduce_helper(coll, i, acc, combiner) {
+    if (i >= list.len(coll)) { return acc }
+    acc = combiner(acc, list.get(coll, i));
+    return reduce_helper(coll, i + 1, acc, combiner)
+}
+
+fn reduce(coll, initial, combiner) {
+    return reduce_helper(coll, 0, initial, combiner)
+}
+
+fn main() {
+    let nums = list.new();
+    list.append(nums, 1); list.append(nums, 2);
+    list.append(nums, 3); list.append(nums, 4);
+    list.append(nums, 5);
+    let total = reduce(nums, 0, sum);
+    let prod = reduce(nums, 1, product);
+    print("Sum:", total);
+    print("Product:", prod)
+}

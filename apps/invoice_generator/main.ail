@@ -1,0 +1,48 @@
+import list;
+import map;
+import time;
+
+fn add_line(lines, desc, qty, price) {
+    let line = map.new();
+    map.set(line, "desc", desc);
+    map.set(line, "qty", qty);
+    map.set(line, "price", price);
+    list.append(lines, line);
+    return lines
+}
+
+fn calc_subtotal_helper(lines, i) {
+    if (i >= list.len(lines)) { return 0 }
+    let line = list.get(lines, i);
+    return map.get(line, "qty") * map.get(line, "price") + calc_subtotal_helper(lines, i + 1)
+}
+
+fn calc_subtotal(lines) {
+    return calc_subtotal_helper(lines, 0)
+}
+
+fn print_lines_helper(lines, i) {
+    if (i >= list.len(lines)) { return false }
+    let line = list.get(lines, i);
+    print(" ", map.get(line, "desc"), "x", map.get(line, "qty"), "@", map.get(line, "price"));
+    print_lines_helper(lines, i + 1)
+}
+
+fn main() {
+    print("=== Invoice Generator ===");
+    let lines = list.new();
+    lines = add_line(lines, "Keyboard", 1, 50);
+    lines = add_line(lines, "Mouse", 2, 25);
+    lines = add_line(lines, "Monitor", 1, 200);
+    let subtotal = calc_subtotal(lines);
+    let tax = subtotal * 8 / 100;
+    let total = subtotal + tax;
+    print("Customer: Acme Corp");
+    print("Date:", time.now());
+    print("---");
+    print_lines_helper(lines, 0);
+    print("---");
+    print("Subtotal:", subtotal);
+    print("Tax (8%):", tax);
+    print("Total:", total)
+}

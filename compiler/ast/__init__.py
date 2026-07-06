@@ -4,6 +4,7 @@ from compiler.ast.builder import ASTBuilder
 from compiler.ast.nodes import (
     BinaryExpressionNode,
     BlockNode,
+    BooleanLiteralNode,
     CallExpressionNode,
     ExpressionStatementNode,
     FunctionDeclarationNode,
@@ -22,6 +23,7 @@ __all__ = [
     "ASTBuilder",
     "BinaryExpressionNode",
     "BlockNode",
+    "BooleanLiteralNode",
     "CallExpressionNode",
     "ExpressionStatementNode",
     "FunctionDeclarationNode",

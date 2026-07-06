@@ -1,0 +1,45 @@
+import list;
+import map;
+
+fn add_todo(todos, task) {
+    let item = map.new();
+    map.set(item, "task", task);
+    map.set(item, "done", false);
+    list.append(todos, item);
+    return todos
+}
+
+fn complete_todo(todos, index) {
+    let item = list.get(todos, index);
+    map.set(item, "done", true);
+    return todos
+}
+
+fn display_helper(todos, i) {
+    if (i >= list.len(todos)) { return false }
+    let item = list.get(todos, i);
+    let done = map.get(item, "done");
+    if (done) {
+        print("[x]", map.get(item, "task"))
+    } else {
+        print("[ ]", map.get(item, "task"))
+    }
+    display_helper(todos, i + 1)
+}
+
+fn display(todos) {
+    display_helper(todos, 0)
+}
+
+fn main() {
+    print("=== Todo Manager ===");
+    let todos = list.new();
+    todos = add_todo(todos, "Learn AILang");
+    todos = add_todo(todos, "Build applications");
+    todos = add_todo(todos, "Write documentation");
+    print("All todos:");
+    display(todos);
+    print("After completing task 0:");
+    todos = complete_todo(todos, 0);
+    display(todos)
+}

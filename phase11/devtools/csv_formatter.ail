@@ -1,0 +1,112 @@
+import file;
+import environment;
+import list;
+import io;
+import csv;
+import convert;
+
+fn find_max(a, b) {
+    if (a > b) {
+        return a;
+    }
+    return b;
+}
+
+fn pad_helper(text, current, target) {
+    if (current >= target) {
+        return text;
+    }
+    return pad_helper(text + " ", current + 1, target);
+}
+
+fn pad(text, width) {
+    let len = text.__len__();
+    return pad_helper(text, len, width);
+}
+
+fn collect_args(args, idx, result) {
+    if (idx >= list.len(args)) {
+        return result;
+    }
+    let val = list.get(args, idx);
+    if (val != "--") {
+        list.append(result, val);
+    }
+    return collect_args(args, idx + 1, result);
+}
+
+fn find_col_width(rows, row_idx, col_idx, current_max) {
+    if (row_idx >= list.len(rows)) {
+        return current_max;
+    }
+    let row = list.get(rows, row_idx);
+    let cell = list.get(row, col_idx);
+    let cell_len = cell.__len__();
+    let new_max = find_max(current_max, cell_len);
+    return find_col_width(rows, row_idx + 1, col_idx, new_max);
+}
+
+fn calc_widths(rows, col_idx, num_cols, result) {
+    if (col_idx >= num_cols) {
+        return result;
+    }
+    let max_w = find_col_width(rows, 0, col_idx, 0);
+    list.append(result, max_w);
+    return calc_widths(rows, col_idx + 1, num_cols, result);
+}
+
+fn format_row(row, widths, col_idx) {
+    if (col_idx >= list.len(row)) {
+        return "";
+    }
+    if (col_idx + 1 >= list.len(row)) {
+        return pad(list.get(row, col_idx), list.get(widths, col_idx));
+    }
+    return pad(list.get(row, col_idx), list.get(widths, col_idx)) + " | " + format_row(row, widths, col_idx + 1);
+}
+
+fn repeat_char(ch, count) {
+    if (count <= 0) {
+        return "";
+    }
+    return ch + repeat_char(ch, count - 1);
+}
+
+fn make_separator(widths, col_idx) {
+    if (col_idx >= list.len(widths)) {
+        return "";
+    }
+    if (col_idx + 1 >= list.len(widths)) {
+        return repeat_char("-", list.get(widths, col_idx));
+    }
+    return repeat_char("-", list.get(widths, col_idx)) + "-+-" + make_separator(widths, col_idx + 1);
+}
+
+fn print_rows(rows, widths, idx) {
+    if (idx >= list.len(rows)) {
+        return 0;
+    }
+    let row = list.get(rows, idx);
+    let formatted = format_row(row, widths, 0);
+    io.println(formatted);
+    return print_rows(rows, widths, idx + 1);
+}
+
+fn main() {
+    let raw = environment.args();
+    let all_args = list.new();
+    let user_args = collect_args(raw, 0, all_args);
+    let csv_path = list.get(user_args, 0);
+    let content = file.read(csv_path);
+    let rows = csv.parse(content);
+    let header = list.get(rows, 0);
+    let num_cols = list.len(header);
+    let widths_list = list.new();
+    let widths = calc_widths(rows, 0, num_cols, widths_list);
+    let header_line = format_row(header, widths, 0);
+    io.println(header_line);
+    let sep = make_separator(widths, 0);
+    io.println(sep);
+    let print_result = print_rows(rows, widths, 1);
+    return 0;
+}

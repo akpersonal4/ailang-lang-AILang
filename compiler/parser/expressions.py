@@ -183,6 +183,14 @@ def parse_primary_expression(stream: TokenStream) -> CSTNode:
             start_span=token.start_offset,
             end_span=token.end_offset,
         )
+    if stream.current().kind in {TokenKind.TRUE, TokenKind.FALSE}:
+        token = stream.advance()
+        return CSTNode(
+            "BooleanLiteral",
+            token=token,
+            start_span=token.start_offset,
+            end_span=token.end_offset,
+        )
     if stream.current().kind is TokenKind.IDENTIFIER:
         return parse_identifier(stream)
     if stream.match(TokenKind.LPAREN):

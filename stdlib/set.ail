@@ -1,0 +1,23 @@
+fn new() {
+    return set_new()
+}
+
+fn add(values, value) {
+    return set_add(values, value)
+}
+
+fn contains(values, value) {
+    return set_contains(values, value)
+}
+
+fn len(values) {
+    return set_len(values)
+}
+
+fn remove(values, value) {
+    return set_remove(values, value)
+}
+
+fn clear(values) {
+    return set_clear(values)
+}

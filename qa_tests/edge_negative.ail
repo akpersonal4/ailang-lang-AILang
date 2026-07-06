@@ -1,0 +1,11 @@
+fn main() {
+    let a = -5;
+    let b = -10;
+    let c = a + b;
+    print("sum:", c);
+    let d = -a;
+    print("negate:", d);
+    let e = 10 - -5;
+    print("10 --5:", e);
+    return 0
+}

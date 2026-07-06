@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import tempfile
+from pathlib import Path
 
 import pytest
 
@@ -35,6 +36,19 @@ class TestModuleResolver:
 
             resolver = ModuleResolver(root_dir=tmpdir)
             result = resolver.resolve(("math", "max"))
+
+            assert result == module_file
+
+    def test_resolve_stdlib_module(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp_path = Path(tmpdir)
+            stdlib_dir = tmp_path / "stdlib"
+            stdlib_dir.mkdir()
+            module_file = stdlib_dir / "math.ail"
+            module_file.write_text("fn add(a, b) { a + b }")
+
+            resolver = ModuleResolver(root_dir=tmp_path)
+            result = resolver.resolve(("math",))
 
             assert result == module_file
 

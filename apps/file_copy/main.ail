@@ -1,0 +1,27 @@
+import file;
+import path;
+
+fn copy_file(src, dst) {
+    if (!file.exists(src)) {
+        print("Source not found:", src);
+        return false
+    }
+    let content = file.read(src);
+    file.write(dst, content);
+    return true
+}
+
+fn main() {
+    print("=== File Copy Utility ===");
+    let ok = copy_file("apps/file_copy/main.ail", "copied.ail");
+    if (ok) {
+        print("Copied to copied.ail");
+        let copied = file.read("copied.ail");
+        let original = file.read("apps/file_copy/main.ail");
+        if (copied == original) {
+            print("Contents match (correct)")
+        }
+    };
+    file.remove("copied.ail");
+    print("Cleaned up temp file")
+}

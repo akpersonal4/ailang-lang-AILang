@@ -1,0 +1,188 @@
+import environment;
+import convert;
+import list;
+import map;
+import io;
+
+fn build_graph() {
+    let g = map.new();
+    let a_edges = map.new();
+    map.set(a_edges, "b", 1);
+    map.set(a_edges, "c", 4);
+    map.set(g, "a", a_edges);
+    let b_edges = map.new();
+    map.set(b_edges, "d", 2);
+    map.set(b_edges, "e", 5);
+    map.set(g, "b", b_edges);
+    let c_edges = map.new();
+    map.set(c_edges, "e", 1);
+    map.set(g, "c", c_edges);
+    let d_edges = map.new();
+    map.set(d_edges, "f", 3);
+    map.set(g, "d", d_edges);
+    let e_edges = map.new();
+    map.set(e_edges, "f", 1);
+    map.set(g, "e", e_edges);
+    let f_edges = map.new();
+    map.set(g, "f", f_edges);
+    return g;
+}
+
+fn build_heuristic() {
+    let h = map.new();
+    map.set(h, "a", 5);
+    map.set(h, "b", 3);
+    map.set(h, "c", 4);
+    map.set(h, "d", 2);
+    map.set(h, "e", 1);
+    map.set(h, "f", 0);
+    return h;
+}
+
+fn list_contains(lst, item, idx) {
+    if (idx >= list.len(lst)) {
+        return false;
+    }
+    if (list.get(lst, idx) == item) {
+        return true;
+    }
+    return list_contains(lst, item, idx + 1);
+}
+
+fn find_best_idx(open_list, f_scores, idx, best_idx, best_f) {
+    if (idx >= list.len(open_list)) {
+        return best_idx;
+    }
+    let node = list.get(open_list, idx);
+    if (map.has(f_scores, node)) {
+        let f = map.get(f_scores, node);
+        if (best_idx < 0 || f < best_f) {
+            return find_best_idx(open_list, f_scores, idx + 1, idx, f);
+        }
+    }
+    return find_best_idx(open_list, f_scores, idx + 1, best_idx, best_f);
+}
+
+fn remove_by_idx(lst, skip_idx, idx, result) {
+    if (idx >= list.len(lst)) {
+        return result;
+    }
+    if (idx != skip_idx) {
+        list.append(result, list.get(lst, idx));
+    }
+    return remove_by_idx(lst, skip_idx, idx + 1, result);
+}
+
+fn list_to_string_acc(lst, idx, n, acc) {
+    if (idx >= n) {
+        return acc;
+    }
+    let val = convert.to_string(list.get(lst, idx));
+    if (acc == "") {
+        return list_to_string_acc(lst, idx + 1, n, val);
+    }
+    return list_to_string_acc(lst, idx + 1, n, acc + " -> " + val);
+}
+
+fn list_to_string(lst) {
+    return list_to_string_acc(lst, 0, list.len(lst), "");
+}
+
+fn reconstruct_path_rev(came_from, current, path) {
+    list.append(path, current);
+    if (!map.has(came_from, current)) {
+        return path;
+    }
+    return reconstruct_path_rev(came_from, map.get(came_from, current), path);
+}
+
+fn reverse_path(path, idx, result) {
+    if (idx < 0) {
+        return result;
+    }
+    list.append(result, list.get(path, idx));
+    return reverse_path(path, idx - 1, result);
+}
+
+fn process_one_neighbor(nb, current, edges, came_from, g_score, f_score, heuristics, current_g, open_set) {
+    if (map.has(edges, nb)) {
+        let edge_cost = map.get(edges, nb);
+        let tentative = current_g + edge_cost;
+        if (map.has(g_score, nb)) {
+            if (tentative >= map.get(g_score, nb)) {
+                return open_set;
+            }
+        }
+        map.set(came_from, nb, current);
+        map.set(g_score, nb, tentative);
+        map.set(f_score, nb, tentative + map.get(heuristics, nb));
+        if (!list_contains(open_set, nb, 0)) {
+            list.append(open_set, nb);
+        }
+    }
+    return open_set;
+}
+
+fn a_star_search(open_set, came_from, g_score, f_score, graph, heuristics, goal, limit) {
+    if (list.len(open_set) == 0 || limit <= 0) {
+        return list.new();
+    }
+    let best_idx = find_best_idx(open_set, f_score, 0, -1, 999999);
+    if (best_idx < 0) {
+        return list.new();
+    }
+    let current = list.get(open_set, best_idx);
+    if (current == goal) {
+        let rev_path = list.new();
+        let unreversed = reconstruct_path_rev(came_from, current, rev_path);
+        let n = list.len(unreversed);
+        let result_list = list.new();
+        return reverse_path(unreversed, n - 1, result_list);
+    }
+    let new_open = remove_by_idx(open_set, best_idx, 0, list.new());
+    let current_g = map.get(g_score, current);
+    if (map.has(graph, current)) {
+        let edges = map.get(graph, current);
+        let nbs = map.keys(edges);
+        let i = 0;
+        let n = list.len(nbs);
+        let next_open = new_open;
+        if (i < n) { next_open = process_one_neighbor(list.get(nbs, i), current, edges, came_from, g_score, f_score, heuristics, current_g, next_open); i = i + 1; }
+        if (i < n) { next_open = process_one_neighbor(list.get(nbs, i), current, edges, came_from, g_score, f_score, heuristics, current_g, next_open); i = i + 1; }
+        if (i < n) { next_open = process_one_neighbor(list.get(nbs, i), current, edges, came_from, g_score, f_score, heuristics, current_g, next_open); i = i + 1; }
+        if (i < n) { next_open = process_one_neighbor(list.get(nbs, i), current, edges, came_from, g_score, f_score, heuristics, current_g, next_open); i = i + 1; }
+        if (i < n) { next_open = process_one_neighbor(list.get(nbs, i), current, edges, came_from, g_score, f_score, heuristics, current_g, next_open); i = i + 1; }
+        return a_star_search(next_open, came_from, g_score, f_score, graph, heuristics, goal, limit - 1);
+    }
+    return a_star_search(new_open, came_from, g_score, f_score, graph, heuristics, goal, limit - 1);
+}
+
+fn a_star(start, goal) {
+    let graph = build_graph();
+    let heuristics = build_heuristic();
+    let open_set = list.new();
+    list.append(open_set, start);
+    let came_from = map.new();
+    let g_score = map.new();
+    map.set(g_score, start, 0);
+    let f_score = map.new();
+    map.set(f_score, start, map.get(heuristics, start));
+    return a_star_search(open_set, came_from, g_score, f_score, graph, heuristics, goal, 12);
+}
+
+fn main() {
+    let args = environment.args();
+    if (list.len(args) < 2) {
+        io.println("Usage: a_star <start> <goal>");
+        return 1;
+    }
+    let start = list.get(args, 0);
+    let goal = list.get(args, 1);
+    let path = a_star(start, goal);
+    if (list.len(path) == 0) {
+        io.println("No path found from " + start + " to " + goal);
+    } else {
+        io.println("Path: " + list_to_string(path));
+    }
+    return 0;
+}

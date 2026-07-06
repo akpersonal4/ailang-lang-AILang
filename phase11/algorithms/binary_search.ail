@@ -1,0 +1,46 @@
+import environment;
+import convert;
+import list;
+
+fn binary_search(lst, target, left, right) {
+    if (left > right) {
+        return -1;
+    }
+    let mid = convert.to_int((left + right) / 2);
+    let mid_val = list.get(lst, mid);
+    if (mid_val == target) {
+        return mid;
+    }
+    if (mid_val < target) {
+        return binary_search(lst, target, mid + 1, right);
+    }
+    return binary_search(lst, target, left, mid - 1);
+}
+
+fn build_test_list() {
+    let lst = list.new();
+    list.append(lst, 1);
+    list.append(lst, 3);
+    list.append(lst, 5);
+    list.append(lst, 7);
+    list.append(lst, 9);
+    list.append(lst, 11);
+    list.append(lst, 13);
+    list.append(lst, 15);
+    list.append(lst, 17);
+    list.append(lst, 19);
+    return lst;
+}
+
+fn main() {
+    let args = environment.args();
+    let target = convert.to_int(list.get(args, 0));
+    let lst = build_test_list();
+    let result = binary_search(lst, target, 0, 9);
+    if (result == -1) {
+        print("Not found");
+    } else {
+        print("Found " + convert.to_string(target) + " at index " + convert.to_string(result));
+    }
+    return 0;
+}

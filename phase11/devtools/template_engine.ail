@@ -1,0 +1,60 @@
+import file;
+import environment;
+import list;
+import io;
+
+fn replace_all(text, key, value) {
+    let pattern = "{{" + key + "}}";
+    return text.replace(pattern, value);
+}
+
+fn render(template, args, idx) {
+    if (idx >= list.len(args)) {
+        return template;
+    }
+    let arg = list.get(args, idx);
+    let parts = arg.split("=");
+    let key = list.get(parts, 0);
+    let value = list.get(parts, 1);
+    let updated = replace_all(template, key, value);
+    return render(updated, args, idx + 1);
+}
+
+fn collect_args(args, idx, result) {
+    if (idx >= list.len(args)) {
+        return result;
+    }
+    let val = list.get(args, idx);
+    if (val != "--") {
+        list.append(result, val);
+    }
+    return collect_args(args, idx + 1, result);
+}
+
+fn main() {
+    let raw = environment.args();
+    let all_args = list.new();
+    let user_args = collect_args(raw, 0, all_args);
+    let template_path = list.get(user_args, 0);
+    let template = file.read(template_path);
+    let output_file = "";
+    let pair_start = 1;
+    if (list.len(user_args) > 1) {
+        let second = list.get(user_args, 1);
+        if (second == "-o") {
+            if (list.len(user_args) > 2) {
+                output_file = list.get(user_args, 2);
+                pair_start = 3;
+            }
+        }
+    }
+    let pairs = list.new();
+    let i = pair_start;
+    let result = render(template, user_args, pair_start);
+    if (output_file != "") {
+        file.write(output_file, result);
+    } else {
+        io.println(result);
+    }
+    return 0;
+}

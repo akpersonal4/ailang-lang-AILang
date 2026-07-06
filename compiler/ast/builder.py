@@ -13,6 +13,7 @@ from compiler.ast.nodes import (
     ASTNode,
     BinaryExpressionNode,
     BlockNode,
+    BooleanLiteralNode,
     CallExpressionNode,
     ExpressionStatementNode,
     FunctionDeclarationNode,
@@ -78,7 +79,8 @@ class ASTBuilder:
         name = ASTBuilder._try_build(node.children[0])
         assert isinstance(name, IdentifierNode)
         initializer = ASTBuilder._try_build(node.children[1])
-        assert initializer is not None
+        if initializer is None:
+            raise ValueError("Variable declaration requires an initializer expression")
         return VariableDeclarationNode(
             name=name,
             initializer=initializer,
@@ -133,7 +135,8 @@ class ASTBuilder:
     @staticmethod
     def _build_ReturnStatement(node: CSTNode) -> ReturnStatementNode:
         value = ASTBuilder._try_build(node.children[0])
-        assert value is not None
+        if value is None:
+            raise ValueError("Return statement requires an expression")
         return ReturnStatementNode(
             value=value,
             start_span=node.start_span,
@@ -182,8 +185,10 @@ class ASTBuilder:
     def _build_BinaryExpression(node: CSTNode) -> BinaryExpressionNode:
         left = ASTBuilder._try_build(node.children[0])
         right = ASTBuilder._try_build(node.children[1])
-        assert left is not None and right is not None
-        assert node.token is not None
+        if left is None or right is None:
+            raise ValueError("BinaryExpression missing operand")
+        if node.token is None:
+            raise ValueError("BinaryExpression missing operator token")
         return BinaryExpressionNode(
             left=left,
             right=right,
@@ -195,8 +200,10 @@ class ASTBuilder:
     @staticmethod
     def _build_UnaryExpression(node: CSTNode) -> UnaryExpressionNode:
         operand = ASTBuilder._try_build(node.children[0])
-        assert operand is not None
-        assert node.token is not None
+        if operand is None:
+            raise ValueError("UnaryExpression missing operand")
+        if node.token is None:
+            raise ValueError("UnaryExpression missing operator token")
         return UnaryExpressionNode(
             operand=operand,
             operator=node.token.value,
@@ -273,7 +280,8 @@ class ASTBuilder:
 
     @staticmethod
     def _build_Identifier(node: CSTNode) -> IdentifierNode:
-        assert node.token is not None
+        if node.token is None:
+            raise ValueError("Identifier node missing token")
         return IdentifierNode(
             name=node.token.value,
             start_span=node.start_span,
@@ -282,7 +290,8 @@ class ASTBuilder:
 
     @staticmethod
     def _build_NumberLiteral(node: CSTNode) -> NumberLiteralNode:
-        assert node.token is not None
+        if node.token is None:
+            raise ValueError("NumberLiteral node missing token")
         return NumberLiteralNode(
             value=node.token.value,
             start_span=node.start_span,
@@ -291,9 +300,20 @@ class ASTBuilder:
 
     @staticmethod
     def _build_StringLiteral(node: CSTNode) -> StringLiteralNode:
-        assert node.token is not None
+        if node.token is None:
+            raise ValueError("StringLiteral node missing token")
         return StringLiteralNode(
             value=node.token.value,
+            start_span=node.start_span,
+            end_span=node.end_span,
+        )
+
+    @staticmethod
+    def _build_BooleanLiteral(node: CSTNode) -> BooleanLiteralNode:
+        if node.token is None:
+            raise ValueError("BooleanLiteral node missing token")
+        return BooleanLiteralNode(
+            value=node.token.kind is not None and node.token.value == "true",
             start_span=node.start_span,
             end_span=node.end_span,
         )

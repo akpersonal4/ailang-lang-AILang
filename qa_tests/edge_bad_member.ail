@@ -1,0 +1,2 @@
+import math;
+fn main() { math.pow(2, 10); return 0 }

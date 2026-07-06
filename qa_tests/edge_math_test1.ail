@@ -1,0 +1,6 @@
+import math;
+
+fn main() {
+    print("floor:", math.floor(3.7));
+    return 0
+}

@@ -1,0 +1,27 @@
+// === AILang keywords test file ===
+// This file contains every reserved keyword in context.
+
+import string;
+import math as m;
+
+fn greet(name) {
+    return string.concat("Hello, ", name)
+}
+
+fn main() {
+    let x = 42;
+    let y = 10;
+
+    if (x > y) {
+        print("x is greater");
+    } else {
+        print("y is greater or equal");
+    }
+
+    let result = true;
+    if (result == false) {
+        print("unreachable");
+    }
+
+    return 0
+}

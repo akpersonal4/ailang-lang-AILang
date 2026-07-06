@@ -110,11 +110,41 @@ class CompilationSession:
         dependency graph.
         """
         entry_file = Path(entry_path).resolve()
+        self._discover_stdlib_modules()
         self._discover_recursive(entry_file, None)
         self._compile_all()
 
+    def _discover_stdlib_modules(self) -> None:
+        """Register standard library modules from the project tree."""
+        current = self._root.resolve()
+        while True:
+            stdlib_dir = current / "stdlib"
+            if stdlib_dir.exists():
+                for path in sorted(stdlib_dir.rglob("*.ail")):
+                    if not path.is_file():
+                        continue
+                    module_name = self._path_to_module_name(path)
+                    if module_name in self._sources:
+                        continue
+                    source = Source.from_file(str(path))
+                    self._sources[module_name] = source
+                    self._graph.add_module(module_name, str(path))
+                    self._registration_order.append(module_name)
+            if current == current.parent:
+                break
+            current = current.parent
+
     def _path_to_module_name(self, file_path: Path) -> str:
-        """Convert a file path to a module name relative to root."""
+        """Convert a file path to a module name relative to root or stdlib."""
+        stdlib_root = self._root / "stdlib"
+        if stdlib_root in file_path.parents or file_path == stdlib_root:
+            try:
+                relative = file_path.relative_to(stdlib_root)
+            except ValueError:
+                relative = file_path
+            stem = relative.with_suffix("")
+            return ".".join(stem.parts)
+
         try:
             relative = file_path.relative_to(self._root)
         except ValueError:
@@ -209,13 +239,35 @@ class CompilationSession:
         for builtin_name in BUILTINS:
             symbol_table.declare(builtin_name)
 
-        # First, register all exports from all modules
+        # First, register exported symbols from all modules.
+        from compiler.ast.nodes import (
+            FunctionDeclarationNode,
+            VariableDeclarationNode,
+        )
+
         for module_name, ast in self._asts.items():
+            has_same_name_declaration = any(
+                (
+                    isinstance(child, FunctionDeclarationNode)
+                    and child.name.name == module_name.split(".")[-1]
+                )
+                or (
+                    isinstance(child, VariableDeclarationNode)
+                    and child.name.name == module_name.split(".")[-1]
+                )
+                for child in ast.children
+            )
+            if not has_same_name_declaration:
+                symbol_table.declare_module_namespace(module_name)
             for child in ast.children:
                 self._register_export(symbol_table, child, module_name)
 
-        # Then analyze each module
+        # Then analyze each module in its own scope.
         for module_name in self._graph.topological_sort():
+            # Set source text per-module so error positions reference the
+            # correct file.
+            if module_name in self._sources:
+                symbol_table.set_source_text(self._sources[module_name].text)
             self._analyze_module(module_name, symbol_table)
 
     def _register_export(
@@ -235,9 +287,9 @@ class CompilationSession:
             symbol_table.declare(qualified_name, node.start_span, node.end_span)
 
     def _analyze_module(self, module_name: str, symbol_table: SymbolTable) -> None:
-        """Analyze a single module."""
+        """Analyze a single module in a dedicated scope."""
         analyzer = SemanticAnalyzer(symbol_table)
-        analyzer.analyze(self._asts[module_name])
+        analyzer.analyze_module(self._asts[module_name])
 
     def build_ir(self) -> ModuleIRBundle:
         """Build IR for all compiled modules.
@@ -268,5 +320,12 @@ class CompilationSession:
         # Type check each module (type checking uses its own symbol resolution)
         for module_name in self._graph.topological_sort():
             if module_name in self._asts:
-                type_checker = TypeChecker(SymbolTable(), local_reporter)
+                source_text_tc = (
+                    self._sources[module_name].text
+                    if module_name in self._sources
+                    else None
+                )
+                type_checker = TypeChecker(
+                    SymbolTable(), local_reporter, source_text=source_text_tc
+                )
                 type_checker.check(self._asts[module_name])

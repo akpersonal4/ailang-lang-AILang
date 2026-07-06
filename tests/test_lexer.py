@@ -165,3 +165,31 @@ def test_tokens_expose_source_location_information() -> None:
     assert tokens[1].column == 1
     assert tokens[1].start_offset == 2
     assert tokens[1].end_offset == 2
+
+
+def test_lexer_rejects_float_literal() -> None:
+    """Float literals are not supported and must produce a clear diagnostic."""
+    lexer = Lexer()
+
+    try:
+        lexer.tokenize("3.14")
+    except ValueError as error:
+        assert "Float literals not supported" in str(error)
+    else:
+        raise AssertionError("expected ValueError")
+
+    try:
+        lexer.tokenize("0.5")
+    except ValueError as error:
+        assert "Float literals not supported" in str(error)
+    else:
+        raise AssertionError("expected ValueError")
+
+    # Ensure member access on identifiers still works
+    lexer2 = Lexer()
+    tokens = lexer2.tokenize("a.b")
+    assert tokens[0].kind == TokenKind.IDENTIFIER
+    assert tokens[0].value == "a"
+    assert tokens[1].kind == TokenKind.DOT
+    assert tokens[2].kind == TokenKind.IDENTIFIER
+    assert tokens[2].value == "b"

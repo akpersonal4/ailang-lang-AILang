@@ -1,0 +1,11 @@
+fn parse(text) {
+    return csv_parse(text)
+}
+
+fn parse_header(text) {
+    return csv_parse_header(text)
+}
+
+fn stringify(rows) {
+    return csv_stringify(rows)
+}

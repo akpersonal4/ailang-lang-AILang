@@ -1,0 +1,1 @@
+Hello {{name}}, your {{item}} is ready for {{amount}} dollars

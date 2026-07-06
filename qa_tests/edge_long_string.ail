@@ -1,0 +1,13 @@
+import string;
+
+fn main() {
+    let s = "a";
+    let r = "";
+    let i = 0;
+    if (i < 10) {
+        r = string.concat(r, s);
+        i = i + 1
+    }
+    print("r:", r);
+    return 0
+}

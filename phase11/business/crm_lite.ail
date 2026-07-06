@@ -1,0 +1,116 @@
+import list;
+import map;
+import environment;
+
+fn print_usage() {
+    print("Usage:");
+    print("  add <name> <phone> <email>  - Add a contact");
+    print("  list                        - List all contacts");
+    print("  search <name>               - Search for a contact");
+    print("  delete <name>               - Delete a contact")
+}
+
+fn do_add(contacts, args) {
+    let argc = list.len(args);
+    if (argc < 4) {
+        print("Error: add requires 3 arguments: <name> <phone> <email>");
+        return contacts
+    };
+    let name = list.get(args, 1);
+    let phone = list.get(args, 2);
+    let email = list.get(args, 3);
+    if (map.has(contacts, name)) {
+        print("Error: Contact already exists:", name);
+        return contacts
+    };
+    map.set(contacts, name, phone + "," + email);
+    print("Added contact:", name);
+    return contacts
+}
+
+fn list_helper(contacts, keys, i) {
+    if (i >= list.len(keys)) {
+        return false
+    };
+    let name = list.get(keys, i);
+    let value = map.get(contacts, name);
+    let parts = value.split(",");
+    let phone = list.get(parts, 0);
+    let email = list.get(parts, 1);
+    print("  " + name + ": " + phone + ", " + email);
+    return list_helper(contacts, keys, i + 1)
+}
+
+fn do_list(contacts) {
+    let keys = map.keys(contacts);
+    if (list.len(keys) == 0) {
+        print("No contacts found.");
+        return false
+    };
+    print("Contacts:");
+    return list_helper(contacts, keys, 0)
+}
+
+fn do_search(contacts, args) {
+    if (list.len(args) < 2) {
+        print("Error: search requires 1 argument: <name>");
+        return false
+    };
+    let name = list.get(args, 1);
+    if (!map.has(contacts, name)) {
+        print("Contact not found:", name);
+        return false
+    };
+    let value = map.get(contacts, name);
+    let parts = value.split(",");
+    let phone = list.get(parts, 0);
+    let email = list.get(parts, 1);
+    print("Name:", name);
+    print("Phone:", phone);
+    print("Email:", email)
+}
+
+fn do_delete(contacts, args) {
+    if (list.len(args) < 2) {
+        print("Error: delete requires 1 argument: <name>");
+        return contacts
+    };
+    let name = list.get(args, 1);
+    if (!map.has(contacts, name)) {
+        print("Contact not found:", name);
+        return contacts
+    };
+    map.delete(contacts, name);
+    print("Deleted contact:", name);
+    return contacts
+}
+
+fn main() {
+    let args = environment.args();
+    if (list.len(args) < 1) {
+        print("=== CRM Lite ===");
+        print_usage();
+        return 0
+    };
+    let cmd = list.get(args, 0);
+    let contacts = map.new();
+    if (cmd == "add") {
+        contacts = do_add(contacts, args)
+    } else {
+        if (cmd == "list") {
+            do_list(contacts)
+        } else {
+            if (cmd == "search") {
+                do_search(contacts, args)
+            } else {
+                if (cmd == "delete") {
+                    contacts = do_delete(contacts, args)
+                } else {
+                    print("Unknown command:", cmd);
+                    print_usage()
+                }
+            }
+        }
+    };
+    return 0
+}

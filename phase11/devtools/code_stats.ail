@@ -1,0 +1,96 @@
+import file;
+import environment;
+import list;
+import io;
+import convert;
+import map;
+
+fn count_functions(lines, idx, count) {
+    if (idx >= list.len(lines)) {
+        return count;
+    }
+    let line = list.get(lines, idx);
+    if (line.find("fn ") >= 0) {
+        return count_functions(lines, idx + 1, count + 1);
+    }
+    return count_functions(lines, idx + 1, count);
+}
+
+fn count_imports(lines, idx, count) {
+    if (idx >= list.len(lines)) {
+        return count;
+    }
+    let line = list.get(lines, idx);
+    if (line.find("import ") >= 0) {
+        return count_imports(lines, idx + 1, count + 1);
+    }
+    return count_imports(lines, idx + 1, count);
+}
+
+fn count_lets(lines, idx, count) {
+    if (idx >= list.len(lines)) {
+        return count;
+    }
+    let line = list.get(lines, idx);
+    if (line.find("let ") >= 0) {
+        return count_lets(lines, idx + 1, count + 1);
+    }
+    return count_lets(lines, idx + 1, count);
+}
+
+fn analyze_file(file_path) {
+    let content = file.read(file_path);
+    let lines = content.split("\n");
+    let total_lines = list.len(lines);
+    let func_count = count_functions(lines, 0, 0);
+    let import_count = count_imports(lines, 0, 0);
+    let let_count = count_lets(lines, 0, 0);
+    let result = map.new();
+    map.set(result, "file", file_path);
+    map.set(result, "lines", total_lines);
+    map.set(result, "functions", func_count);
+    map.set(result, "imports", import_count);
+    map.set(result, "lets", let_count);
+    return result;
+}
+
+fn print_stats(results, idx) {
+    if (idx >= list.len(results)) {
+        return 0;
+    }
+    let stat = list.get(results, idx);
+    io.println(map.get(stat, "file") + " | lines: " + convert.to_string(map.get(stat, "lines")) + " | fns: " + convert.to_string(map.get(stat, "functions")) + " | imports: " + convert.to_string(map.get(stat, "imports")) + " | lets: " + convert.to_string(map.get(stat, "lets")));
+    return print_stats(results, idx + 1);
+}
+
+fn collect_args(args, idx, result) {
+    if (idx >= list.len(args)) {
+        return result;
+    }
+    let val = list.get(args, idx);
+    if (val != "--") {
+        list.append(result, val);
+    }
+    return collect_args(args, idx + 1, result);
+}
+
+fn analyze_files(files, idx, results) {
+    if (idx >= list.len(files)) {
+        return results;
+    }
+    let file_path = list.get(files, idx);
+    let stat = analyze_file(file_path);
+    list.append(results, stat);
+    return analyze_files(files, idx + 1, results);
+}
+
+fn main() {
+    let raw = environment.args();
+    let all_args = list.new();
+    let files = collect_args(raw, 0, all_args);
+    let results_list = list.new();
+    let results = analyze_files(files, 0, results_list);
+    io.println("File Stats:");
+    let print_result = print_stats(results, 0);
+    return 0;
+}

@@ -1,0 +1,76 @@
+import random;
+import list;
+
+fn get_choices() {
+    let c = list.new();
+    list.append(c, "rock");
+    list.append(c, "paper");
+    list.append(c, "scissors");
+    return c
+}
+
+fn beats(a, b) {
+    if (a == "rock") {
+        if (b == "scissors") { return true }
+        return false
+    }
+    if (a == "scissors") {
+        if (b == "paper") { return true }
+        return false
+    }
+    if (a == "paper") {
+        if (b == "rock") { return true }
+        return false
+    }
+    return false
+}
+
+fn play_round(player_choice, round_num) {
+    let choices = get_choices();
+    let comp_choice = random.choice(choices);
+    print("Round", round_num, "- You:", player_choice, "vs Computer:", comp_choice);
+    if (player_choice == comp_choice) {
+        print("  Result: Tie!");
+        return 0
+    }
+    if (beats(player_choice, comp_choice)) {
+        print("  Result: You win!");
+        return 1
+    }
+    print("  Result: Computer wins!");
+    return -1
+}
+
+fn play_game(rounds, player_score, comp_score, round_num) {
+    if (round_num > rounds) {
+        print("=== Final Score ===");
+        print("Player:", player_score, "Computer:", comp_score);
+        if (player_score > comp_score) {
+            print("You win the game!")
+        } else {
+            if (comp_score > player_score) {
+                print("Computer wins the game!")
+            } else {
+                print("The game is a tie!")
+            }
+        }
+        return 0
+    }
+    let choices = get_choices();
+    let idx = random.int(0, list.len(choices) - 1);
+    let player_choice = list.get(choices, idx);
+    let result = play_round(player_choice, round_num);
+    if (result == 1) {
+        return play_game(rounds, player_score + 1, comp_score, round_num + 1)
+    }
+    if (result == -1) {
+        return play_game(rounds, player_score, comp_score + 1, round_num + 1)
+    }
+    return play_game(rounds, player_score, comp_score, round_num + 1)
+}
+
+fn main() {
+    print("=== Rock Paper Scissors ===");
+    print("Best of 3 rounds");
+    play_game(3, 0, 0, 1)
+}

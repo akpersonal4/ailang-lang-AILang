@@ -137,6 +137,13 @@ class StringLiteralNode:
     end_span: int | None = None
 
 
+@dataclass(frozen=True)
+class BooleanLiteralNode:
+    value: bool
+    start_span: int | None = None
+    end_span: int | None = None
+
+
 ASTNode = (
     ProgramNode
     | BlockNode
@@ -154,5 +161,6 @@ ASTNode = (
     | IdentifierNode
     | NumberLiteralNode
     | StringLiteralNode
+    | BooleanLiteralNode
 )
 """Union type for all AST node kinds."""

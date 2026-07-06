@@ -1,0 +1,66 @@
+import file;
+import environment;
+import list;
+import path;
+import io;
+
+fn collect_exts(args, index, result) {
+    if (index >= list.len(args)) {
+        return result;
+    }
+    let f = list.get(args, index);
+    if (file.exists(f)) {
+        let ext = path.extension(f);
+        if (ext == "") {
+            ext = "(no extension)";
+        }
+        if (result.find(ext) == -1) {
+            if (result == "") {
+                result = ext;
+            } else {
+                result = result + "|" + ext;
+            }
+        }
+    }
+    return collect_exts(args, index + 1, result);
+}
+
+fn print_group(args, ext, index) {
+    if (index < list.len(args)) {
+        let f = list.get(args, index);
+        if (file.exists(f)) {
+            let fext = path.extension(f);
+            if (fext == "") {
+                fext = "(no extension)";
+            }
+            if (fext == ext) {
+                io.println("  " + f);
+            }
+        }
+        print_group(args, ext, index + 1);
+    }
+}
+
+fn print_exts(args, exts, index) {
+    if (index < list.len(exts)) {
+        let ext = list.get(exts, index);
+        io.println(ext + " files:");
+        print_group(args, ext, 0);
+        print_exts(args, exts, index + 1);
+    }
+}
+
+fn main() {
+    let args = environment.args();
+    let num_args = list.len(args);
+    if (num_args < 1) {
+        io.println("Usage: file_organizer <file1> [file2 ...]");
+        return 1;
+    }
+    let exts_str = collect_exts(args, 0, "");
+    let exts = exts_str.split("|");
+    if (exts_str != "") {
+        print_exts(args, exts, 0);
+    }
+    return 0;
+}

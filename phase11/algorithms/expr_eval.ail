@@ -1,0 +1,82 @@
+import environment;
+import list;
+import io;
+import convert;
+import string;
+
+fn find_operator(expr, operators, idx) {
+    if (idx >= list.len(operators)) {
+        return -1;
+    }
+    let op = list.get(operators, idx);
+    let pos = expr.find(op);
+    if (pos >= 0) {
+        return pos;
+    }
+    return find_operator(expr, operators, idx + 1);
+}
+
+fn apply_op(left, op, right) {
+    if (op == "+") {
+        return left + right;
+    }
+    if (op == "-") {
+        return left - right;
+    }
+    if (op == "*") {
+        return left * right;
+    }
+    if (op == "/") {
+        return left / right;
+    }
+    return 0;
+}
+
+fn tokenize(expr, operators, op_idx) {
+    if (op_idx >= list.len(operators)) {
+        let result = list.new();
+        list.append(result, expr);
+        list.append(result, "");
+        list.append(result, "");
+        return result;
+    }
+    let op = list.get(operators, op_idx);
+    let parts = expr.split(op);
+    if (list.len(parts) >= 2) {
+        let result = list.new();
+        list.append(result, list.get(parts, 0));
+        list.append(result, op);
+        list.append(result, list.get(parts, 1));
+        return result;
+    }
+    return tokenize(expr, operators, op_idx + 1);
+}
+
+fn eval_simple(expr) {
+    let operators = list.new();
+    list.append(operators, "+");
+    list.append(operators, "-");
+    list.append(operators, "*");
+    list.append(operators, "/");
+    let tokens = tokenize(expr, operators, 0);
+    if (list.get(tokens, 1) == "") {
+        return convert.to_int(list.get(tokens, 0));
+    }
+    let left = convert.to_int(list.get(tokens, 0));
+    let op = list.get(tokens, 1);
+    let right = convert.to_int(list.get(tokens, 2));
+    return apply_op(left, op, right);
+}
+
+fn main() {
+    let args = environment.args();
+    if (list.len(args) < 1) {
+        io.println("Usage: expr_eval <expression>");
+        io.println("Example: expr_eval 3+4");
+        return 1;
+    }
+    let expr_str = list.get(args, 0);
+    let result = eval_simple(expr_str);
+    io.println(expr_str + " = " + convert.to_string(result));
+    return 0;
+}

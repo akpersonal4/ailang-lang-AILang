@@ -1,0 +1,31 @@
+import csv;
+import list;
+import map;
+
+fn main() {
+    print("=== CSV Demo ===");
+
+    let raw = "name,age,role\nAlice,30,Engineer\nBob,25,Designer";
+    let rows = csv.parse_header(raw);
+
+    print("Header parse:");
+    let first = list.get(rows, 0);
+    print("Name: " + map.get(first, "name"));
+    print("Age: " + map.get(first, "age"));
+
+    let second = list.get(rows, 1);
+    print("Name: " + map.get(second, "name"));
+
+    let row1 = list.new();
+    list.append(row1, "x");
+    list.append(row1, "y");
+    let row2 = list.new();
+    list.append(row2, "1");
+    list.append(row2, "2");
+    let data = list.new();
+    list.append(data, row1);
+    list.append(data, row2);
+
+    let new_csv = csv.stringify(data);
+    print("CSV output: " + new_csv);
+}

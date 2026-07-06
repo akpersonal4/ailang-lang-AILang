@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import sys
 from typing import Any
 
 from compiler.ir.nodes import (
@@ -38,6 +39,7 @@ class Runtime:
     """Execute a lowered IR program with lexical scopes and frames."""
 
     def __init__(self, module_bundle: Any = None) -> None:
+        sys.setrecursionlimit(10000)
         self._global_environment = Environment()
         self._frame_stack: list[StackFrame] = []
         self._functions: dict[str, FunctionIR] = {}
@@ -62,11 +64,11 @@ class Runtime:
             return None
         if isinstance(node, VariableDeclarationIR):
             value = self._evaluate_expression(node.initializer)
-            self._set_local(node.name, value)
+            self._define_local(node.name, value)
             return value
         if isinstance(node, AssignmentIR):
             value = self._evaluate_expression(node.value)
-            self._set_local(node.target, value)
+            self._assign_local(node.target, value)
             return value
         if isinstance(node, IfIR):
             condition = self._evaluate_expression(node.condition)
@@ -96,12 +98,19 @@ class Runtime:
         raise TypeError(f"Unsupported IR node: {type(node)!r}")
 
     def _execute_block(self, block: BlockIR) -> Any:
-        result: Any = None
-        for statement in block.statements:
-            result = self._execute_node(statement)
-            if isinstance(statement, ReturnIR) or isinstance(result, ReturnSignal):
-                return result
-        return result
+        frame = StackFrame(
+            parent_frame=self._frame_stack[-1] if self._frame_stack else None,
+        )
+        self._frame_stack.append(frame)
+        try:
+            result: Any = None
+            for statement in block.statements:
+                result = self._execute_node(statement)
+                if isinstance(statement, ReturnIR) or isinstance(result, ReturnSignal):
+                    return result
+            return result
+        finally:
+            self._frame_stack.pop()
 
     def _call_function(self, function: FunctionIR, args: tuple[Any, ...]) -> Any:
         if len(args) != len(function.parameters):
@@ -179,7 +188,7 @@ class Runtime:
         if isinstance(expression, CallIR):
             # callee can be a string (function name) or an expression
             if isinstance(expression.callee, str):
-                callee = self._get_local(expression.callee)
+                callee = self._resolve_name(expression.callee)
             else:
                 callee = self._evaluate_expression(expression.callee)
 
@@ -195,7 +204,14 @@ class Runtime:
                 args = tuple(
                     self._evaluate_expression(arg) for arg in expression.arguments
                 )
-                return callee(args)
+                if isinstance(callee, FunctionIR):
+                    return self._call_function(callee, args)
+                if callee in BUILTINS.values():
+                    return callee(args)
+                try:
+                    return callee(*args)
+                except TypeError:
+                    return callee(args)
 
             raise TypeError(f"Cannot call non-function: {callee}")
 
@@ -205,7 +221,13 @@ class Runtime:
             return self._get_local(expression.name)
         raise TypeError(f"Unsupported expression: {type(expression)!r}")
 
-    def _set_local(self, name: str, value: Any) -> None:
+    def _define_local(self, name: str, value: Any) -> None:
+        if self._frame_stack:
+            self._frame_stack[-1].define(name, value)
+        else:
+            self._global_environment.define(name, value)
+
+    def _assign_local(self, name: str, value: Any) -> None:
         if self._frame_stack:
             self._frame_stack[-1].assign(name, value)
         else:
@@ -250,11 +272,12 @@ class Runtime:
             self._functions[node.name] = node
             self._global_environment.define(node.name, node)
             self._global_environment.define(qualified_name, node)
+            module_env.define(node.name, node)
             return None
         # Default execution
         return self._execute_node(node)
 
-    def _get_local(self, name: str) -> Any:
+    def _resolve_name(self, name: str) -> Any:
         if self._frame_stack:
             try:
                 return self._frame_stack[-1].resolve(name)
@@ -266,4 +289,33 @@ class Runtime:
             pass
         if name in BUILTINS:
             return BUILTINS[name]
+        module_env = self._modules.get(name)
+        if module_env is not None:
+            return module_env
+        if "." in name:
+            base_name, member = name.split(".", 1)
+            try:
+                receiver = self._get_local(base_name)
+            except NameError:
+                receiver = None
+            if receiver is not None:
+                if isinstance(receiver, Environment):
+                    try:
+                        return receiver.resolve(member)
+                    except NameError:
+                        pass
+                if isinstance(receiver, dict):
+                    return receiver.get(member)
+                if hasattr(receiver, member):
+                    return getattr(receiver, member)
+
+            module_env = self._modules.get(base_name)
+            if module_env is not None:
+                try:
+                    return module_env.resolve(member)
+                except NameError:
+                    pass
         raise NameError(f"Undefined variable: {name}")
+
+    def _get_local(self, name: str) -> Any:
+        return self._resolve_name(name)

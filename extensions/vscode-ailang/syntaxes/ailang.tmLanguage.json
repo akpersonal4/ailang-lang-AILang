@@ -1,0 +1,124 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "AILang",
+  "scopeName": "source.ailang",
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#strings" },
+    { "include": "#keywords" },
+    { "include": "#booleans" },
+    { "include": "#builtins" },
+    { "include": "#stdlib_modules" },
+    { "include": "#numbers" },
+    { "include": "#operators" },
+    { "include": "#delimiters" },
+    { "include": "#function_declaration" },
+    { "include": "#imports" },
+    { "include": "#member_access" }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.double-slash.ailang",
+          "match": "//.*$"
+        }
+      ]
+    },
+    "strings": {
+      "name": "string.quoted.double.ailang",
+      "begin": "\"",
+      "end": "\"",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.string.begin.ailang" }
+      },
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.string.end.ailang" }
+      },
+      "patterns": [
+        {
+          "name": "constant.character.escape.ailang",
+          "match": "\\\\[ntr\\\\\"]"
+        }
+      ]
+    },
+    "keywords": {
+      "patterns": [
+        { "match": "\\bfn\\b", "name": "keyword.declaration.function.ailang" },
+        { "match": "\\blet\\b", "name": "keyword.declaration.variable.ailang" },
+        { "match": "\\bif\\b", "name": "keyword.control.conditional.ailang" },
+        { "match": "\\belse\\b", "name": "keyword.control.conditional.ailang" },
+        { "match": "\\breturn\\b", "name": "keyword.control.return.ailang" },
+        { "match": "\\bimport\\b", "name": "keyword.control.import.ailang" },
+        { "match": "\\bas\\b", "name": "keyword.other.alias.ailang" }
+      ]
+    },
+    "booleans": {
+      "match": "\\b(true|false)\\b",
+      "name": "constant.language.boolean.ailang"
+    },
+    "builtins": {
+      "match": "\\bprint\\b",
+      "name": "support.function.builtin.ailang"
+    },
+    "stdlib_modules": {
+      "patterns": [
+        { "match": "\\bimport\\s+(string|math|list|array|map|set|convert|io|system|file|path|time|environment|random|json|csv|types|tuple|assert)\\b", "name": "support.module.ailang" },
+        { "match": "\\b(string|math|list|array|map|set|convert|io|system|file|path|time|environment|random|json|csv|types|tuple|assert)\\.", "name": "support.module.ailang" }
+      ]
+    },
+    "numbers": {
+      "match": "\\b\\d+\\b",
+      "name": "constant.numeric.ailang"
+    },
+    "operators": {
+      "patterns": [
+        { "match": "=", "name": "keyword.operator.assignment.ailang" },
+        { "match": "\\+", "name": "keyword.operator.arithmetic.ailang" },
+        { "match": "-", "name": "keyword.operator.arithmetic.ailang" },
+        { "match": "\\*", "name": "keyword.operator.arithmetic.ailang" },
+        { "match": "/", "name": "keyword.operator.arithmetic.ailang" },
+        { "match": "%", "name": "keyword.operator.arithmetic.ailang" },
+        { "match": "==", "name": "keyword.operator.comparison.ailang" },
+        { "match": "!=", "name": "keyword.operator.comparison.ailang" },
+        { "match": "<=", "name": "keyword.operator.comparison.ailang" },
+        { "match": ">=", "name": "keyword.operator.comparison.ailang" },
+        { "match": "<", "name": "keyword.operator.comparison.ailang" },
+        { "match": ">", "name": "keyword.operator.comparison.ailang" },
+        { "match": "&&", "name": "keyword.operator.logical.ailang" },
+        { "match": "\\|\\|", "name": "keyword.operator.logical.ailang" },
+        { "match": "!", "name": "keyword.operator.logical.ailang" }
+      ]
+    },
+    "delimiters": {
+      "patterns": [
+        { "match": ";", "name": "punctuation.terminator.ailang" },
+        { "match": ",", "name": "punctuation.separator.ailang" },
+        { "match": "\\{", "name": "punctuation.curlybrace.begin.ailang" },
+        { "match": "\\}", "name": "punctuation.curlybrace.end.ailang" },
+        { "match": "\\(", "name": "punctuation.parenthesis.begin.ailang" },
+        { "match": "\\)", "name": "punctuation.parenthesis.end.ailang" },
+        { "match": "\\.", "name": "punctuation.accessor.ailang" }
+      ]
+    },
+    "function_declaration": {
+      "match": "\\bfn\\s+([a-zA-Z_][a-zA-Z0-9_]*)\\s*\\(",
+      "captures": {
+        "1": { "name": "entity.name.function.ailang" }
+      }
+    },
+    "imports": {
+      "match": "\\bimport\\s+([a-zA-Z_][a-zA-Z0-9_.]*(?:\\s+as\\s+[a-zA-Z_][a-zA-Z0-9_]*)?)\\s*;",
+      "captures": {
+        "1": { "name": "entity.name.type.module.ailang" }
+      }
+    },
+    "member_access": {
+      "match": "([a-zA-Z_][a-zA-Z0-9_]*)\\.([a-zA-Z_][a-zA-Z0-9_]*)",
+      "captures": {
+        "1": { "name": "variable.other.object.ailang" },
+        "2": { "name": "variable.other.property.ailang" }
+      }
+    }
+  }
+}

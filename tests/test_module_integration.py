@@ -231,6 +231,58 @@ def test_module_initialize_once() -> None:
         assert env2 is env
 
 
+def test_stdlib_string_helpers_execute_through_pipeline() -> None:
+    """String helpers in the stdlib should execute through the normal module path."""
+    from compiler.diagnostics import DiagnosticReporter
+    from compiler.runtime.interpreter import Runtime
+
+    repo_root = Path(__file__).resolve().parents[1]
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmp_path = Path(tmpdir)
+        main_file = tmp_path / "main.ail"
+        main_file.write_text(
+            "import string;\n\n"
+            "fn main() {\n"
+            '    let upper = string.uppercase("hello");\n'
+            '    let lower = string.lowercase("HELLO");\n'
+            '    let has = string.contains("hello world", "world");\n'
+            '    let starts = string.starts_with("hello", "he");\n'
+            '    let ends = string.ends_with("hello", "lo");\n'
+            '    let trimmed = string.trim("  hi  " );\n'
+            "    if (\n"
+            '        string.equals(upper, "HELLO")\n'
+            '        && lower == "hello"\n'
+            "        && has\n"
+            "        && starts\n"
+            "        && ends\n"
+            '        && string.equals(trimmed, "hi")\n'
+            "    ) {\n"
+            "        return 1;\n"
+            "    }\n"
+            "    return 0;\n"
+            "}\n"
+        )
+
+        session = CompilationSession()
+        session._root = repo_root
+        session._resolver = type(session._resolver)(repo_root)
+        session.discover(main_file)
+
+        reporter = DiagnosticReporter()
+        session.analyze(reporter)
+        assert reporter.error_count == 0
+
+        bundle = session.build_ir()
+        runtime = Runtime(bundle)
+        for module_name in session._graph.topological_sort():
+            runtime._initialize_module(module_name)
+
+        entry_module = next(name for name in bundle.module_irs if name.endswith("main"))
+        result = runtime.execute(bundle.module_irs[entry_module])
+        assert result == 1
+
+
 def _run_ail_program(source: str) -> tuple[int, str]:
     """Run an AILang program and return (result, output)."""
     import sys
@@ -323,6 +375,79 @@ def test_validation_if_else() -> None:
 # ---------------------------------------------------------------------------
 # Regression: qualified import must not produce "Duplicate declaration"
 # ---------------------------------------------------------------------------
+
+
+def test_stdlib_module_import_executes_through_compilation_pipeline() -> None:
+    """Standard library modules should be discovered and executed as regular modules."""
+    import sys
+    from io import StringIO
+
+    from compiler.diagnostics import DiagnosticReporter
+    from compiler.runtime.interpreter import Runtime
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmp_path = Path(tmpdir)
+        stdlib_dir = tmp_path / "stdlib"
+        stdlib_dir.mkdir()
+        math_file = stdlib_dir / "math.ail"
+        math_file.write_text("fn add(a, b) { return a + b }\n")
+
+        main_file = tmp_path / "main.ail"
+        main_file.write_text(
+            "import math;\n\nfn main() {\n    print(math.add(10, 20))\n}\n"
+        )
+
+        session = CompilationSession()
+        session._root = tmp_path
+        session._resolver = type(session._resolver)(tmp_path)
+        session.discover(main_file)
+
+        reporter = DiagnosticReporter()
+        session.analyze(reporter)
+        assert reporter.error_count == 0
+
+        bundle = session.build_ir()
+        runtime = Runtime(bundle)
+
+        for module_name in session._graph.topological_sort():
+            runtime._initialize_module(module_name)
+
+        old_stdout = sys.stdout
+        sys.stdout = captured = StringIO()
+        try:
+            runtime.execute(bundle.module_irs["main"])
+        finally:
+            sys.stdout = old_stdout
+
+        assert captured.getvalue().strip() == "30"
+
+
+def test_module_local_functions_with_same_name_do_not_conflict() -> None:
+    """Functions defined in different modules should not collide semantically."""
+    from compiler.diagnostics import DiagnosticReporter
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmp_path = Path(tmpdir)
+        (tmp_path / "math.ail").write_text("fn add(a, b) { return a + b }\n")
+        (tmp_path / "string.ail").write_text("fn add(a, b) { return a - b }\n")
+        main_file = tmp_path / "main.ail"
+        main_file.write_text(
+            "import math;\n"
+            "import string;\n\n"
+            "fn main() {\n"
+            "    print(math.add(1, 2))\n"
+            "    print(string.add(3, 1))\n"
+            "}\n"
+        )
+
+        session = CompilationSession()
+        session._root = tmp_path
+        session._resolver = type(session._resolver)(tmp_path)
+        session.discover(main_file)
+
+        reporter = DiagnosticReporter()
+        session.analyze(reporter)
+        assert reporter.error_count == 0
 
 
 def test_qualified_module_import_no_duplicate_declaration() -> None:

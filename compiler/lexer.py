@@ -9,6 +9,8 @@ from compiler.diagnostics import Diagnostic, DiagnosticReporter, ErrorCode, Seve
 class TokenKind(Enum):
     IDENTIFIER = "identifier"
     NUMBER = "number"
+    TRUE = "true"
+    FALSE = "false"
     ASSIGN = "assign"
     LET = "let"
     FN = "fn"
@@ -160,6 +162,8 @@ class Lexer:
                     "return": TokenKind.RETURN,
                     "import": TokenKind.IMPORT,
                     "as": TokenKind.AS,
+                    "true": TokenKind.TRUE,
+                    "false": TokenKind.FALSE,
                 }.get(text_value)
                 if keyword_kind is None:
                     tokens.append(
@@ -201,6 +205,18 @@ class Lexer:
                         start_column,
                     )
                 )
+                if (
+                    index < length
+                    and text[index] == "."
+                    and index + 1 < length
+                    and self._is_digit(text[index + 1])
+                ):
+                    report_error(
+                        "Float literals not supported. Use integer division (22 / 7)",
+                        "LEX004",
+                        start_line,
+                        start_column,
+                    )
                 continue
             if char == "=":
                 if index + 1 < length and text[index + 1] == "=":

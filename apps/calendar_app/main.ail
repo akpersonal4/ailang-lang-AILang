@@ -1,0 +1,572 @@
+// Calendar Application
+// A complete event management and scheduling system
+
+import list;
+import map;
+import json;
+import file;
+import string;
+import time;
+import convert;
+
+// ============================================================
+// Event Creation Functions
+// ============================================================
+
+fn create_event(id, title, date, time_val, description, category) {
+    let event = map.new();
+    map.set(event, "id", id);
+    map.set(event, "title", title);
+    map.set(event, "date", date);
+    map.set(event, "time", time_val);
+    map.set(event, "description", description);
+    map.set(event, "category", category);
+    map.set(event, "created_at", time.now());
+    return event
+}
+
+fn add_event(events, id, title, date_val, time_val, description, category) {
+    let event = create_event(id, title, date_val, time_val, description, category);
+    list.append(events, event);
+    return events
+}
+
+// ============================================================
+// Find and Query Functions
+// ============================================================
+
+fn find_event_by_id_helper(events, i, id) {
+    if (i >= list.len(events)) { return -1 }
+    let event = list.get(events, i);
+    if (map.get(event, "id") == id) { return i }
+    return find_event_by_id_helper(events, i + 1, id)
+}
+
+fn find_event_by_id(events, id) {
+    return find_event_by_id_helper(events, 0, id)
+}
+
+fn get_next_id_helper(events, i, max_id) {
+    if (i >= list.len(events)) { return max_id }
+    let event = list.get(events, i);
+    let current_id = map.get(event, "id");
+    if (current_id > max_id) {
+        return get_next_id_helper(events, i + 1, current_id)
+    }
+    return get_next_id_helper(events, i + 1, max_id)
+}
+
+fn get_next_id(events) {
+    let max_id = get_next_id_helper(events, 0, 0);
+    return max_id + 1
+}
+
+// ============================================================
+// Filter Functions
+// ============================================================
+
+fn filter_events_by_date_helper(events, i, date_val, results) {
+    if (i >= list.len(events)) { return results }
+    let event = list.get(events, i);
+    if (string.equals(map.get(event, "date"), date_val)) {
+        list.append(results, event)
+    }
+    return filter_events_by_date_helper(events, i + 1, date_val, results)
+}
+
+fn filter_events_by_date(events, date_val) {
+    let results = list.new();
+    return filter_events_by_date_helper(events, 0, date_val, results)
+}
+
+fn filter_events_by_month_helper(events, i, year, month, results) {
+    if (i >= list.len(events)) { return results }
+    let event = list.get(events, i);
+    let event_date = map.get(event, "date");
+    let prefix = string.concat(string.concat(year, "-"), month);
+    if (string.starts_with(event_date, prefix)) {
+        list.append(results, event)
+    }
+    return filter_events_by_month_helper(events, i + 1, year, month, results)
+}
+
+fn filter_events_by_month(events, year, month) {
+    let results = list.new();
+    return filter_events_by_month_helper(events, 0, year, month, results)
+}
+
+// ============================================================
+// Search Functions
+// ============================================================
+
+fn search_events_by_title_helper(events, i, query, results) {
+    if (i >= list.len(events)) { return results }
+    let event = list.get(events, i);
+    let title = map.get(event, "title");
+    if (string.contains(string.lowercase(title), string.lowercase(query))) {
+        list.append(results, event)
+    }
+    return search_events_by_title_helper(events, i + 1, query, results)
+}
+
+fn search_events_by_title(events, query) {
+    let results = list.new();
+    return search_events_by_title_helper(events, 0, query, results)
+}
+
+fn filter_events_by_category_helper(events, i, category, results) {
+    if (i >= list.len(events)) { return results }
+    let event = list.get(events, i);
+    if (string.equals(map.get(event, "category"), category)) {
+        list.append(results, event)
+    }
+    return filter_events_by_category_helper(events, i + 1, category, results)
+}
+
+fn filter_events_by_category(events, category) {
+    let results = list.new();
+    return filter_events_by_category_helper(events, 0, category, results)
+}
+
+fn get_upcoming_events_helper(events, i, today, results) {
+    if (i >= list.len(events)) { return results }
+    let event = list.get(events, i);
+    let event_date = map.get(event, "date");
+    if (event_date >= today) {
+        list.append(results, event)
+    }
+    return get_upcoming_events_helper(events, i + 1, today, results)
+}
+
+fn get_upcoming_events(events) {
+    let today = string.substring(time.now(), 0, 10);
+    let results = list.new();
+    return get_upcoming_events_helper(events, 0, today, results)
+}
+
+// ============================================================
+// Update Functions
+// ============================================================
+
+fn update_event_title(event, new_title) {
+    map.set(event, "title", new_title);
+    return true
+}
+
+fn update_event_date(event, new_date) {
+    map.set(event, "date", new_date);
+    return true
+}
+
+fn update_event_time(event, new_time) {
+    map.set(event, "time", new_time);
+    return true
+}
+
+fn update_event_description(event, new_desc) {
+    map.set(event, "description", new_desc);
+    return true
+}
+
+fn update_event_category(event, new_category) {
+    map.set(event, "category", new_category);
+    return true
+}
+
+// ============================================================
+// Delete Functions
+// ============================================================
+
+fn delete_event(events, id) {
+    let idx = find_event_by_id(events, id);
+    if (idx == -1) { return false }
+    let event = list.get(events, idx);
+    list.remove(events, event);
+    return true
+}
+
+// ============================================================
+// Sort Functions
+// ============================================================
+
+fn event_comes_before(a, b) {
+    let a_date = map.get(a, "date");
+    let b_date = map.get(b, "date");
+    if (a_date < b_date) { return true }
+    if (string.equals(a_date, b_date)) {
+        if (map.get(a, "time") < map.get(b, "time")) { return true }
+    }
+    return false
+}
+
+fn append_remaining(source, i, target) {
+    if (i >= list.len(source)) { return target }
+    list.append(target, list.get(source, i));
+    return append_remaining(source, i + 1, target)
+}
+
+fn sorted_insert(sorted, event, i, result) {
+    if (i >= list.len(sorted)) {
+        list.append(result, event);
+        return result
+    }
+    let current = list.get(sorted, i);
+    if (event_comes_before(event, current)) {
+        list.append(result, event);
+        return append_remaining(sorted, i, result)
+    }
+    list.append(result, current);
+    return sorted_insert(sorted, event, i + 1, result)
+}
+
+fn build_sorted_events_helper(events, i, sorted) {
+    if (i >= list.len(events)) { return sorted }
+    let event = list.get(events, i);
+    sorted = sorted_insert(sorted, event, 0, list.new());
+    return build_sorted_events_helper(events, i + 1, sorted)
+}
+
+fn get_sorted_events(events) {
+    return build_sorted_events_helper(events, 0, list.new())
+}
+
+// ============================================================
+// Display Functions
+// ============================================================
+
+fn print_event(event) {
+    print("ID:", map.get(event, "id"));
+    print("  Title:", map.get(event, "title"));
+    print("  Date:", map.get(event, "date"), "at", map.get(event, "time"));
+    print("  Category:", map.get(event, "category"));
+    print("  Description:", map.get(event, "description"));
+    print("---")
+}
+
+fn print_event_short(event) {
+    let date_val = map.get(event, "date");
+    let time_val = map.get(event, "time");
+    let title = map.get(event, "title");
+    let category = map.get(event, "category");
+    print("  [", map.get(event, "id"), "]", date_val, time_val, "-", title, "(", category, ")")
+}
+
+fn print_events_helper(events, i) {
+    if (i >= list.len(events)) { return true }
+    print_event_short(list.get(events, i));
+    return print_events_helper(events, i + 1)
+}
+
+fn print_events(events, label) {
+    print("=== ", label, " ===");
+    if (list.len(events) == 0) {
+        print("No events found.");
+        return true
+    }
+    let sorted = get_sorted_events(events);
+    print_events_helper(sorted, 0);
+    print("Total:", list.len(events));
+    print("---")
+}
+
+fn print_event_detail(event) {
+    print("Event Details:");
+    print("  ID:", map.get(event, "id"));
+    print("  Title:", map.get(event, "title"));
+    print("  Date:", map.get(event, "date"));
+    print("  Time:", map.get(event, "time"));
+    print("  Category:", map.get(event, "category"));
+    print("  Description:", map.get(event, "description"))
+}
+
+// ============================================================
+// Category Functions
+// ============================================================
+
+fn collect_category(categories, category) {
+    if (list.contains(categories, category)) {
+        return categories
+    }
+    list.append(categories, category);
+    return categories
+}
+
+fn collect_categories_helper(events, i, categories) {
+    if (i >= list.len(events)) { return categories }
+    let event = list.get(events, i);
+    let category = map.get(event, "category");
+    categories = collect_category(categories, category);
+    return collect_categories_helper(events, i + 1, categories)
+}
+
+fn collect_categories(events) {
+    let categories = list.new();
+    return collect_categories_helper(events, 0, categories)
+}
+
+// ============================================================
+// Statistics Functions
+// ============================================================
+
+fn count_events_by_category_helper(events, i, category, count) {
+    if (i >= list.len(events)) { return count }
+    let event = list.get(events, i);
+    if (string.equals(map.get(event, "category"), category)) {
+        return count_events_by_category_helper(events, i + 1, category, count + 1)
+    }
+    return count_events_by_category_helper(events, i + 1, category, count)
+}
+
+fn count_events_by_category(events, category) {
+    return count_events_by_category_helper(events, 0, category, 0)
+}
+
+fn print_category_counts_helper(categories, i, events) {
+    if (i >= list.len(categories)) { return true }
+    let category = list.get(categories, i);
+    let count = count_events_by_category(events, category);
+    print("  ", category, ":", count);
+    return print_category_counts_helper(categories, i + 1, events)
+}
+
+fn print_statistics(events) {
+    print("=== Calendar Statistics ===");
+    print("Total Events:", list.len(events));
+    let categories = collect_categories(events);
+    print("Categories:", list.len(categories));
+    print_category_counts_helper(categories, 0, events);
+    print("===========================")
+}
+
+// ============================================================
+// Persistence Functions
+// ============================================================
+
+fn save_events(events, filename) {
+    let json_data = json.stringify(events);
+    file.write(filename, json_data);
+    return true
+}
+
+fn load_events(filename) {
+    if (!file.exists(filename)) { return list.new() }
+    let content = file.read(filename);
+    return json.parse(content)
+}
+
+// ============================================================
+// Date Helper Functions
+// ============================================================
+
+fn pad_month(m) {
+    if (m < 10) { return string.concat("0", convert.to_string(m)) }
+    return convert.to_string(m)
+}
+
+fn get_month_name(m) {
+    if (m == 1) { return "January" }
+    if (m == 2) { return "February" }
+    if (m == 3) { return "March" }
+    if (m == 4) { return "April" }
+    if (m == 5) { return "May" }
+    if (m == 6) { return "June" }
+    if (m == 7) { return "July" }
+    if (m == 8) { return "August" }
+    if (m == 9) { return "September" }
+    if (m == 10) { return "October" }
+    if (m == 11) { return "November" }
+    return "December"
+}
+
+fn get_today_date() {
+    return string.substring(time.now(), 0, 10)
+}
+
+fn get_current_year() {
+    let today = get_today_date();
+    return convert.to_int(string.substring(today, 0, 4))
+}
+
+fn get_current_month() {
+    let today = get_today_date();
+    return convert.to_int(string.substring(today, 5, 7))
+}
+
+// ============================================================
+// Calendar View Functions
+// ============================================================
+
+fn print_daily_view(events, date_val) {
+    print("=== Daily View: ", date_val, " ===");
+    let day_events = filter_events_by_date(events, date_val);
+    if (list.len(day_events) == 0) {
+        print("No events on this date.");
+        return true
+    }
+    let sorted = get_sorted_events(day_events);
+    print_events_helper(sorted, 0);
+    return true
+}
+
+fn print_monthly_view(events, year, month) {
+    let month_name = get_month_name(month);
+    let month_str = pad_month(month);
+    print("=== Monthly View:", month_name, year, "===");
+    let month_events = filter_events_by_month(events, convert.to_string(year), month_str);
+    if (list.len(month_events) == 0) {
+        print("No events in this month.");
+        return true
+    }
+    let sorted = get_sorted_events(month_events);
+    print_events_helper(sorted, 0);
+    print("Total events in", month_name + ":", list.len(month_events));
+    return true
+}
+
+fn print_upcoming_view(events) {
+    print("=== Upcoming Events ===");
+    let upcoming = get_upcoming_events(events);
+    if (list.len(upcoming) == 0) {
+        print("No upcoming events.");
+        return true
+    }
+    let sorted = get_sorted_events(upcoming);
+    print_events_helper(sorted, 0);
+    print("Total upcoming:", list.len(upcoming));
+    return true
+}
+
+// ============================================================
+// Demo Functions
+// ============================================================
+
+fn create_sample_events() {
+    let events = list.new();
+    events = add_event(events, 1, "Team Standup",
+        "2026-07-06", "09:00",
+        "Daily team standup meeting", "meeting");
+    events = add_event(events, 2, "Doctor Appointment",
+        "2026-07-07", "14:30",
+        "Annual checkup with Dr. Smith", "personal");
+    events = add_event(events, 3, "Project Review",
+        "2026-07-10", "10:00",
+        "Q3 project review with stakeholders", "meeting");
+    events = add_event(events, 4, "Birthday Party",
+        "2026-07-15", "18:00",
+        "Sarah's birthday party at the park", "personal");
+    events = add_event(events, 5, "Dentist",
+        "2026-07-07", "09:00",
+        "Teeth cleaning appointment", "personal");
+    events = add_event(events, 6, "Conference Talk",
+        "2026-08-05", "11:00",
+        "Speaking at the annual tech conference", "work");
+    events = add_event(events, 7, "Team Lunch",
+        "2026-07-20", "12:00",
+        "Monthly team lunch at Italian restaurant", "social");
+    events = add_event(events, 8, "Gym Class",
+        "2026-07-06", "07:00",
+        "Morning yoga session", "health");
+    events = add_event(events, 9, "Flight to NYC",
+        "2026-08-10", "06:00",
+        "Business trip to New York office", "work");
+    events = add_event(events, 10, "Weekend Hike",
+        "2026-07-12", "08:00",
+        "Group hike at Mountain Trail Park", "social");
+    return events
+}
+
+fn demo_all_events(events) {
+    print("\n--- Demo: All Events ---");
+    print_events(events, "Complete Calendar");
+    return true
+}
+
+fn demo_daily_view(events) {
+    print("\n--- Demo: Daily View ---");
+    print_daily_view(events, "2026-07-06");
+    return true
+}
+
+fn demo_monthly_view(events) {
+    print("\n--- Demo: Monthly View ---");
+    let year = get_current_year();
+    let month = get_current_month();
+    print_monthly_view(events, year, month);
+    return true
+}
+
+fn demo_upcoming(events) {
+    print("\n--- Demo: Upcoming Events ---");
+    print_upcoming_view(events);
+    return true
+}
+
+fn demo_search(events) {
+    print("\n--- Demo: Search Events ---");
+    let results = search_events_by_title(events, "team");
+    print_events(results, "Search for 'team'");
+    return true
+}
+
+fn demo_category_filter(events) {
+    print("\n--- Demo: Filter by Category ---");
+    let work_events = filter_events_by_category(events, "work");
+    print_events(work_events, "Work Events");
+    return true
+}
+
+fn demo_update_and_delete(events) {
+    print("\n--- Demo: Update and Delete ---");
+    let idx = find_event_by_id(events, 8);
+    if (idx != -1) {
+        let event = list.get(events, idx);
+        update_event_title(event, "Morning Yoga Class");
+        update_event_time(event, "06:30");
+        print("Updated event 8 - new title: Morning Yoga Class at 06:30")
+    }
+    let deleted = delete_event(events, 10);
+    if (deleted) {
+        print("Deleted event 10 (Weekend Hike).")
+    }
+    print_events(events, "After update and delete");
+    return events
+}
+
+fn demo_persistence(events) {
+    print("\n--- Demo: Save and Load ---");
+    save_events(events, "calendar_data.json");
+    print("Calendar saved to calendar_data.json.");
+    let loaded = load_events("calendar_data.json");
+    print("Loaded", list.len(loaded), "events from disk.");
+    print_events(loaded, "Restored Calendar");
+    return loaded
+}
+
+// ============================================================
+// Main Application
+// ============================================================
+
+fn main() {
+    print("=== Calendar Application ===");
+    print("Event management and scheduling system");
+    print("");
+
+    let events = create_sample_events();
+    print("Created", list.len(events), "sample events.");
+    print_statistics(events);
+
+    demo_all_events(events);
+    demo_daily_view(events);
+    demo_monthly_view(events);
+    demo_upcoming(events);
+    demo_search(events);
+    demo_category_filter(events);
+    events = demo_update_and_delete(events);
+
+    print_statistics(events);
+
+    events = demo_persistence(events);
+
+    print("\n=== Calendar Demo Complete ===");
+    return 0
+}

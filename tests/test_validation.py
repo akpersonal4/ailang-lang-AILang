@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import tempfile
 from pathlib import Path
+from typing import cast
 
 from compiler.compilation import CompilationSession
+from compiler.diagnostics import DiagnosticReporter
 from compiler.runtime.interpreter import Runtime
 
 
@@ -22,7 +24,7 @@ def _run_ail_program(source: str) -> int:
         bundle = session.build_ir()
         runtime = Runtime(bundle)
 
-        return runtime.execute(bundle.module_irs["main"])
+        return cast(int, runtime.execute(bundle.module_irs["main"]))
 
 
 def _run_multi_module_program(tmp_path: Path, main_source: str) -> int:
@@ -39,7 +41,7 @@ def _run_multi_module_program(tmp_path: Path, main_source: str) -> int:
     for module_name in session._graph.topological_order():
         runtime._initialize_module(module_name)
 
-    return runtime.execute(bundle.module_irs["main"])
+    return cast(int, runtime.execute(bundle.module_irs["main"]))
 
 
 # =============================================================================
@@ -229,13 +231,45 @@ fn main() {
 # =============================================================================
 
 
-def test_limitation_module_function_calls() -> None:
-    """Document: Module function calls (math.add) not yet fully supported.
+def _run_with_stdlib(source: str) -> int:
+    """Compile and run an AILang program with stdlib access."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmp_path = Path(tmpdir)
+        main_file = tmp_path / "main.ail"
+        main_file.write_text(source)
 
-    This is a known limitation. The import syntax works, but calling
-    imported functions via qualified names (math.add) needs more work.
-    """
-    pass
+        repo_root = Path(__file__).resolve().parents[1]
+        session = CompilationSession()
+        session._root = repo_root
+        session._resolver = type(session._resolver)(repo_root)
+        session.discover(main_file)
+
+        reporter = DiagnosticReporter()
+        session.analyze(reporter)
+        assert reporter.error_count == 0
+
+        bundle = session.build_ir()
+        runtime = Runtime(bundle)
+        for module_name in session._graph.topological_sort():
+            runtime._initialize_module(module_name)
+
+        entry_module = next(name for name in bundle.module_irs if name.endswith("main"))
+        return int(runtime.execute(bundle.module_irs[entry_module]))
+
+
+def test_regression_module_function_as_value() -> None:
+    """BUG-003: Module functions must be resolvable as bare identifiers."""
+    result = _run_with_stdlib("""
+import map;
+fn main() {
+    let m = map.new();
+    map.set(m, "k", "v");
+    let v = map.get(m, "k");
+    if (v == "v") { return 1 }
+    return 0
+}
+""")
+    assert result == 1
 
 
 # =============================================================================
@@ -382,3 +416,28 @@ def test_all_examples_in_repo_compile_and_run() -> None:
 
         # Ensure execution doesn't crash
         runtime.execute(bundle.module_irs["main"])
+
+
+def test_regression_parser_no_infinite_loop_on_unrecognized_token() -> None:
+    """Regression: Parser must not infinite-loop on unrecognized tokens.
+
+    Bug: When parse_block encountered an unrecognized token (e.g. the
+    identifier ``and`` which is not a keyword in AILang), parse_expression
+    would report an error but not advance the token stream, causing an
+    infinite loop.
+
+    Fix: Added a max-iterations safety guard and a force-advance fallback
+    in parse_block when the stream index does not change after parsing
+    an expression statement.
+    """
+    from compiler.diagnostics import DiagnosticReporter
+    from compiler.lexer import Lexer
+    from compiler.parser import Parser
+
+    reporter = DiagnosticReporter()
+    lexer = Lexer(reporter)
+    tokens = lexer.tokenize("fn main() { if (x and y) { return 1; } }")
+    parser = Parser(tokens, reporter)
+    cst = parser.parse_program()
+    # Should complete without hanging; errors are expected for invalid syntax
+    assert cst is not None

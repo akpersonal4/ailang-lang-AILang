@@ -1,0 +1,43 @@
+import list;
+import map;
+
+fn add_employee(emps, name, salary, years) {
+    let e = map.new();
+    map.set(e, "name", name);
+    map.set(e, "salary", salary);
+    map.set(e, "years", years);
+    list.append(emps, e);
+    return emps
+}
+
+fn calc_bonus(salary, years) {
+    if (years >= 5) { return salary * 15 / 100 }
+    if (years >= 3) { return salary * 10 / 100 }
+    return salary * 5 / 100
+}
+
+fn process_payroll_helper(emps, i) {
+    if (i >= list.len(emps)) { return 0 }
+    let e = list.get(emps, i);
+    let salary = map.get(e, "salary");
+    let years = map.get(e, "years");
+    let bonus = calc_bonus(salary, years);
+    let pay = salary + bonus;
+    print(map.get(e, "name"), "salary:", salary, "bonus:", bonus, "total:", pay);
+    return pay + process_payroll_helper(emps, i + 1)
+}
+
+fn process_payroll(emps) {
+    let total = process_payroll_helper(emps, 0);
+    print("Total payroll:", total)
+}
+
+fn main() {
+    print("=== Employee Management ===");
+    let emps = list.new();
+    emps = add_employee(emps, "Alice", 50000, 6);
+    emps = add_employee(emps, "Bob", 45000, 3);
+    emps = add_employee(emps, "Charlie", 40000, 1);
+    print("Payroll processing:");
+    process_payroll(emps)
+}

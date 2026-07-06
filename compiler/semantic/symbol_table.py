@@ -42,10 +42,22 @@ class Scope:
 
 
 class SymbolTable:
-    def __init__(self, reporter: DiagnosticReporter | None = None) -> None:
+    def __init__(
+        self,
+        reporter: DiagnosticReporter | None = None,
+    ) -> None:
         self.reporter = reporter
+        self._source_lines: list[str] | None = None
         self.scopes: list[Scope] = [Scope()]
         self.node_scopes: dict[int, Scope] = {}
+
+    def set_source_text(self, source_text: str | None) -> None:
+        """Set source text for offset-to-line/col conversion.
+
+        Must be called before analyzing each module in a multi-module
+        session so that error positions reference the correct file.
+        """
+        self._source_lines = source_text.split("\n") if source_text else None
 
     def enter_scope(self, node: object | None = None) -> None:
         if node is not None and id(node) in self.node_scopes:
@@ -76,6 +88,20 @@ class SymbolTable:
             return scope.symbols[name]
         return scope.declare(name, start_span, end_span, type)
 
+    def declare_module_namespace(
+        self,
+        name: str,
+        start_span: int | None = None,
+        end_span: int | None = None,
+        type: object | None = None,
+    ) -> Symbol:
+        scope = self.scopes[-1]
+        if name in scope.symbols:
+            return scope.symbols[name]
+        symbol = Symbol(name, start_span, end_span, type)
+        scope.symbols[name] = symbol
+        return symbol
+
     def resolve(
         self, name: str, start_span: int | None = None, end_span: int | None = None
     ) -> Symbol | None:
@@ -95,7 +121,17 @@ class SymbolTable:
             return
         line = None
         column = None
-        if start_span is not None:
+        if start_span is not None and self._source_lines is not None:
+            # Convert character offset to 1-based line/column
+            line = 1
+            col_offset = start_span
+            for lineno, src_line in enumerate(self._source_lines, 1):
+                if col_offset <= len(src_line):
+                    line = lineno
+                    column = col_offset + 1
+                    break
+                col_offset -= len(src_line) + 1  # +1 for newline char
+        elif start_span is not None:
             line = 1
             column = start_span + 1
         diagnostic = Diagnostic(
