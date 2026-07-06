@@ -1,0 +1,1238 @@
+import list;
+import map;
+import string;
+import json;
+import file;
+import time;
+import convert;
+
+// ============================================================
+// Level 0: Pure Utilities
+// ============================================================
+fn is_empty(val) {
+    if (string.length(val) == 0) {
+        return true;
+    }
+    return false;
+}
+
+fn current_timestamp_val() {
+    return time.timestamp();
+}
+
+
+let next_identity = 1;
+
+fn new_id() {
+    let nid = next_identity;
+    next_identity = next_identity + 1;
+    return nid;
+}
+
+// ============================================================
+// Level 1: String Helpers — NO dependencies on later functions
+// ============================================================
+fn find_substring(text, pat, start_pos) {
+    let tlen = string.length(text);
+    let plen = string.length(pat);
+    if (start_pos + plen > tlen) {
+        return -1;
+    }
+    let segment = string.substring(text, start_pos, start_pos + plen);
+    if (string.equals(segment, pat)) {
+        return start_pos;
+    }
+    return find_substring(text, pat, start_pos + 1);
+}
+
+fn find_delim(text, delim, start_d) {
+    if (start_d >= string.length(text)) {
+        return start_d;
+    }
+    let dlen_d = string.length(delim);
+    let rest_d = start_d + dlen_d;
+    if (rest_d > string.length(text)) {
+        return start_d;
+    }
+    let seg_d = string.substring(text, start_d, rest_d);
+    if (string.equals(seg_d, delim)) {
+        return start_d;
+    }
+    return find_delim(text, delim, start_d + 1);
+}
+
+fn split_helper(text, delim, idx, accum) {
+    if (idx >= string.length(text)) {
+        return accum;
+    }
+    let end_pos = find_delim(text, delim, idx);
+    let part = string.substring(text, idx, end_pos);
+    list.append(accum, part);
+    let dlen_local = string.length(delim);
+    return split_helper(text, delim, end_pos + dlen_local, accum);
+}
+
+fn split_string(text, delim) {
+    return split_helper(text, delim, 0, list.new());
+}
+
+fn join_helper(items, sep, pos_jh, result_jh) {
+    if (pos_jh >= list.len(items)) {
+        return 0;
+    }
+    let item_jh = list.get(items, pos_jh);
+    list.append(result_jh, item_jh);
+    return join_helper(items, sep, pos_jh + 1, result_jh);
+}
+
+fn join_build(parts, pos_jb, acc_jb, sep_jb) {
+    if (pos_jb >= list.len(parts)) {
+        return acc_jb;
+    }
+    let part_jb = list.get(parts, pos_jb);
+    if (pos_jb == 0) {
+        return join_build(parts, pos_jb + 1, part_jb, sep_jb);
+    }
+    return join_build(parts, pos_jb + 1, acc_jb + sep_jb + part_jb, sep_jb);
+}
+
+fn join_strings(items, sep) {
+    let parts_js = list.new();
+    join_helper(items, sep, 0, parts_js);
+    return join_build(parts_js, 0, "", sep);
+}
+
+fn string_in_list_pos(items, search_val, pos_sl) {
+    if (pos_sl >= list.len(items)) {
+        return -1;
+    }
+    let item_sl = list.get(items, pos_sl);
+    if (item_sl == search_val) {
+        return pos_sl;
+    }
+    return string_in_list_pos(items, search_val, pos_sl + 1);
+}
+
+fn string_in_list_flag(items, search_sf) {
+    let found_sf = string_in_list_pos(items, search_sf, 0);
+    if (found_sf >= 0) {
+        return true;
+    }
+    return false;
+}
+
+fn list_copy(items_lc, result_lc, pos_lc) {
+    if (pos_lc >= list.len(items_lc)) {
+        return result_lc;
+    }
+    let item_lc = list.get(items_lc, pos_lc);
+    list.append(result_lc, item_lc);
+    return list_copy(items_lc, result_lc, pos_lc + 1);
+}
+
+fn merge_lists(target_ml, source_ml, pos_ml) {
+    if (pos_ml >= list.len(source_ml)) {
+        return target_ml;
+    }
+    let item_ml = list.get(source_ml, pos_ml);
+    list.append(target_ml, item_ml);
+    return merge_lists(target_ml, source_ml, pos_ml + 1);
+}
+
+fn priority_value(prio) {
+    if (prio == "Critical") {
+        return 4;
+    }
+    if (prio == "High") {
+        return 3;
+    }
+    if (prio == "Medium") {
+        return 2;
+    }
+    if (prio == "Low") {
+        return 1;
+    }
+    return 0;
+}
+
+fn filter_matching(items, search_q, result_fm, pos_fm) {
+    if (pos_fm >= list.len(items)) {
+        return result_fm;
+    }
+    let item_fm = list.get(items, pos_fm);
+    if (map.has(item_fm, "title")) {
+        let title_fm = map.get(item_fm, "title");
+        if (find_substring(string.lowercase(title_fm), search_q, 0) >= 0) {
+            list.append(result_fm, item_fm);
+            return filter_matching(items, search_q, result_fm, pos_fm + 1);
+        }
+    }
+    if (map.has(item_fm, "desc")) {
+        let desc_fm = map.get(item_fm, "desc");
+        if (find_substring(string.lowercase(desc_fm), search_q, 0) >= 0) {
+            list.append(result_fm, item_fm);
+        }
+    }
+    return filter_matching(items, search_q, result_fm, pos_fm + 1);
+}
+
+fn filter_by_field(tasks_fbf, field_fbf, value_fbf, pos_fbf, result_fbf) {
+    if (pos_fbf >= list.len(tasks_fbf)) {
+        return result_fbf;
+    }
+    let task_fbf = list.get(tasks_fbf, pos_fbf);
+    if (map.has(task_fbf, field_fbf)) {
+        let val_fbf = map.get(task_fbf, field_fbf);
+        if (val_fbf == value_fbf) {
+            list.append(result_fbf, task_fbf);
+        }
+    }
+    return filter_by_field(tasks_fbf, field_fbf, value_fbf, pos_fbf + 1, result_fbf);
+}
+
+fn filter_by_label_func(tasks_fbl, label_fbl, pos_fbl, result_fbl) {
+    if (pos_fbl >= list.len(tasks_fbl)) {
+        return result_fbl;
+    }
+    let task_fbl = list.get(tasks_fbl, pos_fbl);
+    if (map.has(task_fbl, "labels")) {
+        let lbls_fbl = map.get(task_fbl, "labels");
+        if (string_in_list_flag(lbls_fbl, label_fbl)) {
+            list.append(result_fbl, task_fbl);
+        }
+    }
+    return filter_by_label_func(tasks_fbl, label_fbl, pos_fbl + 1, result_fbl);
+}
+
+fn count_matching(tasks_cm, field_cm, value_cm, pos_cm, acc_cm) {
+    if (pos_cm >= list.len(tasks_cm)) {
+        return acc_cm;
+    }
+    let task_cm = list.get(tasks_cm, pos_cm);
+    if (map.has(task_cm, field_cm)) {
+        let val_cm = map.get(task_cm, field_cm);
+        if (val_cm == value_cm) {
+            return count_matching(tasks_cm, field_cm, value_cm, pos_cm + 1, acc_cm + 1);
+        }
+    }
+    return count_matching(tasks_cm, field_cm, value_cm, pos_cm + 1, acc_cm);
+}
+
+// ============================================================
+// Level 2: Task Data Constructor
+// ============================================================
+fn make_task(title, desc_p, priority_p, due_date_p, assignee_p, labels_p) {
+    let id_t = new_id();
+    let now_t = current_timestamp_val();
+    let task_t = map.new();
+    map.set(task_t, "id", id_t);
+    map.set(task_t, "title", title);
+    map.set(task_t, "desc", desc_p);
+    map.set(task_t, "priority", priority_p);
+    map.set(task_t, "due_date", due_date_p);
+    map.set(task_t, "assignee", assignee_p);
+    map.set(task_t, "labels", labels_p);
+    map.set(task_t, "created_at", now_t);
+    map.set(task_t, "updated_at", now_t);
+    return task_t;
+}
+
+fn task_set_labels(task_tl, labels_tl) {
+    map.set(task_tl, "labels", labels_tl);
+    map.set(task_tl, "updated_at", current_timestamp_val());
+    return task_tl;
+}
+
+fn task_add_label(task_al, label_al) {
+    if (map.has(task_al, "labels")) {
+        let lbls_al = map.get(task_al, "labels");
+        if (!string_in_list_flag(lbls_al, label_al)) {
+            list.append(lbls_al, label_al);
+        }
+    }
+    map.set(task_al, "updated_at", current_timestamp_val());
+    return task_al;
+}
+
+fn task_has_label(task_hl, label_hl) {
+    if (!map.has(task_hl, "labels")) {
+        return false;
+    }
+    let lbls_hl = map.get(task_hl, "labels");
+    return string_in_list_flag(lbls_hl, label_hl);
+}
+
+fn task_matches_filter(task_mf, field_mf, value_mf) {
+    if (!map.has(task_mf, field_mf)) {
+        return false;
+    }
+    let val_mf = map.get(task_mf, field_mf);
+    if (val_mf == value_mf) {
+        return true;
+    }
+    return false;
+}
+
+// ============================================================
+// Level 3: Column Operations
+// ============================================================
+fn make_column(name_c) {
+    let id_c = new_id();
+    let col_c = map.new();
+    map.set(col_c, "id", id_c);
+    map.set(col_c, "name", name_c);
+    map.set(col_c, "tasks", list.new());
+    return col_c;
+}
+
+fn column_add_task(col_cat, task_cat) {
+    if (!map.has(col_cat, "tasks")) {
+        map.set(col_cat, "tasks", list.new());
+    }
+    let tasks_cat = map.get(col_cat, "tasks");
+    list.append(tasks_cat, task_cat);
+    return col_cat;
+}
+
+fn column_task_count(col_ctc) {
+    if (!map.has(col_ctc, "tasks")) {
+        return 0;
+    }
+    return list.len(map.get(col_ctc, "tasks"));
+}
+
+fn find_task_in_column(col_ftc, task_id_ftc, pos_ftc) {
+    if (!map.has(col_ftc, "tasks")) {
+        return false;
+    }
+    let tasks_ftc = map.get(col_ftc, "tasks");
+    if (pos_ftc >= list.len(tasks_ftc)) {
+        return false;
+    }
+    let task_ftc = list.get(tasks_ftc, pos_ftc);
+    if (map.has(task_ftc, "id")) {
+        if (map.get(task_ftc, "id") == task_id_ftc) {
+            return task_ftc;
+        }
+    }
+    return find_task_in_column(col_ftc, task_id_ftc, pos_ftc + 1);
+}
+
+fn find_task_index(col_fti, task_id_fti, pos_fti) {
+    if (!map.has(col_fti, "tasks")) {
+        return -1;
+    }
+    let tasks_fti = map.get(col_fti, "tasks");
+    if (pos_fti >= list.len(tasks_fti)) {
+        return -1;
+    }
+    let task_fti = list.get(tasks_fti, pos_fti);
+    if (map.has(task_fti, "id")) {
+        if (map.get(task_fti, "id") == task_id_fti) {
+            return pos_fti;
+        }
+    }
+    return find_task_index(col_fti, task_id_fti, pos_fti + 1);
+}
+
+fn remove_task_from_column(col_rtc, task_id_rtc) {
+    if (!map.has(col_rtc, "tasks")) {
+        return col_rtc;
+    }
+    let tasks_rtc = map.get(col_rtc, "tasks");
+    let idx_rtc = find_task_index(col_rtc, task_id_rtc, 0);
+    if (idx_rtc >= 0) {
+        if (idx_rtc < list.len(tasks_rtc)) {
+            let target_rtc = list.get(tasks_rtc, idx_rtc);
+            if (map.has(target_rtc, "title")) {
+                list.remove(tasks_rtc, map.get(target_rtc, "title"));
+            }
+        }
+    }
+    return col_rtc;
+}
+
+fn list_tasks_in_column(col_ltc, result_ltc, pos_ltc) {
+    if (!map.has(col_ltc, "tasks")) {
+        return result_ltc;
+    }
+    let tasks_ltc = map.get(col_ltc, "tasks");
+    if (pos_ltc >= list.len(tasks_ltc)) {
+        return result_ltc;
+    }
+    list.append(result_ltc, list.get(tasks_ltc, pos_ltc));
+    return list_tasks_in_column(col_ltc, result_ltc, pos_ltc + 1);
+}
+
+fn collect_all_tasks(board_cat, col_pos_cat, result_cat) {
+    if (!map.has(board_cat, "columns")) {
+        return result_cat;
+    }
+    let cols_cat = map.get(board_cat, "columns");
+    if (col_pos_cat >= list.len(cols_cat)) {
+        return result_cat;
+    }
+    let col_cat = list.get(cols_cat, col_pos_cat);
+    let tasks_cat = list_tasks_in_column(col_cat, list.new(), 0);
+    let merged_cat = merge_lists(result_cat, tasks_cat, 0);
+    return collect_all_tasks(board_cat, col_pos_cat + 1, merged_cat);
+}
+
+fn find_column_by_id(board_fc, col_id_fc, pos_fc) {
+    if (!map.has(board_fc, "columns")) {
+        return false;
+    }
+    let cols_fc = map.get(board_fc, "columns");
+    if (pos_fc >= list.len(cols_fc)) {
+        return false;
+    }
+    let col_fc = list.get(cols_fc, pos_fc);
+    if (map.has(col_fc, "id")) {
+        if (map.get(col_fc, "id") == col_id_fc) {
+            return col_fc;
+        }
+    }
+    return find_column_by_id(board_fc, col_id_fc, pos_fc + 1);
+}
+
+fn find_column_index(board_fci, col_id_fci, pos_fci) {
+    if (!map.has(board_fci, "columns")) {
+        return -1;
+    }
+    let cols_fci = map.get(board_fci, "columns");
+    if (pos_fci >= list.len(cols_fci)) {
+        return -1;
+    }
+    let col_fci = list.get(cols_fci, pos_fci);
+    if (map.has(col_fci, "id")) {
+        if (map.get(col_fci, "id") == col_id_fci) {
+            return pos_fci;
+        }
+    }
+    return find_column_index(board_fci, col_id_fci, pos_fci + 1);
+}
+
+fn get_first_column_id(board_gfc) {
+    if (!map.has(board_gfc, "columns")) {
+        return -1;
+    }
+    let cols_gfc = map.get(board_gfc, "columns");
+    if (list.len(cols_gfc) == 0) {
+        return -1;
+    }
+    let first_gfc = list.get(cols_gfc, 0);
+    if (map.has(first_gfc, "id")) {
+        return map.get(first_gfc, "id");
+    }
+    return -1;
+}
+
+fn column_name_list(board_cnl, result_cnl, pos_cnl) {
+    if (!map.has(board_cnl, "columns")) {
+        return result_cnl;
+    }
+    let cols_cnl = map.get(board_cnl, "columns");
+    if (pos_cnl >= list.len(cols_cnl)) {
+        return result_cnl;
+    }
+    let col_cnl = list.get(cols_cnl, pos_cnl);
+    if (map.has(col_cnl, "name")) {
+        list.append(result_cnl, map.get(col_cnl, "name"));
+    }
+    return column_name_list(board_cnl, result_cnl, pos_cnl + 1);
+}
+
+fn print_column_names_iter(names_pcn, pos_pcn) {
+    if (pos_pcn >= list.len(names_pcn)) {
+        return 0;
+    }
+    print("  [" + convert.to_string(pos_pcn + 1) + "]", list.get(names_pcn, pos_pcn));
+    return print_column_names_iter(names_pcn, pos_pcn + 1);
+}
+
+fn print_column_names(board_pcn) {
+    let names_pcn = column_name_list(board_pcn, list.new(), 0);
+    if (list.len(names_pcn) == 0) {
+        print("  (no columns)");
+        return 0;
+    }
+    return print_column_names_iter(names_pcn, 0);
+}
+
+fn sum_column_tasks(cols_sct, pos_sct, acc_sct) {
+    if (pos_sct >= list.len(cols_sct)) {
+        return acc_sct;
+    }
+    let col_sct = list.get(cols_sct, pos_sct);
+    let count_sct = column_task_count(col_sct);
+    return sum_column_tasks(cols_sct, pos_sct + 1, acc_sct + count_sct);
+}
+
+fn board_find_col_by_name(board_bfc, name_bfc, cols_bfc, pos_bfc) {
+    if (pos_bfc >= list.len(cols_bfc)) {
+        return false;
+    }
+    let col_bfc = list.get(cols_bfc, pos_bfc);
+    if (map.has(col_bfc, "name")) {
+        if (map.get(col_bfc, "name") == name_bfc) {
+            return col_bfc;
+        }
+    }
+    return board_find_col_by_name(board_bfc, name_bfc, cols_bfc, pos_bfc + 1);
+}
+
+fn print_column_stats_iter(cols_pcs, pos_pcs) {
+    if (pos_pcs >= list.len(cols_pcs)) {
+        return 0;
+    }
+    let col_pcs = list.get(cols_pcs, pos_pcs);
+    let cname_pcs = "";
+    if (map.has(col_pcs, "name")) {
+        cname_pcs = map.get(col_pcs, "name");
+    }
+    let ccount_pcs = column_task_count(col_pcs);
+    print("  " + cname_pcs + ":", convert.to_string(ccount_pcs));
+    return print_column_stats_iter(cols_pcs, pos_pcs + 1);
+}
+
+fn remove_task_from_cols(cols_rtc, task_id_rtc, pos_rtc) {
+    if (pos_rtc >= list.len(cols_rtc)) {
+        return cols_rtc;
+    }
+    let col_rtc = list.get(cols_rtc, pos_rtc);
+    remove_task_from_column(col_rtc, task_id_rtc);
+    return remove_task_from_cols(cols_rtc, task_id_rtc, pos_rtc + 1);
+}
+
+fn count_in_cols(cols_cic, name_cic, pos_cic, acc_cic) {
+    if (pos_cic >= list.len(cols_cic)) {
+        return acc_cic;
+    }
+    let col_cic = list.get(cols_cic, pos_cic);
+    if (map.has(col_cic, "name")) {
+        if (map.get(col_cic, "name") == name_cic) {
+            return count_in_cols(cols_cic, name_cic, pos_cic + 1, acc_cic + column_task_count(col_cic));
+        }
+    }
+    return count_in_cols(cols_cic, name_cic, pos_cic + 1, acc_cic);
+}
+
+fn board_total_tasks(board_btt) {
+    if (!map.has(board_btt, "columns")) {
+        return 0;
+    }
+    return sum_column_tasks(map.get(board_btt, "columns"), 0, 0);
+}
+
+fn print_task(ptask) {
+    if (!map.has(ptask, "id")) {
+        return 0;
+    }
+    let pid_pt = map.get(ptask, "id");
+    let title_pt = "";
+    let prio_pt = "";
+    let assign_pt = "";
+    let due_pt = "";
+    if (map.has(ptask, "title")) {
+        title_pt = map.get(ptask, "title");
+    }
+    if (map.has(ptask, "priority")) {
+        prio_pt = map.get(ptask, "priority");
+    }
+    if (map.has(ptask, "assignee")) {
+        assign_pt = map.get(ptask, "assignee");
+    }
+    if (map.has(ptask, "due_date")) {
+        due_pt = map.get(ptask, "due_date");
+    }
+    print("  #" + convert.to_string(pid_pt) + ":", title_pt, "[" + prio_pt + "]", "Assignee:", assign_pt, "Due:", due_pt);
+    return 0;
+}
+
+fn print_board_iter(boards_pab, pos_pab) {
+    if (pos_pab >= list.len(boards_pab)) {
+        return 0;
+    }
+    let board_pab = list.get(boards_pab, pos_pab);
+    let bid_pab = 0;
+    let bname_pab = "";
+    if (map.has(board_pab, "id")) {
+        bid_pab = map.get(board_pab, "id");
+    }
+    if (map.has(board_pab, "name")) {
+        bname_pab = map.get(board_pab, "name");
+    }
+    let btotal_pab = board_total_tasks(board_pab);
+    print("  [" + convert.to_string(bid_pab) + "]", bname_pab, "-", convert.to_string(btotal_pab), "tasks");
+    return print_board_iter(boards_pab, pos_pab + 1);
+}
+
+fn print_tasks_in_list(tasks_ptl, pos_ptl) {
+    if (pos_ptl >= list.len(tasks_ptl)) {
+        return 0;
+    }
+    print_task(list.get(tasks_ptl, pos_ptl));
+    return print_tasks_in_list(tasks_ptl, pos_ptl + 1);
+}
+
+// ============================================================
+// Level 4: Board Operations
+// ============================================================
+fn make_board(name_b, desc_b) {
+    let id_b = new_id();
+    let board_b = map.new();
+    map.set(board_b, "id", id_b);
+    map.set(board_b, "name", name_b);
+    map.set(board_b, "description", desc_b);
+    map.set(board_b, "columns", list.new());
+    let col1_b = make_column("Todo");
+    let col2_b = make_column("Doing");
+    let col3_b = make_column("Review");
+    let col4_b = make_column("Done");
+    let cols_b = list.new();
+    list.append(cols_b, col1_b);
+    list.append(cols_b, col2_b);
+    list.append(cols_b, col3_b);
+    list.append(cols_b, col4_b);
+    map.set(board_b, "columns", cols_b);
+    return board_b;
+}
+
+fn board_get_column(board_bgc, col_name_bgc) {
+    if (!map.has(board_bgc, "columns")) {
+        return false;
+    }
+    return board_find_col_by_name(board_bgc, col_name_bgc, map.get(board_bgc, "columns"), 0);
+}
+
+fn board_display(board_bd) {
+    if (!map.has(board_bd, "name")) {
+        return 0;
+    }
+    let bname_bd = map.get(board_bd, "name");
+    let bdesc_bd = "";
+    if (map.has(board_bd, "description")) {
+        bdesc_bd = map.get(board_bd, "description");
+    }
+    let btotal_bd = board_total_tasks(board_bd);
+    print("Board:", bname_bd);
+    print("  Description:", bdesc_bd);
+    print("  Total tasks:", convert.to_string(btotal_bd));
+    print("  Columns:");
+    print_column_names(board_bd);
+    return 0;
+}
+
+fn print_column_tasks_iter(board_pcti, col_name_pcti, cols_pcti, pos_pcti) {
+    if (pos_pcti >= list.len(cols_pcti)) {
+        return 0;
+    }
+    let col_pcti = list.get(cols_pcti, pos_pcti);
+    if (map.has(col_pcti, "name")) {
+        if (map.get(col_pcti, "name") == col_name_pcti) {
+            print("Column:", col_name_pcti);
+            if (map.has(col_pcti, "tasks")) {
+                print_tasks_in_list(map.get(col_pcti, "tasks"), 0);
+            }
+            return 0;
+        }
+    }
+    return print_column_tasks_iter(board_pcti, col_name_pcti, cols_pcti, pos_pcti + 1);
+}
+
+fn print_column_tasks(board_pct, col_name_pct) {
+    if (!map.has(board_pct, "columns")) {
+        return 0;
+    }
+    let cols_pct = map.get(board_pct, "columns");
+    return print_column_tasks_iter(board_pct, col_name_pct, cols_pct, 0);
+}
+
+fn print_all_tasks(board_pat) {
+    print_column_tasks(board_pat, "Todo");
+    print_column_tasks(board_pat, "Doing");
+    print_column_tasks(board_pat, "Review");
+    print_column_tasks(board_pat, "Done");
+    return 0;
+}
+
+// ============================================================
+// Level 5: Persistence
+// ============================================================
+
+let DATA_FILE = "kanban_data.json";
+
+fn load_boards() {
+    if (!file.exists(DATA_FILE)) {
+        return list.new();
+    }
+    let content_lb = file.read(DATA_FILE);
+    if (string.length(content_lb) == 0) {
+        return list.new();
+    }
+    return json.parse(content_lb);
+}
+
+fn save_boards(boards_sb) {
+    file.write(DATA_FILE, json.stringify(boards_sb));
+    return 0;
+}
+
+fn export_board_to_file(board_eb, filepath_eb) {
+    file.write(filepath_eb, json.stringify(board_eb));
+    return 0;
+}
+
+fn import_board_from_file(filepath_ib) {
+    if (!file.exists(filepath_ib)) {
+        return false;
+    }
+    let content_ib = file.read(filepath_ib);
+    if (string.length(content_ib) == 0) {
+        return false;
+    }
+    return json.parse(content_ib);
+}
+
+fn add_board_to_list(boards_abl, board_abl) {
+    list.append(boards_abl, board_abl);
+    save_boards(boards_abl);
+    return boards_abl;
+}
+
+fn remove_board_from_list(boards_rbl, board_id_rbl, pos_rbl) {
+    if (pos_rbl >= list.len(boards_rbl)) {
+        return boards_rbl;
+    }
+    let board_rbl = list.get(boards_rbl, pos_rbl);
+    if (map.has(board_rbl, "id")) {
+        if (map.get(board_rbl, "id") == board_id_rbl) {
+            if (map.has(board_rbl, "name")) {
+                list.remove(boards_rbl, map.get(board_rbl, "name"));
+            }
+            save_boards(boards_rbl);
+            return boards_rbl;
+        }
+    }
+    return remove_board_from_list(boards_rbl, board_id_rbl, pos_rbl + 1);
+}
+
+fn find_board_by_id(boards_fbi, board_id_fbi, pos_fbi) {
+    if (pos_fbi >= list.len(boards_fbi)) {
+        return false;
+    }
+    let board_fbi = list.get(boards_fbi, pos_fbi);
+    if (map.has(board_fbi, "id")) {
+        if (map.get(board_fbi, "id") == board_id_fbi) {
+            return board_fbi;
+        }
+    }
+    return find_board_by_id(boards_fbi, board_id_fbi, pos_fbi + 1);
+}
+
+fn print_all_boards(boards_pab) {
+    let count_pab = list.len(boards_pab);
+    if (count_pab == 0) {
+        print("No boards found.");
+        return 0;
+    }
+    print("Boards (" + convert.to_string(count_pab) + "):");
+    return print_board_iter(boards_pab, 0);
+}
+
+fn get_board_by_index(boards_gbi, index_gbi) {
+    if (index_gbi >= list.len(boards_gbi)) {
+        return false;
+    }
+    return list.get(boards_gbi, index_gbi);
+}
+
+// ============================================================
+// Level 6: Task CRUD
+// ============================================================
+fn create_task(board_ct, col_id_ct, title_ct, desc_ct, priority_ct, due_ct, assignee_ct, labels_ct) {
+    if (!map.has(board_ct, "columns")) {
+        return board_ct;
+    }
+    let col_ct = find_column_by_id(board_ct, col_id_ct, 0);
+    if (col_ct) {
+        let task_ct = make_task(title_ct, desc_ct, priority_ct, due_ct, assignee_ct, labels_ct);
+        column_add_task(col_ct, task_ct);
+    }
+    return board_ct;
+}
+
+fn move_task(board_mt, task_id_mt, from_col_id_mt, to_col_id_mt) {
+    let from_col_mt = find_column_by_id(board_mt, from_col_id_mt, 0);
+    let to_col_mt = find_column_by_id(board_mt, to_col_id_mt, 0);
+    if (from_col_mt && to_col_mt) {
+        let task_mt = find_task_in_column(from_col_mt, task_id_mt, 0);
+        if (task_mt) {
+            remove_task_from_column(from_col_mt, task_id_mt);
+            column_add_task(to_col_mt, task_mt);
+        }
+    }
+    return board_mt;
+}
+
+fn add_task_to_board(boards_atb, board_id_atb, col_name_atb, title_atb, desc_atb, priority_atb, due_atb, assignee_atb) {
+    let board_atb = find_board_by_id(boards_atb, board_id_atb, 0);
+    if (board_atb) {
+        let col_atb = board_get_column(board_atb, col_name_atb);
+        if (col_atb) {
+            if (map.has(col_atb, "id")) {
+                let cid_atb = map.get(col_atb, "id");
+                board_atb = create_task(board_atb, cid_atb, title_atb, desc_atb, priority_atb, due_atb, assignee_atb, list.new());
+                save_boards(boards_atb);
+            }
+        }
+    }
+    return boards_atb;
+}
+
+fn simple_move_task(boards_smt, board_id_smt, task_id_smt, from_col_smt, to_col_smt) {
+    let board_smt = find_board_by_id(boards_smt, board_id_smt, 0);
+    if (board_smt) {
+        let from_c_smt = board_get_column(board_smt, from_col_smt);
+        let to_c_smt = board_get_column(board_smt, to_col_smt);
+        if (from_c_smt && to_c_smt) {
+            if (map.has(from_c_smt, "id") && map.has(to_c_smt, "id")) {
+                let fid_smt = map.get(from_c_smt, "id");
+                let tid_smt = map.get(to_c_smt, "id");
+                board_smt = move_task(board_smt, task_id_smt, fid_smt, tid_smt);
+                save_boards(boards_smt);
+            }
+        }
+    }
+    return boards_smt;
+}
+
+fn find_task_in_any_column(board_fta, task_id_fta, col_pos_fta) {
+    if (!map.has(board_fta, "columns")) {
+        return false;
+    }
+    let cols_fta = map.get(board_fta, "columns");
+    if (col_pos_fta >= list.len(cols_fta)) {
+        return false;
+    }
+    let col_fta = list.get(cols_fta, col_pos_fta);
+    let task_fta = find_task_in_column(col_fta, task_id_fta, 0);
+    if (task_fta) {
+        return task_fta;
+    }
+    return find_task_in_any_column(board_fta, task_id_fta, col_pos_fta + 1);
+}
+
+fn update_task_field_simple(boards_utfs, board_id_utfs, task_id_utfs, field_utfs, value_utfs) {
+    let board_utfs = find_board_by_id(boards_utfs, board_id_utfs, 0);
+    if (board_utfs) {
+        let task_utfs = find_task_in_any_column(board_utfs, task_id_utfs, 0);
+        if (task_utfs) {
+            map.set(task_utfs, field_utfs, value_utfs);
+            map.set(task_utfs, "updated_at", current_timestamp_val());
+            save_boards(boards_utfs);
+        }
+    }
+    return boards_utfs;
+}
+
+fn delete_task_simple(boards_dts, board_id_dts, task_id_dts) {
+    let board_dts = find_board_by_id(boards_dts, board_id_dts, 0);
+    if (board_dts) {
+        if (!map.has(board_dts, "columns")) {
+            return boards_dts;
+        }
+        let cols_dts = map.get(board_dts, "columns");
+        remove_task_from_cols(cols_dts, task_id_dts, 0);
+        save_boards(boards_dts);
+    }
+    return boards_dts;
+}
+
+// ============================================================
+// Level 7: Board CRUD
+// ============================================================
+fn create_board_wrapper(boards_cbw, name_cbw, desc_cbw) {
+    return add_board_to_list(boards_cbw, make_board(name_cbw, desc_cbw));
+}
+
+fn delete_board_wrapper(boards_dbw, board_id_dbw) {
+    return remove_board_from_list(boards_dbw, board_id_dbw, 0);
+}
+
+fn rename_board_wrapper(boards_rbw, board_id_rbw, new_name_rbw) {
+    let board_rbw = find_board_by_id(boards_rbw, board_id_rbw, 0);
+    if (board_rbw) {
+        map.set(board_rbw, "name", new_name_rbw);
+        save_boards(boards_rbw);
+    }
+    return boards_rbw;
+}
+
+// ============================================================
+// Level 8: Search & Filter
+// ============================================================
+fn search_all_tasks(board_sat, query_sat, accum_sat) {
+    let qlower_sat = string.lowercase(query_sat);
+    let all_sat = collect_all_tasks(board_sat, 0, list.new());
+    return filter_matching(all_sat, qlower_sat, accum_sat, 0);
+}
+
+fn filter_tasks_by_priority(board_ftp, priority_ftp) {
+    let all_ftp = collect_all_tasks(board_ftp, 0, list.new());
+    return filter_by_field(all_ftp, "priority", priority_ftp, 0, list.new());
+}
+
+fn filter_tasks_by_assignee(board_fta, assignee_fta) {
+    let all_fta = collect_all_tasks(board_fta, 0, list.new());
+    return filter_by_field(all_fta, "assignee", assignee_fta, 0, list.new());
+}
+
+fn filter_tasks_by_label(board_ftl, label_ftl) {
+    let all_ftl = collect_all_tasks(board_ftl, 0, list.new());
+    return filter_by_label_func(all_ftl, label_ftl, 0, list.new());
+}
+
+fn print_task_list(tasks_ptl) {
+    let count_ptl = list.len(tasks_ptl);
+    if (count_ptl == 0) {
+        print("  (no tasks found)");
+        return 0;
+    }
+    print("Found " + convert.to_string(count_ptl) + " task(s):");
+    print_tasks_in_list(tasks_ptl, 0);
+    return 0;
+}
+
+// ============================================================
+// Level 9: Statistics & Reports
+// ============================================================
+fn count_by_priority_all(board_cpa) {
+    let all_cpa = collect_all_tasks(board_cpa, 0, list.new());
+    print("  Critical:", convert.to_string(count_matching(all_cpa, "priority", "Critical", 0, 0)));
+    print("  High:", convert.to_string(count_matching(all_cpa, "priority", "High", 0, 0)));
+    print("  Medium:", convert.to_string(count_matching(all_cpa, "priority", "Medium", 0, 0)));
+    print("  Low:", convert.to_string(count_matching(all_cpa, "priority", "Low", 0, 0)));
+    return 0;
+}
+
+fn count_by_column_stats(board_bcs) {
+    print("Tasks by Column:");
+    if (!map.has(board_bcs, "columns")) {
+        return 0;
+    }
+    return print_column_stats_iter(map.get(board_bcs, "columns"), 0);
+}
+
+fn generate_report(board_gr) {
+    if (!map.has(board_gr, "name")) {
+        return 0;
+    }
+    print("=== Report:", map.get(board_gr, "name"), "===");
+    count_by_column_stats(board_gr);
+    print("Priority Distribution:");
+    count_by_priority_all(board_gr);
+    print("Total tasks:", convert.to_string(board_total_tasks(board_gr)));
+    return 0;
+}
+
+// ============================================================
+// Level 10: Import/Export & Demo Data
+// ============================================================
+fn export_all_boards(boards_eab) {
+    file.write("kanban_export.json", json.stringify(boards_eab));
+    print("Exported all boards to kanban_export.json");
+    return 0;
+}
+
+fn import_all_boards() {
+    let imported_ia = import_board_from_file("kanban_export.json");
+    if (imported_ia) {
+        print("Imported boards from kanban_export.json");
+        return imported_ia;
+    }
+    print("No export file found.");
+    return list.new();
+}
+
+fn create_demo_board(boards_cdb) {
+    let board_cdb = make_board("Sprint 24", "Team project for Q3 deliverables");
+    let cols_cdb = map.get(board_cdb, "columns");
+    let todo_cdb = list.get(cols_cdb, 0);
+    let doing_cdb = list.get(cols_cdb, 1);
+    let review_cdb = list.get(cols_cdb, 2);
+    let done_cdb = list.get(cols_cdb, 3);
+    if (map.has(todo_cdb, "id") && map.has(doing_cdb, "id") && map.has(review_cdb, "id") && map.has(done_cdb, "id")) {
+        let tid_cdb = map.get(todo_cdb, "id");
+        let did_cdb = map.get(doing_cdb, "id");
+        let rid_cdb = map.get(review_cdb, "id");
+        let dnd_cdb = map.get(done_cdb, "id");
+        let lbl1_cdb = list.new();
+        list.append(lbl1_cdb, "backend");
+        let lbl2_cdb = list.new();
+        list.append(lbl2_cdb, "frontend");
+        let lbl3_cdb = list.new();
+        list.append(lbl3_cdb, "bug");
+        let lbl4_cdb = list.new();
+        list.append(lbl4_cdb, "docs");
+        board_cdb = create_task(board_cdb, tid_cdb, "Set up CI pipeline", "Configure GitHub Actions", "High", "2026-07-15", "Alice", lbl1_cdb);
+        board_cdb = create_task(board_cdb, tid_cdb, "Design API endpoints", "Define REST API schema", "Medium", "2026-07-10", "Bob", lbl1_cdb);
+        board_cdb = create_task(board_cdb, did_cdb, "Implement login", "OAuth2 integration", "Critical", "2026-07-08", "Alice", lbl2_cdb);
+        let labels_combined_cdb = list_copy(lbl1_cdb, list.new(), 0);
+        merge_lists(labels_combined_cdb, lbl3_cdb, 0);
+        board_cdb = create_task(board_cdb, did_cdb, "Write unit tests", "Coverage for core modules", "High", "2026-07-12", "Charlie", labels_combined_cdb);
+        board_cdb = create_task(board_cdb, rid_cdb, "Code review: auth module", "Review PR #42", "Medium", "2026-07-09", "Bob", lbl2_cdb);
+        board_cdb = create_task(board_cdb, dnd_cdb, "Write README", "Project documentation", "Low", "2026-07-05", "Charlie", lbl4_cdb);
+        board_cdb = create_task(board_cdb, dnd_cdb, "Setup database schema", "Postgres initial migration", "High", "2026-07-01", "Alice", lbl1_cdb);
+    }
+    return add_board_to_list(boards_cdb, board_cdb);
+}
+
+// ============================================================
+// Level 11: UI Menu
+// ============================================================
+
+let board_global_id = 0;
+
+fn main_menu(boards_mm) {
+    print("");
+    print("=== KANBAN PROJECT MANAGER ===");
+    print("1. List boards");
+    print("2. Create board");
+    print("3. Delete board");
+    print("4. Show board details");
+    print("5. Add task");
+    print("6. Move task");
+    print("7. Delete task");
+    print("8. Search tasks");
+    print("9. Filter by priority");
+    print("10. Filter by assignee");
+    print("11. Board statistics");
+    print("12. Generate report");
+    print("13. Export all");
+    print("14. Import all");
+    print("15. Load demo data");
+    print("16. Update task field");
+    print("0. Exit");
+    print("Enter choice:");
+    return 0;
+}
+
+fn handle_list_boards(boards_hlb) {
+    print_all_boards(boards_hlb);
+    return boards_hlb;
+}
+
+fn handle_create_board_ui(boards_hcb) {
+    let board_hcb = make_board("New Board", "Default description");
+    let result_hcb = add_board_to_list(boards_hcb, board_hcb);
+    let bid_hcb = -1;
+    if (map.has(board_hcb, "id")) {
+        bid_hcb = map.get(board_hcb, "id");
+    }
+    print("Created board ID:", convert.to_string(bid_hcb));
+    return result_hcb;
+}
+
+fn handle_delete_board_ui(boards_hdb) {
+    print("Enter board ID to delete:");
+    print("(Using first board for demo)");
+    if (list.len(boards_hdb) > 0) {
+        let board_hdb = list.get(boards_hdb, 0);
+        if (map.has(board_hdb, "id")) {
+            boards_hdb = delete_board_wrapper(boards_hdb, map.get(board_hdb, "id"));
+            print("Deleted board.");
+        }
+    }
+    return boards_hdb;
+}
+
+fn handle_show_board(boards_hsb) {
+    print("Enter board ID:");
+    print("(Using first board for demo)");
+    if (list.len(boards_hsb) > 0) {
+        let board_hsb = list.get(boards_hsb, 0);
+        board_display(board_hsb);
+        print("");
+        print_all_tasks(board_hsb);
+    }
+    return boards_hsb;
+}
+
+fn handle_add_task_ui(boards_hat) {
+    if (list.len(boards_hat) == 0) {
+        print("No boards exist.");
+        return boards_hat;
+    }
+    let board_hat_ref = list.get(boards_hat, 0);
+    if (map.has(board_hat_ref, "id")) {
+        boards_hat = add_task_to_board(boards_hat, map.get(board_hat_ref, "id"), "Todo", "New Task", "Description", "Medium", "", "Unassigned");
+        print("Added task to Todo column.");
+    }
+    return boards_hat;
+}
+
+fn handle_move_task_ui(boards_hmt) {
+    if (list.len(boards_hmt) == 0) {
+        print("No boards.");
+        return boards_hmt;
+    }
+    let board_hmt_ref = list.get(boards_hmt, 0);
+    if (map.has(board_hmt_ref, "columns")) {
+        let cols_hmt = map.get(board_hmt_ref, "columns");
+        if (list.len(cols_hmt) > 1) {
+            let first_col_hmt = list.get(cols_hmt, 0);
+            let second_col_hmt = list.get(cols_hmt, 1);
+            if (map.has(first_col_hmt, "tasks")) {
+                let tasks_hmt = map.get(first_col_hmt, "tasks");
+                if (list.len(tasks_hmt) > 0) {
+                    let task_hmt_ref = list.get(tasks_hmt, 0);
+                    if (map.has(task_hmt_ref, "id")) {
+                        let tid_hmt = map.get(task_hmt_ref, "id");
+                        let from_hmt = "";
+                        let to_hmt = "";
+                        if (map.has(first_col_hmt, "name")) {
+                            from_hmt = map.get(first_col_hmt, "name");
+                        }
+                        if (map.has(second_col_hmt, "name")) {
+                            to_hmt = map.get(second_col_hmt, "name");
+                        }
+                        boards_hmt = simple_move_task(boards_hmt, board_global_id, tid_hmt, from_hmt, to_hmt);
+                        print("Moved task to", to_hmt);
+                    }
+                }
+            }
+        }
+    }
+    return boards_hmt;
+}
+
+fn handle_delete_task_ui(boards_hdlt) {
+    if (list.len(boards_hdlt) == 0) {
+        print("No boards.");
+        return boards_hdlt;
+    }
+    let board_hdlt_ref = list.get(boards_hdlt, 0);
+    if (map.has(board_hdlt_ref, "id")) {
+        boards_hdlt = delete_task_simple(boards_hdlt, map.get(board_hdlt_ref, "id"), 1);
+        print("Deleted task ID 1.");
+    }
+    return boards_hdlt;
+}
+
+fn handle_search_ui(boards_hsu) {
+    if (list.len(boards_hsu) == 0) {
+        print("No boards.");
+        return boards_hsu;
+    }
+    let board_hsu_ref = list.get(boards_hsu, 0);
+    print_task_list(search_all_tasks(board_hsu_ref, "", list.new()));
+    return boards_hsu;
+}
+
+fn handle_filter_priority(boards_hfp) {
+    if (list.len(boards_hfp) == 0) {
+        print("No boards.");
+        return boards_hfp;
+    }
+    let board_hfp_ref = list.get(boards_hfp, 0);
+    print("High priority tasks:");
+    print_task_list(filter_tasks_by_priority(board_hfp_ref, "High"));
+    return boards_hfp;
+}
+
+fn handle_filter_assignee(boards_hfa) {
+    if (list.len(boards_hfa) == 0) {
+        print("No boards.");
+        return boards_hfa;
+    }
+    let board_hfa_ref = list.get(boards_hfa, 0);
+    print("Tasks assigned to Alice:");
+    print_task_list(filter_tasks_by_assignee(board_hfa_ref, "Alice"));
+    return boards_hfa;
+}
+
+fn handle_statistics(boards_hst) {
+    if (list.len(boards_hst) == 0) {
+        print("No boards.");
+        return boards_hst;
+    }
+    count_by_column_stats(list.get(boards_hst, 0));
+    count_by_priority_all(list.get(boards_hst, 0));
+    return boards_hst;
+}
+
+fn handle_report(boards_hrp) {
+    if (list.len(boards_hrp) == 0) {
+        print("No boards.");
+        return boards_hrp;
+    }
+    generate_report(list.get(boards_hrp, 0));
+    return boards_hrp;
+}
+
+fn handle_export(boards_hex) {
+    export_all_boards(boards_hex);
+    return boards_hex;
+}
+
+fn handle_import(boards_hi) {
+    let imported_hi = import_all_boards();
+    if (list.len(imported_hi) > 0) {
+        save_boards(merge_lists(boards_hi, imported_hi, 0));
+        print("Import complete.");
+    }
+    return boards_hi;
+}
+
+fn handle_demo(boards_hd) {
+    boards_hd = create_demo_board(boards_hd);
+    if (list.len(boards_hd) > 0) {
+        let board_hd_ref = list.get(boards_hd, 0);
+        if (map.has(board_hd_ref, "id")) {
+            board_global_id = map.get(board_hd_ref, "id");
+        }
+    }
+    print("Demo data loaded.");
+    return boards_hd;
+}
+
+fn handle_update_field(boards_huf) {
+    if (list.len(boards_huf) == 0) {
+        print("No boards.");
+        return boards_huf;
+    }
+    let board_huf_ref = list.get(boards_huf, 0);
+    if (map.has(board_huf_ref, "id")) {
+        boards_huf = update_task_field_simple(boards_huf, map.get(board_huf_ref, "id"), 1, "priority", "Critical");
+        print("Updated task ID 1 priority to Critical.");
+    }
+    return boards_huf;
+}
+
+fn demo_flow(boards_df) {
+    boards_df = handle_demo(boards_df);
+    print("");
+    if (list.len(boards_df) > 0) {
+        let board_df = list.get(boards_df, 0);
+        board_display(board_df);
+        print("");
+        print_all_tasks(board_df);
+        print("");
+        generate_report(board_df);
+    }
+    print("");
+    print("=== End of Kanban Demo ===");
+    return boards_df;
+}
+
+// ============================================================
+// Level N: main()
+// ============================================================
+fn main() {
+    let boards_main = list.new();
+    boards_main = demo_flow(boards_main);
+    save_boards(boards_main);
+    print("Data saved to kanban_data.json");
+    return 0;
+}

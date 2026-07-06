@@ -1,0 +1,19 @@
+import file;
+import environment;
+import list;
+import json;
+import io;
+
+fn main() {
+    let args = environment.args();
+    let num_args = list.len(args);
+    if (num_args < 1) {
+        io.println("Usage: json_validator <file>");
+        return 1;
+    }
+    let source_file = list.get(args, num_args - 1);
+    let content = file.read(source_file);
+    json.parse(content);
+    io.println("Valid JSON: " + source_file);
+    return 0;
+}

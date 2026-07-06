@@ -1,0 +1,41 @@
+// === AILang operators test file ===
+// Every operator used in expressions.
+
+import math;
+
+fn main() {
+    // Arithmetic
+    let a = 10 + 5;
+    let b = 10 - 5;
+    let c = 10 * 5;
+    let d = 10 / 5;
+    let e = 17 % 5;
+
+    // Unary
+    let neg = -42;
+    let not_true = !false;
+
+    // Comparison
+    let eq = 5 == 5;
+    let neq = 5 != 10;
+    let lt = 5 < 10;
+    let gt = 10 > 5;
+    let lte = 5 <= 5;
+    let gte = 10 >= 10;
+
+    // Logical
+    let and = true && false;
+    let or = true || false;
+
+    // Assignment
+    let x = 1;
+    x = 2;
+
+    print(a, b, c, d, e);
+    print(neg, not_true);
+    print(eq, neq, lt, gt, lte, gte);
+    print(and, or);
+    print(x);
+
+    return 0
+}

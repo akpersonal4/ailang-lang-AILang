@@ -1,0 +1,49 @@
+import file;
+import environment;
+import list;
+import io;
+
+fn format_lines(lines, index, result) {
+if (index >= list.len(lines)) {
+return result;
+}
+let line = list.get(lines, index);
+let trimmed = line.strip();
+let is_heading = trimmed.startswith("#");
+if (result != "") {
+result = result + "\n";
+}
+if (is_heading && index > 0) {
+let prev = list.get(lines, index - 1);
+if (prev.strip() != "") {
+result = result + "\n";
+}
+}
+result = result + trimmed;
+if (is_heading && index + 1 < list.len(lines)) {
+let next = list.get(lines, index + 1);
+if (next.strip() != "") {
+result = result + "\n";
+}
+}
+return format_lines(lines, index + 1, result);
+}
+
+fn main() {
+let args = environment.args();
+let num_args = list.len(args);
+if (num_args < 1) {
+io.println("Usage: md_formatter <file>");
+return 1;
+}
+let source_file = list.get(args, num_args - 1);
+let content = file.read(source_file);
+let lines = content.split("\n");
+let result = format_lines(lines, 0, "");
+if (!result.endswith("\n")) {
+result = result + "\n";
+}
+file.write(source_file, result);
+io.println("Formatted: " + source_file);
+return 0;
+}

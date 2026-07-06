@@ -1,0 +1,12 @@
+import convert;
+
+fn main() {
+    print("to_string 42:", convert.to_string(42));
+    print("to_string true:", convert.to_string(true));
+    print("to_int 42:", convert.to_int(42));
+    print("to_int \"42\":", convert.to_int("42"));
+    print("to_bool true:", convert.to_bool("true"));
+    print("to_bool 1:", convert.to_bool("1"));
+    print("to_bool yes:", convert.to_bool("yes"));
+    return 0
+}

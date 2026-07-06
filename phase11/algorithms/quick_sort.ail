@@ -1,0 +1,132 @@
+import environment;
+import convert;
+import list;
+
+fn make_list_acc(args, idx, n, acc) {
+    if (idx >= n) {
+        return acc;
+    }
+    let val = convert.to_int(list.get(args, idx));
+    list.append(acc, val);
+    return make_list_acc(args, idx + 1, n, acc);
+}
+
+fn make_list(args, start) {
+    return make_list_acc(args, start, list.len(args), list.new());
+}
+
+fn sublist_acc(lst, idx, end, acc) {
+    if (idx > end) {
+        return acc;
+    }
+    list.append(acc, list.get(lst, idx));
+    return sublist_acc(lst, idx + 1, end, acc);
+}
+
+fn sublist(lst, start, end) {
+    if (start > end) {
+        return list.new();
+    }
+    return sublist_acc(lst, start, end, list.new());
+}
+
+fn list_rest(lst) {
+    let n = list.len(lst);
+    if (n <= 1) {
+        return list.new();
+    }
+    return sublist(lst, 1, n - 1);
+}
+
+fn filter_less_acc(lst, idx, n, pivot, acc) {
+    if (idx >= n) {
+        return acc;
+    }
+    let val = list.get(lst, idx);
+    if (val < pivot) {
+        list.append(acc, val);
+    }
+    return filter_less_acc(lst, idx + 1, n, pivot, acc);
+}
+
+fn filter_less(lst, pivot) {
+    return filter_less_acc(lst, 0, list.len(lst), pivot, list.new());
+}
+
+fn filter_equal_acc(lst, idx, n, pivot, acc) {
+    if (idx >= n) {
+        return acc;
+    }
+    let val = list.get(lst, idx);
+    if (val == pivot) {
+        list.append(acc, val);
+    }
+    return filter_equal_acc(lst, idx + 1, n, pivot, acc);
+}
+
+fn filter_equal(lst, pivot) {
+    return filter_equal_acc(lst, 0, list.len(lst), pivot, list.new());
+}
+
+fn filter_greater_acc(lst, idx, n, pivot, acc) {
+    if (idx >= n) {
+        return acc;
+    }
+    let val = list.get(lst, idx);
+    if (val > pivot) {
+        list.append(acc, val);
+    }
+    return filter_greater_acc(lst, idx + 1, n, pivot, acc);
+}
+
+fn filter_greater(lst, pivot) {
+    return filter_greater_acc(lst, 0, list.len(lst), pivot, list.new());
+}
+
+fn concat_lists_acc(a, idx, n, b) {
+    if (idx >= n) {
+        return b;
+    }
+    list.append(b, list.get(a, idx));
+    return concat_lists_acc(a, idx + 1, n, b);
+}
+
+fn concat_lists(a, b) {
+    return concat_lists_acc(a, 0, list.len(a), b);
+}
+
+fn quick_sort(lst) {
+    let n = list.len(lst);
+    if (n <= 1) {
+        return lst;
+    }
+    let pivot = list.get(lst, 0);
+    let less = filter_less(lst, pivot);
+    let equal = filter_equal(lst, pivot);
+    let greater = filter_greater(lst, pivot);
+    return concat_lists(concat_lists(quick_sort(less), equal), quick_sort(greater));
+}
+
+fn list_to_string_acc(lst, idx, n, acc) {
+    if (idx >= n) {
+        return acc;
+    }
+    let val_str = convert.to_string(list.get(lst, idx));
+    if (acc == "") {
+        return list_to_string_acc(lst, idx + 1, n, val_str);
+    }
+    return list_to_string_acc(lst, idx + 1, n, acc + " " + val_str);
+}
+
+fn list_to_string(lst) {
+    return list_to_string_acc(lst, 0, list.len(lst), "");
+}
+
+fn main() {
+    let args = environment.args();
+    let lst = make_list(args, 0);
+    print("Original: " + list_to_string(lst));
+    let sorted = quick_sort(lst);
+    print("Sorted: " + list_to_string(sorted));
+    return 0;
+}

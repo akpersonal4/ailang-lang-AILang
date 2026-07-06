@@ -1,0 +1,44 @@
+import list;
+import map;
+
+fn add_item(items, name, qty, price) {
+    let item = map.new();
+    map.set(item, "name", name);
+    map.set(item, "qty", qty);
+    map.set(item, "price", price);
+    list.append(items, item);
+    return items
+}
+
+fn total_value_helper(items, i) {
+    if (i >= list.len(items)) { return 0 }
+    let item = list.get(items, i);
+    let val = map.get(item, "qty") * map.get(item, "price");
+    return val + total_value_helper(items, i + 1)
+}
+
+fn total_value(items) {
+    return total_value_helper(items, 0)
+}
+
+fn display_inventory_helper(items, i) {
+    if (i >= list.len(items)) { return false }
+    let item = list.get(items, i);
+    print(map.get(item, "name"), "qty:", map.get(item, "qty"), "price:", map.get(item, "price"));
+    display_inventory_helper(items, i + 1)
+}
+
+fn display_inventory(items) {
+    display_inventory_helper(items, 0)
+}
+
+fn main() {
+    print("=== Inventory System ===");
+    let items = list.new();
+    items = add_item(items, "Widget", 100, 5);
+    items = add_item(items, "Gadget", 50, 15);
+    items = add_item(items, "Doodad", 200, 3);
+    print("Inventory:");
+    display_inventory(items);
+    print("Total inventory value:", total_value(items))
+}

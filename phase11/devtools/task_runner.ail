@@ -1,0 +1,98 @@
+import file;
+import environment;
+import string;
+import list;
+import io;
+import convert;
+
+fn print_tasks(lines, idx) {
+    if (idx >= list.len(lines)) {
+        return 0;
+    }
+    let line = list.get(lines, idx);
+    let num = convert.to_string(idx + 1);
+    io.println(num + ". " + line);
+    return print_tasks(lines, idx + 1);
+}
+
+fn rebuild_lines(lines, idx, skip_idx, new_content, result) {
+    if (idx >= list.len(lines)) {
+        return result;
+    }
+    if (idx == skip_idx) {
+        list.append(result, new_content);
+    } else {
+        list.append(result, list.get(lines, idx));
+    }
+    return rebuild_lines(lines, idx + 1, skip_idx, new_content, result);
+}
+
+fn join_lines(lines, idx, separator) {
+    if (idx >= list.len(lines)) {
+        return "";
+    }
+    if (idx + 1 >= list.len(lines)) {
+        return list.get(lines, idx);
+    }
+    return list.get(lines, idx) + separator + join_lines(lines, idx + 1, separator);
+}
+
+fn collect_args(args, idx, result) {
+    if (idx >= list.len(args)) {
+        return result;
+    }
+    let val = list.get(args, idx);
+    if (val != "--") {
+        list.append(result, val);
+    }
+    return collect_args(args, idx + 1, result);
+}
+
+fn main() {
+    let raw = environment.args();
+    let all_args = list.new();
+    let user_args = collect_args(raw, 0, all_args);
+    let cmd = list.get(user_args, 0);
+    let tasks_file = "tasks.txt";
+    let content = "";
+    if (file.exists(tasks_file)) {
+        content = file.read(tasks_file);
+    }
+    if (cmd == "list") {
+        let lines = content.split("\n");
+        io.println("Tasks:");
+        let print_result = print_tasks(lines, 0);
+        return 0;
+    }
+    if (cmd == "add") {
+        let desc = list.get(user_args, 1);
+        if (string.length(content) > 0 && !content.endswith("\n")) {
+            content = content + "\n";
+        }
+        let new_content = content + desc + "\n";
+        file.write(tasks_file, new_content);
+        io.println("Added task: " + desc);
+        return 0;
+    }
+    if (cmd == "done") {
+        let num_str = list.get(user_args, 1);
+        let num = convert.to_int(num_str);
+        let lines = content.split("\n");
+        let idx = num - 1;
+        if (idx < 0 || idx >= list.len(lines)) {
+            io.println("Invalid task number: " + num_str);
+            return 1;
+        }
+        let old_line = list.get(lines, idx);
+        let new_line = "[DONE] " + old_line;
+        let new_lines_list = list.new();
+        let new_lines = rebuild_lines(lines, 0, idx, new_line, new_lines_list);
+        let new_content = join_lines(new_lines, 0, "\n");
+        file.write(tasks_file, new_content);
+        io.println("Marked task " + num_str + " as done.");
+        return 0;
+    }
+    io.println("Unknown command: " + cmd);
+    io.println("Usage: list|add <desc>|done <num>");
+    return 1;
+}

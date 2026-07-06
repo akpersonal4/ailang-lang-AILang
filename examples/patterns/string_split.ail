@@ -1,0 +1,51 @@
+// String Split Pattern
+// Splits a string by a delimiter (manual implementation)
+// string.split() does NOT exist in stdlib — implement this yourself
+//
+// fn find_delim(text, delim, start) { ... }
+// fn split_helper(text, delim, i, result) { ... }
+// fn split_string(text, delim) { ... }
+
+import string;
+import list;
+
+fn find_delim(text, delim, start) {
+    if (start >= string.length(text)) { return start }
+    let dlen = string.length(delim);
+    let rest = start + dlen;
+    if (rest > string.length(text)) { return start }
+    let segment = string.substring(text, start, rest);
+    if (string.equals(segment, delim)) { return start }
+    return find_delim(text, delim, start + 1)
+}
+
+fn split_helper(text, delim, i, result) {
+    if (i >= string.length(text)) { return result }
+    let end = find_delim(text, delim, i);
+    let part = string.substring(text, i, end);
+    list.append(result, part);
+    let dlen = string.length(delim);
+    return split_helper(text, delim, end + dlen, result)
+}
+
+fn split_string(text, delim) {
+    return split_helper(text, delim, 0, list.new())
+}
+
+fn display(items, i) {
+    if (i >= list.len(items)) { return 0 }
+    print("  [", i, "]:", list.get(items, i));
+    return display(items, i + 1)
+}
+
+fn main() {
+    let parts = split_string("apple,banana,cherry,date", ",");
+    print("Split by comma:", list.len(parts), "parts");
+    display(parts, 0);
+    let words = split_string("hello world", " ");
+    print("Split by space:", list.len(words), "parts");
+    display(words, 0);
+    let single = split_string("no delimiter here", ",");
+    print("No delimiter found:", list.len(single), "part");
+    display(single, 0)
+}

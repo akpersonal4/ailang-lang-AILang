@@ -1,0 +1,47 @@
+import list;
+import map;
+import time;
+
+fn add_expense(expenses, desc, amount, category) {
+    let e = map.new();
+    map.set(e, "desc", desc);
+    map.set(e, "amount", amount);
+    map.set(e, "category", category);
+    map.set(e, "date", time.now());
+    list.append(expenses, e);
+    return expenses
+}
+
+fn total_by_category_helper(expenses, i, category) {
+    if (i >= list.len(expenses)) { return 0 }
+    let e = list.get(expenses, i);
+    if (map.get(e, "category") == category) {
+        return map.get(e, "amount") + total_by_category_helper(expenses, i + 1, category)
+    }
+    return total_by_category_helper(expenses, i + 1, category)
+}
+
+fn total_by_category(expenses, category) {
+    return total_by_category_helper(expenses, 0, category)
+}
+
+fn total_all_helper(expenses, i) {
+    if (i >= list.len(expenses)) { return 0 }
+    return map.get(list.get(expenses, i), "amount") + total_all_helper(expenses, i + 1)
+}
+
+fn total_all(expenses) {
+    return total_all_helper(expenses, 0)
+}
+
+fn main() {
+    print("=== Expense Tracker ===");
+    let expenses = list.new();
+    expenses = add_expense(expenses, "Groceries", 150, "Food");
+    expenses = add_expense(expenses, "Gas", 45, "Transport");
+    expenses = add_expense(expenses, "Dinner", 80, "Food");
+    expenses = add_expense(expenses, "Movie", 25, "Entertainment");
+    print("Total spent:", total_all(expenses));
+    print("Food total:", total_by_category(expenses, "Food"));
+    print("Transport total:", total_by_category(expenses, "Transport"))
+}

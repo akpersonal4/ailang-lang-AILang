@@ -1,0 +1,943 @@
+// Library Management System
+// A comprehensive library management application
+
+import list;
+import map;
+import json;
+import file;
+import csv;
+import string;
+import time;
+import math;
+import convert;
+
+// ============================================================
+// Configuration Constants
+// ============================================================
+
+fn fine_per_day() {
+    return 1
+}
+
+fn max_fine_amount() {
+    return 100
+}
+
+fn max_books_per_member() {
+    return 5
+}
+
+fn loan_period_days() {
+    return 14
+}
+
+// ============================================================
+// Book Creation Functions
+// ============================================================
+
+fn create_book(id, title, author, isbn, category, copies) {
+    let book = map.new();
+    map.set(book, "id", id);
+    map.set(book, "title", title);
+    map.set(book, "author", author);
+    map.set(book, "isbn", isbn);
+    map.set(book, "category", category);
+    map.set(book, "total_copies", copies);
+    map.set(book, "available_copies", copies);
+    map.set(book, "issued_to", list.new());
+    map.set(book, "times_issued", 0);
+    return book
+}
+
+fn add_book(books, id, title, author, isbn, category, copies) {
+    let book = create_book(id, title, author, isbn, category, copies);
+    list.append(books, book);
+    return books
+}
+
+fn update_book_title(book, new_title) {
+    map.set(book, "title", new_title);
+    return true
+}
+
+fn update_book_author(book, new_author) {
+    map.set(book, "author", new_author);
+    return true
+}
+
+fn update_book_category(book, new_category) {
+    map.set(book, "category", new_category);
+    return true
+}
+
+fn find_book_by_id_helper(books, i, id) {
+    if (i >= list.len(books)) { return -1 }
+    let book = list.get(books, i);
+    if (map.get(book, "id") == id) { return i }
+    return find_book_by_id_helper(books, i + 1, id)
+}
+
+fn find_book_by_id(books, id) {
+    return find_book_by_id_helper(books, 0, id)
+}
+
+fn update_book_copies(books, book_id, new_copies) {
+    let book_idx = find_book_by_id(books, book_id);
+    if (book_idx == -1) { return false }
+    let book = list.get(books, book_idx);
+    let old_total = map.get(book, "total_copies");
+    let old_available = map.get(book, "available_copies");
+    map.set(book, "total_copies", new_copies);
+    map.set(book, "available_copies", old_available + (new_copies - old_total));
+    return true
+}
+
+fn increment_book_issued_count(book) {
+    let count = map.get(book, "times_issued");
+    map.set(book, "times_issued", count + 1);
+    return true
+}
+
+fn get_book_issued_count(book) {
+    return map.get(book, "times_issued")
+}
+
+fn find_book_by_isbn_helper(books, i, isbn) {
+    if (i >= list.len(books)) { return -1 }
+    let book = list.get(books, i);
+    if (string.equals(map.get(book, "isbn"), isbn)) { return i }
+    return find_book_by_isbn_helper(books, i + 1, isbn)
+}
+
+fn find_book_by_isbn(books, isbn) {
+    return find_book_by_isbn_helper(books, 0, isbn)
+}
+
+fn search_books_by_title_helper(books, i, query, results) {
+    if (i >= list.len(books)) { return results }
+    let book = list.get(books, i);
+    let title = map.get(book, "title");
+    if (string.contains(string.lowercase(title), string.lowercase(query))) {
+        list.append(results, book)
+    }
+    return search_books_by_title_helper(books, i + 1, query, results)
+}
+
+fn search_books_by_title(books, query) {
+    let results = list.new();
+    return search_books_by_title_helper(books, 0, query, results)
+}
+
+fn search_books_by_author_helper(books, i, query, results) {
+    if (i >= list.len(books)) { return results }
+    let book = list.get(books, i);
+    let author = map.get(book, "author");
+    if (string.contains(string.lowercase(author), string.lowercase(query))) {
+        list.append(results, book)
+    }
+    return search_books_by_author_helper(books, i + 1, query, results)
+}
+
+fn search_books_by_author(books, query) {
+    let results = list.new();
+    return search_books_by_author_helper(books, 0, query, results)
+}
+
+fn search_books_by_category_helper(books, i, query, results) {
+    if (i >= list.len(books)) { return results }
+    let book = list.get(books, i);
+    let category = map.get(book, "category");
+    if (string.contains(string.lowercase(category), string.lowercase(query))) {
+        list.append(results, book)
+    }
+    return search_books_by_category_helper(books, i + 1, query, results)
+}
+
+fn search_books_by_category(books, query) {
+    let results = list.new();
+    return search_books_by_category_helper(books, 0, query, results)
+}
+
+fn is_book_available(book) {
+    let available = map.get(book, "available_copies");
+    if (available > 0) { return true }
+    return false
+}
+
+fn get_book_availability_status(book) {
+    if (is_book_available(book)) { return "Available" }
+    return "Checked Out"
+}
+
+// ============================================================
+// Member Management Functions
+// ============================================================
+
+fn create_member(id, name, email, phone, address) {
+    let member = map.new();
+    map.set(member, "id", id);
+    map.set(member, "name", name);
+    map.set(member, "email", email);
+    map.set(member, "phone", phone);
+    map.set(member, "address", address);
+    map.set(member, "books_issued", list.new());
+    map.set(member, "fines", 0);
+    map.set(member, "join_date", time.now());
+    return member
+}
+
+fn add_member(members, id, name, email, phone, address) {
+    let member = create_member(id, name, email, phone, address);
+    list.append(members, member);
+    return members
+}
+
+fn find_member_by_id_helper(members, i, id) {
+    if (i >= list.len(members)) { return -1 }
+    let member = list.get(members, i);
+    if (map.get(member, "id") == id) { return i }
+    return find_member_by_id_helper(members, i + 1, id)
+}
+
+fn find_member_by_id(members, id) {
+    return find_member_by_id_helper(members, 0, id)
+}
+
+fn search_members_by_name_helper(members, i, query, results) {
+    if (i >= list.len(members)) { return results }
+    let member = list.get(members, i);
+    let name = map.get(member, "name");
+    if (string.contains(string.lowercase(name), string.lowercase(query))) {
+        list.append(results, member)
+    }
+    return search_members_by_name_helper(members, i + 1, query, results)
+}
+
+fn search_members_by_name(members, query) {
+    let results = list.new();
+    return search_members_by_name_helper(members, 0, query, results)
+}
+
+fn get_member_book_count(member) {
+    return list.len(map.get(member, "books_issued"))
+}
+
+fn can_member_borrow(member) {
+    let book_count = get_member_book_count(member);
+    let fines = map.get(member, "fines");
+    if (book_count >= max_books_per_member()) { return false }
+    if (fines >= max_fine_amount()) { return false }
+    return true
+}
+
+fn update_member_name(member, new_name) {
+    map.set(member, "name", new_name);
+    return true
+}
+
+fn update_member_email(member, new_email) {
+    map.set(member, "email", new_email);
+    return true
+}
+
+fn update_member_phone(member, new_phone) {
+    map.set(member, "phone", new_phone);
+    return true
+}
+
+fn update_member_address(member, new_address) {
+    map.set(member, "address", new_address);
+    return true
+}
+
+fn get_member_fine(member) {
+    return map.get(member, "fines")
+}
+
+fn set_member_fine(member, amount) {
+    map.set(member, "fines", amount);
+    return true
+}
+
+fn clear_member_fines(members, member_id) {
+    let member_idx = find_member_by_id(members, member_id);
+    if (member_idx == -1) { return false }
+    let member = list.get(members, member_idx);
+    map.set(member, "fines", 0);
+    return true
+}
+
+fn search_members_by_email_helper(members, i, query, results) {
+    if (i >= list.len(members)) { return results }
+    let member = list.get(members, i);
+    let email = map.get(member, "email");
+    if (string.contains(string.lowercase(email), string.lowercase(query))) {
+        list.append(results, member)
+    }
+    return search_members_by_email_helper(members, i + 1, query, results)
+}
+
+fn search_members_by_email(members, query) {
+    let results = list.new();
+    return search_members_by_email_helper(members, 0, query, results)
+}
+
+// ============================================================
+// Issue/Return Book Functions
+// ============================================================
+
+fn issue_book(books, members, book_id, member_id, issue_date) {
+    let book_idx = find_book_by_id(books, book_id);
+    if (book_idx == -1) { return "Book not found" }
+    
+    let member_idx = find_member_by_id(members, member_id);
+    if (member_idx == -1) { return "Member not found" }
+    
+    let book = list.get(books, book_idx);
+    let member = list.get(members, member_idx);
+    
+    if (!is_book_available(book)) { return "Book not available" }
+    
+    if (!can_member_borrow(member)) { return "Member cannot borrow more books" }
+    
+    // Update book availability
+    let current_available = map.get(book, "available_copies");
+    map.set(book, "available_copies", current_available - 1);
+    
+    // Add to issued_to list
+    list.append(map.get(book, "issued_to"), member_id);
+    
+    // Add to member's issued books
+    list.append(map.get(member, "books_issued"), book_id);
+    
+    return "Book issued successfully"
+}
+
+fn return_book(books, members, book_id, member_id, return_date, due_date) {
+    let book_idx = find_book_by_id(books, book_id);
+    if (book_idx == -1) { return "Book not found" }
+    
+    let member_idx = find_member_by_id(members, member_id);
+    if (member_idx == -1) { return "Member not found" }
+    
+    let book = list.get(books, book_idx);
+    let member = list.get(members, member_idx);
+    
+    // Check if member has this book
+    let issued_books = map.get(member, "books_issued");
+    if (!list.contains(issued_books, book_id)) { return "Member does not have this book" }
+    
+    // Update book availability
+    let current_available = map.get(book, "available_copies");
+    map.set(book, "available_copies", current_available + 1);
+    
+    // Remove from issued_to list
+    list.remove(map.get(book, "issued_to"), member_id);
+    
+    // Remove from member's issued books
+    list.remove(issued_books, book_id);
+    
+    return "Book returned successfully"
+}
+
+// ============================================================
+// Fine Calculation Functions
+// ============================================================
+
+fn calculate_days_overdue(return_date, due_date) {
+    // Simple date comparison assuming YYYY-MM-DD format
+    // AILang doesn't have date arithmetic, so we use string comparison
+    // as a rough proxy
+    if (return_date >= due_date) { return 0 }
+    return 1
+}
+
+fn calculate_fine_amount(days_overdue) {
+    if (days_overdue <= 0) { return 0 }
+    return days_overdue * fine_per_day()
+}
+
+fn add_fine_to_member(members, member_id, amount) {
+    let member_idx = find_member_by_id(members, member_id);
+    if (member_idx == -1) { return false }
+    let member = list.get(members, member_idx);
+    let current_fines = map.get(member, "fines");
+    map.set(member, "fines", current_fines + amount);
+    return true
+}
+
+// ============================================================
+// Display Functions (helpers defined BEFORE callers)
+// ============================================================
+
+fn print_book(book) {
+    print("ID:", map.get(book, "id"));
+    print("  Title:", map.get(book, "title"));
+    print("  Author:", map.get(book, "author"));
+    print("  ISBN:", map.get(book, "isbn"));
+    print("  Category:", map.get(book, "category"));
+    print("  Total Copies:", map.get(book, "total_copies"));
+    print("  Available:", map.get(book, "available_copies"));
+    print("  Status:", get_book_availability_status(book));
+    print("---")
+}
+
+fn print_books_helper(books, i) {
+    if (i >= list.len(books)) { return true }
+    let book = list.get(books, i);
+    print_book(book);
+    return print_books_helper(books, i + 1)
+}
+
+fn print_books(books) {
+    if (list.len(books) == 0) {
+        print("No books found.");
+        return true
+    }
+    return print_books_helper(books, 0)
+}
+
+fn print_member(member) {
+    print("ID:", map.get(member, "id"));
+    print("  Name:", map.get(member, "name"));
+    print("  Email:", map.get(member, "email"));
+    print("  Phone:", map.get(member, "phone"));
+    print("  Address:", map.get(member, "address"));
+    print("  Books Issued:", get_member_book_count(member));
+    print("  Outstanding Fines:", map.get(member, "fines"));
+    print("  Join Date:", map.get(member, "join_date"));
+    print("---")
+}
+
+fn print_members_helper(members, i) {
+    if (i >= list.len(members)) { return true }
+    let member = list.get(members, i);
+    print_member(member);
+    return print_members_helper(members, i + 1)
+}
+
+fn print_members(members) {
+    if (list.len(members) == 0) {
+        print("No members found.");
+        return true
+    }
+    return print_members_helper(members, 0)
+}
+
+// ============================================================
+// Reports Functions (helpers defined BEFORE callers)
+// ============================================================
+
+fn build_book_report_row_helper(books, i, csv_data) {
+    if (i >= list.len(books)) { return csv_data }
+    let book = list.get(books, i);
+    let row = list.new();
+    list.append(row, map.get(book, "id"));
+    list.append(row, map.get(book, "title"));
+    list.append(row, map.get(book, "author"));
+    list.append(row, map.get(book, "isbn"));
+    list.append(row, map.get(book, "category"));
+    list.append(row, map.get(book, "total_copies"));
+    list.append(row, map.get(book, "available_copies"));
+    list.append(csv_data, row);
+    return build_book_report_row_helper(books, i + 1, csv_data)
+}
+
+fn generate_book_report(books, filename) {
+    let csv_data = list.new();
+    csv_data = build_book_report_row_helper(books, 0, csv_data);
+    let csv_content = csv.stringify(csv_data);
+    return file.write(filename, csv_content)
+}
+
+fn build_member_report_row_helper(members, i, csv_data) {
+    if (i >= list.len(members)) { return csv_data }
+    let member = list.get(members, i);
+    let row = list.new();
+    list.append(row, map.get(member, "id"));
+    list.append(row, map.get(member, "name"));
+    list.append(row, map.get(member, "email"));
+    list.append(row, map.get(member, "phone"));
+    list.append(row, map.get(member, "address"));
+    list.append(row, map.get(member, "fines"));
+    list.append(csv_data, row);
+    return build_member_report_row_helper(members, i + 1, csv_data)
+}
+
+fn generate_member_report(members, filename) {
+    let csv_data = list.new();
+    csv_data = build_member_report_row_helper(members, 0, csv_data);
+    let csv_content = csv.stringify(csv_data);
+    return file.write(filename, csv_content)
+}
+
+// ============================================================
+// Statistics Functions
+// ============================================================
+
+fn count_total_books(books) {
+    return list.len(books)
+}
+
+fn count_available_books_helper(books, i, count) {
+    if (i >= list.len(books)) { return count }
+    let book = list.get(books, i);
+    if (is_book_available(book)) {
+        return count_available_books_helper(books, i + 1, count + 1)
+    }
+    return count_available_books_helper(books, i + 1, count)
+}
+
+fn count_available_books(books) {
+    return count_available_books_helper(books, 0, 0)
+}
+
+fn count_issued_books(books) {
+    let total = count_total_books(books);
+    let available = count_available_books(books);
+    return total - available
+}
+
+fn count_total_members(members) {
+    return list.len(members)
+}
+
+fn count_active_members_helper(members, i, count) {
+    if (i >= list.len(members)) { return count }
+    let member = list.get(members, i);
+    if (get_member_book_count(member) > 0) {
+        return count_active_members_helper(members, i + 1, count + 1)
+    }
+    return count_active_members_helper(members, i + 1, count)
+}
+
+fn count_active_members(members) {
+    return count_active_members_helper(members, 0, 0)
+}
+
+fn count_total_fines_helper(members, i, total) {
+    if (i >= list.len(members)) { return total }
+    let member = list.get(members, i);
+    return count_total_fines_helper(members, i + 1, total + map.get(member, "fines"))
+}
+
+fn count_total_fines(members) {
+    return count_total_fines_helper(members, 0, 0)
+}
+
+fn count_books_by_category_helper(books, i, category, count) {
+    if (i >= list.len(books)) { return count }
+    let book = list.get(books, i);
+    let book_category = map.get(book, "category");
+    if (string.equals(string.lowercase(book_category), string.lowercase(category))) {
+        return count_books_by_category_helper(books, i + 1, category, count + 1)
+    }
+    return count_books_by_category_helper(books, i + 1, category, count)
+}
+
+fn count_books_by_category(books, category) {
+    return count_books_by_category_helper(books, 0, category, 0)
+}
+
+fn count_members_with_fines_helper(members, i, count) {
+    if (i >= list.len(members)) { return count }
+    let member = list.get(members, i);
+    let fines = map.get(member, "fines");
+    if (fines > 0) {
+        return count_members_with_fines_helper(members, i + 1, count + 1)
+    }
+    return count_members_with_fines_helper(members, i + 1, count)
+}
+
+fn count_members_with_fines(members) {
+    return count_members_with_fines_helper(members, 0, 0)
+}
+
+fn get_total_copies_helper(books, i, total) {
+    if (i >= list.len(books)) { return total }
+    let book = list.get(books, i);
+    return get_total_copies_helper(books, i + 1, total + map.get(book, "total_copies"))
+}
+
+fn get_total_copies(books) {
+    return get_total_copies_helper(books, 0, 0)
+}
+
+fn print_extended_statistics(books, members) {
+    print("=== Extended Library Statistics ===");
+    print("Total Books:", count_total_books(books));
+    print("Total Book Copies:", get_total_copies(books));
+    print("Available Book Copies:", count_available_books(books));
+    print("Issued Book Copies:", count_issued_books(books));
+    print("Total Members:", count_total_members(members));
+    print("Active Members:", count_active_members(members));
+    print("Members with Fines:", count_members_with_fines(members));
+    print("Total Outstanding Fines:", count_total_fines(members));
+    print("Books by Category:");
+    print("  Fiction:", count_books_by_category(books, "Fiction"));
+    print("  Programming:", count_books_by_category(books, "Programming"));
+    print("  Dystopian:", count_books_by_category(books, "Dystopian"));
+    print("  Romance:", count_books_by_category(books, "Romance"));
+    print("  Computer Science:", count_books_by_category(books, "Computer Science"));
+    print("================================")
+}
+
+fn print_statistics(books, members) {
+    print("=== Library Statistics ===");
+    print("Total Books:", count_total_books(books));
+    print("Available Books:", count_available_books(books));
+    print("Issued Books:", count_issued_books(books));
+    print("Total Members:", count_total_members(members));
+    print("Active Members:", count_active_members(members));
+    print("Total Outstanding Fines:", count_total_fines(members));
+    print("=========================")
+}
+
+// ============================================================
+// File I/O Functions
+// ============================================================
+
+fn save_data(books, members, books_file, members_file) {
+    let books_json = json.stringify(books);
+    file.write(books_file, books_json);
+    
+    let members_json = json.stringify(members);
+    file.write(members_file, members_json);
+    
+    return true
+}
+
+fn load_books(filename) {
+    if (!file.exists(filename)) { return list.new() }
+    let content = file.read(filename);
+    return json.parse(content)
+}
+
+fn load_members(filename) {
+    if (!file.exists(filename)) { return list.new() }
+    let content = file.read(filename);
+    return json.parse(content)
+}
+
+// ============================================================
+// Validation Functions
+// ============================================================
+
+fn validate_book_id(books, id) {
+    if (find_book_by_id(books, id) != -1) { return false }
+    return true
+}
+
+fn validate_member_id(members, id) {
+    if (find_member_by_id(members, id) != -1) { return false }
+    return true
+}
+
+fn validate_positive_number(value, min_val) {
+    if (value < min_val) { return false }
+    return true
+}
+
+// ============================================================
+// Menu System
+// ============================================================
+
+fn print_menu() {
+    print("\n=== Library Management System ===");
+    print("1. Add Book");
+    print("2. Add Member");
+    print("3. Search Books");
+    print("4. Search Members");
+    print("5. Issue Book");
+    print("6. Return Book");
+    print("7. View All Books");
+    print("8. View All Members");
+    print("9. View Statistics");
+    print("10. Save Data");
+    print("11. Load Data");
+    print("12. Generate Reports");
+    print("13. Exit");
+    print("================================");
+    print("Enter your choice: ")
+}
+
+fn get_input(prompt) {
+    print(prompt);
+    return ""
+}
+
+// ============================================================
+// Additional Book Operations
+// ============================================================
+
+fn delete_book(books, book_id) {
+    let book_idx = find_book_by_id(books, book_id);
+    if (book_idx == -1) { return false }
+    let book = list.get(books, book_idx);
+    list.remove(books, book);
+    return true
+}
+
+fn get_member_books_list(member) {
+    return map.get(member, "books_issued")
+}
+
+fn get_book_by_index(books, index) {
+    return list.get(books, index)
+}
+
+fn get_member_by_index(members, index) {
+    return list.get(members, index)
+}
+
+fn category_exists_helper(categories, j, category) {
+    if (j >= list.len(categories)) { return false }
+    if (string.equals(list.get(categories, j), category)) { return true }
+    return category_exists_helper(categories, j + 1, category)
+}
+
+fn category_exists(categories, category) {
+    return category_exists_helper(categories, 0, category)
+}
+
+fn get_all_categories_helper(books, i, categories) {
+    if (i >= list.len(books)) { return categories }
+    let book = list.get(books, i);
+    let category = map.get(book, "category");
+    // Check if category already exists in the list
+    if (!category_exists(categories, category)) {
+        list.append(categories, category)
+    }
+    return get_all_categories_helper(books, i + 1, categories)
+}
+
+fn get_all_categories(books) {
+    let categories = list.new();
+    return get_all_categories_helper(books, 0, categories)
+}
+
+// ============================================================
+// Extended Demo Functions
+// ============================================================
+
+fn demonstrate_multiple_issues(books, members) {
+    print("\n--- Demonstrating Multiple Issues ---");
+    let result1 = issue_book(books, members, 2, 1, "2024-01-15");
+    print("Issue Book 2 to Member 1:", result1);
+    let result2 = issue_book(books, members, 3, 1, "2024-01-15");
+    print("Issue Book 3 to Member 1:", result2);
+    let result3 = issue_book(books, members, 1, 2, "2024-01-15");
+    print("Issue Book 1 to Member 2:", result3);
+    return true
+}
+
+fn demonstrate_search_operations(books, members) {
+    print("\n--- Demonstrating Search Operations ---");
+    
+    let fiction_books = search_books_by_category(books, "Fiction");
+    print("Found", list.len(fiction_books), "Fiction books.");
+    
+    let author_books = search_books_by_author(books, "Martin");
+    print("Found", list.len(author_books), "books by Martin.");
+    
+    let title_books = search_books_by_title(books, "Algorithms");
+    print("Found", list.len(title_books), "books with 'Algorithms' in title.");
+    
+    let member_search = search_members_by_name(members, "Alice");
+    print("Found", list.len(member_search), "member(s) named Alice.");
+    
+    let email_search = search_members_by_email(members, "bob");
+    print("Found", list.len(email_search), "member(s) with 'bob' in email.");
+    
+    return true
+}
+
+fn demonstrate_fine_operations(members) {
+    print("\n--- Demonstrating Fine Operations ---");
+    add_fine_to_member(members, 1, 25);
+    print("Added $25 fine to Member 1.");
+    add_fine_to_member(members, 2, 10);
+    print("Added $10 fine to Member 2.");
+    add_fine_to_member(members, 1, 15);
+    print("Added $15 fine to Member 1 (total: $40).");
+    
+    let book_count = count_total_fines(members);
+    print("Total fines across all members:", book_count);
+    
+    return true
+}
+
+fn demonstrate_update_operations(books, members) {
+    print("\n--- Demonstrating Update Operations ---");
+    let book_idx = find_book_by_id(books, 1);
+    if (book_idx != -1) {
+        let book = list.get(books, book_idx);
+        update_book_title(book, "The Great Gatsby (Updated Edition)");
+        print("Updated Book 1 title.");
+    }
+    
+    let member_idx = find_member_by_id(members, 1);
+    if (member_idx != -1) {
+        let member = list.get(members, member_idx);
+        update_member_email(member, "alice.johnson@newdomain.com");
+        print("Updated Member 1 email.");
+    }
+    
+    return true
+}
+
+fn print_separator() {
+    print("-----------------------------------------------");
+    return true
+}
+
+// ============================================================
+// Additional Validation and Utility Functions
+// ============================================================
+
+fn validate_isbn(books, isbn) {
+    if (find_book_by_isbn(books, isbn) != -1) { return false }
+    return true
+}
+
+fn get_book_field(book, field) {
+    return map.get(book, field)
+}
+
+fn get_member_field(member, field) {
+    return map.get(member, field)
+}
+
+fn get_issued_to_list(book) {
+    return map.get(book, "issued_to")
+}
+
+fn get_issued_to_count(book) {
+    return list.len(map.get(book, "issued_to"))
+}
+
+fn calculate_utilization_rate(books) {
+    let total = get_total_copies(books);
+    let available = count_total_books(books);
+    if (total == 0) { return 0 }
+    return (total - available) * 100 / total
+}
+
+// ============================================================
+// Error Messages Constants
+// ============================================================
+
+fn error_book_not_found() {
+    return "Error: Book not found in the library database."
+}
+
+fn error_member_not_found() {
+    return "Error: Member not found in the database."
+}
+
+fn error_book_not_available() {
+    return "Error: The requested book is not available for checkout."
+}
+
+fn error_member_cannot_borrow() {
+    return "Error: Member cannot borrow more books at this time."
+}
+
+fn error_member_has_not_borrowed() {
+    return "Error: Member does not have this book checked out."
+}
+
+// ============================================================
+// Main Application
+// ============================================================
+
+fn initialize_sample_data() {
+    let books = list.new();
+    
+    // Add sample books
+    books = add_book(books, 1, "The Great Gatsby", "F. Scott Fitzgerald", "9780743273565", "Fiction", 3);
+    books = add_book(books, 2, "To Kill a Mockingbird", "Harper Lee", "9780061120081", "Fiction", 2);
+    books = add_book(books, 3, "1984", "George Orwell", "9780451528935", "Dystopian", 4);
+    books = add_book(books, 4, "Pride and Prejudice", "Jane Austen", "9780141435147", "Romance", 2);
+    books = add_book(books, 5, "The Catcher in the Rye", "J.D. Salinger", "9780316769488", "Fiction", 3);
+    books = add_book(books, 6, "Clean Code", "Robert Martin", "9780132350884", "Programming", 5);
+    books = add_book(books, 7, "The Pragmatic Programmer", "Andy Hunt", "9780201616224", "Programming", 4);
+    books = add_book(books, 8, "Introduction to Algorithms", "Cormen et al", "9780262033848", "Computer Science", 2);
+    
+    return books
+}
+
+fn main() {
+    print("=== Library Management System ===");
+    print("Initializing...");
+    
+    let books = list.new();
+    let members = list.new();
+    
+    // Initialize with sample data
+    books = initialize_sample_data();
+    members = add_member(members, 1, "Alice Johnson", "alice@example.com", "555-0101", "123 Main St");
+    members = add_member(members, 2, "Bob Smith", "bob@example.com", "555-0102", "456 Oak Ave");
+    members = add_member(members, 3, "Carol White", "carol@example.com", "555-0103", "789 Pine Rd");
+    members = add_member(members, 4, "David Brown", "david@example.com", "555-0104", "321 Elm St");
+    members = add_member(members, 5, "Eve Davis", "eve@example.com", "555-0105", "654 Maple Dr");
+    
+    print("Library initialized with sample data.");
+    print_separator();
+    
+    // Print statistics
+    print_statistics(books, members);
+    
+    // Print all books
+    print("\n=== Book Catalog ===");
+    print_books(books);
+    print_separator();
+    
+    // Print all members
+    print("\n=== Member Database ===");
+    print_members(members);
+    print_separator();
+    
+    // Demonstrate search functionality
+    demonstrate_search_operations(books, members);
+    print_separator();
+    
+    // Demonstrate issue functionality
+    demonstrate_multiple_issues(books, members);
+    print("\n--- After Multiple Issues ---");
+    print_statistics(books, members);
+    
+    // Demonstrate fine operations
+    demonstrate_fine_operations(members);
+    print_separator();
+    
+    // Demonstrate update operations
+    demonstrate_update_operations(books, members);
+    print("\n--- After Updates ---");
+    print_books(books);
+    
+    // Generate reports
+    print("\n=== Generating Reports ===");
+    generate_book_report(books, "book_report.csv");
+    print("Book report saved to book_report.csv");
+    generate_member_report(members, "member_report.csv");
+    print("Member report saved to member_report.csv");
+    print_separator();
+    
+    // Save data
+    print("\n=== Saving Data ===");
+    save_data(books, members, "books.json", "members.json");
+    print("Data saved to books.json and members.json");
+    
+    // Extended statistics
+    print("\n=== Extended Statistics ===");
+    print_extended_statistics(books, members);
+    
+    // All categories
+    print("\n=== Book Categories ===");
+    let categories = get_all_categories(books);
+    print("Total categories:", list.len(categories));
+    
+    print("\n=== Demo Complete ===");
+    return 0
+}

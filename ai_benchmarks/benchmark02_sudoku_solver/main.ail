@@ -1,0 +1,419 @@
+// Sudoku Solver - Recursive backtracking algorithm
+// Benchmark 008 for AILang v0.1.2
+
+import list;
+import map;
+import convert;
+import set;
+import json;
+
+// ============================================================
+// Level 0: Core board operations
+// Board = list of 9 maps, each map has integer keys 0-8
+// ============================================================
+
+fn init_row(inner, col) {
+    if (col > 8) { return true }
+    map.set(inner, col, 0);
+    return init_row(inner, col + 1)
+}
+
+fn init_board(board, row) {
+    if (row > 8) { return true }
+    let inner = map.new();
+    let r = init_row(inner, 0);
+    list.append(board, inner);
+    return init_board(board, row + 1)
+}
+
+fn create_board() {
+    let board = list.new();
+    let r = init_board(board, 0);
+    return board
+}
+
+fn set_cell(board, row, col, val) {
+    let inner = list.get(board, row);
+    map.set(inner, col, val);
+    return true
+}
+
+fn get_cell(board, row, col) {
+    let inner = list.get(board, row);
+    return map.get(inner, col)
+}
+
+// ============================================================
+// Level 1: Constraint checking
+// ============================================================
+
+fn is_in_row_helper(board, row, col, num) {
+    if (col > 8) { return false }
+    let val = get_cell(board, row, col);
+    if (val == num) { return true }
+    return is_in_row_helper(board, row, col + 1, num)
+}
+
+fn is_in_row(board, row, num) {
+    return is_in_row_helper(board, row, 0, num)
+}
+
+fn is_in_col_helper(board, row, col, num) {
+    if (row > 8) { return false }
+    let val = get_cell(board, row, col);
+    if (val == num) { return true }
+    return is_in_col_helper(board, row + 1, col, num)
+}
+
+fn is_in_col(board, col, num) {
+    return is_in_col_helper(board, 0, col, num)
+}
+
+fn is_in_box_helper(board, start_row, start_col, dr, dc, num) {
+    if (dr > 2) { return false }
+    if (dc > 2) {
+        return is_in_box_helper(board, start_row, start_col, dr + 1, 0, num)
+    }
+    let row = start_row + dr;
+    let col = start_col + dc;
+    let val = get_cell(board, row, col);
+    if (val == num) { return true }
+    return is_in_box_helper(board, start_row, start_col, dr, dc + 1, num)
+}
+
+fn is_in_box(board, start_row, start_col, num) {
+    return is_in_box_helper(board, start_row, start_col, 0, 0, num)
+}
+
+fn is_valid(board, row, col, num) {
+    let box_row = convert.to_int(row / 3) * 3;
+    let box_col = convert.to_int(col / 3) * 3;
+    if (is_in_row(board, row, num)) { return false }
+    if (is_in_col(board, col, num)) { return false }
+    if (is_in_box(board, box_row, box_col, num)) { return false }
+    return true
+}
+
+// ============================================================
+// Level 2: Solver (recursive backtracking)
+// Single recursive function avoids AILang's no-forward-reference constraint.
+// ============================================================
+
+fn solve_recursive(board, pos, num) {
+    if (pos > 80) { return true }
+
+    let row = convert.to_int(pos / 9);
+    let col = pos % 9;
+    let val = get_cell(board, row, col);
+
+    if (val != 0) {
+        return solve_recursive(board, pos + 1, 1)
+    }
+
+    if (num > 9) { return false }
+
+    if (is_valid(board, row, col, num)) {
+        set_cell(board, row, col, num);
+        let solved = solve_recursive(board, pos + 1, 1);
+        if (solved) { return true }
+        set_cell(board, row, col, 0)
+    }
+
+    return solve_recursive(board, pos, num + 1)
+}
+
+fn solve(board) {
+    return solve_recursive(board, 0, 1)
+}
+
+// ============================================================
+// Level 3: Pretty printing
+// ============================================================
+
+fn print_separator() {
+    print("+-------+-------+-------+");
+    return true
+}
+
+fn build_cell_str(board, row, col) {
+    let val = get_cell(board, row, col);
+    if (val == 0) { return " " }
+    return convert.to_string(val)
+}
+
+fn build_row_helper(board, row, col, result) {
+    if (col > 8) {
+        print(result);
+        return true
+    }
+    let cell = build_cell_str(board, row, col);
+    let new_result = result + " " + cell;
+    if (col % 3 == 2) {
+        new_result = new_result + " |"
+    }
+    return build_row_helper(board, row, col + 1, new_result)
+}
+
+fn print_row(board, row) {
+    return build_row_helper(board, row, 0, "|")
+}
+
+fn print_board_helper(board, row) {
+    if (row > 8) {
+        print_separator();
+        return true
+    }
+    if (row % 3 == 0) {
+        print_separator()
+    }
+    print_row(board, row);
+    return print_board_helper(board, row + 1)
+}
+
+fn print_board(board) {
+    print("");
+    let r = print_board_helper(board, 0);
+    print("");
+    return true
+}
+
+// ============================================================
+// Level 4a: Puzzle validation (check initial givens for duplicates)
+// ============================================================
+
+fn validate_row_helper(board, row, col, seen) {
+    if (col > 8) { return true }
+    let val = get_cell(board, row, col);
+    if (val != 0) {
+        if (set.contains(seen, val)) { return false }
+        set.add(seen, val)
+    }
+    return validate_row_helper(board, row, col + 1, seen)
+}
+
+fn validate_row(board, row) {
+    let seen = set.new();
+    return validate_row_helper(board, row, 0, seen)
+}
+
+fn validate_col_helper(board, row, col, seen) {
+    if (row > 8) { return true }
+    let val = get_cell(board, row, col);
+    if (val != 0) {
+        if (set.contains(seen, val)) { return false }
+        set.add(seen, val)
+    }
+    return validate_col_helper(board, row + 1, col, seen)
+}
+
+fn validate_col(board, col) {
+    let seen = set.new();
+    return validate_col_helper(board, 0, col, seen)
+}
+
+fn validate_box_helper(board, start_row, start_col, dr, dc, seen) {
+    if (dr > 2) { return true }
+    if (dc > 2) {
+        return validate_box_helper(board, start_row, start_col, dr + 1, 0, seen)
+    }
+    let row = start_row + dr;
+    let col = start_col + dc;
+    let val = get_cell(board, row, col);
+    if (val != 0) {
+        if (set.contains(seen, val)) { return false }
+        set.add(seen, val)
+    }
+    return validate_box_helper(board, start_row, start_col, dr, dc + 1, seen)
+}
+
+fn validate_box(board, start_row, start_col) {
+    let seen = set.new();
+    return validate_box_helper(board, start_row, start_col, 0, 0, seen)
+}
+
+fn validate_all_rows(board, row) {
+    if (row > 8) { return true }
+    if (!validate_row(board, row)) { return false }
+    return validate_all_rows(board, row + 1)
+}
+
+fn validate_all_cols(board, col) {
+    if (col > 8) { return true }
+    if (!validate_col(board, col)) { return false }
+    return validate_all_cols(board, col + 1)
+}
+
+fn validate_all_boxes(board, idx) {
+    if (idx > 8) { return true }
+    let box_row = convert.to_int(idx / 3) * 3;
+    let box_col = (idx % 3) * 3;
+    if (!validate_box(board, box_row, box_col)) { return false }
+    return validate_all_boxes(board, idx + 1)
+}
+
+fn validate_puzzle(board) {
+    if (!validate_all_rows(board, 0)) { return false }
+    if (!validate_all_cols(board, 0)) { return false }
+    if (!validate_all_boxes(board, 0)) { return false }
+    return true
+}
+
+// ============================================================
+// Level 4b: Solution verification
+// ============================================================
+
+fn verify_row_helper(board, row, col, seen) {
+    if (col > 8) {
+        if (set.len(seen) == 9) { return true }
+        return false
+    }
+    let val = get_cell(board, row, col);
+    if (val == 0) { return false }
+    if (set.contains(seen, val)) { return false }
+    set.add(seen, val);
+    return verify_row_helper(board, row, col + 1, seen)
+}
+
+fn verify_row(board, row) {
+    let seen = set.new();
+    return verify_row_helper(board, row, 0, seen)
+}
+
+fn verify_col_helper(board, row, col, seen) {
+    if (row > 8) {
+        if (set.len(seen) == 9) { return true }
+        return false
+    }
+    let val = get_cell(board, row, col);
+    if (val == 0) { return false }
+    if (set.contains(seen, val)) { return false }
+    set.add(seen, val);
+    return verify_col_helper(board, row + 1, col, seen)
+}
+
+fn verify_col(board, col) {
+    let seen = set.new();
+    return verify_col_helper(board, 0, col, seen)
+}
+
+fn verify_box_helper(board, start_row, start_col, dr, dc, seen) {
+    if (dr > 2) {
+        if (set.len(seen) == 9) { return true }
+        return false
+    }
+    if (dc > 2) {
+        return verify_box_helper(board, start_row, start_col, dr + 1, 0, seen)
+    }
+    let row = start_row + dr;
+    let col = start_col + dc;
+    let val = get_cell(board, row, col);
+    if (val == 0) { return false }
+    if (set.contains(seen, val)) { return false }
+    set.add(seen, val);
+    return verify_box_helper(board, start_row, start_col, dr, dc + 1, seen)
+}
+
+fn verify_box(board, start_row, start_col) {
+    let seen = set.new();
+    return verify_box_helper(board, start_row, start_col, 0, 0, seen)
+}
+
+fn verify_all_rows(board, row) {
+    if (row > 8) { return true }
+    if (!verify_row(board, row)) { return false }
+    return verify_all_rows(board, row + 1)
+}
+
+fn verify_all_cols(board, col) {
+    if (col > 8) { return true }
+    if (!verify_col(board, col)) { return false }
+    return verify_all_cols(board, col + 1)
+}
+
+fn verify_all_boxes(board, idx) {
+    if (idx > 8) { return true }
+    let box_row = convert.to_int(idx / 3) * 3;
+    let box_col = (idx % 3) * 3;
+    if (!verify_box(board, box_row, box_col)) { return false }
+    return verify_all_boxes(board, idx + 1)
+}
+
+fn verify_solution(board) {
+    if (!verify_all_rows(board, 0)) { return false }
+    if (!verify_all_cols(board, 0)) { return false }
+    if (!verify_all_boxes(board, 0)) { return false }
+    return true
+}
+
+// ============================================================
+// Level 5: Puzzle loading from JSON
+// ============================================================
+
+fn load_cells(board, row, data, col) {
+    if (col > 8) { return true }
+    let val = list.get(data, col);
+    let int_val = convert.to_int(val);
+    set_cell(board, row, col, int_val);
+    return load_cells(board, row, data, col + 1)
+}
+
+fn load_rows(board, data, row) {
+    if (row > 8) { return true }
+    let row_data = list.get(data, row);
+    let r = load_cells(board, row, row_data, 0);
+    return load_rows(board, data, row + 1)
+}
+
+fn load_puzzle(board, json_str) {
+    let data = json.parse(json_str);
+    return load_rows(board, data, 0)
+}
+
+// ============================================================
+// Level 6: Test harness
+// ============================================================
+
+fn test_puzzle(board, name) {
+    print("=== " + name + " ===");
+    print("Initial board:");
+    print_board(board);
+    if (!validate_puzzle(board)) {
+        print("INVALID PUZZLE: Duplicate digits detected.\n");
+        return true
+    }
+    let solved = solve(board);
+    if (solved) {
+        print("Solved:");
+        print_board(board);
+        if (verify_solution(board)) {
+            print("Solution verified - all rows, columns, and boxes valid.\n");
+        } else {
+            print("WARNING: Solution verification FAILED!\n");
+        }
+    } else {
+        print("No solution exists - puzzle is unsolvable.\n");
+    }
+    return true
+}
+
+fn main() {
+    print("Sudoku Solver Benchmark for AILang v0.1.2");
+    print("==========================================");
+
+    // Puzzle 1: Standard solvable Sudoku (Wikipedia example)
+    let puzzle1 = create_board();
+    load_puzzle(puzzle1, "[[5,3,0,0,7,0,0,0,0],[6,0,0,1,9,5,0,0,0],[0,9,8,0,0,0,0,6,0],[8,0,0,0,6,0,0,0,3],[4,0,0,8,0,3,0,0,1],[7,0,0,0,2,0,0,0,6],[0,6,0,0,0,0,2,8,0],[0,0,0,4,1,9,0,0,5],[0,0,0,0,8,0,0,7,9]]");
+    test_puzzle(puzzle1, "Puzzle 1: Standard");
+
+    // Puzzle 2: Invalid puzzle (duplicate 5 in first row)
+    let puzzle2 = create_board();
+    load_puzzle(puzzle2, "[[5,5,0,0,7,0,0,0,0],[6,0,0,1,9,5,0,0,0],[0,9,8,0,0,0,0,6,0],[8,0,0,0,6,0,0,0,3],[4,0,0,8,0,3,0,0,1],[7,0,0,0,2,0,0,0,6],[0,6,0,0,0,0,2,8,0],[0,0,0,4,1,9,0,0,5],[0,0,0,0,8,0,0,7,9]]");
+    test_puzzle(puzzle2, "Puzzle 2: Invalid (duplicate)");
+
+    // Puzzle 3: Unsolvable puzzle (cell (0,8) must be 9 but (1,8) = 9)
+    let puzzle3 = create_board();
+    load_puzzle(puzzle3, "[[1,2,3,4,5,6,7,8,0],[0,0,0,0,0,0,0,0,9],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]]");
+    test_puzzle(puzzle3, "Puzzle 3: Unsolvable");
+
+    return 0
+}

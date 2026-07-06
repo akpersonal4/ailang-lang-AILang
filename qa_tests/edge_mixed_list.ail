@@ -1,0 +1,12 @@
+import list;
+
+fn main() {
+    let l = list.new();
+    list.append(l, 42);
+    list.append(l, "hello");
+    list.append(l, true);
+    print("get 0:", list.get(l, 0));
+    print("get 1:", list.get(l, 1));
+    print("get 2:", list.get(l, 2));
+    return 0
+}

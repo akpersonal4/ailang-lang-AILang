@@ -1,0 +1,27 @@
+import random;
+
+fn ask_add(a, b) {
+    let answer = a + b;
+    print("What is", a, "+", b, "?");
+    print("Answer:", answer);
+    if (answer == a + b) { return true }
+    return false
+}
+
+fn ask_mul(a, b) {
+    let answer = a * b;
+    print("What is", a, "*", b, "?");
+    print("Answer:", answer);
+    if (answer == a * b) { return true }
+    return false
+}
+
+fn main() {
+    print("=== Simple Quiz ===");
+    let score = 0;
+    if (ask_add(2, 3)) { score = score + 1 };
+    if (ask_mul(4, 5)) { score = score + 1 };
+    if (ask_add(10, 20)) { score = score + 1 };
+    if (ask_mul(6, 7)) { score = score + 1 };
+    print("Score:", score, "/ 4")
+}

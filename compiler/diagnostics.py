@@ -19,6 +19,25 @@ class ErrorCode:
     message: str
 
 
+# Parser error codes
+PAR001_EXPECTED_TOKEN = ErrorCode("PAR001", "Expected token")
+PAR002_INVALID_IMPORT_PATH = ErrorCode("PAR002", "Invalid import path")
+PAR003_EXPECTED_IDENTIFIER = ErrorCode("PAR003", "Expected identifier")
+
+# Module error codes
+MOD001_CIRCULAR_IMPORT = ErrorCode("MOD001", "Circular import detected")
+MOD002_DUPLICATE_IMPORT = ErrorCode("MOD002", "Duplicate import")
+MOD003_MODULE_NOT_FOUND = ErrorCode("MOD003", "Module not found")
+MOD004_SYMBOL_NOT_FOUND = ErrorCode("MOD004", "Symbol not found in module")
+MOD005_INVALID_MODULE_PATH = ErrorCode("MOD005", "Import path traversal attempt")
+
+# Lex error codes
+LEX001_UNEXPECTED_CHARACTER = ErrorCode("LEX001", "Unexpected character")
+LEX002_UNTERMINATED_STRING = ErrorCode("LEX002", "Unterminated string literal")
+LEX003_INVALID_ESCAPE_SEQUENCE = ErrorCode("LEX003", "Invalid escape sequence")
+LEX004_FLOAT_LITERAL = ErrorCode("LEX004", "Float literals are not supported")
+
+
 @dataclass(frozen=True)
 class Diagnostic:
     severity: Severity

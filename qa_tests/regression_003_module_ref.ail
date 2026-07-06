@@ -1,0 +1,6 @@
+import map;
+fn main() {
+    let m = map.new();
+    let f = map.set;
+    return 0
+}

@@ -1,0 +1,39 @@
+fn concat(a, b) {
+    return a + b
+}
+
+fn equals(a, b) {
+    return a == b
+}
+
+fn uppercase(value) {
+    return value.upper()
+}
+
+fn lowercase(value) {
+    return value.lower()
+}
+
+fn length(value) {
+    return value.__len__()
+}
+
+fn contains(value, needle) {
+    return value.find(needle) != -1
+}
+
+fn starts_with(value, prefix) {
+    return value.startswith(prefix)
+}
+
+fn ends_with(value, suffix) {
+    return value.endswith(suffix)
+}
+
+fn trim(value) {
+    return value.strip()
+}
+
+fn substring(value, start, end) {
+    return string_substring(value, start, end)
+}

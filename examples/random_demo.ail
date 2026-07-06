@@ -1,0 +1,23 @@
+import random;
+import list;
+
+fn main() {
+    print("=== Random Demo ===");
+
+    print("Random int 1-100:");
+    print(random.int(1, 100));
+
+    print("Random int 1-100:");
+    print(random.int(1, 100));
+
+    print("Random float:");
+    print(random.float());
+
+    let items = list.new();
+    list.append(items, "apple");
+    list.append(items, "banana");
+    list.append(items, "cherry");
+    list.append(items, "date");
+    print("Random choice:");
+    print(random.choice(items));
+}

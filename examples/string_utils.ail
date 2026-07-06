@@ -1,0 +1,10 @@
+import string;
+
+fn main() {
+    print(string.uppercase("hello"));
+    print(string.lowercase("HELLO"));
+    print(string.contains("hello world", "world"));
+    print(string.starts_with("hello", "he"));
+    print(string.ends_with("hello", "lo"));
+    print(string.trim("  hi  "));
+}

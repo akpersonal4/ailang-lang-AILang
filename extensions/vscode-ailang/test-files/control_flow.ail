@@ -1,0 +1,38 @@
+// === AILang control flow test file ===
+
+fn grade(score) {
+    if (score >= 90) {
+        return "A"
+    }
+    if (score >= 80) {
+        return "B"
+    }
+    if (score >= 70) {
+        return "C"
+    }
+    if (score >= 60) {
+        return "D"
+    }
+    return "F"
+}
+
+fn classify(x) {
+    if (x > 0) {
+        return "positive"
+    } else if (x < 0) {
+        return "negative"
+    } else {
+        return "zero"
+    }
+}
+
+fn main() {
+    print(grade(85));
+    print(grade(95));
+    print(grade(45));
+
+    print(classify(10));
+    print(classify(-5));
+    print(classify(0));
+    return 0
+}

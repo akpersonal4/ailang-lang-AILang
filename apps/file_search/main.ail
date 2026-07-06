@@ -1,0 +1,28 @@
+import file;
+import string;
+
+fn search_in_file(path, pattern) {
+    if (!file.exists(path)) {
+        print("File not found:", path);
+        return false
+    }
+    let content = file.read(path);
+    if (string.contains(content, pattern)) {
+        print("Found '" + pattern + "' in:", path);
+        return true
+    }
+    return false
+}
+
+fn main() {
+    print("=== File Search Utility ===");
+    let data = "apps/file_search/data.txt";
+    let found = search_in_file(data, "mango");
+    if (found) {
+        print("Search for 'mango': found (correct)")
+    };
+    let not_found = search_in_file(data, "xyznonexistent");
+    if (!not_found) {
+        print("Search for 'xyznonexistent': not found (correct)")
+    }
+}

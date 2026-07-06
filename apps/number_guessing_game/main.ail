@@ -1,0 +1,28 @@
+import random;
+
+fn play_guess(target, attempts) {
+    if (attempts >= 5) { return false }
+    let guess = random.int(1, 100);
+    if (guess == target) {
+        print("Attempt", attempts + 1, ":", guess, "- Correct!");
+        return true
+    }
+    if (guess < target) {
+        print("Attempt", attempts + 1, ":", guess, "- Too low")
+    } else {
+        print("Attempt", attempts + 1, ":", guess, "- Too high")
+    }
+    return play_guess(target, attempts + 1)
+}
+
+fn main() {
+    print("=== Number Guessing Game ===");
+    print("Guess a number between 1 and 100 in 5 attempts");
+    let target = random.int(1, 100);
+    print("(Secret number is", target, ")");
+    if (play_guess(target, 0)) {
+        print("You won!")
+    } else {
+        print("You lost! The number was", target)
+    }
+}

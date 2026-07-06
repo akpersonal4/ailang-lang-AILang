@@ -1,0 +1,11 @@
+import map;
+
+fn main() {
+    let inner = map.new();
+    map.set(inner, "x", 10);
+    let outer = map.new();
+    map.set(outer, "nested", inner);
+    let retrieved = map.get(outer, "nested");
+    print("x:", map.get(retrieved, "x"));
+    return 0
+}

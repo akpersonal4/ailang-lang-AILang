@@ -1,0 +1,9 @@
+fn test() {
+    return
+}
+
+fn main() {
+    let x = test();
+    print("x:", x);
+    return 0
+}

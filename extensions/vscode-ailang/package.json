@@ -1,0 +1,51 @@
+{
+  "name": "vscode-ailang",
+  "displayName": "AILang",
+  "description": "AILang language support — syntax highlighting, snippets, bracket matching, auto-indentation",
+  "version": "0.1.2",
+  "publisher": "ailang",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/anomalyco/ailang.git"
+  },
+  "engines": {
+    "vscode": "^1.84.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "ailang",
+        "aliases": ["AILang", "ailang", "ail"],
+        "extensions": [".ail"],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "ailang",
+        "scopeName": "source.ailang",
+        "path": "./syntaxes/ailang.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "ailang",
+        "path": "./snippets/snippets.code-snippets"
+      }
+    ]
+  }
+,
+  "main": "extension.js",
+  "activationEvents": ["onLanguage:ailang"],
+  "scripts": {
+    "vscode:prepublish": "echo 'No compilation needed for JavaScript extension'"
+  },
+  "devDependencies": {
+    "vscode-languageclient": "^9.0.0",
+    "typescript": "^5.0.0"
+  }
+}

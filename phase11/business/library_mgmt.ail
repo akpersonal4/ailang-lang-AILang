@@ -1,0 +1,104 @@
+import list;
+import map;
+import environment;
+import io;
+import convert;
+
+fn new_library() {
+    let lib = map.new();
+    map.set(lib, "books", list.new());
+    map.set(lib, "patrons", map.new());
+    return lib;
+}
+
+fn add_book(lib, title, author) {
+    let books = map.get(lib, "books");
+    let book = map.new();
+    map.set(book, "title", title);
+    map.set(book, "author", author);
+    map.set(book, "checked_out", false);
+    list.append(books, book);
+    io.println("Added book: " + title);
+    return lib;
+}
+
+fn find_book_idx(books, title, idx) {
+    if (idx >= list.len(books)) {
+        return -1;
+    }
+    let book = list.get(books, idx);
+    let book_title = map.get(book, "title");
+    if (book_title == title) {
+        return idx;
+    }
+    return find_book_idx(books, title, idx + 1);
+}
+
+fn list_books_helper(books, idx) {
+    if (idx >= list.len(books)) {
+        return 0;
+    }
+    let book = list.get(books, idx);
+    let title = map.get(book, "title");
+    let author = map.get(book, "author");
+    let status = "available";
+    if (map.get(book, "checked_out")) {
+        status = "checked out";
+    }
+    let num = convert.to_string(idx + 1);
+    io.println("  " + num + ". " + title + " by " + author + " (" + status + ")");
+    return list_books_helper(books, idx + 1);
+}
+
+fn list_books(lib) {
+    let books = map.get(lib, "books");
+    if (list.len(books) == 0) {
+        io.println("No books in library.");
+        return 0;
+    }
+    return list_books_helper(books, 0);
+}
+
+fn checkout_book(lib, title, patron) {
+    let books = map.get(lib, "books");
+    let idx = find_book_idx(books, title, 0);
+    if (idx < 0) {
+        io.println("Book not found: " + title);
+        return lib;
+    }
+    let book = list.get(books, idx);
+    if (map.get(book, "checked_out")) {
+        io.println("Book already checked out: " + title);
+        return lib;
+    }
+    map.set(book, "checked_out", true);
+    map.set(book, "patron", patron);
+    io.println("Checked out: " + title + " to " + patron);
+    return lib;
+}
+
+fn return_book(lib, title) {
+    let books = map.get(lib, "books");
+    let idx = find_book_idx(books, title, 0);
+    if (idx < 0) {
+        io.println("Book not found: " + title);
+        return lib;
+    }
+    let book = list.get(books, idx);
+    map.set(book, "checked_out", false);
+    io.println("Returned: " + title);
+    return lib;
+}
+
+fn main() {
+    let args = environment.args();
+    let lib = new_library();
+    add_book(lib, "The Great Gatsby", "F. Scott Fitzgerald");
+    add_book(lib, "1984", "George Orwell");
+    add_book(lib, "To Kill a Mockingbird", "Harper Lee");
+    add_book(lib, "Pride and Prejudice", "Jane Austen");
+    io.println("");
+    io.println("=== Library Books ===");
+    let print_result = list_books(lib);
+    return 0;
+}

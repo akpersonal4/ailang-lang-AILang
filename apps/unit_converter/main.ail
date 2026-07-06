@@ -1,0 +1,14 @@
+fn cm_to_inches(cm) { return cm * 3937 / 10000 }
+fn inches_to_cm(inches) { return inches * 10000 / 3937 }
+fn kg_to_lbs(kg) { return kg * 22 / 10 }
+fn lbs_to_kg(lbs) { return lbs * 10 / 22 }
+
+fn main() {
+    print("=== Unit Converter ===");
+    print("10 cm to inches:", cm_to_inches(10));
+    print("5 inches to cm:", inches_to_cm(5));
+    print("70 kg to lbs:", kg_to_lbs(70));
+    print("154 lbs to kg:", lbs_to_kg(154));
+    print("0 cm to inches:", cm_to_inches(0));
+    print("100 cm to inches:", cm_to_inches(100))
+}

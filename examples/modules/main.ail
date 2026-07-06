@@ -1,0 +1,6 @@
+// Multi-module Calculator - Using imported math module
+import math.add;
+
+fn main() {
+    print(math.add(10, 20))
+}

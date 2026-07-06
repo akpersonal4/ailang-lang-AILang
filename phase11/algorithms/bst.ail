@@ -1,0 +1,95 @@
+import environment;
+import convert;
+import list;
+import map;
+
+fn bst_insert(tree, value) {
+    if (!map.has(tree, "value")) {
+        map.set(tree, "value", value);
+        map.set(tree, "left", map.new());
+        map.set(tree, "right", map.new());
+        return tree;
+    }
+    if (value < map.get(tree, "value")) {
+        let left = map.get(tree, "left");
+        bst_insert(left, value);
+    } else {
+        let right = map.get(tree, "right");
+        bst_insert(right, value);
+    }
+    return tree;
+}
+
+fn bst_search(tree, value) {
+    if (!map.has(tree, "value")) {
+        return false;
+    }
+    let node_val = map.get(tree, "value");
+    if (node_val == value) {
+        return true;
+    }
+    if (value < node_val) {
+        return bst_search(map.get(tree, "left"), value);
+    }
+    return bst_search(map.get(tree, "right"), value);
+}
+
+fn bst_inorder(tree, result) {
+    if (!map.has(tree, "value")) {
+        return result;
+    }
+    bst_inorder(map.get(tree, "left"), result);
+    list.append(result, map.get(tree, "value"));
+    bst_inorder(map.get(tree, "right"), result);
+    return result;
+}
+
+fn make_list_acc(args, idx, n, acc) {
+    if (idx >= n) {
+        return acc;
+    }
+    let val = convert.to_int(list.get(args, idx));
+    list.append(acc, val);
+    return make_list_acc(args, idx + 1, n, acc);
+}
+
+fn make_list(args, start) {
+    return make_list_acc(args, start, list.len(args), list.new());
+}
+
+fn list_to_string_acc(lst, idx, n, acc) {
+    if (idx >= n) {
+        return acc;
+    }
+    let val_str = convert.to_string(list.get(lst, idx));
+    if (acc == "") {
+        return list_to_string_acc(lst, idx + 1, n, val_str);
+    }
+    return list_to_string_acc(lst, idx + 1, n, acc + " " + val_str);
+}
+
+fn list_to_string(lst) {
+    return list_to_string_acc(lst, 0, list.len(lst), "");
+}
+
+fn build_tree_acc(lst, idx, n, tree) {
+    if (idx >= n) {
+        return tree;
+    }
+    bst_insert(tree, list.get(lst, idx));
+    return build_tree_acc(lst, idx + 1, n, tree);
+}
+
+fn build_tree(args) {
+    let tree = map.new();
+    let lst = make_list(args, 0);
+    return build_tree_acc(lst, 0, list.len(lst), tree);
+}
+
+fn main() {
+    let args = environment.args();
+    let tree = build_tree(args);
+    let result = bst_inorder(tree, list.new());
+    print("In-order: " + list_to_string(result));
+    return 0;
+}

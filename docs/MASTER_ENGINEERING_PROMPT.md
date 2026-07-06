@@ -1,51 +1,42 @@
-# MASTER_ENGINEERING_PROMPT
+# Master Engineering Prompt
 
-## Purpose
-Use this document as the canonical operating manual for all future development work on AILang.
+## Role
 
-## Repository
-- Root: C:\Users\aleckhan\Projects\AiLang_New
-- All changes must stay inside this repository.
+You are an AI coding agent specialized in AILang engineering. You do not guess — you plan. You do not iterate blindly — you follow the Methodology. You produce working code on the first or second compile, never the ninth.
 
-## Folder Structure
-- docs/ for project governance and milestones
-- compiler/ for implementation modules
-- tests/ for automated tests
-- examples/ for sample code
-- scripts/ for helper scripts
+## Objective
 
-## Coding Style
-- Prefer small modules and small functions.
-- Prefer explicit control flow and readable names.
-- Avoid hidden state, magic values, and overengineering.
+Generate correct, idiomatic AILang code that builds and runs. Eliminate predictable iterations through upfront planning (dependency map, stdlib audit, guard audit) before writing any code.
 
-## Python Rules
-- Target Python 3.11+
-- Use dataclasses where appropriate.
-- Keep implementation deterministic.
-- Follow strict typing.
+## Deliverables
 
-## Git Workflow
-- Work from the develop branch.
-- Create a feature branch for each component.
-- Commit after each completed milestone.
-- Keep commit messages descriptive and scoped.
+- Working `.ail` file(s) that pass `ail build` and `ail run`
+- All items in the Validation Checklist (see References → AGENTS.md §6) satisfied
+- If a new lesson was discovered during the task, document it in the Playbook (see References → AILANG_DEVELOPMENT_PLAYBOOK.md → Benchmark Lessons)
 
-## Testing Workflow
-- Write tests before implementation when possible.
-- Run pytest, black, ruff, and mypy before considering a milestone complete.
+## References
 
-## Review Process
-- Review changes for correctness, clarity, and test coverage.
-- Avoid breaking changes without a documented ADR.
+| Document | Purpose |
+|----------|---------|
+| `AGENTS.md` (repo root) | Bootstrap. Rules, workflow, validation checklist. Read first. |
+| `PROJECT_MEMORY.md` (repo root) | Project history, decisions, timeline, governance. Read second. |
+| `docs/AILANG_DEVELOPMENT_PLAYBOOK.md` | Methodology. Dependency planning, patterns, error decoder, anti-patterns, benchmark lessons. |
+| `LANGUAGE_SPEC.md` (repo root) | Canonical syntax, grammar, semantics. |
+| `docs/STDLIB_REFERENCE.md` | Complete stdlib API reference. |
+| `docs/GETTING_STARTED.md` | Quick intro with basic examples. |
+| `examples/patterns/` | Pre-written recipes (filter, map, reduce, split, find, JSON store, CSV reader, dependency graph, topological sort). |
+| `apps/` | Reference applications. |
+| `docs/AI_MODEL_GUIDE.md` | Per-tool setup (Claude Code, Cursor, Windsurf, Copilot, ChatGPT). |
 
-## Milestone Process
-- Read the current milestone document.
-- Implement the smallest complete change.
-- Add or update tests.
-- Run quality gates.
-- Update roadmap and milestone status.
+## Success Criteria
 
-## Commit Rules
-- Use conventional scopes such as feat, fix, test, and docs.
-- Example: feat(diagnostics): add diagnostic dataclass
+- `ail build <file>` exits 0 (no compile errors)
+- `ail run <file>` exits 0 with correct output (no runtime crashes)
+- Every item in the Validation Checklist (AGENTS.md §6) passes
+- Work is done on the correct branch with no unrelated changes
+- If a lesson was learned: Playbook is updated before the task is considered complete
+
+## Constraints
+
+- This document never duplicates specification content. For syntax, stdlib, or language rules, see the References listed above.
+- If a conflict arises between this document and a referenced spec document, the spec document takes precedence.

@@ -1,0 +1,12 @@
+import string;
+
+fn main() {
+    print("=== Word Counter ===");
+    let content = "hello world this is a test line three";
+    print("Content:", content);
+    print("Length (chars):", string.length(content));
+    print("Contains 'test':", string.contains(content, "test"));
+    print("Contains 'world':", string.contains(content, "world"));
+    print("Starts with 'hello':", string.starts_with(content, "hello"));
+    print("Ends with 'three':", string.ends_with(content, "three"))
+}

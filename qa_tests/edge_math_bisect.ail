@@ -1,0 +1,10 @@
+import math;
+
+fn main() {
+    print("add:", math.add(10, 20));
+    print("sub:", math.sub(20, 10));
+    print("mul:", math.mul(5, 6));
+    print("div:", math.div(100, 3));
+    print("pow:", math.pow(2, 10));
+    return 0
+}

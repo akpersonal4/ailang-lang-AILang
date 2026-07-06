@@ -1,0 +1,40 @@
+// Recursive Search Pattern
+// Finds the first element matching a predicate, or returns false
+// Use: fn predicate(item) { return condition }
+//
+// fn find_helper(coll, i, pred) {
+//     if (i >= list.len(coll)) { return false }
+//     let item = list.get(coll, i);
+//     if (pred(item)) { return item }
+//     return find_helper(coll, i + 1, pred)
+// }
+// fn find(coll, pred) {
+//     return find_helper(coll, 0, pred)
+// }
+
+import list;
+
+fn is_target(n) { return n == 42 }
+
+fn find_helper(coll, i, pred) {
+    if (i >= list.len(coll)) { return false }
+    let item = list.get(coll, i);
+    if (pred(item)) { return item }
+    return find_helper(coll, i + 1, pred)
+}
+
+fn find(coll, pred) {
+    return find_helper(coll, 0, pred)
+}
+
+fn fn_bad(n) { return n == 999 }
+
+fn main() {
+    let nums = list.new();
+    list.append(nums, 10); list.append(nums, 20);
+    list.append(nums, 42); list.append(nums, 99);
+    let found = find(nums, is_target);
+    if (found) { print("Found:", found) } else { print("Not found") };
+    let missing = find(nums, fn_bad);
+    if (missing) { print("Found:", missing) } else { print("Missing value not found (correct)") }
+}

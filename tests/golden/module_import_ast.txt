@@ -1,0 +1,1 @@
+ProgramNode(children=(ImportDeclarationNode(module_path=('math',), alias=None, start_span=None, end_span=None),), start_span=0, end_span=12)

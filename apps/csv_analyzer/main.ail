@@ -1,0 +1,28 @@
+import csv;
+import list;
+import map;
+import convert;
+
+fn display_rows_helper(rows, i) {
+    if (i >= list.len(rows)) { return false }
+    let r = list.get(rows, i);
+    print(" ", map.get(r, "name"), map.get(r, "score"), map.get(r, "grade"));
+    display_rows_helper(rows, i + 1)
+}
+
+fn sum_scores_helper(rows, i) {
+    if (i >= list.len(rows)) { return 0 }
+    let r = list.get(rows, i);
+    let score = convert.to_int(map.get(r, "score"));
+    return score + sum_scores_helper(rows, i + 1)
+}
+
+fn main() {
+    print("=== CSV Analyzer ===");
+    let raw = "name,score,grade\nAlice,85,A\nBob,92,A\nCharlie,78,B\nDiana,95,A";
+    let rows = csv.parse_header(raw);
+    print("Rows:", list.len(rows));
+    display_rows_helper(rows, 0);
+    let total = sum_scores_helper(rows, 0);
+    print("Avg score:", total / list.len(rows))
+}

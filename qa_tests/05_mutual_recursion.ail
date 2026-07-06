@@ -1,0 +1,15 @@
+fn is_even(n) {
+    if (n == 0) { return 1 }
+    return is_odd(n - 1)
+}
+
+fn is_odd(n) {
+    if (n == 0) { return 0 }
+    return is_even(n - 1)
+}
+
+fn main() {
+    print("10 even?", is_even(10));
+    print("11 even?", is_even(11));
+    return 0
+}

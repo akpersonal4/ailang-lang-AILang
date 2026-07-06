@@ -1,0 +1,27 @@
+fn new() {
+    return dict_new()
+}
+
+fn set(values, key, value) {
+    return dict_set(values, key, value)
+}
+
+fn get(values, key) {
+    return dict_get(values, key)
+}
+
+fn has(values, key) {
+    return dict_has(values, key)
+}
+
+fn delete(values, key) {
+    return dict_delete(values, key)
+}
+
+fn keys(values) {
+    return dict_keys(values)
+}
+
+fn clear(values) {
+    return dict_clear(values)
+}

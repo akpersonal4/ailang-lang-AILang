@@ -1,0 +1,78 @@
+import file;
+import environment;
+import list;
+import path;
+import io;
+
+fn matches_all(name, patterns, idx) {
+    if (idx >= list.len(patterns)) {
+        return true;
+    }
+    let pattern = list.get(patterns, idx);
+    if (name.find(pattern) < 0) {
+        return false;
+    }
+    return matches_all(name, patterns, idx + 1);
+}
+
+fn collect_matches(files, patterns, idx, result) {
+    if (idx >= list.len(files)) {
+        return result;
+    }
+    let name = list.get(files, idx);
+    if (matches_all(name, patterns, 0)) {
+        list.append(result, name);
+    }
+    return collect_matches(files, patterns, idx + 1, result);
+}
+
+fn collect_args(args, idx, end_idx, result) {
+    if (idx >= end_idx) {
+        return result;
+    }
+    list.append(result, list.get(args, idx));
+    return collect_args(args, idx + 1, end_idx, result);
+}
+
+fn find_separator(args, idx) {
+    if (idx >= list.len(args)) {
+        return -1;
+    }
+    let val = list.get(args, idx);
+    if (val == "--") {
+        return idx;
+    }
+    return find_separator(args, idx + 1);
+}
+
+fn print_results(results, idx) {
+    if (idx >= list.len(results)) {
+        return 0;
+    }
+    io.println(list.get(results, idx));
+    return print_results(results, idx + 1);
+}
+
+fn main() {
+    let args = environment.args();
+    let num_args = list.len(args);
+    if (num_args < 2) {
+        io.println("Usage: find <pattern1> [pattern2 ...] -- <file1> [file2 ...]");
+        return 1;
+    }
+    let sep = find_separator(args, 0);
+    let files_start = 0;
+    let patterns_end = num_args;
+    if (sep >= 0) {
+        patterns_end = sep;
+        files_start = sep + 1;
+    }
+    let patterns_list = list.new();
+    let patterns = collect_args(args, 0, patterns_end, patterns_list);
+    let files_list = list.new();
+    let files = collect_args(args, files_start, num_args, files_list);
+    let result_list = list.new();
+    let matches = collect_matches(files, patterns, 0, result_list);
+    let print_result = print_results(matches, 0);
+    return 0;
+}

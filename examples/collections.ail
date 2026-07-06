@@ -1,0 +1,24 @@
+import array;
+import list;
+import map;
+import set;
+
+fn main() {
+    let values = array.new();
+    array.push(values, 1);
+    array.push(values, 2);
+    print(array.len(values));
+
+    let items = list.new();
+    list.append(items, 3);
+    list.append(items, 4);
+    print(list.len(items));
+
+    let lookup = map.new();
+    map.set(lookup, "answer", 42);
+    print(map.get(lookup, "answer"));
+
+    let members = set.new();
+    set.add(members, 5);
+    print(set.contains(members, 5));
+}

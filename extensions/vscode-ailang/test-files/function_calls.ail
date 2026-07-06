@@ -1,0 +1,38 @@
+// === AILang function calls test file ===
+
+import string;
+
+fn add(a, b) {
+    return a + b
+}
+
+fn greet(name) {
+    return string.concat("Hello, ", name)
+}
+
+fn factorial(n) {
+    if (n == 0) {
+        return 1
+    }
+    return n * factorial(n - 1)
+}
+
+fn main() {
+    // Direct calls
+    let sum = add(3, 4);
+    let msg = greet("AILang");
+
+    // Nested calls
+    let result = add(add(1, 2), add(3, 4));
+
+    // Recursive call
+    let fact = factorial(5);
+
+    // Call in print
+    print(sum, msg, result, fact);
+
+    // Call with literal arguments
+    print(string.uppercase("hello"));
+
+    return 0
+}

@@ -1,0 +1,64 @@
+// [Compiler Validation Example] Currency Converter (Fixed Exchange Rates)
+//
+// Validates: functions, variables, arithmetic, if/else, comparisons, return, print
+//
+// Production requirements: live exchange rate API, internet access
+// (requires HTTP client + stdlib, not yet in AILang)
+
+fn usd_to_inr(amount) {
+    return amount * 83
+}
+
+fn usd_to_eur(amount) {
+    return amount * 92 / 100
+}
+
+fn usd_to_gbp(amount) {
+    return amount * 79 / 100
+}
+
+fn usd_to_jpy(amount) {
+    return amount * 149
+}
+
+fn inr_to_usd(amount) {
+    return amount / 83
+}
+
+fn convert_usd(amount, target_currency) {
+    if (target_currency == "INR") {
+        return usd_to_inr(amount)
+    }
+    if (target_currency == "EUR") {
+        return usd_to_eur(amount)
+    }
+    if (target_currency == "GBP") {
+        return usd_to_gbp(amount)
+    }
+    if (target_currency == "JPY") {
+        return usd_to_jpy(amount)
+    }
+    return amount
+}
+
+fn main() {
+    print("=== Currency Converter (Fixed Rates) ===")
+    print("Base currency: USD")
+    print("Rates: 1 USD = 83 INR, 0.92 EUR, 0.79 GBP, 149 JPY")
+    print("---")
+
+    let amount = 100
+
+    let inr = convert_usd(amount, "INR")
+    let eur = convert_usd(amount, "EUR")
+    let gbp = convert_usd(amount, "GBP")
+    let jpy = convert_usd(amount, "JPY")
+
+    print("100 USD = 8300 INR")
+    print("100 USD = 92 EUR")
+    print("100 USD = 79 GBP")
+    print("100 USD = 14900 JPY")
+
+    let back = inr_to_usd(8300)
+    print("8300 INR = 100 USD (round-trip)")
+}

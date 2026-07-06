@@ -1,0 +1,10 @@
+import file;
+import string;
+
+fn main() {
+    print("=== Log Analyzer ===");
+    let log = file.read("apps/log_analyzer/main.ail");
+    print("File length:", string.length(log));
+    print("Contains 'fn':", string.contains(log, "fn"));
+    print("Contains 'main':", string.contains(log, "main"))
+}

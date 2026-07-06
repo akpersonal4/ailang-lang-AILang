@@ -1,0 +1,10 @@
+fn count(n) {
+    if (n <= 0) { return 0 }
+    let result = 1 + count(n - 1);
+    return result
+}
+
+fn main() {
+    print(count(1000));
+    return 0
+}

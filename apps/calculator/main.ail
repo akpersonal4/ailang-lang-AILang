@@ -1,0 +1,14 @@
+fn add(a, b) { return a + b }
+fn sub(a, b) { return a - b }
+fn mul(a, b) { return a * b }
+fn div(a, b) { return a / b }
+fn mod(a, b) { return a % b }
+
+fn main() {
+    print("=== Calculator ===");
+    print("10 + 3 =", add(10, 3));
+    print("10 - 3 =", sub(10, 3));
+    print("10 * 3 =", mul(10, 3));
+    print("10 / 3 =", div(10, 3));
+    print("10 % 3 =", mod(10, 3))
+}

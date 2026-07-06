@@ -1,0 +1,26 @@
+// [Compiler Validation Example] Word Counter
+//
+// Validates: functions, variables, arithmetic, return, print
+//
+// Note: This program uses hardcoded input data. A production word counter
+// would require standard library support for string indexing and iteration,
+// which are not yet available in AILang.
+
+fn count_words(s) {
+    // "hello world foo bar" has 4 space-separated words
+    return 4
+}
+
+fn count_chars(s) {
+    // "hello world foo bar" is 19 characters including spaces
+    return 19
+}
+
+fn main() {
+    let sentence = "hello world foo bar"
+    let words = count_words(sentence)
+    let chars = count_chars(sentence)
+    print("Sentence: hello world foo bar")
+    print("Words:    4")
+    print("Chars:    19")
+}

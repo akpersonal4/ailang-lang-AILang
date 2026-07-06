@@ -1,0 +1,53 @@
+// === AILang snippets demonstration ===
+// This file shows what each VS Code snippet generates.
+
+// [main] snippet:
+fn main() {
+    print("Hello, AILang!");
+    return 0
+}
+
+// [fn] snippet:
+fn add(a, b) {
+    return a + b
+}
+
+// [if] snippet:
+fn check(x) {
+    if (x > 0) {
+        return 1
+    }
+    return 0
+}
+
+// [ifelse] snippet:
+fn sign(x) {
+    if (x > 0) {
+        return 1
+    } else {
+        return -1
+    }
+}
+
+// [import] snippet:
+import string;
+
+// [return] snippet:
+fn double(x) {
+    return x * 2
+}
+
+// [recur] snippet:
+fn factorial(n) {
+    if (n == 0) {
+        return 1
+    }
+    return factorial(n - 1) * n
+}
+
+// [let] snippet:
+fn demo() {
+    let message = "hello";
+    print(message);
+    return 0
+}

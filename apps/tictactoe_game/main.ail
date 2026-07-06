@@ -1,0 +1,112 @@
+import random;
+import map;
+import list;
+import string;
+import convert;
+
+fn create_board() {
+    let b = map.new();
+    map.set(b, "0", " "); map.set(b, "1", " "); map.set(b, "2", " ");
+    map.set(b, "3", " "); map.set(b, "4", " "); map.set(b, "5", " ");
+    map.set(b, "6", " "); map.set(b, "7", " "); map.set(b, "8", " ");
+    return b
+}
+
+fn cell(board, pos) {
+    if (map.has(board, pos)) { return map.get(board, pos) }
+    return " "
+}
+
+fn print_cell(val) {
+    if (val == " ") { print(" ") } else { print(val) }
+}
+
+fn print_board(board) {
+    print(" " + cell(board, "0") + " | " + cell(board, "1") + " | " + cell(board, "2"));
+    print("---+---+---");
+    print(" " + cell(board, "3") + " | " + cell(board, "4") + " | " + cell(board, "5"));
+    print("---+---+---");
+    print(" " + cell(board, "6") + " | " + cell(board, "7") + " | " + cell(board, "8"))
+}
+
+fn check_line(board, a, b, c) {
+    let va = cell(board, a);
+    if (va == " ") { return " " }
+    if (va == cell(board, b) && va == cell(board, c)) { return va }
+    return " "
+}
+
+fn check_winner(board) {
+    let win = check_line(board, "0", "1", "2");
+    if (win != " ") { return win }
+    win = check_line(board, "3", "4", "5");
+    if (win != " ") { return win }
+    win = check_line(board, "6", "7", "8");
+    if (win != " ") { return win }
+    win = check_line(board, "0", "3", "6");
+    if (win != " ") { return win }
+    win = check_line(board, "1", "4", "7");
+    if (win != " ") { return win }
+    win = check_line(board, "2", "5", "8");
+    if (win != " ") { return win }
+    win = check_line(board, "0", "4", "8");
+    if (win != " ") { return win }
+    win = check_line(board, "2", "4", "6");
+    if (win != " ") { return win }
+    return " "
+}
+
+fn is_board_full(board, pos) {
+    if (pos > 8) { return true }
+    if (cell(board, convert.to_string(pos)) == " ") { return false }
+    return is_board_full(board, pos + 1)
+}
+
+fn list_empty_positions(board, pos, acc) {
+    if (pos > 8) { return acc }
+    let key = convert.to_string(pos);
+    if (cell(board, key) == " ") {
+        list.append(acc, key)
+    }
+    return list_empty_positions(board, pos + 1, acc)
+}
+
+fn get_random_move(board) {
+    let empties = list_empty_positions(board, 0, list.new());
+    if (list.len(empties) == 0) { return "-1" }
+    return random.choice(empties)
+}
+
+fn play_turn(board, player, turn) {
+    print("");
+    print("Turn", turn, "- Player", player);
+    print_board(board);
+    let move = get_random_move(board);
+    if (move == "-1") {
+        print("Board full! It's a tie!");
+        return 0
+    }
+    print("Player", player, "chooses position", move);
+    map.set(board, move, player);
+    let winner = check_winner(board);
+    if (winner != " ") {
+        print_board(board);
+        print("Player", winner, "wins!");
+        return 0
+    }
+    if (turn >= 9) {
+        print_board(board);
+        print("It's a tie!");
+        return 0
+    }
+    let next = " ";
+    if (player == "X") { next = "O" } else { next = "X" }
+    return play_turn(board, next, turn + 1)
+}
+
+fn main() {
+    print("=== Tic-Tac-Toe ===");
+    print("X vs O - AI vs AI");
+    let board = create_board();
+    play_turn(board, "X", 1)
+}

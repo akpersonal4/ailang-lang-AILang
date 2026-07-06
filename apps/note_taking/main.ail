@@ -1,0 +1,402 @@
+// Note Taking Application
+// A complete note management system with persistence
+
+import list;
+import map;
+import json;
+import file;
+import string;
+import time;
+import convert;
+
+// ============================================================
+// Note Creation Functions
+// ============================================================
+
+fn create_note(id, title, content, tags) {
+    let note = map.new();
+    map.set(note, "id", id);
+    map.set(note, "title", title);
+    map.set(note, "content", content);
+    map.set(note, "tags", tags);
+    map.set(note, "created_at", time.now());
+    map.set(note, "updated_at", time.now());
+    return note
+}
+
+fn add_note(notes, id, title, content, tags) {
+    let note = create_note(id, title, content, tags);
+    list.append(notes, note);
+    return notes
+}
+
+// ============================================================
+// Find and Query Functions
+// ============================================================
+
+fn find_note_by_id_helper(notes, i, id) {
+    if (i >= list.len(notes)) { return -1 }
+    let note = list.get(notes, i);
+    if (map.get(note, "id") == id) { return i }
+    return find_note_by_id_helper(notes, i + 1, id)
+}
+
+fn find_note_by_id(notes, id) {
+    return find_note_by_id_helper(notes, 0, id)
+}
+
+fn get_next_id_helper(notes, i, max_id) {
+    if (i >= list.len(notes)) { return max_id }
+    let note = list.get(notes, i);
+    let current_id = map.get(note, "id");
+    if (current_id > max_id) {
+        return get_next_id_helper(notes, i + 1, current_id)
+    }
+    return get_next_id_helper(notes, i + 1, max_id)
+}
+
+fn get_next_id(notes) {
+    let max_id = get_next_id_helper(notes, 0, 0);
+    return max_id + 1
+}
+
+// ============================================================
+// Search Functions
+// ============================================================
+
+fn search_notes_by_text_helper(notes, i, query, results) {
+    if (i >= list.len(notes)) { return results }
+    let note = list.get(notes, i);
+    let title = map.get(note, "title");
+    let content = map.get(note, "content");
+    let lower_title = string.lowercase(title);
+    let lower_content = string.lowercase(content);
+    let lower_query = string.lowercase(query);
+    if (string.contains(lower_title, lower_query)) {
+        list.append(results, note)
+    } else if (string.contains(lower_content, lower_query)) {
+        list.append(results, note)
+    }
+    return search_notes_by_text_helper(notes, i + 1, query, results)
+}
+
+fn search_notes_by_text(notes, query) {
+    let results = list.new();
+    return search_notes_by_text_helper(notes, 0, query, results)
+}
+
+fn tags_contain_tag_helper(tags, i, tag) {
+    if (i >= list.len(tags)) { return false }
+    if (string.equals(list.get(tags, i), tag)) { return true }
+    return tags_contain_tag_helper(tags, i + 1, tag)
+}
+
+fn tags_contain_tag(tags, tag) {
+    return tags_contain_tag_helper(tags, 0, tag)
+}
+
+fn search_notes_by_tag_helper(notes, i, tag, results) {
+    if (i >= list.len(notes)) { return results }
+    let note = list.get(notes, i);
+    let tags = map.get(note, "tags");
+    if (tags_contain_tag(tags, tag)) {
+        list.append(results, note)
+    }
+    return search_notes_by_tag_helper(notes, i + 1, tag, results)
+}
+
+fn search_notes_by_tag(notes, tag) {
+    let results = list.new();
+    return search_notes_by_tag_helper(notes, 0, tag, results)
+}
+
+// ============================================================
+// Update Functions
+// ============================================================
+
+fn update_note_title(note, new_title) {
+    map.set(note, "title", new_title);
+    map.set(note, "updated_at", time.now());
+    return true
+}
+
+fn update_note_content(note, new_content) {
+    map.set(note, "content", new_content);
+    map.set(note, "updated_at", time.now());
+    return true
+}
+
+fn add_tag_to_note(note, tag) {
+    let tags = map.get(note, "tags");
+    if (!tags_contain_tag(tags, tag)) {
+        list.append(tags, tag)
+    }
+    map.set(note, "tags", tags);
+    map.set(note, "updated_at", time.now());
+    return true
+}
+
+// ============================================================
+// Delete Functions
+// ============================================================
+
+fn delete_note(notes, id) {
+    let idx = find_note_by_id(notes, id);
+    if (idx == -1) { return false }
+    let note = list.get(notes, idx);
+    list.remove(notes, note);
+    return true
+}
+
+// ============================================================
+// Display Functions
+// ============================================================
+
+fn print_tags_inline_helper(tags, i) {
+    if (i >= list.len(tags)) { return true }
+    if (i > 0) { print(", ") }
+    print(list.get(tags, i));
+    return print_tags_inline_helper(tags, i + 1)
+}
+
+fn print_tags(tags) {
+    if (list.len(tags) == 0) {
+        print("(none)");
+        return true
+    }
+    return print_tags_inline_helper(tags, 0)
+}
+
+fn print_note(note) {
+    print("ID:", map.get(note, "id"));
+    print("  Title:", map.get(note, "title"));
+    print("  Created:", map.get(note, "created_at"));
+    print("  Updated:", map.get(note, "updated_at"));
+    print("  Tags: ");
+    print_tags(map.get(note, "tags"));
+    print("");
+    let content = map.get(note, "content");
+    if (string.length(content) > 80) {
+        print("  Content:", string.substring(content, 0, 80), "...")
+    } else {
+        print("  Content:", content)
+    }
+    print("---")
+}
+
+fn print_short_note(note) {
+    print("  [", map.get(note, "id"), "]", map.get(note, "title"),
+          "-", map.get(note, "created_at"))
+}
+
+fn print_notes_helper(notes, i) {
+    if (i >= list.len(notes)) { return true }
+    print_short_note(list.get(notes, i));
+    return print_notes_helper(notes, i + 1)
+}
+
+fn print_notes(notes, label) {
+    print("=== ", label, " ===");
+    if (list.len(notes) == 0) {
+        print("No notes found.");
+        return true
+    }
+    print_notes_helper(notes, 0);
+    print("Total:", list.len(notes));
+    print("---")
+}
+
+fn print_note_detail(note) {
+    print("ID:", map.get(note, "id"));
+    print("Title:", map.get(note, "title"));
+    print("Created:", map.get(note, "created_at"));
+    print("Updated:", map.get(note, "updated_at"));
+    print("Tags: ");
+    print_tags(map.get(note, "tags"));
+    print("");
+    print("Content:");
+    print(map.get(note, "content"));
+    print("---")
+}
+
+// ============================================================
+// Persistence Functions
+// ============================================================
+
+fn save_notes(notes, filename) {
+    let json_data = json.stringify(notes);
+    file.write(filename, json_data);
+    return true
+}
+
+fn load_notes(filename) {
+    if (!file.exists(filename)) { return list.new() }
+    let content = file.read(filename);
+    return json.parse(content)
+}
+
+fn count_notes(notes) {
+    return list.len(notes)
+}
+
+fn collect_unique_tags(note_tags, all_tags, i) {
+    if (i >= list.len(note_tags)) { return all_tags }
+    let tag = list.get(note_tags, i);
+    if (!list.contains(all_tags, tag)) {
+        list.append(all_tags, tag)
+    }
+    return collect_unique_tags(note_tags, all_tags, i + 1)
+}
+
+fn get_all_tags_helper(notes, i, all_tags) {
+    if (i >= list.len(notes)) { return all_tags }
+    let note = list.get(notes, i);
+    let note_tags = map.get(note, "tags");
+    let result = collect_unique_tags(note_tags, all_tags, 0);
+    return get_all_tags_helper(notes, i + 1, result)
+}
+
+fn get_all_tags(notes) {
+    let all_tags = list.new();
+    return get_all_tags_helper(notes, 0, all_tags)
+}
+
+// ============================================================
+// Statistics Functions
+// ============================================================
+
+fn print_statistics(notes) {
+    print("=== Note Statistics ===");
+    print("Total Notes:", count_notes(notes));
+    let all_tags = get_all_tags(notes);
+    print("Unique Tags:", list.len(all_tags));
+    print("Tags: ");
+    print_tags(all_tags);
+    print("");
+    print("=========================")
+}
+
+// ============================================================
+// Demo / Main Flow Functions
+// ============================================================
+
+fn create_sample_notes() {
+    let notes = list.new();
+    let tag1 = list.new();
+    list.append(tag1, "personal");
+    notes = add_note(notes, 1, "Grocery List",
+        "Buy milk, eggs, bread, and butter from the store", tag1);
+    let tag2 = list.new();
+    list.append(tag2, "work");
+    list.append(tag2, "urgent");
+    notes = add_note(notes, 2, "Project Meeting Notes",
+        "Discussed Q3 roadmap. Action items: finish API docs, review PRs, update schemas",
+        tag2);
+    let tag3 = list.new();
+    list.append(tag3, "ideas");
+    notes = add_note(notes, 3, "App Feature Ideas",
+        "Dark mode toggle, export to PDF, keyboard shortcuts for power users", tag3);
+    let tag4 = list.new();
+    list.append(tag4, "work");
+    list.append(tag4, "learning");
+    notes = add_note(notes, 4, "Learning Rust",
+        "Study ownership model, borrow checker, trait system, and async programming",
+        tag4);
+    let tag5 = list.new();
+    list.append(tag5, "personal");
+    list.append(tag5, "health");
+    notes = add_note(notes, 5, "Workout Plan",
+        "Monday: chest and triceps. Wednesday: back and biceps. Friday: legs and shoulders",
+        tag5);
+    return notes
+}
+
+fn demo_create_and_list(notes) {
+    print("\n--- Demo: Create and List Notes ---");
+    print_notes(notes, "All Notes");
+    return notes
+}
+
+fn demo_search_by_text(notes) {
+    print("\n--- Demo: Search Notes by Text ---");
+    let results = search_notes_by_text(notes, "roadmap");
+    print_notes(results, "Search Results for 'roadmap'");
+    return true
+}
+
+fn demo_search_by_tag(notes) {
+    print("\n--- Demo: Search Notes by Tag ---");
+    let results = search_notes_by_tag(notes, "work");
+    print_notes(results, "Notes tagged 'work'");
+    return true
+}
+
+fn demo_view_note(notes) {
+    print("\n--- Demo: View Note Detail ---");
+    let idx = find_note_by_id(notes, 3);
+    if (idx != -1) {
+        print_note_detail(list.get(notes, idx))
+    }
+    return true
+}
+
+fn demo_update_note(notes) {
+    print("\n--- Demo: Update Note ---");
+    let idx = find_note_by_id(notes, 1);
+    if (idx != -1) {
+        let note = list.get(notes, idx);
+        update_note_title(note, "Weekly Grocery List");
+        update_note_content(note, "Buy milk, eggs, bread, butter, cheese, and vegetables");
+        add_tag_to_note(note, "shopping");
+        print("Updated note 1:");
+        print_short_note(note)
+    }
+    return notes
+}
+
+fn demo_delete_note(notes) {
+    print("\n--- Demo: Delete Note ---");
+    let deleted = delete_note(notes, 5);
+    if (deleted) {
+        print("Deleted note 5 (Workout Plan).")
+    }
+    print_notes(notes, "Notes after deletion");
+    return notes
+}
+
+fn demo_persistence(notes) {
+    print("\n--- Demo: Save and Load ---");
+    save_notes(notes, "notes.json");
+    print("Notes saved to notes.json");
+    let loaded = load_notes("notes.json");
+    print("Loaded", count_notes(loaded), "notes from notes.json");
+    print_notes(loaded, "Loaded Notes");
+    return loaded
+}
+
+fn main() {
+    print("=== Note Taking Application ===");
+    print("A complete note management system");
+    print("");
+
+    let notes = create_sample_notes();
+    print("Created", count_notes(notes), "sample notes.");
+
+    notes = demo_create_and_list(notes);
+    print_statistics(notes);
+
+    demo_search_by_text(notes);
+    demo_search_by_tag(notes);
+    demo_view_note(notes);
+
+    notes = demo_update_note(notes);
+    print_notes(notes, "Notes after update");
+
+    notes = demo_delete_note(notes);
+    print_statistics(notes);
+
+    notes = demo_persistence(notes);
+
+    print("\n=== Note Taking Demo Complete ===");
+    return 0
+}

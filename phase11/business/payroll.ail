@@ -1,0 +1,77 @@
+import environment;
+import list;
+import io;
+import convert;
+import map;
+
+fn calc_tax(gross) {
+    if (gross <= 1000) {
+        return 0;
+    }
+    if (gross <= 3000) {
+        return gross * 10 / 100;
+    }
+    if (gross <= 5000) {
+        return gross * 15 / 100;
+    }
+    return gross * 20 / 100;
+}
+
+fn calc_ssf(gross) {
+    return gross * 5 / 100;
+}
+
+fn process_employee(name, gross) {
+    let tax = calc_tax(gross);
+    let ssf = calc_ssf(gross);
+    let net = gross - tax - ssf;
+    let record = map.new();
+    map.set(record, "name", name);
+    map.set(record, "gross", gross);
+    map.set(record, "tax", tax);
+    map.set(record, "ssf", ssf);
+    map.set(record, "net", net);
+    return record;
+}
+
+fn print_employee(record) {
+    let name = map.get(record, "name");
+    let gross = convert.to_string(map.get(record, "gross"));
+    let tax = convert.to_string(map.get(record, "tax"));
+    let ssf = convert.to_string(map.get(record, "ssf"));
+    let net = convert.to_string(map.get(record, "net"));
+    io.println(name + " | Gross: " + gross + " | Tax: " + tax + " | SSF: " + ssf + " | Net: " + net);
+}
+
+fn process_pairs(args, idx, results) {
+    if (idx + 1 >= list.len(args)) {
+        return results;
+    }
+    let name = list.get(args, idx);
+    let gross_str = list.get(args, idx + 1);
+    let gross = convert.to_int(gross_str);
+    let record = process_employee(name, gross);
+    list.append(results, record);
+    return process_pairs(args, idx + 2, results);
+}
+
+fn print_all(results, idx) {
+    if (idx >= list.len(results)) {
+        return 0;
+    }
+    print_employee(list.get(results, idx));
+    return print_all(results, idx + 1);
+}
+
+fn main() {
+    let args = environment.args();
+    if (list.len(args) < 2) {
+        io.println("Usage: payroll <name1> <gross1> [name2 gross2 ...]");
+        return 1;
+    }
+    let results_list = list.new();
+    let results = process_pairs(args, 0, results_list);
+    io.println("=== Payroll Summary ===");
+    let print_result = print_all(results, 0);
+    return 0;
+}
