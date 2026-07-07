@@ -187,11 +187,11 @@ A chronological record of every major engineering phase, with results, lessons, 
 
 | Aspect | Detail |
 |--------|--------|
-| **What** | Created comprehensive architecture documentation: ARCHITECTURE_DECISIONS.md (9 ADRs), RUNTIME_OPTIMIZATIONS.md (optimization registry), FOR_FUTURE_AI.md (10-minute guide). Updated PROJECT_MEMORY.md, AGENTS.md, Playbook, and Master Prompt. |
+| **What** | Created comprehensive architecture documentation: ARCHITECTURE_DECISIONS.md (9 ADRs), RUNTIME_OPTIMIZATIONS.md (optimization registry), FOR_FUTURE_AI.md (10-minute guide) [archived M16]. Updated PROJECT_MEMORY.md, AGENTS.md, Playbook, and Master Prompt [archived M16]. |
 | **Why** | Preserve engineering knowledge so future AI and human contributors understand why decisions were made without rediscovering them. |
 | **Result** | Single source of truth for all architectural decisions. Evidence attached to every optimization. Cross-references verified. Repository is self-explanatory. |
 | **Lessons** | Documentation is infrastructure. AI-consumable structured documentation reduces iteration by making all context available upfront. |
-| **Documents** | `docs/architecture/ARCHITECTURE_DECISIONS.md`, `docs/runtime/optimizations.md`, `docs/guides/FOR_FUTURE_AI.md`, `docs/guides/ARCHITECTURE_DOCUMENTATION_REPORT.md` (this file) |
+| **Documents** | `docs/architecture/ARCHITECTURE_DECISIONS.md`, `docs/runtime/optimizations.md`, `docs/archive/misc/FOR_FUTURE_AI.md`, `docs/guides/ARCHITECTURE_DOCUMENTATION_REPORT.md` (this file) |
 
 ### M11 — DX Tool #001 (ail context)
 
@@ -275,7 +275,7 @@ Root
 │
 ├── docs/
 │   ├── reference/                     ← LANGUAGE_SPEC, stdlib, compiler arch, install
-│   ├── guides/                        ← Playbook, Master Prompt, FOR_FUTURE_AI, AI_MODEL_GUIDE
+│   ├── guides/                        ← Playbook, AI_MODEL_GUIDE
 │   ├── architecture/                  ← ARCHITECTURE_DECISIONS.md, TOOLING_ARCHITECTURE.md, PACKAGE_MANAGER_DESIGN.md, MEMBER_ACCESS, MODULE_SYSTEM
 │   ├── adr/                           ← ADR-001, ADR-002
 │   ├── governance/                    ← Philosophy, Constitution, Vision, Evolution, Contributing

@@ -71,9 +71,8 @@ You MUST check examples/patterns/ for pre-written recipes before writing filter/
 **Behavior:** No project awareness, no file system access.
 
 **Recommended setup:**
-- Paste the contents of `docs/guides/MASTER_ENGINEERING_PROMPT.md` into the chat
-- This references `AGENTS.md` §1 Mandatory Pre-Read Checklist
-- If asked, paste `AGENTS.md` content as well
+- Paste the contents of `AGENTS.md` and `docs/guides/AILANG_DEVELOPMENT_PLAYBOOK.md` into the chat
+- This covers all mandatory rules and engineering workflow
 
 ---
 
@@ -86,7 +85,7 @@ You MUST check examples/patterns/ for pre-written recipes before writing filter/
 | Windsurf | ✅ | None |
 | Copilot Chat | ❌ | Manual paste per session |
 | Cline | ✅ (if configured) | Add custom instruction |
-| ChatGPT | ❌ | Paste MASTER_ENGINEERING_PROMPT.md |
+| ChatGPT | ❌ | Paste AGENTS.md + AILANG_DEVELOPMENT_PLAYBOOK.md |
 
 ---
 

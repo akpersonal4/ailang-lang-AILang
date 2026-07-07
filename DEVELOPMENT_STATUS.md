@@ -98,7 +98,7 @@ until this document has been reviewed. Update AGENTS.md reading order after revi
 - [x] LANGUAGE_SPEC.md (canonical)
 - [x] STDLIB_REFERENCE.md (complete)
 - [x] AILANG_DEVELOPMENT_PLAYBOOK.md
-- [x] MASTER_ENGINEERING_PROMPT.md
+- [x] AI_MODEL_GUIDE.md
 - [x] ARCHITECTURE_DECISIONS.md (9 ADRs)
 - [x] GOVERNANCE.md
 - [x] PROJECT_PHILOSOPHY.md
