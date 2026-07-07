@@ -273,6 +273,46 @@ def test_invalid_syntax_raises() -> None:
         pass
 
 
+def test_error_message_no_semicolon_noise() -> None:
+    """Regression: error message must not contain SEMICOLON noise.
+    
+    When there's a real syntax error, the error message should report
+    only the real errors, not "Expected SEMICOLON" diagnostics from
+    lines after the error.
+    """
+    source = "fn main() {\n    let x = \n    return x\n}\n"
+    try:
+        format_source(source)
+        assert False, "Should have raised ValueError"
+    except ValueError as e:
+        msg = str(e)
+        assert "Expected SEMICOLON" not in msg, (
+            f"Error message contains SEMICOLON noise: {msg}"
+        )
+
+
+def test_error_message_includes_real_error() -> None:
+    """Regression: error message must include the real error.
+    
+    When the AST builder detects a problem (e.g. missing initializer),
+    the error message should include that problem, not just SEMICOLON
+    diagnostics.
+    """
+    source = "fn main() {\n    let x = ;\n    return x;\n}\n"
+    try:
+        format_source(source)
+        assert False, "Should have raised ValueError"
+    except ValueError as e:
+        msg = str(e)
+        # Must include the actual error, not just SEMICOLON messages
+        assert "Expected SEMICOLON" not in msg, (
+            f"Error message contains SEMICOLON noise: {msg}"
+        )
+        assert "initializer" in msg or "expression" in msg, (
+            f"Error message missing real error: {msg}"
+        )
+
+
 # =============================================================================
 # Edge cases
 # =============================================================================
