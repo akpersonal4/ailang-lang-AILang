@@ -340,3 +340,94 @@ def test_nested_expressions() -> None:
     source = "fn main(){let r=(1+2)*3;print(r);}"
     expected = "fn main() {\n" "    let r = (1 + 2) * 3;\n" "    print(r);\n" "}\n"
     assert format_source(source) == expected
+
+
+def test_empty_string() -> None:
+    """Empty string should produce just a trailing newline."""
+    assert format_source("") == "\n"
+
+
+def test_only_imports_no_functions() -> None:
+    """File with only imports should format correctly."""
+    source = "import string;import math;"
+    expected = "import string;\nimport math;\n"
+    assert format_source(source) == expected
+
+
+def test_import_without_semicolon() -> None:
+    """Import without semicolon should be recovered."""
+    source = "import string\nimport math\n"
+    expected = "import string;\nimport math;\n"
+    assert format_source(source) == expected
+
+
+def test_additional_blank_lines_between_imports_and_functions() -> None:
+    """Extra blank lines between imports and functions should be collapsed."""
+    source = "import string;\n\n\n\nfn main() {\n    return 0;\n}\n"
+    expected = "import string;\n\nfn main() {\n    return 0;\n}\n"
+    assert format_source(source) == expected
+
+
+def test_inline_comment_with_exclamation() -> None:
+    """Inline comments with special characters should be preserved."""
+    source = "fn main() {\n    return 0; // important!\n}\n"
+    result = format_source(source)
+    assert "// important!" in result
+
+
+def test_block_comment_before_import() -> None:
+    """Block comment before import should be preserved."""
+    source = "// module docs\nimport string;\n\nfn main() {\n    return 0;\n}\n"
+    result = format_source(source)
+    assert "// module docs" in result
+    assert "import string;" in result
+
+
+def test_trailing_comment_only() -> None:
+    """File with only trailing comment should produce just the comment."""
+    source = "// just a comment\n"
+    assert format_source(source) == "// just a comment\n"
+
+
+def test_multiple_comments_between_functions() -> None:
+    """Multiple consecutive comments between functions should be preserved."""
+    source = "fn foo() {\n    return 1;\n}\n// step 1\n// step 2\nfn bar() {\n    return 2;\n}\n"
+    result = format_source(source)
+    assert "// step 1" in result
+    assert "// step 2" in result
+
+
+def test_else_if_chain() -> None:
+    """Long else-if chain should format correctly."""
+    source = "fn grade(s){if(s>=90){return\"A\";}else if(s>=80){return\"B\";}else if(s>=70){return\"C\";}else{return\"F\";}}"
+    expected = (
+        "fn grade(s) {\n"
+        "    if (s >= 90) {\n"
+        '        return "A";\n'
+        "    } else if (s >= 80) {\n"
+        '        return "B";\n'
+        "    } else if (s >= 70) {\n"
+        '        return "C";\n'
+        "    } else {\n"
+        '        return "F";\n'
+        "    }\n"
+        "}\n"
+    )
+    assert format_source(source) == expected
+
+
+def test_member_access_with_string_arg() -> None:
+    """Member access with string argument should format correctly."""
+    source = 'fn main(){let s=string.length("hello");print(s);}'
+    expected = "fn main() {\n" '    let s = string.length("hello");\n' "    print(s);\n" "}\n"
+    assert format_source(source) == expected
+
+
+def test_format_check_accepts_formatted_source() -> None:
+    """format_check returns True for sources that are already formatted."""
+    assert format_check("fn main() {\n    return 0;\n}\n") is True
+
+
+def test_format_check_rejects_unformatted_source() -> None:
+    """format_check returns False for sources that need formatting."""
+    assert format_check("fn main(){return 0;}") is False

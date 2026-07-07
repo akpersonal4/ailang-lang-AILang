@@ -10,10 +10,10 @@ until this document has been reviewed. Update AGENTS.md reading order after revi
 
 | Attribute | Value |
 |:----------|:------|
-| **Current Version** | v0.4.0 |
-| **Current Milestone** | DX-007 — AILang Language Server |
+| **Current Version** | v0.5.0 |
+| **Current Milestone** | DX-008 — AILang Formatter |
 | **Project Phase** | Platform & Developer Experience Engineering |
-| **Project Maturity** | ≈95% (relative to v1.0 roadmap) |
+| **Project Maturity** | ≈96% (relative to v1.0 roadmap) |
 
 --------------------------------------
 
@@ -28,7 +28,10 @@ until this document has been reviewed. Update AGENTS.md reading order after revi
 - [x] IR generation with deterministic SHA-256 output
 - [x] Code generation for tree-walking interpreter
 - [x] CLI with build/run/fmt commands
-- [x] Formatter with --check and --stdin modes
+- [x] Formatter with --check, --diff, --quiet, --stdin, and directory-wide modes
+- [x] Lexer infinite-loop guard (unrecognized characters no longer hang)
+- [x] Idempotency verified across 165 valid .ail files (0 failures)
+- [x] Comment-aware inline detection (no false positives from `//` inside strings)
 - [x] Bug Fix Sprint #001 (6 bugs fixed, 522→624 tests)
 
 ### Language
@@ -84,7 +87,9 @@ until this document has been reviewed. Update AGENTS.md reading order after revi
 
 ### Developer Tools
 - [x] VS Code Extension (syntax highlighting, snippets, language config)
-- [x] Deterministic formatter (`ail fmt`)
+- [x] Deterministic formatter (`ail fmt` — --check, --diff, --quiet, dir-wide)
+- [x] Lexer stability (no infinite loops on unrecognized characters)
+- [x] 82 formatter + CLI tests (50 formatter + 32 CLI)
 - [x] 772 tests across 84 test scripts (34 manual + 7 DX tool + 43 generated)
 - [x] CI/CD pipeline (GitHub Actions)
 - [x] **DX-001** — `ail context` (AI onboarding) — **Complete & Accepted**
@@ -134,84 +139,53 @@ in the ecosystem that makes AILang productive for both human and AI developers.
 
 ## Current Work
 
-**DX-007 — AILang Language Server** ✅
+**DX-008 — AILang Formatter** ✅
 
 ### Status
-- **Phase:** Language Server Design & Implementation
+- **Phase:** Formatter Hardening & Feature Completion
 - **Runtime:** Frozen pending new bottleneck evidence
-- **v0.4.0 Goal:** Implement DX-007 AILang Language Server (architecture, consolidation, symbol search, code actions)
-- **Architecture Design:** ✅ Complete (LSP_ARCHITECTURE.md)
+- **v0.5.0 Goal:** Production-ready formatter with --diff, --quiet, directory-wide formatting; verified idempotency across all repo .ail files; corrected lexer stability; lexer no longer hangs on unrecognized characters
+- **Architecture Design:** ✅ Complete (FORMATTER_ARCHITECTURE.md)
 - **Implementation:** ✅ **Complete** — see details below
 
-> **Naming convention:** User-facing milestones use product names (e.g., "AILang Package Manager") rather than DX numbers. DX numbers (DX-006, DX-007, etc.) remain for internal planning.
-
-### Architecture Milestone (M15) — Tooling Architecture & Package Manager Design
-
-Before writing implementation code for DX-006, two architecture documents were created:
-
-| Document | Purpose | Status |
-|----------|---------|--------|
-| `docs/architecture/TOOLING_ARCHITECTURE.md` | Architecture contract for all DX tools — CLI conventions, exit codes, JSON/MD report conventions, generated file policy, `tools/common/` responsibilities, testing strategy | ✅ Complete |
-| `docs/architecture/PACKAGE_MANAGER_DESIGN.md` | Specification-first design — `ail.toml` manifest schema, dependency resolution algorithm, CLI commands, lock file, caching, checksum verification, integration with other DX tools | ✅ Complete |
-
-### Key Design Decisions (DX-006)
+### Key Design Decisions (DX-008)
 
 | Decision | Choice | Rationale |
 |----------|--------|-----------|
-| Manifest format | **TOML** (`ail.toml`) | Python stdlib `tomllib`, human-readable, supports comments |
-| Package sources | Local paths + Git repos (v1); official registry (future) | Minimal viable scope; registry requires infrastructure |
-| Lock file | **TOML** (`ail.lock`), committed to VCS | Reproducible builds, fast install replay |
-| Dependency resolution | **Backtracking**, semver ranges, highest-version preference | Consistent with Cargo/npm |
-| Exit codes | 0=success, 1=failure, 3=internal error | Per TOOLING_ARCHITECTURE.md conventions |
-| Cache | Project-local `.ail/cache/` (v1); global `~/.cache/ail/` (future) | Simple v1, no concurrency concerns |
+| Formatting engine | **AST-based** (parse → validate → reformat) | Preserves structure, allows validation in one pass |
+| Configuration | **Zero** — single canonical style | Architecture-first per CTO direction; no config unless ≥2 benchmarks request |
+| Comment handling | **Source-line tracking** with string-aware // detection | Preserves comment placement; avoids `//` inside strings (e.g., `https://`) |
+| Error recovery | **Skip unrecognized chars with advance** | Lexer must never hang, even on invalid input |
+| Semicolons | **Reinserted by formatter**; missing semicolons are not syntax errors | Parser recovers fully; formatter reinserts in output |
 
-### v0.3.1 Deliverables (Tooling Architecture + Package Manager Design)
-
-- **Tooling Architecture Contract** (`docs/architecture/TOOLING_ARCHITECTURE.md`):
-  12 sections covering tool layers, lifecycle, CLI conventions, exit code policy, JSON report conventions, generated file conventions, `tools/common/` responsibilities, shared utilities, discovery patterns, plugin/extension points, versioning policy, testing strategy
-- **Package Manager Design Spec** (`docs/architecture/PACKAGE_MANAGER_DESIGN.md`):
-  13 sections covering motivation, project manifest, package repository, dependency resolution, CLI commands (6: init, add, remove, install, update, list), lock file, cache, checksum verification, DX tool integration
-- **10 Open Questions**: See `docs/architecture/PACKAGE_MANAGER_DESIGN.md §13` — must be resolved before implementation
-
-### DX-006 Implementation Status (Package Manager)
+### DX-008 Deliverables
 
 | Component | Status | Details |
 |-----------|:------:|---------|
-| Manifest parser (`ail.toml`) | ✅ | Full TOML validation, kebab-case name check, semver validation, BOM handling |
-| `ail init` | ✅ | Creates project structure (ail.toml, main.ail, ail.lock) |
-| Local package install | ✅ | Resolves path deps, copies to `lib/<name>/`, full transitive resolution |
-| Git package install | ✅ | Shallow clone, tag/branch/rev support, transitive resolution |
-| Dependency resolver | ✅ | Recursive resolution, topological sort, circular dep detection |
-| Lock file (`ail.lock`) | ✅ | TOML format, versioned schema, input_hash staleness detection, replay |
-| Cache management | ✅ | SHA-256 checksums, package cleanup, `.ail/cache/` layout |
-| Installation engine | ✅ | Full orchestration, --no-lock, --offline, --frozen-lockfile flags |
-| Acceptance tests | ✅ | 8/8 tests passing (name validation, init, parse, install, lock) |
-| `ail add` / `ail remove` / `ail update` / `ail list` | 📋 | CLI stubs created, implementation deferred to v1.1 |
-
-### M16 — Documentation Architecture Cleanup (Complete)
-
-Before DX-006 implementation began, a documentation cleanup milestone was completed:
-
-
-- ADR numbering collision resolved (ADR-001→ADR-010, etc.)
-- Status documents consolidated (PROJECT_PHASE.md, ROADMAP.md, CURRENT_MILESTONE.md → archived)
-- AI guidance consolidated (see AGENTS.md)
-- v0.1.0 sprint reports archived
-- Generated files policy established (generated/ added to .gitignore)
-- Performance data centralized
-- Documentation Ownership Matrix created
+| FORMATTER_ARCHITECTURE.md | ✅ | Philosophy, existing architecture, limitations, v0.5 scope, stability release gate |
+| SEMICOLON bug fix | ✅ | Filtered `reporter.diagnostics` from error messages; AST builder exception handler also filtered |
+| Regression tests (SEMICOLON) | ✅ | Committed before fix per AILang standard |
+| `--diff` mode | ✅ | Unified diff output for unformatted files |
+| `--quiet` mode | ✅ | Suppresses all output; exit code only |
+| Directory-wide formatting | ✅ | Recursive `.ail` discovery; skips hidden/venv/git dirs |
+| Comment-only file preservation | ✅ | Files with only comments (no AST) no longer have comments dropped |
+| Lexer stability | ✅ | 4 infinite-loop paths fixed (`:`, standalone `&`, standalone `\|`, invalid escape sequences) |
+| String-aware inline comments | ✅ | `https://` inside strings no longer treated as comment start |
+| Idempotency verification | ✅ | 165 valid `.ail` files pass format + idempotency (0 failures); 3 aspirational examples rejected (invalid map literals `{...}` — correct behavior) |
+| Test suite | ✅ | 82 tests (50 formatter + 32 CLI) — all passing |
 
 --------------------------------------
 
 ## Next Priority Queue
 
-### v0.4.0 — Language Server Complete
+### v0.6.0 — Ecosystem Maturity
 
 | # | Tool | Goal | Priority |
 |:-:|------|------|:--------:|
 | 1 | **AILang LSP** (DX-007) | ✅ Complete — Language Server with Go to Definition, Hover, Completion, Diagnostics, References, Rename, Symbols, Code Actions |
-| 2 | **AILang Formatter** (DX-008) | `ail fmt` — formalize and harden | Medium |
-| 3 | **Documentation website** | Create hosted documentation site | Low |
+| 2 | **AILang Formatter** (DX-008) | ✅ Complete — Production-ready formatter with --diff, --quiet, directory-wide formatting; idempotency verified repo-wide |
+| 3 | **Documentation website** | Create hosted documentation site | Medium |
+| 4 | **PyPI package** | `pip install ailang` | Medium |
 
 ### Maintenance
 - 📋 **Community feedback collection** — Gather real-world usage data
@@ -225,7 +199,8 @@ Before DX-006 implementation began, a documentation cleanup milestone was comple
 | Milestone | Focus | Target |
 |-----------|-------|:------:|
 | **v0.4.0** | DX-007 Language Server — architecture, consolidation, symbol search, code actions | Current |
-| **v0.5.x** | Ecosystem maturity — full tooling suite, docs site, community | Next |
+| **v0.5.0** | ✅ DX-008 Formatter — production-ready, repo-wide idempotent | Current |
+| **v0.6.x** | Ecosystem maturity — docs site, PyPI package, community | Next |
 | **v1.0** | Language freeze with full backward-compatibility guarantees | Planned |
 | **Post-1.0** | Self-hosting, JIT, advanced features (evidence-driven) | Future |
 
@@ -248,7 +223,6 @@ Before DX-006 implementation began, a documentation cleanup milestone was comple
 
 ### Waiting
 - Source line numbers in errors (poor DX for large files)
-- `ail fmt` spurious SEMICOLON error (formatter unusable on valid code)
 - Wildcard imports (not in spec)
 
 --------------------------------------
@@ -279,6 +253,7 @@ Before DX-006 implementation began, a documentation cleanup milestone was comple
 
 | Item | Version | Date |
 |------|---------|------|
+| **DX-008** — AILang Formatter — architecture, --diff, --quiet, dir-wide, lexer stability, string-aware comments, repo-wide idempotency (82 tests) | v0.5.0 | 2026-07-07 |
 | **DX-007** — AILang Language Server — architecture, consolidation, symbol search, code actions (103 tests) | v0.4.0 | 2026-07-07 |
 | **M16** — Documentation Architecture Cleanup (ADR fix, status consolidation, AI guidance, archive, .gitignore) | v0.3.1 | 2026-07-07 |
 | **DX-006** — AILang Package Manager — implementation complete (manifest, init, install, lock, resolver) | v0.3.1 | 2026-07-07 |
@@ -307,7 +282,6 @@ Before DX-006 implementation began, a documentation cleanup milestone was comple
 
 ### Non-blocking
 - Source line numbers not included in error messages
-- `ail fmt` false positive on SEMICOLON token in some edge cases
 - Float literals rejected with LEX004 (intentional design decision)
 - (resolved) DX-003 directory analysis timeout — now configurable via `--timeout` (default: 300s)
 
@@ -337,7 +311,8 @@ Before DX-006 implementation began, a documentation cleanup milestone was comple
 | **v0.2.1** | ✅ Complete | DX-003 Static Analyzer, stdlib additions |
 | **v0.3.0** | ✅ **Complete** | DX-004 Benchmark Runner + DX-005 Test Generator |
 | **v0.4.0** | ✅ Complete | DX-007 Language Server |
-| **v0.5.x** | 📋 Planned | Ecosystem maturity |
+| **v0.5.0** | ✅ **Complete** | DX-008 AILang Formatter — production-ready |
+| **v0.6.x** | 📋 Planned | Ecosystem maturity — docs site, PyPI package |
 | **v1.0** | 📋 Planned | Full backward compatibility |
 
 --------------------------------------
@@ -408,5 +383,5 @@ Every document type has exactly one owner. If you need to add information, first
 | Field | Value |
 |:------|:------|
 | **Date** | 2026-07-07 |
-| **Version** | v0.4.0 |
-| **Milestone** | DX-007 — AILang Language Server |
+| **Version** | v0.5.0 |
+| **Milestone** | DX-008 — AILang Formatter |

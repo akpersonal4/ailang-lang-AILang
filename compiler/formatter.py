@@ -168,11 +168,28 @@ class _Formatter:
                     found.append((lineno, stripped[2:].strip()))
         return found
 
+    def _find_comment_start(self, line: str) -> int:
+        """Return index of // that is not inside a string literal, or -1."""
+        in_string = False
+        i = 0
+        while i < len(line):
+            c = line[i]
+            if c == "\\" and in_string:
+                i += 1  # skip escaped character inside string
+            elif c == '"':
+                in_string = not in_string
+            elif c == "/" and i + 1 < len(line) and line[i + 1] == "/":
+                if not in_string:
+                    return i
+                i += 1  # skip second /
+            i += 1
+        return -1
+
     def _inline_comment(self, source_line: int) -> str | None:
         """Return inline comment text for a given source line, or None."""
         if 0 <= source_line < len(self.source_lines):
             line = self.source_lines[source_line]
-            idx = line.find("//")
+            idx = self._find_comment_start(line)
             if idx >= 0:
                 text = line[idx + 2 :].strip()
                 if text:
@@ -251,12 +268,14 @@ class _Formatter:
                 last_was_import = False
                 before_first_function = False
 
-        # Trailing comments after last AST node
+        # Trailing comments after last AST node, or all comments if no AST nodes
         if children:
             last_end_line = _line_from_offset(self.source, children[-1].end_span or 0)
             comments = self._comments_between(last_end_line, len(self.source_lines))
-            for _, comment_text in comments:
-                self._emit(f"// {comment_text}")
+        else:
+            comments = self._comments_between(-1, len(self.source_lines))
+        for _, comment_text in comments:
+            self._emit(f"// {comment_text}")
 
     # ------------------------------------------------------------------
     # Declarations

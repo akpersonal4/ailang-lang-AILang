@@ -157,6 +157,101 @@ class TestCliAPI:
         result = cmd_fmt([])
         assert result == 1
 
+    def test_fmt_diff_formatted(self) -> None:
+        """fmt --diff on formatted file returns 0."""
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            source = Path(tmpdir) / "test.ail"
+            source.write_text("fn main() {\n    return 0;\n}\n", encoding="utf-8")
+            result = cmd_fmt(["--diff", str(source)])
+            assert result == 0
+
+    def test_fmt_diff_unformatted(self) -> None:
+        """fmt --diff on unformatted file returns 1."""
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            source = Path(tmpdir) / "test.ail"
+            source.write_text("fn main(){return 0;}", encoding="utf-8")
+            result = cmd_fmt(["--diff", str(source)])
+            assert result == 1
+
+    def test_fmt_quiet(self) -> None:
+        """fmt --quiet suppresses status output."""
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            source = Path(tmpdir) / "test.ail"
+            source.write_text("fn main(){return 0;}", encoding="utf-8")
+            result = cmd_fmt(["--quiet", str(source)])
+            assert result == 0
+            content = source.read_text(encoding="utf-8")
+            assert "    return 0;" in content
+
+    def test_fmt_directory(self) -> None:
+        """fmt formats all files in a directory."""
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            d = Path(tmpdir)
+            (d / "a.ail").write_text("fn main(){return 0;}", encoding="utf-8")
+            (d / "b.ail").write_text("fn add(a,b){return a+b;}", encoding="utf-8")
+            result = cmd_fmt([str(d)])
+            assert result == 0
+            assert "    return 0;" in (d / "a.ail").read_text(encoding="utf-8")
+            assert "    return a + b;" in (d / "b.ail").read_text(encoding="utf-8")
+
+    def test_fmt_directory_check(self) -> None:
+        """fmt --check on unformatted directory returns 1."""
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            d = Path(tmpdir)
+            (d / "a.ail").write_text("fn main(){return 0;}", encoding="utf-8")
+            result = cmd_fmt(["--check", str(d)])
+            assert result == 1
+
+    def test_fmt_directory_check_formatted(self) -> None:
+        """fmt --check on formatted directory returns 0."""
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            d = Path(tmpdir)
+            f = d / "test.ail"
+            f.write_text("fn main() {\n    return 0;\n}\n", encoding="utf-8")
+            result = cmd_fmt(["--check", str(d)])
+            assert result == 0
+
+    def test_fmt_directory_diff(self) -> None:
+        """fmt --diff on unformatted directory returns 1."""
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            d = Path(tmpdir)
+            (d / "a.ail").write_text("fn main(){return 0;}", encoding="utf-8")
+            result = cmd_fmt(["--diff", str(d)])
+            assert result == 1
+
+    def test_fmt_multiple_paths(self) -> None:
+        """fmt accepts multiple file/directory paths."""
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            d1 = Path(tmpdir) / "dir1"
+            d2 = Path(tmpdir) / "dir2"
+            d1.mkdir()
+            d2.mkdir()
+            (d1 / "a.ail").write_text("fn main(){return 0;}", encoding="utf-8")
+            (d2 / "b.ail").write_text("fn main(){return 0;}", encoding="utf-8")
+            result = cmd_fmt(["--check", str(d1), str(d2)])
+            assert result == 1
+
+    def test_fmt_unknown_flag(self) -> None:
+        """fmt with unknown flag returns 1."""
+        result = cmd_fmt(["--unknown", "test.ail"])
+        assert result == 1
+
     def test_run_stdout_output(self, capsys: pytest.CaptureFixture[str]) -> None:
         """run on a program with print() captures stdout."""
         import tempfile

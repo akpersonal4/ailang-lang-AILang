@@ -12,6 +12,7 @@ Usage:
 
 from __future__ import annotations
 
+import difflib
 import sys
 from collections.abc import Callable
 from pathlib import Path
@@ -147,19 +148,65 @@ def cmd_check(args: list[str]) -> int:
     return cmd_build(args)
 
 
+# Directories to skip when formatting a project directory
+_FMT_SKIP_DIRS = frozenset({
+    ".venv", ".venv_test", ".git", ".mypy_cache", ".pytest_cache",
+    ".ruff_cache", "node_modules", "__pycache__", ".ail",
+})
+
+
+def _collect_ail_files(paths: list[str]) -> list[Path] | None:
+    """Resolve file/directory paths to a list of .ail files.
+
+    Returns None if any path doesn't exist (caller handles error message).
+    """
+    files: list[Path] = []
+    for p in paths:
+        path = Path(p).resolve()
+        if not path.exists():
+            return None
+        if path.is_dir():
+            for found in sorted(path.rglob("*.ail")):
+                parts = found.parts
+                if any(skip in parts for skip in _FMT_SKIP_DIRS):
+                    continue
+                files.append(found)
+        else:
+            files.append(path)
+    return files
+
+
+def _print_diff(filepath: str, original: str, formatted: str) -> None:
+    """Print a unified diff of formatting changes to stdout."""
+    orig_lines = original.splitlines(keepends=True)
+    fmt_lines = formatted.splitlines(keepends=True)
+    diff = difflib.unified_diff(
+        orig_lines, fmt_lines,
+        fromfile=f"a/{filepath}",
+        tofile=f"b/{filepath}",
+    )
+    sys.stdout.writelines(diff)
+
+
 def cmd_fmt(args: list[str]) -> int:
-    """Format an AILang source file.
+    """Format AILang source files.
 
     Usage:
-        ail fmt <file>         Format file in-place
-        ail fmt --check <file> Check if file is formatted (exit 0/1)
-        ail fmt --stdin        Read from stdin, write to stdout
+        ail fmt <file_or_dir>            Format file(s) in-place
+        ail fmt --check <file_or_dir>     Check if formatted (exit 0/1)
+        ail fmt --diff <file_or_dir>      Show unified diff of changes
+        ail fmt --stdin                   Read from stdin, write formatted
+        ail fmt --check --stdin           Check stdin formatting (exit 0/1)
+        ail fmt --diff --stdin            Show diff of stdin changes
+        ail fmt --quiet <file_or_dir>     Suppress status output
     """
     from compiler.formatter import format_source
 
     stdin_mode = False
     check_mode = False
-    file_arg: str | None = None
+    diff_mode = False
+    quiet_mode = False
+    paths: list[str] = []
 
     remaining: list[str] = list(args)
     while remaining:
@@ -168,14 +215,22 @@ def cmd_fmt(args: list[str]) -> int:
             stdin_mode = True
         elif arg == "--check":
             check_mode = True
+        elif arg == "--diff":
+            diff_mode = True
+        elif arg == "--quiet":
+            quiet_mode = True
         elif arg.startswith("-"):
             print(f"Unknown option: {arg}", file=sys.stderr)
-            print(f"Usage: {PROG} fmt [--check] [--stdin] [<file>]", file=sys.stderr)
+            print(
+                f"Usage: {PROG} fmt [--check] [--diff] [--stdin] [--quiet] "
+                f"[<file_or_dir>]",
+                file=sys.stderr,
+            )
             return 1
         else:
-            file_arg = arg
+            paths.append(arg)
 
-    # stdin mode
+    # --stdin mode
     if stdin_mode:
         source = sys.stdin.read()
         try:
@@ -186,40 +241,81 @@ def cmd_fmt(args: list[str]) -> int:
         if check_mode:
             if source == formatted:
                 return 0
-            print("File would be reformatted", file=sys.stderr)
+            print("stdin would be reformatted", file=sys.stderr)
+            return 1
+        if diff_mode:
+            if source == formatted:
+                return 0
+            _print_diff("stdin", source, formatted)
             return 1
         sys.stdout.write(formatted)
         sys.stdout.flush()
         return 0
 
-    # File mode
-    if file_arg is None:
-        print("Error: missing file argument", file=sys.stderr)
-        print(f"Usage: {PROG} fmt [--check] [--stdin] [<file>]", file=sys.stderr)
+    # Path mode (file or directory)
+    if not paths:
+        print("Error: missing file or directory argument", file=sys.stderr)
+        print(
+            f"Usage: {PROG} fmt [--check] [--diff] [--stdin] [--quiet] "
+            f"[<file_or_dir>]",
+            file=sys.stderr,
+        )
         return 1
 
-    source_path = Path(file_arg).resolve()
-    if not source_path.exists():
-        print(f"Error: File not found: {source_path}", file=sys.stderr)
+    ail_files = _collect_ail_files(paths)
+    if ail_files is None:
+        print(f"Error: not found: {paths[0]}", file=sys.stderr)
         return 1
 
-    try:
-        original = source_path.read_text(encoding="utf-8")
-        formatted = format_source(original)
-    except ValueError as e:
-        print(f"Format error in {source_path}: {e}", file=sys.stderr)
+    if not ail_files:
+        print(f"Error: no .ail files found in {paths[0]}", file=sys.stderr)
         return 1
 
-    if check_mode:
+    changes = 0
+    errors = 0
+    for file in ail_files:
+        try:
+            original = file.read_text(encoding="utf-8")
+            formatted = format_source(original)
+        except ValueError as e:
+            print(f"Format error in {file}: {e}", file=sys.stderr)
+            errors += 1
+            continue
+
         if original == formatted:
-            print(f"{source_path} is already formatted")
-            return 0
-        print(f"{source_path} would be reformatted")
+            continue
+
+        changes += 1
+
+        if check_mode:
+            print(f"{file} would be reformatted")
+            continue
+
+        if diff_mode:
+            _print_diff(str(file), original, formatted)
+            continue
+
+        file.write_text(formatted, encoding="utf-8")
+        if not quiet_mode:
+            print(f"Formatted: {file}")
+
+    if not quiet_mode and len(ail_files) > 1 and not check_mode and not diff_mode:
+        if changes or errors:
+            print()
+        if changes:
+            print(f"Formatted {changes} file(s)")
+        if errors:
+            print(f"{errors} error(s)", file=sys.stderr)
+    elif check_mode and changes:
+        if not quiet_mode:
+            print(f"\n{changes} file(s) would be reformatted")
+        return 1
+    elif diff_mode and changes:
+        if not quiet_mode and changes > 1:
+            print(f"\n{changes} file(s) would be reformatted", file=sys.stderr)
         return 1
 
-    source_path.write_text(formatted, encoding="utf-8")
-    print(f"Formatted: {source_path}")
-    return 0
+    return 1 if errors else 0
 
 
 def cmd_lsp(args: list[str]) -> int:
@@ -245,9 +341,11 @@ def cmd_help(args: list[str]) -> int:
     print(f"  {PROG} run <file>       Compile and run an AILang program")
     print(f"  {PROG} build <file>     Compile and check for errors (no execution)")
     print(f"  {PROG} check <file>     Compile and check for errors (alias for build)")
-    print(f"  {PROG} fmt <file>       Format an AILang source file")
-    print(f"  {PROG} fmt --check      Check if file is formatted (exit 0/1)")
-    print(f"  {PROG} fmt --stdin      Read from stdin, write formatted to stdout")
+    print(f"  {PROG} fmt <file_or_dir>  Format AILang source file(s)")
+    print(f"  {PROG} fmt --check       Check formatting (exit 0/1)")
+    print(f"  {PROG} fmt --diff        Show unified diff of formatting changes")
+    print(f"  {PROG} fmt --stdin       Read from stdin, write formatted to stdout")
+    print(f"  {PROG} fmt --quiet       Suppress status output")
     print(f"  {PROG} lsp              Start the LSP server (stdin/stdout)")
     print(f"  {PROG} version          Print version information")
     print(f"  {PROG} help             Print this help message")
@@ -257,6 +355,9 @@ def cmd_help(args: list[str]) -> int:
     print(f"  {PROG} build hello.ail")
     print(f"  {PROG} fmt hello.ail")
     print(f"  {PROG} fmt --check hello.ail")
+    print(f"  {PROG} fmt --diff hello.ail")
+    print(f"  {PROG} fmt apps/")
+    print(f"  {PROG} fmt --check apps/ stdlib/")
     print(f"  {PROG} version")
     print(f"  {PROG} hello.ail")
     return 0

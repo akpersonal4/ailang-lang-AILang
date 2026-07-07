@@ -351,6 +351,8 @@ class Lexer:
                         start_line,
                         start_column,
                     )
+                    index += 1
+                    column += 1
                 continue
             if char == "|":
                 if index + 1 < length and text[index + 1] == "|":
@@ -373,6 +375,8 @@ class Lexer:
                         start_line,
                         start_column,
                     )
+                    index += 1
+                    column += 1
                 continue
             if char == ".":
                 tokens.append(
@@ -408,6 +412,8 @@ class Lexer:
                                 start_line,
                                 start_column,
                             )
+                            index += 1
+                            column += 1
                             break
                         escaped = text[index + 1]
                         if escaped == "n":
@@ -424,6 +430,8 @@ class Lexer:
                             report_error(
                                 "Invalid escape sequence", "LEX003", line, column
                             )
+                            index += 2
+                            column += 2
                             break
                         index += 2
                         column += 2
@@ -594,6 +602,9 @@ class Lexer:
             report_error(
                 f"Unexpected character: {char}", "LEX001", start_line, start_column
             )
+            index += 1
+            column += 1
+            continue
 
         tokens.append(
             Token(TokenKind.EOF, "", length, length, line, column, length, length)
