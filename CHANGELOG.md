@@ -111,7 +111,56 @@
 - **Error code constants**: Centralized PAR001, PAR002, PAR003, LEX001, LEX002, LEX003 constants in diagnostics.py
 - **Test count corrected**: Updated README.md to show 507 passing tests
 
+## 0.3.0
+
+### Developer Experience
+
+- **DX-004 — Benchmark Runner** completed and accepted (auto-discovery, suite modes, configurable repetition, baseline save/compare, regression detection, CI-friendly exit codes, fault-tolerant execution)
+
+### Quality Gates
+
+- **677 tests**, all passing (up from 658)
+- DX-004 (ail benchmark): PASS — 11 acceptance tests + 4 regression + 4 AI validation
+
+## 0.2.1
+
+### Static Analyzer Performance Optimization
+
+- **Replaced 4-pass scan** with single `scan_lines` pass, eliminating redundant function-end detection
+- **Replaced character-by-character** `scan_line_calls_inner` with `collect_calls_inner` using `find_substring` builtin
+- **Replaced `count_calls_file`** (character-by-character scan of all lines) with `build_calls_from_cache` (derives call statistics from per-function cache)
+- **Result:** 3× speedup on hotel_management (252s → 84s), 3× on self-analysis (71s → 24s); self-analysis and large-file analysis now complete (previously never finished)
+
+### Standard Library Additions (ADR-003)
+
+- **`string.find(value, needle)`** — substring search, returns position index or -1
+- **`string.find_from(value, needle, start_pos)`** — substring search with start offset
+- **`string.split(value, delim)`** — split string into list by delimiter
+- Evidence: 8+ independent reimplementations across the app ecosystem satisfied ADR-008 threshold
+
+### Documentation
+
+- **ADR-003** — Decision record for `string.find`/`string.split` stdlib additions
+- **v0.2.1 Release Validation Report** — formal checkpoint with 658 tests, benchmark validation, DX acceptance, before/after performance
+- **PROJECT_PHASE.md** — documents Platform & Developer Experience Engineering phase
+- **PROJECT_CONTEXT.md** regenerated — reflects new stdlib APIs, updated version and test counts
+
+### Quality Gates
+
+- **658 tests**, all passing (up from 624)
+- DX-001 (ail context): PASS — 8 acceptance tests, AI validation
+- DX-002 (ail doctor): PASS — 9 acceptance tests
+- DX-003 (ail static_analyzer): PASS — 8/8 acceptance tests (directory analysis timeout resolved with configurable `--timeout`)
+
 ## 0.2.0
+
+### DX Tool #001 — ail context Developer Experience Tool
+
+- **Standalone tool**: `tools/ail_context/` generates `generated/PROJECT_CONTEXT.md` for AI consumption
+- **Single-file context**: All project knowledge consolidated into one LLM-optimized document (~6.5KB)
+- **15 sections**: Project overview, philosophy, architecture, constraints, milestone, ADRs, stdlib, benchmarks, testing, frozen components
+- **Acceptance tested**: 9 functional tests, 6 performance tests, 6 content validation tests, 3 AI validation tests
+- **Zero changes**: No modifications to compiler, runtime, or language specification
 
 ### Runtime Optimization #001 — Lexical Variable Lookup Cache
 
