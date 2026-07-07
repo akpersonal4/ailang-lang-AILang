@@ -78,14 +78,19 @@ def _parse_to_ast(source: str) -> ProgramNode:
         if "Expected SEMICOLON" not in d.message
     ]
     if real_errors:
-        msgs = [d.message for d in reporter.diagnostics]
+        msgs = [d.message for d in real_errors]
         raise ValueError("Syntax errors: " + "; ".join(msgs))
 
     builder = ASTBuilder()
     try:
         ast = builder.build(cst)
     except (ValueError, AssertionError, IndexError, AttributeError) as e:
-        msgs = [d.message for d in reporter.diagnostics]
+        msgs = [
+            d.message for d in reporter.diagnostics
+            if "Expected SEMICOLON" not in d.message
+        ]
+        if not msgs:
+            msgs = [str(e)]
         raise ValueError("Syntax errors: " + "; ".join(msgs)) from e
 
     if not isinstance(ast, ProgramNode):
