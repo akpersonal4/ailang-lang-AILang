@@ -233,6 +233,16 @@ A chronological record of every major engineering phase, with results, lessons, 
 | **Lessons** | Separation of concerns (facts first, rendering second via intermediate `TestCase` model) makes the system extensible to other output formats (Markdown examples, AI prompts, documentation). Pure Python generators are simpler and more maintainable than template files. The `--force` guard prevents accidental overwrites. |
 | **Documents** | `tools/ail_testgen/`, `tests/dx_tool_005_acceptance_test.py`, `tests/dx_tool_005_regression_test.py`, `tests/dx_tool_005_ai_validation.py`, `tools/ail_testgen/DESIGN.md` |
 
+### M15 — Tooling Architecture & Package Manager Design (v0.3.1)
+
+| Aspect | Detail |
+|--------|--------|
+| **What** | Created two architecture documents before implementing DX-006: `TOOLING_ARCHITECTURE.md` (architecture contract for all DX tools) and `PACKAGE_MANAGER_DESIGN.md` (specification-first design for the package manager). |
+| **Why** | Following AILang's specification-first philosophy. A package manager touches many system components (filesystem, VCS, network, registry, caching, integrity verification). Getting the design right before writing code prevents redesign later. The tooling architecture contract ensures all future DX tools follow consistent conventions. |
+| **Result** | `TOOLING_ARCHITECTURE.md`: 572 lines covering 12 sections + 2 appendices. `PACKAGE_MANAGER_DESIGN.md`: 722 lines covering 13 sections + 1 appendix. 10 open questions identified for review. No implementation code written. |
+| **Lessons** | Design-first prevents architecture drift. The `ail.toml` project manifest serves as a single source of truth for all DX tools (package manager, benchmark runner, test generator, LSP, formatter). Writing the design document revealed 10 open questions that would have been discovered mid-implementation. |
+| **Documents** | `docs/architecture/TOOLING_ARCHITECTURE.md`, `docs/architecture/PACKAGE_MANAGER_DESIGN.md` |
+
 ### Governance
 
 - **Benchmark Feedback Loop:** Single-app findings stay in benchmark reports. Only ≥2 independent apps promote lessons to Playbook/AGENTS.md.
@@ -266,7 +276,7 @@ Root
 ├── docs/
 │   ├── reference/                     ← LANGUAGE_SPEC, stdlib, compiler arch, install
 │   ├── guides/                        ← Playbook, Master Prompt, FOR_FUTURE_AI, AI_MODEL_GUIDE
-│   ├── architecture/                  ← ARCHITECTURE_DECISIONS.md, MEMBER_ACCESS, MODULE_SYSTEM
+│   ├── architecture/                  ← ARCHITECTURE_DECISIONS.md, TOOLING_ARCHITECTURE.md, PACKAGE_MANAGER_DESIGN.md, MEMBER_ACCESS, MODULE_SYSTEM
 │   ├── adr/                           ← ADR-001, ADR-002
 │   ├── governance/                    ← Philosophy, Constitution, Vision, Evolution, Contributing
 │   ├── runtime/

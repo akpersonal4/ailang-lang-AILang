@@ -110,27 +110,38 @@ until this document has been reviewed. Update AGENTS.md reading order after revi
 
 ## Current Work
 
-**DX-005 — Test Generator — Complete & Accepted** 🚀
+**DX-006 — Package Manager — Architecture Design Phase** 📋
 
 ### Status
-- **Phase:** Platform & Developer Experience Engineering
+- **Phase:** Tooling Architecture & Package Manager Design
 - **Runtime:** Frozen pending new bottleneck evidence
-- **v0.3.0 Goal:** Complete DX-004 through DX-008
-- **DX-004 Status:** ✅ Complete & Accepted
-- **DX-005 Status:** ✅ Complete & Accepted
+- **v0.3.1 Goal:** Complete DX-006 (Package Manager) design and implementation
+- **Architecture Design:** ✅ Complete & Accepted
+- **Implementation:** 📋 Not started
 
-### DX-005 Implementation
-- **Architecture:** Three-stage pipeline — Discovery → Analysis → Generation
-- **models.py** — `TestCase`, `TestCategory`, `AppInfo`, `CoverageReport` intermediate model (facts first, rendering second)
-- **discovery.py** — Auto-discovers 43 apps from `apps/*/main.ail`, finds existing tests in `tests/`
-- **analyzer.py** — Coverage gap analysis, identifies missing test opportunities
-- **generator.py** — Pure Python generators (no template files), produces pytest-compatible files
-- **validator.py** — Runs generated tests through pytest for verification
-- **reporter.py** — Dual output: `generated/TEST_GENERATION_REPORT.md` + `.json`
-- **CLI flags:** `--dry-run`, `--force`, `--app <name>`, `--report-only`, `--quiet`
-- **Safety:** Never overwrites existing files without `--force`; `tests/generated/` is a Python package; generated files have `AUTO-GENERATED` header
-- **Output:** 44 generated test files in `tests/generated/` (one per app, 2 tests each: build + run)
-- **Tests:** 9 acceptance + 4 regression + 4 AI validation = 17 tests, all passing
+### Architecture Milestone (M15)
+
+Before writing implementation code for DX-006, two architecture documents were created:
+
+| Document | Purpose | Status |
+|----------|---------|--------|
+| `docs/architecture/TOOLING_ARCHITECTURE.md` | Architecture contract for all DX tools — CLI conventions, exit codes, JSON/MD report conventions, generated file policy, `tools/common/` responsibilities, testing strategy | ✅ Complete |
+| `docs/architecture/PACKAGE_MANAGER_DESIGN.md` | Specification-first design — `ail.toml` manifest schema, dependency resolution algorithm, CLI commands, lock file, caching, checksum verification, integration with other DX tools | ✅ Complete |
+
+### Key Design Decisions (DX-006)
+
+| Decision | Choice | Rationale |
+|----------|--------|-----------|
+| Manifest format | **TOML** (`ail.toml`) | Python stdlib `tomllib`, human-readable, supports comments |
+| Package sources | Local paths + Git repos (v1); official registry (future) | Minimal viable scope; registry requires infrastructure |
+| Lock file | **TOML** (`ail.lock`), committed to VCS | Reproducible builds, fast install replay |
+| Dependency resolution | **Backtracking**, semver ranges, highest-version preference | Consistent with Cargo/npm |
+| Exit codes | 0=success, 1=failure, 3=internal error | Per TOOLING_ARCHITECTURE.md conventions |
+| Cache | Project-local `.ail/cache/` (v1); global `~/.cache/ail/` (future) | Simple v1, no concurrency concerns |
+
+### 10 Open Questions
+
+The design document identifies 10 open questions that must be resolved before implementation. See `docs/architecture/PACKAGE_MANAGER_DESIGN.md §13`.
 
 --------------------------------------
 
@@ -203,6 +214,7 @@ until this document has been reviewed. Update AGENTS.md reading order after revi
 
 | Item | Version | Date |
 |------|---------|------|
+| **M15** — Tooling Architecture & Package Manager Design (TOOLING_ARCHITECTURE.md + PACKAGE_MANAGER_DESIGN.md) | v0.3.1 | 2026-07-07 |
 | **DX-005** — Test Generator — **Complete & Accepted** | v0.3.0 | 2026-07-07 |
 | **DX-004** — Benchmark Runner — **Complete & Accepted** | v0.3.0 | 2026-07-07 |
 | **tools/common/** — shared DX tooling library (+ hashing, discover_apps) | v0.3.0 | 2026-07-07 |
@@ -256,7 +268,7 @@ until this document has been reviewed. Update AGENTS.md reading order after revi
 | **v0.2.0** | ✅ Complete | Runtime optimization |
 | **v0.2.1** | ✅ Complete | DX-003 Static Analyzer, stdlib additions |
 | **v0.3.0** | ✅ **Complete** | DX-004 Benchmark Runner + DX-005 Test Generator |
-| **v0.3.1** | 📋 In Progress | DX-006 Package Manager |
+| **v0.3.1** | 📋 Architecture Design Complete | DX-006 Package Manager (Tooling Architecture + Package Manager Design docs) |
 | **v0.5.x** | 📋 Planned | Ecosystem maturity |
 | **v1.0** | 📋 Planned | Full backward compatibility |
 

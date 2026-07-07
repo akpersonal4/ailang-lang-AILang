@@ -2,38 +2,44 @@
 
 ## Current Milestone
 
-v0.3.1 — DX-006 Package Manager
+v0.3.1 — DX-006 Package Manager Architecture Design
 
 ## Status
 
-**In progress** — DX-004 (Benchmark Runner) and DX-005 (Test Generator) complete.
-DX-006 (Package Manager) is the next priority.
+**Architecture design complete** — TOOLING_ARCHITECTURE.md and PACKAGE_MANAGER_DESIGN.md created.
+DX-006 implementation is the next priority after design review.
 
-## What Was Delivered in v0.3.0
+## What Was Delivered in v0.3.1 (Design Phase)
 
-### DX-004 — Benchmark Runner
-- `python -m tools.ail_benchmark` — auto-discovers apps, suite modes (quick/canonical/full), configurable repetition, baseline save/compare, regression detection, CI-friendly exit codes
-- Output: `generated/benchmarks/BENCHMARK_REPORT.md` + `.json`
+### Tooling Architecture Contract
+- **`docs/architecture/TOOLING_ARCHITECTURE.md`** — Architecture contract for all DX tools
+- 12 sections covering: layers, tool lifecycle, CLI conventions, exit code policy, JSON report conventions, generated file conventions, `tools/common/` responsibilities, shared utilities, discovery patterns, plugin/extension points, versioning policy, testing strategy
+- Appendix A: Current Tool Registry (DX-001 through DX-006)
+- Appendix B: Reserved Tool Names (`ail init`, `ail add`, `ail remove`, `ail install`, `ail search`, `ail publish`, `ail update`)
 
-### DX-005 — Test Generator
-- `python -m tools.ail_testgen` — three-stage pipeline (Discovery → Analysis → Generation)
-- Intermediate `TestCase` model — facts first, rendering second
-- Pure Python generators — no template files
-- Flags: `--dry-run`, `--force`, `--app`, `--report-only`
-- Output: 44 generated test files in `tests/generated/`, `generated/TEST_GENERATION_REPORT.md` + `.json`
+### Package Manager Design Specification
+- **`docs/architecture/PACKAGE_MANAGER_DESIGN.md`** — Specification-first design for DX-006
+- 13 sections covering: motivation, project manifest (`ail.toml`), package repository, dependency resolution, CLI commands, repository layout, lock file, offline cache, checksum verification, versioning, DX tool integration, future considerations
+- 10 open questions identified for review before implementation
+- 6 CLI commands designed: `ail init`, `ail add`, `ail remove`, `ail install`, `ail update`, `ail list`
 
-### tools/common/ Shared Library
-- Extended with `hashing.py` (SHA-256 file hashing), `discover_apps()`, `list_py_files()`
-- Existing tools continue to work — incremental adoption
+### Key Design Decisions
+- **Manifest**: `ail.toml` (TOML format, Python stdlib `tomllib`)
+- **Package sources**: Local paths + Git repos (v1); official registry (future)
+- **Lock file**: `ail.lock` (TOML, committed to VCS, staleness detection via SHA-256 hash)
+- **Dependency resolution**: Backtracking algorithm, semver ranges, highest-version preference
+- **Offline cache**: Project-local `.ail/cache/` (v1); global `~/.cache/ail/` (future)
+- **Integrity**: SHA-256 checksum verification at download, install, and build
+- **Exit codes**: Per TOOLING_ARCHITECTURE.md conventions (0=success, 1=failure, 3=internal error)
 
-### Quality Gates
-- pytest: **772 passed** (up from 658)
-- black: clean, ruff: clean, mypy: clean
-- DX-005: 9 acceptance + 4 regression + 4 AI validation = 17 tests, all passing
+### Design Decisions Made in v0.3.0
+- DX-004 (Benchmark Runner) — complete and accepted
+- DX-005 (Test Generator) — complete and accepted
+- tools/common/ Shared Library — extended with hashing and discovery utilities
 
 ## Runtime Frozen
 No further optimizations, runtime architecture changes, or performance work
 until community feedback identifies new bottlenecks.
 
 ## Next Milestone
-**DX-006** — Package Manager (`ail init`, `ail install`, dependency resolution)
+**DX-006 Implementation** — after design documents are reviewed and approved
