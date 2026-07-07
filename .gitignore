@@ -37,3 +37,6 @@ htmlcov/
 *.so
 *.dll
 *.dylib
+
+# Generated files (regeneratable by DX tools)
+generated/

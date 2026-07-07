@@ -455,11 +455,11 @@ No baseline files found. The benchmark runner's `--baseline` flag saves baseline
 
 ---
 
-### R5: Add `generated/` to `.gitignore`
+### R5: Add `generated/` to `.gitignore` ✅
 
-**Problem:** All files in `generated/` are regeneratable by DX tools but are not in `.gitignore`. They appear as untracked files in `git status`.
+**Problem:** All files in `generated/` were regeneratable by DX tools but were not in `.gitignore`. They appeared as tracked files.
 
-**Recommendation:** Add `generated/` to `.gitignore`.
+**Resolution:** Added `generated/` to `.gitignore`. Removed 9 tracked generated files with `git rm --cached`.
 
 **Benefits:** Clean `git status`. No risk of stale generated files being accidentally committed.
 **Risk:** Low — all generated files are regeneratable. If a reference baseline is needed, commit it to `tests/baselines/` instead.
