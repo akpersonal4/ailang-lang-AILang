@@ -11,7 +11,7 @@ until this document has been reviewed. Update AGENTS.md reading order after revi
 | Attribute | Value |
 |:----------|:------|
 | **Current Version** | v0.3.0 |
-| **Current Milestone** | v0.3.0 — DX-005 Test Generator (Next) |
+| **Current Milestone** | v0.3.1 — DX-006 Package Manager (Architecture Design Complete) |
 | **Project Phase** | Platform & Developer Experience Engineering |
 
 --------------------------------------
@@ -108,6 +108,29 @@ until this document has been reviewed. Update AGENTS.md reading order after revi
 
 --------------------------------------
 
+## Phase Definition
+
+This phase builds the AI-native engineering ecosystem around the stable AILang core.
+The language, compiler, runtime, and standard library are frozen — all new
+development targets tooling, automation, and developer experience.
+
+### What is Frozen (not modified during this phase)
+
+- Language syntax, grammar, and semantics
+- Compiler pipeline (lexer, parser, AST, IR)
+- Runtime interpreter and optimization cache
+- Standard library API signatures
+- Existing benchmark applications
+- Existing test suite
+
+### Why This Phase
+
+AILang's differentiation comes from AI-friendly tooling, automation,
+and developer experience — not from syntax changes. This phase invests
+in the ecosystem that makes AILang productive for both human and AI developers.
+
+---
+
 ## Current Work
 
 **DX-006 — Package Manager — Architecture Design Phase** 📋
@@ -119,7 +142,7 @@ until this document has been reviewed. Update AGENTS.md reading order after revi
 - **Architecture Design:** ✅ Complete & Accepted
 - **Implementation:** 📋 Not started
 
-### Architecture Milestone (M15)
+### Architecture Milestone (M15) — Tooling Architecture & Package Manager Design
 
 Before writing implementation code for DX-006, two architecture documents were created:
 
@@ -139,30 +162,52 @@ Before writing implementation code for DX-006, two architecture documents were c
 | Exit codes | 0=success, 1=failure, 3=internal error | Per TOOLING_ARCHITECTURE.md conventions |
 | Cache | Project-local `.ail/cache/` (v1); global `~/.cache/ail/` (future) | Simple v1, no concurrency concerns |
 
-### 10 Open Questions
+### v0.3.1 Deliverables (Tooling Architecture + Package Manager Design)
 
-The design document identifies 10 open questions that must be resolved before implementation. See `docs/architecture/PACKAGE_MANAGER_DESIGN.md §13`.
+- **Tooling Architecture Contract** (`docs/architecture/TOOLING_ARCHITECTURE.md`):
+  12 sections covering tool layers, lifecycle, CLI conventions, exit code policy, JSON report conventions, generated file conventions, `tools/common/` responsibilities, shared utilities, discovery patterns, plugin/extension points, versioning policy, testing strategy
+- **Package Manager Design Spec** (`docs/architecture/PACKAGE_MANAGER_DESIGN.md`):
+  13 sections covering motivation, project manifest, package repository, dependency resolution, CLI commands (6: init, add, remove, install, update, list), lock file, cache, checksum verification, DX tool integration
+- **10 Open Questions**: See `docs/architecture/PACKAGE_MANAGER_DESIGN.md §13` — must be resolved before implementation
+
+### M16 — Documentation Architecture Cleanup (Current)
+
+Before beginning DX-006 implementation, a documentation cleanup milestone was introduced:
+- ADR numbering collision resolved (ADR-001→ADR-010, etc.)
+- Status documents consolidated (PROJECT_PHASE.md, ROADMAP.md, CURRENT_MILESTONE.md → archived)
+- AI guidance consolidated (see AGENTS.md)
+- v0.1.0 sprint reports archived
+- Generated files policy established (generated/ added to .gitignore)
+- Performance data centralized
+- Documentation Ownership Matrix created
 
 --------------------------------------
 
 ## Next Priority Queue
 
-### v0.3.0 — Developer Experience Automation
+### v0.3.1 — DX-006 Package Manager Implementation
 
  | # | Tool | Goal | Priority |
 |:-:|------|------|:--------:|
-| 1 | **DX-004** | Benchmark Runner — **Complete & Accepted** | **Done** |
-| 2 | **DX-005** | Test Generator — **Complete & Accepted** | **Done** |
-| 3 | **DX-006** | Package Manager — `ail init`, `ail install`, dependency resolution | **Highest** |
-| 4 | **DX-007** | LSP (Language Server Protocol) — editor intelligence | Medium |
-| 5 | **DX-008** | Code Formatter (`ail fmt`) — formalize and harden | Medium |
+| 1 | **DX-006** | Package Manager — `ail init`, `ail install`, dependency resolution | **Highest** |
+| 2 | **DX-007** | LSP (Language Server Protocol) — editor intelligence | High |
+| 3 | **DX-008** | Code Formatter (`ail fmt`) — formalize and harden | Medium |
 
 ### Maintenance
 - 📋 **Community feedback collection** — Gather real-world usage data
 - 📋 **Documentation website** — Create hosted documentation site
 - 📋 **PyPI package** — `pip install ailang`
 
-*See docs/ROADMAP.md for detailed priority matrix*
+---
+
+## Forward-Looking Roadmap
+
+| Milestone | Focus | Target |
+|-----------|-------|:------:|
+| **v0.3.1** | DX-006 Package Manager — implementation | Current |
+| **v0.5.x** | Ecosystem maturity — full tooling suite, docs site, community | Next |
+| **v1.0** | Language freeze with full backward-compatibility guarantees | Planned |
+| **Post-1.0** | Self-hosting, JIT, advanced features (evidence-driven) | Future |
 
 --------------------------------------
 
@@ -214,6 +259,7 @@ The design document identifies 10 open questions that must be resolved before im
 
 | Item | Version | Date |
 |------|---------|------|
+| **M16** — Documentation Architecture Cleanup (ADR fix, status consolidation, AI guidance, archive, .gitignore) | v0.3.1 | 2026-07-07 |
 | **M15** — Tooling Architecture & Package Manager Design (TOOLING_ARCHITECTURE.md + PACKAGE_MANAGER_DESIGN.md) | v0.3.1 | 2026-07-07 |
 | **DX-005** — Test Generator — **Complete & Accepted** | v0.3.0 | 2026-07-07 |
 | **DX-004** — Benchmark Runner — **Complete & Accepted** | v0.3.0 | 2026-07-07 |
@@ -315,4 +361,5 @@ Every completed task follows this flow. Nothing gets lost.
 | Field | Value |
 |:------|:------|
 | **Date** | 2026-07-07 |
-| **Version** | v0.3.0 |
+| **Version** | v0.3.1 |
+| **Milestone** | M16 — Documentation Architecture Cleanup |

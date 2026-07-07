@@ -33,8 +33,7 @@ Current version: **0.1.2** (pre-1.0 development phase)
 - [ ] Review ALL documentation for accuracy and consistency
 - [ ] Update any docs affected by changes in this release
 - [ ] Verify all links in documentation are valid
-- [ ] Update `docs/ROADMAP.md` with completed milestones
-- [ ] Update `docs/CURRENT_MILESTONE.md`
+- [ ] Update `DEVELOPMENT_STATUS.md` — move completed milestone to "Recently Completed", update "Current Work"
 - [ ] Update `README.md` with current status
 
 ### 4. Quality Assurance
@@ -62,7 +61,7 @@ Current version: **0.1.2** (pre-1.0 development phase)
 ### 6. Post-Release
 
 - [ ] Update `PROJECT_STATE.json` with the new version
-- [ ] Set the next milestone in `docs/ROADMAP.md`
+- [ ] Set the next milestone in `DEVELOPMENT_STATUS.md` ("Current Work" → "Recently Completed", new milestone in "Current Work")
 - [ ] Communicate the release to contributors
 - [ ] Begin work on the next milestone
 
