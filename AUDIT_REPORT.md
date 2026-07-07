@@ -127,7 +127,7 @@ Total Markdown files: **173** (excluding `node_modules/`, `.git/`, `.venv*/`, `_
 | `v0.2.1/RELEASE_VALIDATION.md` | v0.2.1 release validation report | 8.4 KB | Historical |
 | `v0.3.0/RELEASE_VALIDATION.md` | v0.3.0 release validation report | 6.3 KB | Current release |
 
-### 1.13 v0.1.0 Report Documents — `docs/reports/v0.1.0/` (21 files)
+### 1.13 v0.1.0 Report Documents — `docs/archive/v0.1.0/` (21 files, archived M16)
 
 | File | Purpose | Size |
 |------|---------|:----:|
@@ -445,9 +445,9 @@ No baseline files found. The benchmark runner's `--baseline` flag saves baseline
 
 ### R4: Archive v0.1.0 Sprint Reports
 
-**Problem:** 21 files in `docs/reports/v0.1.0/` are historical sprint artifacts from the v0.1.0 release. Their information has been consolidated into `DEVELOPMENT_STATUS.md`, `CHANGELOG.md`, and `PROJECT_MEMORY.md`.
+**Problem:** 21 files in `docs/reports/v0.1.0/` were historical sprint artifacts from the v0.1.0 release. Their information has been consolidated into `DEVELOPMENT_STATUS.md`, `CHANGELOG.md`, and `PROJECT_MEMORY.md`.
 
-**Recommendation:** Move all 21 files to `docs/archive/reports/v0.1.0/` with an `ARCHIVED_README.md` explaining their status.
+**Resolution:** Moved to `docs/archive/v0.1.0/`. Files remain available for historical reference but no longer clutter the active documentation tree.
 
 **Benefits:** Permanent docs directory shrinks by 21 files (26%). Reduces noise for readers.
 **Risk:** Low — no permanent documents reference these files.
