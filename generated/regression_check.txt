@@ -1,0 +1,105 @@
+﻿
+Analyzing: apps/dice_roller/main.ail
+
+========================================================================
+  AILang Static Code Analyzer -- Report
+========================================================================
+
+File: apps/dice_roller/main.ail
+------------------------------------------------------------------------
+
+Source Statistics
+-----------------
+  Total lines:      84
+  Blank lines:      11
+  Comment lines:    0
+  Code lines:       73
+
+Function Analysis
+-----------------
+  Total functions:  10
+  Average length:   7.8 lines
+  Longest:          main (17 lines)
+  Duplicates:       (none)
+
+  Functions:
+    roll_die (params:1, lines:4, ifs:0)
+    roll_multiple (params:3, lines:6, ifs:1)
+    sum_list (params:2, lines:5, ifs:1)
+    min_list (params:2, lines:8, ifs:2)
+    max_list (params:2, lines:8, ifs:2)
+    count_value (params:3, lines:7, ifs:2)
+    build_freq_map (params:4, lines:6, ifs:1)
+    build_bar (params:3, lines:5, ifs:1)
+    print_freq_helper (params:3, lines:12, ifs:2)
+    main (params:0, lines:17, ifs:0)
+
+Variable Analysis
+-----------------
+  Total let decls:  14
+  Duplicates:       val, rest
+
+Call Analysis
+-------------
+  Total calls:      17
+  Unused:           (none)
+  Recursive:        roll_multiple, sum_list, min_list, max_list, count_value, build_freq_map, build_bar, print_freq_helper
+
+  Most called (user fns):
+    print_freq_helper (2)
+    build_bar (2)
+    build_freq_map (2)
+    count_value (2)
+    max_list (2)
+    min_list (2)
+    sum_list (2)
+    roll_multiple (2)
+    roll_die (1)
+
+Module Analysis
+---------------
+  Import count:     5
+  Imports:
+    - random
+    - list
+    - map
+    - math
+    - convert
+
+Complexity Report
+-----------------
+  Max call depth:   2
+  High-branch fns:  (none)
+  Large fns (>50):  (none)
+  High fanout (>5): main (6 callees)
+
+Dependency Tree
+---------------
+  main
+   +-- roll_multiple
+   |   +-- roll_die
+   |   +-- roll_multiple (cycle)
+   +-- sum_list
+   |   +-- sum_list (cycle)
+   +-- min_list
+   |   +-- min_list (cycle)
+   +-- max_list
+   |   +-- max_list (cycle)
+   +-- build_freq_map
+   |   +-- count_value
+   |   |   +-- count_value (cycle)
+   |   +-- build_freq_map (cycle)
+   +-- print_freq_helper
+   |   +-- build_bar
+   |   |   +-- build_bar (cycle)
+   |   +-- print_freq_helper (cycle)
+
+Documentation Analysis
+---------------------
+  Missing docs:     roll_die, roll_multiple, sum_list, min_list, max_list, count_value, build_freq_map, build_bar, print_freq_helper, main
+
+Reachability Analysis
+---------------------
+  Unreachable fns:  (none)
+
+========================================================================

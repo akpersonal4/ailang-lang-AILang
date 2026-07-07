@@ -1,0 +1,38 @@
+import string
+
+let PASS_COUNT = 0
+let FAIL_COUNT = 0
+
+fn report(name, passed) {
+    if passed {
+        PASS_COUNT = PASS_COUNT + 1;
+        return "PASS: " + name
+    } else {
+        FAIL_COUNT = FAIL_COUNT + 1;
+        return "FAIL: " + name
+    }
+}
+
+fn main() {
+    io.println(report("string.find finds 'world' at position 6", string.find("hello world from ailang", "world") == 6));
+    io.println(report("string.find returns -1 for missing substring", string.find("hello world", "xyz") == -1));
+    io.println(report("string.find_from finds second 'hello' at position 12", string.find_from("hello world hello", "hello", 1) == 12));
+    io.println(report("string.find_from with start=0 finds at position 0", string.find_from("hello world", "hello", 0) == 0));
+
+    let parts1 = string.split("a,b,c,d", ",");
+    io.println(report("string.split with comma splits into 4 parts", list.len(parts1) == 4));
+    if list.len(parts1) == 4 {
+        io.println(report("  first part is 'a'", list.get(parts1, 0) == "a"));
+        io.println(report("  second part is 'b'", list.get(parts1, 1) == "b"));
+        io.println(report("  third part is 'c'", list.get(parts1, 2) == "c"));
+        io.println(report("  fourth part is 'd'", list.get(parts1, 3) == "d"))
+    };
+
+    let parts2 = string.split("hello", ",");
+    io.println(report("string.split with no delimiter returns single-element list", list.len(parts2) == 1 && list.get(parts2, 0) == "hello"));
+
+    let parts3 = string.split("", ",");
+    io.println(report("string.split empty string returns ['']", list.len(parts3) == 1 && list.get(parts3, 0) == ""));
+
+    io.println("---")
+}

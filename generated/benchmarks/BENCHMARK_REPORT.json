@@ -1,0 +1,99 @@
+{
+  "tool": "ail_benchmark",
+  "version": "0.1.0",
+  "timestamp": "2026-07-07T12:15:17.348040+00:00",
+  "suite": "quick",
+  "threshold_pct": 20.0,
+  "config": {
+    "repeat": 1,
+    "memory": false,
+    "timeout": 300
+  },
+  "baseline": null,
+  "summary": {
+    "total": 2,
+    "passed": 2,
+    "failed": 0,
+    "regressed": 0,
+    "skipped": 0,
+    "total_time_seconds": 0.971
+  },
+  "benchmarks": [
+    {
+      "name": "dice_roller",
+      "path": "C:\\Users\\aleckhan\\Projects\\AiLang_New\\apps\\dice_roller\\main.ail",
+      "suite": "quick",
+      "status": "pass",
+      "error": null,
+      "runs": [
+        {
+          "build_time": 0.202,
+          "run_time": 0.218,
+          "exit_code": 0,
+          "build_stdout": "Build successful: C:\\Users\\aleckhan\\Projects\\AiLang_New\\apps\\dice_roller\\main.ail\n",
+          "build_stderr": "",
+          "run_stdout": "=== Dice Roller & Statistics ===\nRolling 20 dice with 6 sides...\nResults: [1, 6, 1, 3, 1, 5, 1, 3, 5, 4, 6, 3, 5, 2, 5, 1, 5, 4, 1, 1]\nSum: 63 | Average: 3\nMin: 1 | Max: 6\n\nFrequency Distribution:\n1 : ####### ( 7 )\n2 : # ( 1 )\n3 : ### ( 3 )\n4 : ## ( 2 )\n5 : ##### ( 5 )\n6 : ## ( 2 )\n",
+          "run_stderr": ""
+        }
+      ],
+      "stats": {
+        "build_time": {
+          "min": 0.202,
+          "max": 0.202,
+          "avg": 0.202,
+          "median": 0.202
+        },
+        "run_time": {
+          "min": 0.218,
+          "max": 0.218,
+          "avg": 0.218,
+          "median": 0.218
+        }
+      },
+      "regression": {
+        "detected": false,
+        "build_regression_pct": null,
+        "run_regression_pct": null
+      },
+      "baseline": null
+    },
+    {
+      "name": "hangman_game",
+      "path": "C:\\Users\\aleckhan\\Projects\\AiLang_New\\apps\\hangman_game\\main.ail",
+      "suite": "quick",
+      "status": "pass",
+      "error": null,
+      "runs": [
+        {
+          "build_time": 0.19,
+          "run_time": 0.361,
+          "exit_code": 0,
+          "build_stdout": "Build successful: C:\\Users\\aleckhan\\Projects\\AiLang_New\\apps\\hangman_game\\main.ail\n",
+          "build_stderr": "",
+          "run_stdout": "=== Hangman ===\nGuess the word letter by letter\nWord: ________ | Lives: 6\nGuessing: w\nWrong!\nWord: ________ | Lives: 5\nGuessing: s\nWrong!\nWord: ________ | Lives: 4\nGuessing: t\nCorrect!\nWord: ____t___ | Lives: 4\nGuessing: k\nWrong!\nWord: ____t___ | Lives: 3\nGuessing: i\nCorrect!\nWord: ____ti__ | Lives: 3\nGuessing: n\nCorrect!\nWord: __n_ti_n | Lives: 3\nGuessing: j\nWrong!\nWord: __n_ti_n | Lives: 2\nHint: Revealing a random letter!\nGuessing: c\nCorrect!\nWord: _uncti_n | Lives: 2\nGuessing: c\nWord: _uncti_n | Lives: 2\nGuessing: o\nCorrect!\nWord: _unction | Lives: 2\nGuessing: a\nWrong!\nWord: _unction | Lives: 1\nGuessing: o\nWord: _unction | Lives: 1\nGuessing: c\nWord: _unction | Lives: 1\nGuessing: d\nWrong!\nGame over! The word was: function\n",
+          "run_stderr": ""
+        }
+      ],
+      "stats": {
+        "build_time": {
+          "min": 0.19,
+          "max": 0.19,
+          "avg": 0.19,
+          "median": 0.19
+        },
+        "run_time": {
+          "min": 0.361,
+          "max": 0.361,
+          "avg": 0.361,
+          "median": 0.361
+        }
+      },
+      "regression": {
+        "detected": false,
+        "build_regression_pct": null,
+        "run_regression_pct": null
+      },
+      "baseline": null
+    }
+  ]
+}
