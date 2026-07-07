@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.4.0
+
+### DX-007 — AILang Language Server
+
+- **Architecture document**: `docs/architecture/LSP_ARCHITECTURE.md` — JSON-RPC, workspace model, document lifecycle, diagnostics pipeline, feature modules, performance goals, testing strategy
+- **Shared AST utilities**: New `compiler/lsp/utils.py` consolidating 5× duplicated helpers (`walk_ast`, `find_node_at_offset`, `position_to_offset`, `node_range`, `find_references`, `find_enclosing_call`, `callee_name`, `member_access_name`, `find_definition_target`) into a single source of truth
+- **Code duplication eliminated**: `definition.py`, `hover.py`, `references.py`, `rename.py`, `signature_help.py` all refactored to import from `utils.py` — 300+ lines of duplicated code removed
+- **Workspace Symbol Search**: `workspace/symbol` implemented — cross-file symbol search with case-insensitive query matching across functions, variables, and imports
+- **Code Actions foundation**: `textDocument/codeAction` — quick fix scaffolding for import errors, undefined stdlib references, and unused variable warnings
+- **Server capabilities extended**: `workspaceSymbolProvider: true` and `codeActionProvider: true` added to initialize response
+- **103 tests**, all passing (up from 99) — 4 new tests for workspace symbols and code actions
+
 ## 0.3.1
 
 ### DX-006 — AILang Package Manager

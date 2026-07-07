@@ -2,19 +2,15 @@
 
 from __future__ import annotations
 
-from collections.abc import Generator
 from typing import Any
 
-from compiler.ast.nodes import (
-    CallExpressionNode,
-    FunctionDeclarationNode,
-    IdentifierNode,
-)
+from compiler.ast.nodes import FunctionDeclarationNode
 from compiler.lsp.protocol import (
     ParameterInformation,
     SignatureHelp,
     SignatureInformation,
 )
+from compiler.lsp.utils import callee_name, find_enclosing_call, position_to_offset, walk_ast
 
 _STDLIB_SIGNATURES: dict[str, tuple[str, list[tuple[str, str]]]] = {
     "string.concat": (
@@ -140,19 +136,17 @@ def get_signature_help(doc: Any, position: dict[str, Any]) -> dict[str, Any] | N
     text = doc.text
     line = position["line"]
     char = position["character"]
-    offset = _position_to_offset(line, char, text)
+    offset = position_to_offset(line, char, text)
 
-    # Find the enclosing CallExpressionNode
-    call_node = _find_enclosing_call(ast, offset)
+    call_node = find_enclosing_call(ast, offset)
     if call_node is None:
         return None
 
     callee = call_node.callee
-    name = _callee_name(callee)
+    name = callee_name(callee)
     if name is None:
         return None
 
-    # Check builtins
     if name == "print":
         sig = SignatureInformation(
             label="print(value, ...)",
@@ -161,7 +155,6 @@ def get_signature_help(doc: Any, position: dict[str, Any]) -> dict[str, Any] | N
         )
         return SignatureHelp(signatures=[sig]).to_dict()
 
-    # Check stdlib
     if name in _STDLIB_SIGNATURES:
         label, params = _STDLIB_SIGNATURES[name]
         sig = SignatureInformation(
@@ -170,8 +163,7 @@ def get_signature_help(doc: Any, position: dict[str, Any]) -> dict[str, Any] | N
         )
         return SignatureHelp(signatures=[sig]).to_dict()
 
-    # Search for user-defined functions
-    for child in _walk_ast(ast):
+    for child in walk_ast(ast):
         if isinstance(child, FunctionDeclarationNode) and child.name.name == name:
             pnames = [p.name for p in child.parameters]
             param_infos = [
@@ -184,54 +176,3 @@ def get_signature_help(doc: Any, position: dict[str, Any]) -> dict[str, Any] | N
             return SignatureHelp(signatures=[sig]).to_dict()
 
     return None
-
-
-def _callee_name(node: Any) -> str | None:
-    if isinstance(node, IdentifierNode):
-        return node.name
-    if hasattr(node, "member") and hasattr(node, "receiver"):
-        rcv = _callee_name(node.receiver)
-        if rcv:
-            return f"{rcv}.{node.member.name}"
-    return None
-
-
-def _find_enclosing_call(node: Any, offset: int) -> Any | None:
-    best = None
-    for child in _walk_ast(node):
-        if isinstance(child, CallExpressionNode):
-            start = getattr(child, "start_span", None)
-            end = getattr(child, "end_span", None)
-            if start is not None and end is not None and start <= offset < end:
-                if best is None or (
-                    getattr(child, "start_span", 0) >= getattr(best, "start_span", 0)
-                ):
-                    best = child
-    return best
-
-
-def _position_to_offset(line: int, character: int, text: str) -> int:
-    current_line = 0
-    for i, ch in enumerate(text):
-        if current_line == line:
-            return i + character
-        if ch == "\n":
-            current_line += 1
-    return len(text)
-
-
-def _walk_ast(node: Any) -> Generator[Any, None, None]:
-    if node is None:
-        return
-    yield node
-    if isinstance(node, (list, tuple)):
-        for item in node:
-            yield from _walk_ast(item)
-    elif hasattr(node, "__dataclass_fields__"):
-        for field_name in node.__dataclass_fields__:
-            val = getattr(node, field_name)
-            if isinstance(val, (list, tuple)):
-                for item in val:
-                    yield from _walk_ast(item)
-            elif hasattr(val, "__dataclass_fields__"):
-                yield from _walk_ast(val)

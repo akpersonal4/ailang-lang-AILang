@@ -13,6 +13,8 @@ from compiler.lsp.features.references import get_references
 from compiler.lsp.features.rename import get_rename_edits
 from compiler.lsp.features.signature_help import get_signature_help
 from compiler.lsp.features.symbols import get_document_symbols
+from compiler.lsp.features.workspace_symbols import get_workspace_symbols
+from compiler.lsp.features.code_actions import get_code_actions
 from compiler.lsp.protocol import _read_message, _send_message
 
 
@@ -67,6 +69,8 @@ class LspServer:
             "textDocument/rename": self._handle_rename,
             "textDocument/signatureHelp": self._handle_signature_help,
             "textDocument/documentSymbol": self._handle_document_symbols,
+            "textDocument/codeAction": self._handle_code_action,
+            "workspace/symbol": self._handle_workspace_symbols,
         }
         handler = handlers.get(method)
         if handler is not None:
@@ -97,6 +101,8 @@ class LspServer:
                 "triggerCharacters": ["("],
             },
             "documentSymbolProvider": True,
+            "workspaceSymbolProvider": True,
+            "codeActionProvider": True,
         }
         return {
             "capabilities": self._capabilities,
@@ -225,3 +231,19 @@ class LspServer:
         uri = text_doc.get("uri", "")
         doc = self._get_document(uri)
         return get_document_symbols(doc)
+
+    def _handle_workspace_symbols(
+        self, params: dict[str, Any]
+    ) -> list[dict[str, Any]]:
+        query = params.get("query", "")
+        return get_workspace_symbols(self.documents, query)
+
+    def _handle_code_action(
+        self, params: dict[str, Any]
+    ) -> list[dict[str, Any]]:
+        text_doc = params.get("textDocument", {})
+        uri = text_doc.get("uri", "")
+        _range = params.get("range", {})
+        context = params.get("context", {})
+        doc = self._get_document(uri)
+        return get_code_actions(doc, _range, context)

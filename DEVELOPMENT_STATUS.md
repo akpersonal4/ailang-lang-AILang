@@ -10,8 +10,8 @@ until this document has been reviewed. Update AGENTS.md reading order after revi
 
 | Attribute | Value |
 |:----------|:------|
-| **Current Version** | v0.3.1 |
-| **Current Milestone** | DX-006 — AILang Package Manager (Implementation) |
+| **Current Version** | v0.4.0 |
+| **Current Milestone** | DX-007 — AILang Language Server |
 | **Project Phase** | Platform & Developer Experience Engineering |
 | **Project Maturity** | ≈95% (relative to v1.0 roadmap) |
 
@@ -134,13 +134,13 @@ in the ecosystem that makes AILang productive for both human and AI developers.
 
 ## Current Work
 
-**DX-006 — AILang Package Manager** 📋
+**DX-007 — AILang Language Server** ✅
 
 ### Status
-- **Phase:** Package Manager Implementation
+- **Phase:** Language Server Design & Implementation
 - **Runtime:** Frozen pending new bottleneck evidence
-- **v0.3.1 Goal:** Implement DX-006 AILang Package Manager
-- **Architecture Design:** ✅ Complete & Accepted
+- **v0.4.0 Goal:** Implement DX-007 AILang Language Server (architecture, consolidation, symbol search, code actions)
+- **Architecture Design:** ✅ Complete (LSP_ARCHITECTURE.md)
 - **Implementation:** ✅ **Complete** — see details below
 
 > **Naming convention:** User-facing milestones use product names (e.g., "AILang Package Manager") rather than DX numbers. DX numbers (DX-006, DX-007, etc.) remain for internal planning.
@@ -173,7 +173,7 @@ Before writing implementation code for DX-006, two architecture documents were c
   13 sections covering motivation, project manifest, package repository, dependency resolution, CLI commands (6: init, add, remove, install, update, list), lock file, cache, checksum verification, DX tool integration
 - **10 Open Questions**: See `docs/architecture/PACKAGE_MANAGER_DESIGN.md §13` — must be resolved before implementation
 
-### DX-006 Implementation Status
+### DX-006 Implementation Status (Package Manager)
 
 | Component | Status | Details |
 |-----------|:------:|---------|
@@ -191,6 +191,8 @@ Before writing implementation code for DX-006, two architecture documents were c
 ### M16 — Documentation Architecture Cleanup (Complete)
 
 Before DX-006 implementation began, a documentation cleanup milestone was completed:
+
+
 - ADR numbering collision resolved (ADR-001→ADR-010, etc.)
 - Status documents consolidated (PROJECT_PHASE.md, ROADMAP.md, CURRENT_MILESTONE.md → archived)
 - AI guidance consolidated (see AGENTS.md)
@@ -203,13 +205,13 @@ Before DX-006 implementation began, a documentation cleanup milestone was comple
 
 ## Next Priority Queue
 
-### v0.3.1 — AILang Package Manager
+### v0.4.0 — Language Server Complete
 
- | # | Tool | Goal | Priority |
+| # | Tool | Goal | Priority |
 |:-:|------|------|:--------:|
-| 1 | **AILang Package Manager** | `ail init`, `ail install`, dependency resolution | **Highest** |
-| 2 | **AILang LSP** (DX-007) | Language Server Protocol — editor intelligence | High |
-| 3 | **AILang Formatter** (DX-008) | `ail fmt` — formalize and harden | Medium |
+| 1 | **AILang LSP** (DX-007) | ✅ Complete — Language Server with Go to Definition, Hover, Completion, Diagnostics, References, Rename, Symbols, Code Actions |
+| 2 | **AILang Formatter** (DX-008) | `ail fmt` — formalize and harden | Medium |
+| 3 | **Documentation website** | Create hosted documentation site | Low |
 
 ### Maintenance
 - 📋 **Community feedback collection** — Gather real-world usage data
@@ -222,7 +224,7 @@ Before DX-006 implementation began, a documentation cleanup milestone was comple
 
 | Milestone | Focus | Target |
 |-----------|-------|:------:|
-| **v0.3.1** | DX-006 Package Manager — implementation | Current |
+| **v0.4.0** | DX-007 Language Server — architecture, consolidation, symbol search, code actions | Current |
 | **v0.5.x** | Ecosystem maturity — full tooling suite, docs site, community | Next |
 | **v1.0** | Language freeze with full backward-compatibility guarantees | Planned |
 | **Post-1.0** | Self-hosting, JIT, advanced features (evidence-driven) | Future |
@@ -277,6 +279,7 @@ Before DX-006 implementation began, a documentation cleanup milestone was comple
 
 | Item | Version | Date |
 |------|---------|------|
+| **DX-007** — AILang Language Server — architecture, consolidation, symbol search, code actions (103 tests) | v0.4.0 | 2026-07-07 |
 | **M16** — Documentation Architecture Cleanup (ADR fix, status consolidation, AI guidance, archive, .gitignore) | v0.3.1 | 2026-07-07 |
 | **DX-006** — AILang Package Manager — implementation complete (manifest, init, install, lock, resolver) | v0.3.1 | 2026-07-07 |
 | **M15** — Tooling Architecture & Package Manager Design (TOOLING_ARCHITECTURE.md + PACKAGE_MANAGER_DESIGN.md) | v0.3.1 | 2026-07-07 |
@@ -333,7 +336,7 @@ Before DX-006 implementation began, a documentation cleanup milestone was comple
 | **v0.2.0** | ✅ Complete | Runtime optimization |
 | **v0.2.1** | ✅ Complete | DX-003 Static Analyzer, stdlib additions |
 | **v0.3.0** | ✅ **Complete** | DX-004 Benchmark Runner + DX-005 Test Generator |
-| **v0.3.1** | 📋 Architecture Design Complete | DX-006 Package Manager (Tooling Architecture + Package Manager Design docs) |
+| **v0.4.0** | ✅ Complete | DX-007 Language Server |
 | **v0.5.x** | 📋 Planned | Ecosystem maturity |
 | **v1.0** | 📋 Planned | Full backward compatibility |
 
@@ -394,6 +397,7 @@ Every completed task follows this flow. Nothing gets lost.
 | **Performance / Runtime** | `docs/performance/runtime_optimization_001/analysis.md` |
 | **Tooling Architecture** | `docs/architecture/TOOLING_ARCHITECTURE.md` |
 | **Package Manager Design** | `docs/architecture/PACKAGE_MANAGER_DESIGN.md` |
+| **LSP Architecture** | `docs/architecture/LSP_ARCHITECTURE.md` |
 
 Every document type has exactly one owner. If you need to add information, first check which document owns it. If no document owns it, create a new owner file or add a row to this matrix.
 
@@ -404,5 +408,5 @@ Every document type has exactly one owner. If you need to add information, first
 | Field | Value |
 |:------|:------|
 | **Date** | 2026-07-07 |
-| **Version** | v0.3.1 |
-| **Milestone** | M16 — Documentation Architecture Cleanup |
+| **Version** | v0.4.0 |
+| **Milestone** | DX-007 — AILang Language Server |

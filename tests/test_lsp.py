@@ -31,6 +31,7 @@ from compiler.lsp.features.references import get_references
 from compiler.lsp.features.rename import get_rename_edits
 from compiler.lsp.features.signature_help import get_signature_help
 from compiler.lsp.features.symbols import get_document_symbols
+from compiler.lsp.features.code_actions import get_code_actions
 from compiler.lsp.server import LspServer
 
 # =============================================================================
@@ -1334,3 +1335,45 @@ class TestLspServerFeatureDispatch:
             )
         assert isinstance(result, list)
         assert len(result) == 4  # 4 functions, no imports
+
+    def test_workspace_symbols_through_server(self):
+        server = LspServer()
+        server._handle_did_open(
+            {"textDocument": {"uri": TEST_URI, "text": _VALID_PROGRAM}}
+        )
+        server._handle_did_open(
+            {"textDocument": {"uri": ALT_URI, "text": _PROGRAM_WITH_REFERENCES}}
+        )
+        with patch("compiler.lsp.server._send_message"):
+            result = server._handle_workspace_symbols({"query": "add"})
+        assert isinstance(result, list)
+        names = [s["name"] for s in result]
+        assert "add" in names
+
+    def test_workspace_symbols_empty_query_returns_all(self):
+        server = LspServer()
+        server._handle_did_open(
+            {"textDocument": {"uri": TEST_URI, "text": _VALID_PROGRAM}}
+        )
+        with patch("compiler.lsp.server._send_message"):
+            result = server._handle_workspace_symbols({"query": ""})
+        assert isinstance(result, list)
+        assert len(result) > 0
+
+    def test_code_action_returns_list(self):
+        doc = Document(TEST_URI, _ERROR_PROGRAM_SEMANTIC)
+        doc.compile()
+        _range = {"start": {"line": 0, "character": 0}, "end": {"line": 2, "character": 0}}
+        context = {"diagnostics": []}
+        actions = get_code_actions(doc, _range, context)
+        assert isinstance(actions, list)
+
+    def test_code_action_on_import_error(self):
+        doc = Document(TEST_URI, _ERROR_PROGRAM_IMPORT)
+        doc.compile()
+        _range = {"start": {"line": 0, "character": 0}, "end": {"line": 1, "character": 0}}
+        context = {"diagnostics": [{"message": "Module not found: nonexistent", "severity": 1, "range": _range}]}
+        actions = get_code_actions(doc, _range, context)
+        assert len(actions) > 0
+        titles = [a["title"] for a in actions]
+        assert any("module" in t.lower() for t in titles)

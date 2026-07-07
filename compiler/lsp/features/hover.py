@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from collections.abc import Generator
 from typing import Any
 
 from compiler.ast.nodes import (
@@ -12,7 +11,14 @@ from compiler.ast.nodes import (
     MemberAccessNode,
     ParameterNode,
 )
-from compiler.lsp.protocol import Hover, offset_to_position
+from compiler.lsp.protocol import Hover
+from compiler.lsp.utils import (
+    find_node_at_offset,
+    member_access_name,
+    node_range,
+    position_to_offset,
+    walk_ast,
+)
 
 _STDLIB_DOCS: dict[str, str] = {
     "string.concat": "`string.concat(a, b)` — Concatenates two strings.",
@@ -99,25 +105,19 @@ def get_hover(doc: Any, position: dict[str, Any]) -> dict[str, Any] | None:
     line = position["line"]
     char = position["character"]
 
-    # Convert LSP position to offset
-    offset = _position_to_offset(line, char, text)
-
-    # Find the identifier under the cursor
-    node = _find_node_at_offset(ast, offset)
+    offset = position_to_offset(line, char, text)
+    node = find_node_at_offset(ast, offset)
     if node is None:
         return None
 
-    # Determine hover content based on node type
     if isinstance(node, IdentifierNode):
         name = node.name
-        # Check if it's a known builtin
         if name == "print":
             return Hover(
                 contents="`print(value, ...)` — Builtin function. Writes to stdout.",
-                range=_node_range(node, text),
+                range=node_range(node, text),
             ).to_dict()
 
-        # Check symbol table
         if doc.symbol_table is not None:
             for scope in reversed(doc.symbol_table.scopes):
                 if scope is None:
@@ -126,123 +126,52 @@ def get_hover(doc: Any, position: dict[str, Any]) -> dict[str, Any] | None:
                 if sym is not None:
                     return Hover(
                         contents=f"**{name}**  \nVariable",
-                        range=_node_range(node, text),
+                        range=node_range(node, text),
                     ).to_dict()
 
-        # Check if it's a known function by looking at the AST
-        for child in _walk_ast(ast):
+        for child in walk_ast(ast):
             if isinstance(child, FunctionDeclarationNode) and child.name.name == name:
                 params = ", ".join(p.name for p in child.parameters)
                 return Hover(
                     contents=f"**{name}({params})**  \nFunction",
-                    range=_node_range(node, text),
+                    range=node_range(node, text),
                 ).to_dict()
 
         return Hover(
             contents=f"Identifier: `{name}`",
-            range=_node_range(node, text),
+            range=node_range(node, text),
         ).to_dict()
 
     if isinstance(node, MemberAccessNode):
-        name = _member_access_name(node)
+        name = member_access_name(node)
         if name in _STDLIB_DOCS:
             return Hover(
                 contents=_STDLIB_DOCS[name],
-                range=_node_range(node, text),
+                range=node_range(node, text),
             ).to_dict()
         return Hover(
             contents=f"Member: `{name}`",
-            range=_node_range(node, text),
+            range=node_range(node, text),
         ).to_dict()
 
     if isinstance(node, ImportDeclarationNode):
         path = ".".join(node.module_path)
         return Hover(
             contents=f"Module: `{path}`",
-            range=_node_range(node, text),
+            range=node_range(node, text),
         ).to_dict()
 
     if isinstance(node, FunctionDeclarationNode):
         params = ", ".join(p.name for p in node.parameters)
         return Hover(
             contents=f"**{node.name.name}({params})**  \nFunction definition",
-            range=_node_range(node, text),
+            range=node_range(node, text),
         ).to_dict()
 
     if isinstance(node, ParameterNode):
         return Hover(
             contents=f"Parameter: `{node.name}`",
-            range=_node_range(node, text),
+            range=node_range(node, text),
         ).to_dict()
 
     return None
-
-
-def _position_to_offset(line: int, character: int, text: str) -> int:
-    """Convert LSP 0-based position to source offset."""
-    current_line = 0
-    for i, ch in enumerate(text):
-        if current_line == line:
-            return i + character
-        if ch == "\n":
-            current_line += 1
-    return len(text)
-
-
-def _find_node_at_offset(node: Any, offset: int) -> Any | None:
-    """Walk AST and find the deepest node containing the offset."""
-    best = None
-
-    for child in _walk_ast(node):
-        if child is None:
-            continue
-        start = getattr(child, "start_span", None)
-        end = getattr(child, "end_span", None)
-        if start is not None and end is not None and start <= offset < end:
-            best = child
-
-    return best
-
-
-def _walk_ast(node: Any) -> Generator[Any, None, None]:
-    """Yield all nodes in the AST tree."""
-    if node is None:
-        return
-    yield node
-    if isinstance(node, (list, tuple)):
-        for item in node:
-            yield from _walk_ast(item)
-    elif hasattr(node, "__dataclass_fields__"):
-        for field_name in node.__dataclass_fields__:
-            val = getattr(node, field_name)
-            if isinstance(val, (list, tuple)):
-                for item in val:
-                    yield from _walk_ast(item)
-            elif hasattr(val, "__dataclass_fields__"):
-                yield from _walk_ast(val)
-
-
-def _node_range(node: Any, text: str) -> Any:
-    """Create an LSP Range from a node's source spans."""
-    from compiler.lsp.protocol import Range as LspRange
-
-    start = getattr(node, "start_span", None)
-    end = getattr(node, "end_span", None)
-    if start is None or end is None:
-        return None
-    return LspRange(
-        start=offset_to_position(start, text),
-        end=offset_to_position(end, text),
-    )
-
-
-def _member_access_name(node: MemberAccessNode) -> str:
-    """Get the qualified name of a member access expression."""
-    parts: list[str] = []
-    current: Any = node
-    while isinstance(current, MemberAccessNode):
-        parts.append(current.member.name)
-        current = current.receiver
-    if isinstance(current, IdentifierNode):
-        parts.append(current.name)
-    return ".".join(reversed(parts))
