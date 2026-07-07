@@ -112,7 +112,7 @@ AILang follows [Semantic Versioning 2.0.0](https://semver.org/).
 include breaking changes with an ADR. After 1.0, breaking changes require a
 `MAJOR` bump and a deprecation cycle.
 
-See `docs/RELEASE_PROCESS.md` for the full release checklist.
+See `docs/releases/RELEASE_PROCESS.md` for the full release checklist.
 
 ---
 

@@ -10,7 +10,7 @@ Project history, key decisions, and evolution timeline for AI coding assistants.
 - **Version:** v0.3.0
 - **Compiler:** 40 Python source files, ~4,000 LOC
 - **Standard Library:** 16 `.ail` modules
-- **Test Suite:** 677 passing tests across 24 test files
+- **Test Suite:** 772 passing tests across 84 test scripts
 - **Applications:** 66+ across `apps/`, `ai_benchmarks/`, `examples/patterns/`
 
 ---
@@ -129,7 +129,7 @@ A chronological record of every major engineering phase, with results, lessons, 
 |--------|--------|
 | **What** | Built a comprehensive test suite covering lexer, parser, AST, IR, semantic analysis, type checker, runtime, CLI, formatter, stdlib, stress, benchmarks, and AI validation. |
 | **Why** | TDD mandatory. Every feature starts with tests. No change is accepted without passing all existing tests. |
-| **Result** | 522 tests (now 677 after cache optimization + DX tools) across 24 test files. Quality gates (pytest, black, ruff, mypy) enforced on every change. |
+| **Result** | 522 tests (now 772 after cache optimization + DX tools) across 84 test scripts. Quality gates (pytest, black, ruff, mypy) enforced on every change. |
 | **Lessons** | TDD prevents regression in a codebase where the compiler and runtime are closely coupled. The relationship between tests and feature areas must be maintained as the codebase grows. |
 | **Documents** | `docs/reference/TESTING.md` |
 
@@ -219,9 +219,19 @@ A chronological record of every major engineering phase, with results, lessons, 
 |--------|--------|
 | **What** | Created `tools/common/` shared library providing CLI conventions, filesystem utilities, process execution, and reporting helpers to all DX tools, eliminating duplication across ail_context, ail_doctor, ail_static_analyzer, and ail_benchmark. |
 | **Why** | As DX tools grew, each reimplemented the same patterns (CLI argument parsing, JSON file I/O, subprocess execution, markdown/JSON dual report writing). A shared library ensures consistency and reduces maintenance burden. |
-| **Result** | 5 modules: `cli.py` (standard argument parser), `filesystem.py` (path resolution, output dirs), `process.py` (subprocess helpers), `reporting.py` (markdown/JSON report writer), `__init__.py`. All existing tools continue to work — migration is incremental. |
+| **Result** | 5 modules: `cli.py` (standard argument parser), `filesystem.py` (path resolution, output dirs), `process.py` (subprocess helpers), `reporting.py` (markdown/JSON report writer), `__init__.py`. All existing tools continue to work — migration is incremental. Later extended with `hashing.py` (SHA-256 file hashing), `discover_apps()`, `list_py_files()` for DX-005. |
 | **Lessons** | Shared libraries should be opt-in, not forced migration. Each tool can adopt helpers incrementally without breaking existing functionality. The CLI conventions module ensures all tools have consistent `--help` output and argument naming. |
 | **Documents** | `tools/common/` |
+
+### M14 — DX Tool #005 (ail testgen)
+
+| Aspect | Detail |
+|--------|--------|
+| **What** | Implemented `tools/ail_testgen/` — automatic AILang test case generator with three-stage pipeline (Discovery → Analysis → Generation). |
+| **Why** | Needed to automatically generate regression tests for all 43 apps, detect coverage gaps, and produce standardized reports — eliminating manual test creation overhead. |
+| **Result** | 7 Python files: `models.py` (TestCase intermediate model), `discovery.py` (app + existing test discovery), `analyzer.py` (coverage gap analysis), `generator.py` (pure Python generators, no template files), `validator.py` (pytest verification), `reporter.py` (MD + JSON), `__main__.py` (CLI). Output: 44 generated test files in `tests/generated/`, `generated/TEST_GENERATION_REPORT.md` + `.json`. CLI flags: `--dry-run`, `--force`, `--app`, `--report-only`, `--quiet`. 17 tests all passing. |
+| **Lessons** | Separation of concerns (facts first, rendering second via intermediate `TestCase` model) makes the system extensible to other output formats (Markdown examples, AI prompts, documentation). Pure Python generators are simpler and more maintainable than template files. The `--force` guard prevents accidental overwrites. |
+| **Documents** | `tools/ail_testgen/`, `tests/dx_tool_005_acceptance_test.py`, `tests/dx_tool_005_regression_test.py`, `tests/dx_tool_005_ai_validation.py`, `tools/ail_testgen/DESIGN.md` |
 
 ### Governance
 
@@ -282,7 +292,10 @@ Root
 │   ├── ail_context/                  ← DX-001
 │   ├── ail_doctor/                   ← DX-002
 │   ├── ail_static_analyzer/          ← DX-003
-│   └── ail_benchmark/               ← DX-004
+│   ├── ail_benchmark/               ← DX-004
+│   └── ail_testgen/                 ← DX-005
+├── tests/
+│   └── generated/                    ← Auto-generated test files
 ├── ai_benchmarks/                    ← 3 large benchmarks
 ├── examples/patterns/                ← 10 pattern files
 └── .github/workflows/ci.yml          ← CI pipeline

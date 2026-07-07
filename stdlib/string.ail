@@ -37,3 +37,15 @@ fn trim(value) {
 fn substring(value, start, end) {
     return string_substring(value, start, end)
 }
+
+fn find(value, needle) {
+    return string_find(value, needle, 0)
+}
+
+fn find_from(value, needle, start_pos) {
+    return string_find(value, needle, start_pos)
+}
+
+fn split(value, delim) {
+    return string_split(value, delim)
+}

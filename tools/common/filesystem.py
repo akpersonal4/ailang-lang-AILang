@@ -24,3 +24,21 @@ def ensure_output_dir(path: Path) -> Path:
     """Ensure an output directory exists and return it."""
     path.mkdir(parents=True, exist_ok=True)
     return path
+
+
+def discover_apps(root: Path) -> list[Path]:
+    """Discover all AILang app main files under root/apps/."""
+    apps_dir = root / "apps"
+    if not apps_dir.is_dir():
+        return []
+    return sorted(apps_dir.glob("*/main.ail"))
+
+
+def list_py_files(root: Path) -> list[Path]:
+    """Recursively list all .py files under root, excluding common noise dirs."""
+    exclude = {".venv", ".venv_test", ".git", ".mypy_cache", ".pytest_cache", ".ruff_cache", "node_modules", "__pycache__"}
+    result = []
+    for path in root.rglob("*.py"):
+        if not any(part in exclude for part in path.parts):
+            result.append(path)
+    return sorted(result)

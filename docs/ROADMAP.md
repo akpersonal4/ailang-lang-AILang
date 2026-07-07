@@ -8,59 +8,46 @@
 
 ---
 
-## Current Status (v0.1.2 — Bug Fix Release)
+## Current Status (v0.3.0 — Developer Experience Automation)
 
-- Compiler pipeline: **Complete and validated**
-- Standard Library v1.0: **Complete** (16 modules, 60+ functions)
-- Validation: **Complete** (522 tests, all quality gates passing)
-- Documentation: **Complete** (canonical spec, full ecosystem guides, governance)
-- VS Code extension: **Complete** (syntax highlighting, snippets, language config)
-- Formatter: **Complete** (`ail fmt` — deterministic, idempotent, single canonical style)
-- Language freeze: **Active** (v0.1.x — no syntax/grammar/semantic changes)
-- Governance: **Complete** (GOVERNANCE.md, LANGUAGE_EVOLUTION.md, PROJECT_PHILOSOPHY.md)
-- Real-world validation: **Complete** (56 AILang applications, all compile and run)
-- Public release: **Current phase** (repository polish, GitHub readiness, release engineering)
-
----
-
-## Short-Term (v0.1.x — Ecosystem & Tooling)
-
-Focus: ecosystem growth, community building, tooling maturity.
-Language remains frozen.
-
-| Area | Priority | Status |
-|------|----------|--------|
-| Public GitHub release (v0.1.2) | Critical | ✅ Complete |
-| Documentation website | High | 📋 Planned |
-| LSP (Language Server Protocol) | High | 📋 Planned |
-| Interactive REPL | Medium | 📋 Planned |
-| PyPI package (`pip install ailang`) | Medium | 📋 Planned |
-| Pre-built binaries (Windows, Linux, macOS) | Low | 📋 Planned |
-| CI/CD pipeline with GitHub Actions | High | 📋 Planned |
-| Community feedback collection | High | 📋 Planned |
+| Area | Status |
+|------|:------:|
+| Compiler pipeline | **Complete and frozen** |
+| Standard Library v1.0 | **Complete** (16 modules, 63+ functions) |
+| Validation | **Complete** (772 tests, all quality gates passing) |
+| Documentation | **Complete** (canonical spec, full ecosystem guides, governance) |
+| Language freeze | **Active** (v0.1.x — no syntax/grammar/semantic changes) |
+| Developer Experience | **DX-001 through DX-005 complete** — Context, Doctor, Analyzer, Benchmark, Test Generator |
+| Project Phase | **Platform & Developer Experience Engineering** |
 
 ---
 
-## Medium-Term (v0.2.x — Evidence-Based Improvements)
+## v0.3.1 — Developer Experience Automation (DX-006)
 
-After substantial real-world usage and community feedback.
-Language may be unfrozen with evidence from actual users.
+Focus: Package management for the AILang ecosystem.
 
-| Area | Priority | Status |
-|------|----------|--------|
-| Evidence-based language improvements | High | 📋 Pending freeze review |
-| IR optimizer (constant folding, DCE) | Medium | 📋 Planned |
-| Compiler performance profiling | Medium | 📋 Planned |
-| Package manager (`ail init`, `ail install`) | Medium | 📋 Planned |
-| Reduced compile time for >1000 LOC | Medium | 📋 Planned |
+| # | Tool | Goal | Priority |
+|:-:|------|------|:--------:|
+| 1 | **DX-006** | Package Manager — `ail init`, `ail install`, dependency resolution | **Highest** |
+| 2 | **DX-007** | LSP (Language Server Protocol) — editor intelligence | High |
+| 3 | **DX-008** | Code Formatter (`ail fmt`) — formalize and harden | Medium |
 
 ---
 
-## Long-Term (v0.5.x → v1.0 — Ecosystem Maturity)
+## v0.3.0 — Developer Experience Automation ✅ Completed
+
+| # | Tool | Status |
+|:-:|------|:------:|
+| 1 | **DX-004** | Benchmark Runner — **Complete & Accepted** |
+| 2 | **DX-005** | Test Generator — **Complete & Accepted** |
+
+---
+
+## Medium-Term (v0.5.x — Ecosystem Maturity)
 
 | Milestone | Goal |
 |-----------|------|
-| v0.5.x | Ecosystem maturity — LSP, package manager, REPL, documentation site, community |
+| v0.5.x | Ecosystem maturity — full tooling suite, documentation site, community |
 | v1.0 | Language freeze with full backward-compatibility guarantees |
 | Post-1.0 | Self-hosting, JIT, advanced features (evidence-driven) |
 
@@ -131,12 +118,25 @@ Language may be unfrozen with evidence from actual users.
 - [x] Documentation audit, example validation, installation validation
 - [x] VS Code extension verification, CI/CD verification
 
-### Compiler QA — Bug Fix Sprint #001 ✓
+### RTO-001 — Variable Lookup Cache ✓
 
-- [x] BUG-001: Empty return statement crash fixed
-- [x] BUG-002: Missing initializer crash fixed
-- [x] BUG-003: Module bare-name resolution fixed
-- [x] BUG-004: Float literal LEX004 diagnostic added
-- [x] BUG-005: Block scope shadowing fixed
-- [x] BUG-006: Recursion limit increased
-- [x] 522 tests passing (up from 521)
+- [x] `Environment.resolve()` caching — ~6× speedup on static analyzer
+- [x] 102 regression tests, 624 total tests
+- [x] Runtime frozen after optimization
+
+### DX Foundation — Developer Experience Tools ✓
+
+- [x] **DX-001** — `ail context` (AI onboarding context generator)
+- [x] **DX-002** — `ail doctor` (repository health checker)
+- [x] **DX-003** — `ail static_analyzer` (multi-file analysis, JSON/Markdown reports, self-analysis)
+- [x] Stdlib additions: `string.find`, `string.find_from`, `string.split` (ADR-003)
+- [x] 658 tests passing (up from 624)
+- [x] v0.2.1 Release Validation Report completed
+
+### v0.3.0 — Automation Milestone ✓
+
+- [x] **DX-004** — `ail benchmark` (auto-discovery, suite modes, regression detection, CI-friendly exit codes)
+- [x] **DX-005** — `ail testgen` (three-stage pipeline, intermediate TestCase model, 44 auto-generated test files)
+- [x] `tools/common/` — shared DX tooling library (hashing, discover_apps, list_py_files, process, reporting)
+- [x] 772 tests passing (up from 658)
+- [x] v0.3.0 Release Validation Report completed

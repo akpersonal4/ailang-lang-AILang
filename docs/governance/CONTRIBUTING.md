@@ -125,7 +125,7 @@ See [TESTING.md](TESTING.md) for the complete testing guide.
 2. Register them in the `BUILTINS` dictionary
 3. Create `stdlib/modulename.ail` with thin wrappers
 4. Add tests in `tests/test_stdlib_modulename.py`
-5. Add documentation to `docs/STDLIB_REFERENCE.md`
+5. Add documentation to `docs/reference/STDLIB_REFERENCE.md`
 6. Update the module table in `README.md`
 7. Run all quality gates
 

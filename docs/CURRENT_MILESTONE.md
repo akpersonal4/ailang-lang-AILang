@@ -2,38 +2,38 @@
 
 ## Current Milestone
 
-v0.2.0 — Runtime Optimization #001 (Lexical Variable Lookup Cache)
+v0.3.1 — DX-006 Package Manager
 
 ## Status
 
-**Completed** — Variable lookup cache implemented, benchmarked at ~6× speedup on the primary bottleneck workload (static analyzer). 624 tests passing. Runtime frozen.
+**In progress** — DX-004 (Benchmark Runner) and DX-005 (Test Generator) complete.
+DX-006 (Package Manager) is the next priority.
 
-## What Was Delivered in v0.2.0
+## What Was Delivered in v0.3.0
 
-### Variable Lookup Cache
+### DX-004 — Benchmark Runner
+- `python -m tools.ail_benchmark` — auto-discovers apps, suite modes (quick/canonical/full), configurable repetition, baseline save/compare, regression detection, CI-friendly exit codes
+- Output: `generated/benchmarks/BENCHMARK_REPORT.md` + `.json`
 
-- **`Environment.resolve()`** now caches binding locations per-environment in `_resolve_cache: dict[str, Environment]`, eliminating recursive chain walks on repeated lookups
-- **52–64% cache hit rate** across all 5 benchmark apps (dice_roller, hangman_game, inventory_mgmt, kanban, static_analyzer)
-- **~6× speedup** on static_analyzer (373s → 19.5s, the primary bottleneck identified by Python profiling)
-- **Negative caching removed**: `assign` can create new bindings in ancestor environments, making negative cache entries stale
+### DX-005 — Test Generator
+- `python -m tools.ail_testgen` — three-stage pipeline (Discovery → Analysis → Generation)
+- Intermediate `TestCase` model — facts first, rendering second
+- Pure Python generators — no template files
+- Flags: `--dry-run`, `--force`, `--app`, `--report-only`
+- Output: 44 generated test files in `tests/generated/`, `generated/TEST_GENERATION_REPORT.md` + `.json`
 
-### Instrumentation (Profiling Only)
-
-- `_CacheStats` counters (hits/misses/negative_hits) on each Environment
-- `get_cache_info()` on Environment and Runtime for test introspection
+### tools/common/ Shared Library
+- Extended with `hashing.py` (SHA-256 file hashing), `discover_apps()`, `list_py_files()`
+- Existing tools continue to work — incremental adoption
 
 ### Quality Gates
-
-- pytest: **624 passed** (522 existing + 102 new cache-specific tests)
-- black: clean
-- ruff: clean
-- mypy: clean
+- pytest: **772 passed** (up from 658)
+- black: clean, ruff: clean, mypy: clean
+- DX-005: 9 acceptance + 4 regression + 4 AI validation = 17 tests, all passing
 
 ## Runtime Frozen
-
 No further optimizations, runtime architecture changes, or performance work
 until community feedback identifies new bottlenecks.
 
 ## Next Milestone
-
-v0.2.x — Community feedback collection. Release management.
+**DX-006** — Package Manager (`ail init`, `ail install`, dependency resolution)

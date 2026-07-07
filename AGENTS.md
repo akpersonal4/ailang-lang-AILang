@@ -1,6 +1,6 @@
 # AILang — AI Agent Instructions
 
-Auto-consumed by Claude Code, Windsurf, Cursor, Copilot. See `docs/AI_MODEL_GUIDE.md` for per-tool setup.
+Auto-consumed by Claude Code, Windsurf, Cursor, Copilot. See `docs/guides/AI_MODEL_GUIDE.md` for per-tool setup.
 
 ---
 
@@ -12,19 +12,40 @@ Generate correct, idiomatic AILang code that builds and runs on first compile. E
 
 ## 2. Mandatory Reading Order
 
+### 2.1 Before Writing AILang Code
+
 Before writing any AILang code, read these files in order:
 
 | Order | File |
 |:-----:|------|
-| 1 | `PROJECT_MEMORY.md` |
-| 2 | `docs/AILANG_DEVELOPMENT_PLAYBOOK.md` |
-| 3 | `docs/MASTER_ENGINEERING_PROMPT.md` |
-| 4 | `LANGUAGE_SPEC.md` |
-| 5 | `docs/STDLIB_REFERENCE.md` |
-| 6 | `docs/LANGUAGE_TOUR.md` |
-| 7 | `README.md` |
-| 8 | One existing app from `apps/` |
-| 9 | Browse `examples/patterns/` for pre-written recipes |
+| 1 | `DEVELOPMENT_STATUS.md` |
+| 2 | `PROJECT_MEMORY.md` |
+| 3 | `AGENTS.md` (this file) |
+| 4 | `docs/guides/AILANG_DEVELOPMENT_PLAYBOOK.md` |
+| 5 | `docs/architecture/ARCHITECTURE_DECISIONS.md` |
+| 6 | `docs/reference/LANGUAGE_SPEC.md` |
+
+> Developers first need to know **what is happening today** before learning **how the language works**.
+
+### 2.2 Before Modifying Runtime/Compiler Internals
+
+Before modifying any file in:
+- `compiler/runtime/`
+- `compiler/interpreter/`
+- `environment.py`
+- The semantic analyzer
+- Scope handling
+
+AI MUST read these files in order:
+
+| Order | File |
+|:-----:|------|
+| 1 | `docs/architecture/ARCHITECTURE_DECISIONS.md` |
+| 2 | `docs/runtime/optimizations.md` |
+| 3 | `docs/runtime/lookup_cache/design.md` |
+| 4 | `docs/runtime/lookup_cache/implementation.md` |
+
+**Never remove or redesign an optimization without understanding the architectural decision that introduced it.**
 
 ---
 

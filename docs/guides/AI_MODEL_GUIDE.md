@@ -71,7 +71,7 @@ You MUST check examples/patterns/ for pre-written recipes before writing filter/
 **Behavior:** No project awareness, no file system access.
 
 **Recommended setup:**
-- Paste the contents of `docs/MASTER_ENGINEERING_PROMPT.md` into the chat
+- Paste the contents of `docs/guides/MASTER_ENGINEERING_PROMPT.md` into the chat
 - This references `AGENTS.md` §1 Mandatory Pre-Read Checklist
 - If asked, paste `AGENTS.md` content as well
 

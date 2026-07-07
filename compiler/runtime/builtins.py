@@ -20,9 +20,9 @@ _program_argv: list[str] | None = None
 
 def print_builtin(args: tuple[RuntimeValue, ...]) -> None:
     if not args:
-        print()
+        print(flush=True)
         return
-    print(*args)
+    print(*args, flush=True)
 
 
 def list_new(args: tuple[RuntimeValue, ...]) -> list[RuntimeValue]:
@@ -274,6 +274,19 @@ def string_substring(args: tuple[RuntimeValue, ...]) -> str:
     return s[start:end]
 
 
+def string_find(args: tuple[RuntimeValue, ...]) -> int:
+    s = str(args[0])
+    needle = str(args[1])
+    start = int(args[2]) if len(args) > 2 else 0
+    return s.find(needle, start)
+
+
+def string_split(args: tuple[RuntimeValue, ...]) -> list[str]:
+    s = str(args[0])
+    delim = str(args[1]) if len(args) > 1 else "\n"
+    return s.split(delim)
+
+
 def system_exit(args: tuple[RuntimeValue, ...]) -> None:
     """Exit the process with the given exit code."""
     code = int(args[0]) if args else 0
@@ -328,6 +341,8 @@ BUILTINS: dict[str, Any] = {
     "csv_parse_header": csv_parse_header,
     "csv_stringify": csv_stringify,
     "string_substring": string_substring,
+    "string_find": string_find,
+    "string_split": string_split,
     "__native_to_int": native_to_int,
     "__native_to_string": native_to_string,
     "system_exit": system_exit,

@@ -56,12 +56,12 @@
 
 ## Language Change Policy
 
-1. **v0.1.x Language Freeze** — The language specification is frozen. No new keywords, grammar changes, syntax changes, semantic changes, or breaking changes are accepted during v0.1.x. See `docs/GOVERNANCE.md §7`.
+1. **v0.1.x Language Freeze** — The language specification is frozen. No new keywords, grammar changes, syntax changes, semantic changes, or breaking changes are accepted during v0.1.x. See `docs/governance/GOVERNANCE.md §7`.
 2. **No change to the grammar, parser, lexer, compiler pipeline, or runtime semantics** without written rationale and ≥3 independent requesting applications (applies post-freeze).
 3. **Stdlib additions** require ≥2 independent applications or a demonstrated stdlib gap (e.g., missing function in a documented module).
 4. **Bug fixes** require 1 application demonstrating the defect. No minimum.
 5. **Documentation changes** require no minimum.
-6. **Every rejection stays in this table permanently.** Features in the "Rejected Forever" category (see `docs/GOVERNANCE.md §6`) are permanently closed and will not be reconsidered.
+6. **Every rejection stays in this table permanently.** Features in the "Rejected Forever" category (see `docs/governance/GOVERNANCE.md §6`) are permanently closed and will not be reconsidered.
 7. **Breaking changes** require an Architecture Decision Record (ADR) in `docs/ADR-*.md`.
 
 ## Stdlib API Stability

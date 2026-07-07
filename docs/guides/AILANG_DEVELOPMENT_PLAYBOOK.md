@@ -273,7 +273,106 @@ Derived from 10 benchmarks. Each lesson confirmed in ≥2 independent apps befor
 
 ---
 
-*This playbook is a living document. Update it when:
+---
+
+## Performance Engineering Workflow
+
+The official process for optimizing the AILang runtime. Derived from ADR-007 (Evidence-First Optimization Policy).
+
+### Principle
+
+**Optimization without profiler evidence is prohibited.**
+
+Every optimization must follow the Observe → Profile → Measure → Find → Verify → Design → Benchmark → Test → Merge cycle. No optimization is implemented based on speculation, intuition, or "best practice" without data.
+
+### The Workflow
+
+```
+1. OBSERVE   — Notice that a program is slower than expected
+2. PROFILE   — Run tools/python_profiler.py on the workload
+3. MEASURE   — Record baseline timing, call counts, memory
+4. FIND      — Identify the hotspot function (top 1-2 by internal time)
+5. VERIFY    — Confirm the hotspot is the root cause, not a symptom
+6. DESIGN    — Design the minimal change that eliminates the hotspot
+7. BENCHMARK — Run before/after comparison on all 5 canonical apps
+8. TEST      — Full regression suite (pytest), all tests must pass
+9. MERGE     — Document in RUNTIME_OPTIMIZATIONS.md, update docs
+```
+
+### Workflow Requirements
+
+| Step | Requirement | Tool |
+|:----:|-------------|------|
+| 1 | Measurable slowdown, not hypothetical | User report or benchmark |
+| 2 | cProfile + tracemalloc | `tools/python_profiler.py` |
+| 3 | Wall-clock, internal time, call count, peak memory | profiler output |
+| 4 | Function with highest internal time | profiler top-N display |
+| 5 | Is the hotspot caused by algorithm or architecture? | Code review |
+| 6 | Minimum lines of code, maximum impact | Design doc |
+| 7 | All 5 apps: dice_roller, hangman, inventory, kanban, static_analyzer | `tools/python_profiler.py` |
+| 8 | pytest, black, ruff, mypy | CI pipeline |
+| 9 | Entry in `docs/runtime/optimizations.md` | Documentation |
+
+### What Counts as Evidence
+
+| Evidence Type | Valid? | Notes |
+|---------------|:------:|-------|
+| "It feels slow" | ❌ | Not measurable |
+| "I think this function might be slow" | ❌ | Speculation |
+| Top-1 function by internal time from cProfile | ✅ | Requires full profile |
+| Hotspot confirmed by flame graph | ✅ | Supplementary |
+| Memory spike from tracemalloc | ✅ | Requires baseline comparison |
+| "This pattern is known to be slow in Python" | ❌ | Not specific to AILang's workload |
+| Pre/post benchmark with speedup ratio | ✅ | Required for merge |
+
+### Canonical Benchmark Suite
+
+The following 5 apps are the **only** benchmarks used for performance testing. All 5 must be measured before and after any optimization.
+
+| App | Lines | Purpose |
+|-----|-------|---------|
+| dice_roller | 73 | Shallow recursion, print-heavy — regression test |
+| hangman_game | 116 | Moderate recursion, random-access — regression test |
+| inventory_mgmt | 1099 | Data-driven, linear flow — regression test |
+| kanban | 1130 | Data-driven, some I/O — regression test |
+| static_analyzer | 839 | Deep recursion, string scanning — primary perf workload |
+
+**Why these 5:** They were identified through the initial profiling campaign and represent the full diversity of AILang workloads. The static analyzer is the only workload with meaningful runtime (>1s). The other 4 are primarily regression tests to ensure no performance regression in typical programs.
+
+### Profile Command
+
+```bash
+# Full benchmark run with cache stats
+python tools/python_profiler.py
+
+# Run a single app
+python tools/python_profiler.py --app static_analyzer
+```
+
+### Runtime Optimization Registry
+
+Every optimization must be registered in `docs/runtime/optimizations.md` with:
+
+- Optimization ID (RTO-NNN)
+- Date and version
+- Problem and root cause
+- Solution and files changed
+- Before/after benchmark evidence
+- Memory impact
+- Risks and rollback procedure
+- Related documents
+
+### Current Optimizations
+
+| ID | Optimization | Date | Version | Speedup |
+|:--:|-------------|:----:|:-------:|:-------:|
+| RTO-001 | Lexical Variable Lookup Cache | 2026-07-06 | v0.2.0 | ~6× static_analyzer |
+
+---
+
+## Playbook Update Policy
+
+This playbook is a living document. Update it when:
 - A new lesson appears in ≥2 independent apps
 - A new stdlib function ships
 - A new anti-pattern is identified

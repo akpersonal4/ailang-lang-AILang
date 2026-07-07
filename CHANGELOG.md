@@ -116,11 +116,14 @@
 ### Developer Experience
 
 - **DX-004 — Benchmark Runner** completed and accepted (auto-discovery, suite modes, configurable repetition, baseline save/compare, regression detection, CI-friendly exit codes, fault-tolerant execution)
+- **DX-005 — Test Generator** completed and accepted (auto-discovery, coverage analysis, three-stage pipeline, intermediate TestCase model, pure Python generators, `--force`/`--dry-run`/`--app` flags, `tests/generated/` separation, dual MD+JSON reports)
+- **tools/common/ — extensions**: Added `hashing.py` (SHA-256 file hashing), `discover_apps()`, `list_py_files()`; `run_ail_build()`/`run_ail_run()` already present
 
 ### Quality Gates
 
-- **677 tests**, all passing (up from 658)
-- DX-004 (ail benchmark): PASS — 11 acceptance tests + 4 regression + 4 AI validation
+- **772 tests**, all passing (up from 658)
+- DX-004 (ail benchmark): PASS — 11 acceptance + 4 regression + 4 AI validation
+- DX-005 (ail testgen): PASS — 9 acceptance + 4 regression + 4 AI validation
 
 ## 0.2.1
 

@@ -84,7 +84,7 @@ until this document has been reviewed. Update AGENTS.md reading order after revi
 ### Developer Tools
 - [x] VS Code Extension (syntax highlighting, snippets, language config)
 - [x] Deterministic formatter (`ail fmt`)
-- [x] 677 tests across 24 test files
+- [x] 772 tests across 84 test scripts (34 manual + 7 DX tool + 43 generated)
 - [x] CI/CD pipeline (GitHub Actions)
 - [x] **DX-001** — `ail context` (AI onboarding) — **Complete & Accepted**
 - [x] **DX-002** — `ail doctor` (repository health) — **Complete & Accepted**
@@ -110,20 +110,27 @@ until this document has been reviewed. Update AGENTS.md reading order after revi
 
 ## Current Work
 
-**DX-005 — Test Generator — Next Priority**
+**DX-005 — Test Generator — Complete & Accepted** 🚀
 
 ### Status
 - **Phase:** Platform & Developer Experience Engineering
 - **Runtime:** Frozen pending new bottleneck evidence
 - **v0.3.0 Goal:** Complete DX-004 through DX-008
 - **DX-004 Status:** ✅ Complete & Accepted
+- **DX-005 Status:** ✅ Complete & Accepted
 
-### DX-005 Objective
-- Automatic AILang test case generation from app source files
-- Generate regression tests that validate build+run for all apps
-- Generate edge-case tests for stdlib functions
-- Structured test output compatible with pytest
-- Fault-tolerant: one failure doesn't abort generation
+### DX-005 Implementation
+- **Architecture:** Three-stage pipeline — Discovery → Analysis → Generation
+- **models.py** — `TestCase`, `TestCategory`, `AppInfo`, `CoverageReport` intermediate model (facts first, rendering second)
+- **discovery.py** — Auto-discovers 43 apps from `apps/*/main.ail`, finds existing tests in `tests/`
+- **analyzer.py** — Coverage gap analysis, identifies missing test opportunities
+- **generator.py** — Pure Python generators (no template files), produces pytest-compatible files
+- **validator.py** — Runs generated tests through pytest for verification
+- **reporter.py** — Dual output: `generated/TEST_GENERATION_REPORT.md` + `.json`
+- **CLI flags:** `--dry-run`, `--force`, `--app <name>`, `--report-only`, `--quiet`
+- **Safety:** Never overwrites existing files without `--force`; `tests/generated/` is a Python package; generated files have `AUTO-GENERATED` header
+- **Output:** 44 generated test files in `tests/generated/` (one per app, 2 tests each: build + run)
+- **Tests:** 9 acceptance + 4 regression + 4 AI validation = 17 tests, all passing
 
 --------------------------------------
 
@@ -134,8 +141,8 @@ until this document has been reviewed. Update AGENTS.md reading order after revi
  | # | Tool | Goal | Priority |
 |:-:|------|------|:--------:|
 | 1 | **DX-004** | Benchmark Runner — **Complete & Accepted** | **Done** |
-| 2 | **DX-005** | Test Generator — automatic AILang test case generation | **Highest** |
-| 3 | **DX-006** | Package Manager — `ail init`, `ail install`, dependency resolution | High |
+| 2 | **DX-005** | Test Generator — **Complete & Accepted** | **Done** |
+| 3 | **DX-006** | Package Manager — `ail init`, `ail install`, dependency resolution | **Highest** |
 | 4 | **DX-007** | LSP (Language Server Protocol) — editor intelligence | Medium |
 | 5 | **DX-008** | Code Formatter (`ail fmt`) — formalize and harden | Medium |
 
@@ -196,8 +203,9 @@ until this document has been reviewed. Update AGENTS.md reading order after revi
 
 | Item | Version | Date |
 |------|---------|------|
+| **DX-005** — Test Generator — **Complete & Accepted** | v0.3.0 | 2026-07-07 |
 | **DX-004** — Benchmark Runner — **Complete & Accepted** | v0.3.0 | 2026-07-07 |
-| **tools/common/** — shared DX tooling library | v0.3.0 | 2026-07-07 |
+| **tools/common/** — shared DX tooling library (+ hashing, discover_apps) | v0.3.0 | 2026-07-07 |
 | **v0.3.0 Release Validation Report** | v0.3.0 | 2026-07-07 |
 | **DX-003** — Static Analyzer — **Complete & Accepted** | v0.2.1 | 2026-07-07 |
 | Stdlib: `string.find`, `string.find_from`, `string.split` (ADR-003) | v0.2.1 | 2026-07-07 |
@@ -247,8 +255,8 @@ until this document has been reviewed. Update AGENTS.md reading order after revi
 | **v0.1.2** | ✅ Complete | Bug fix sprint |
 | **v0.2.0** | ✅ Complete | Runtime optimization |
 | **v0.2.1** | ✅ Complete | DX-003 Static Analyzer, stdlib additions |
-| **v0.3.0** | ✅ **Complete** | DX-004 Benchmark Runner |
-| **v0.3.1** | 📋 In Progress | DX-005 Test Generator |
+| **v0.3.0** | ✅ **Complete** | DX-004 Benchmark Runner + DX-005 Test Generator |
+| **v0.3.1** | 📋 In Progress | DX-006 Package Manager |
 | **v0.5.x** | 📋 Planned | Ecosystem maturity |
 | **v1.0** | 📋 Planned | Full backward compatibility |
 
