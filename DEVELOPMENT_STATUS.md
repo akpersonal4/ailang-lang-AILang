@@ -330,6 +330,7 @@ Before beginning DX-006 implementation, a documentation cleanup milestone was in
 4. **AILANG_DEVELOPMENT_PLAYBOOK.md** ← Dependency planning workflow
 5. **ARCHITECTURE_DECISIONS.md** ← Why decisions were made
 6. **LANGUAGE_SPEC.md** ← Language specification
+7. **Documentation Ownership Matrix** (above) ← Know where every doc type lives
 
 ### Validation Checklist (must pass before merge)
 
@@ -353,6 +354,29 @@ Current Work → Recently Completed → PROJECT_MEMORY → CHANGELOG
 ```
 
 Every completed task follows this flow. Nothing gets lost.
+
+--------------------------------------
+
+## Documentation Ownership Matrix
+
+| Topic | Owner Document |
+|-------|----------------|
+| **Current Status** | `DEVELOPMENT_STATUS.md` — this file |
+| **Release History** | `CHANGELOG.md` |
+| **Architecture Decisions** | `docs/architecture/ARCHITECTURE_DECISIONS.md` (inline ADRs) + `docs/adr/ADR-*.md` (separate ADRs) |
+| **Historical Decisions** | `PROJECT_MEMORY.md` |
+| **Language Specification** | `docs/reference/LANGUAGE_SPEC.md` |
+| **Language Tutorial** | `docs/reference/LANGUAGE_TOUR.md` |
+| **Getting Started** | `docs/reference/GETTING_STARTED.md` |
+| **Stdlib Reference** | `docs/reference/STDLIB_REFERENCE.md` |
+| **AI Workflow** | `AGENTS.md` |
+| **Development Playbook** | `docs/guides/AILANG_DEVELOPMENT_PLAYBOOK.md` |
+| **Project Governance** | `docs/governance/GOVERNANCE.md` |
+| **Performance / Runtime** | `docs/performance/runtime_optimization_001/analysis.md` |
+| **Tooling Architecture** | `docs/architecture/TOOLING_ARCHITECTURE.md` |
+| **Package Manager Design** | `docs/architecture/PACKAGE_MANAGER_DESIGN.md` |
+
+Every document type has exactly one owner. If you need to add information, first check which document owns it. If no document owns it, create a new owner file or add a row to this matrix.
 
 --------------------------------------
 

@@ -467,18 +467,16 @@ No baseline files found. The benchmark runner's `--baseline` flag saves baseline
 
 ---
 
-### R6: Consolidate Language Tutorials
+### R6: Consolidate Language Tutorials — Deferred (Distinct Audiences)
 
-**Problem:** `LANGUAGE_SPEC.md` (canonical spec), `LANGUAGE_TOUR.md` (tutorial), and `GETTING_STARTED.md` (beginner intro) all cover the same language features at different depths. Any grammar change requires updates to 3 files.
+**Problem:** `LANGUAGE_SPEC.md`, `LANGUAGE_TOUR.md`, and `GETTING_STARTED.md` all cover the same language features at different depths.
 
-**Recommendation:** 
-- Keep `LANGUAGE_SPEC.md` as the canonical spec (no change).
-- Update `LANGUAGE_TOUR.md` to reference `LANGUAGE_SPEC.md` for formal definitions instead of re-explaining them.
-- Consider archiving `GETTING_STARTED.md` if `LANGUAGE_TOUR.md` can serve both audiences, or retargeting it as a 5-minute quickstart that references the tour for details.
+**Assessment:** These three files have distinct, valid audiences:
+- **GETTING_STARTED.md** — Beginners: install → Hello World → basic concepts in ~10 minutes
+- **LANGUAGE_TOUR.md** — Intermediate: complete feature coverage with examples
+- **LANGUAGE_SPEC.md** — Advanced: normative grammar and semantics reference
 
-**Benefits:** Reduces spec drift risk. One grammar change = one file update.
-**Risk:** Low — LANGUAGE_TOUR.md already references LANGUAGE_SPEC.md as the canonical source.
-**Impact:** Moderate — LANGUAGE_TOUR.md would need trimming; GETTING_STARTED.md may be archived.
+Cross-references already exist (GETTING_STARTED → LANGUAGE_TOUR → LANGUAGE_SPEC). No consolidation needed — drift risk is low since grammar changes happen at the spec level and tour/started docs are illustrative.
 
 ---
 
@@ -490,31 +488,25 @@ No baseline files found. The benchmark runner's `--baseline` flag saves baseline
 
 ---
 
-### R8: Archive App-Specific Benchmark Reports
+### R8: Archive App-Specific Benchmark Reports 📋
 
 **Problem:** 7 apps have `BENCHMARK_REPORT.md` or equivalent files embedded in their directories. These are historical artifacts from the benchmark development process and are not referenced by any permanent documentation.
 
 **Recommendation:** Move app-specific benchmark reports to a centralized archive location, or remove them entirely if their content is captured in `docs/benchmarks/AILANG_BENCHMARK_WHITEPAPER.md`.
 
-**Benefits:** Cleaner app directories. Less noise for new developers reading app code.
-**Risk:** Low — 7 files, no cross-references.
-**Impact:** Move or delete 7+ files.
+**Status:** Deferred — not in M16 scope. Can be done in a future maintenance pass.
 
 ---
 
-### R9: Resolve Stale Version Reference in DEVELOPMENT_STATUS.md
+### R9: Resolve Stale Version Reference in DEVELOPMENT_STATUS.md ✅
 
-**Problem:** `DEVELOPMENT_STATUS.md` line 14 still reads: *"Current Milestone: v0.3.0 — DX-005 Test Generator (Next)"* — but DX-005 is complete and CURRENT_MILESTONE.md says v0.3.1/design phase.
+**Problem:** `DEVELOPMENT_STATUS.md` had stale milestone reference ("v0.3.0 — DX-005 Test Generator (Next)") even though DX-005 was complete.
 
-**Recommendation:** Update line 14 to: *"Current Milestone: v0.3.1 — DX-006 Package Manager (Design Phase)"*
-
-**Benefits:** Corrects misinformation for readers. Consistent with CURRENT_MILESTONE.md.
-**Risk:** None.
-**Impact:** 1 line edit.
+**Resolution:** Fixed as part of R2 consolidation. Now reads: "v0.3.1 — DX-006 Package Manager (Architecture Design Complete)".
 
 ---
 
-### R10: Consolidate Governance Overlap (Project Constitution vs Vision)
+### R10: Consolidate Governance Overlap (Project Constitution vs Vision) 📋
 
 **Problem:** `PROJECT_CONSTITUTION.md` (10 immutable rules) and `PROJECT_VISION.md` (core principles) cover nearly identical ground with different language. The Constitution is authoritative but the Vision duplicates 80% of its content.
 
@@ -522,30 +514,49 @@ No baseline files found. The benchmark runner's `--baseline` flag saves baseline
 - Make `PROJECT_CONSTITUTION.md` the single source of truth for immutable rules.
 - In `PROJECT_VISION.md`, replace the "Core Principles" section with a reference: "See `PROJECT_CONSTITUTION.md` for the immutable rules that govern this project."
 
-**Benefits:** One place to update project rules.
-**Risk:** Low.
-**Impact:** Edit PROJECT_VISION.md to remove/trim duplicated section.
+**Status:** Deferred — not in M16 scope. Can be done in a future maintenance pass.
 
 ---
 
 ## Summary of Recommendations
 
-| # | Recommendation | Effort | Risk | Benefit |
-|:-:|---------------|:------:|:----:|:--------|
-| R1 | Resolve ADR numbering collision | 3 files | Low | Eliminates ambiguity |
-| R2 | Consolidate status documents (4→2) | 4 files | Low | Single source of truth for status |
-| R3 | Consolidate AI coding guides (4→2) | 4 files | Medium | Eliminates quadruple duplication |
-| R4 | Archive v0.1.0 sprint reports | 21 files | Low | Reduces permanent doc count by 26% |
-| R5 | Add `generated/` to `.gitignore` | 1 line | Low | Clean git status |
-| R6 | Consolidate language tutorials | 3 files | Low | Reduces spec drift risk |
-| R7 | Cross-reference performance/runtime docs | 2 files | Low | Single source for profiling data |
-| R8 | Archive app-specific benchmark reports | 7 files | Low | Cleaner app directories |
-| R9 | Fix stale version in DEVELOPMENT_STATUS.md | 1 line | None | Corrects misinformation |
-| R10 | Consolidate governance overlap | 2 files | Low | Single source for rules |
-
-**Total files affected:** ~48 moves + ~17 edits (estimate)  
-**Total risk:** Low (all changes are moves, cross-references, or trims — no content deletion without archival)
+| # | Recommendation | Status | Notes |
+|:-:|---------------|:------:|-------|
+| R1 | Resolve ADR numbering collision | ✅ **Done** | ADR-001/002/003 → ADR-010/011/012 |
+| R2 | Consolidate status documents (4→1) | ✅ **Done** | Merged into DEVELOPMENT_STATUS.md; 3 files archived |
+| R3 | Consolidate AI coding guides (4→2) | ✅ **Done** | MASTER_PROMPT + FOR_FUTURE_AI archived |
+| R4 | Archive v0.1.0 sprint reports | ✅ **Done** | 21 files moved to docs/archive/v0.1.0/ |
+| R5 | Add `generated/` to `.gitignore` | ✅ **Done** | Added + git rm --cached for 9 tracked files |
+| R6 | Consolidate language tutorials | 🔍 **Deferred** | Distinct audiences confirmed; no action needed |
+| R7 | Cross-reference performance/runtime docs | ✅ **Done** | Canonical-source note added to optimizations.md |
+| R8 | Archive app-specific benchmark reports | 📋 **Not in M16 scope** | Can be done in a future maintenance pass |
+| R9 | Fix stale version in DEVELOPMENT_STATUS.md | ✅ **Done** | Fixed as part of R2 |
+| R10 | Consolidate governance overlap | 📋 **Not in M16 scope** | Can be done in a future maintenance pass |
 
 ---
 
-*This report is an audit only. No files were created, renamed, moved, merged, or deleted.*
+## Documentation Ownership Matrix
+
+Introduced during M16 to prevent future duplication. Every document type has exactly one owner.
+
+| Topic | Owner Document | Also Covers |
+|-------|----------------|-------------|
+| **Current Status** | `DEVELOPMENT_STATUS.md` | Active milestone, completed milestones, roadmap summary |
+| **Release History** | `CHANGELOG.md` | Per-version changelog entries |
+| **Architecture Decisions** | `docs/architecture/ARCHITECTURE_DECISIONS.md` | Inline ADRs (ADR-001 → ADR-009) |
+| **Technical Decisions** | `docs/adr/ADR-010+.md` | Separate ADR files (ADR-010 → ADR-012) |
+| **Historical Decisions** | `PROJECT_MEMORY.md` | Milestone history, key decisions, repository map |
+| **Language Specification** | `docs/reference/LANGUAGE_SPEC.md` | Grammar, semantics, normative reference |
+| **Language Tutorial** | `docs/reference/LANGUAGE_TOUR.md` | Intermediate feature tour with examples |
+| **Getting Started** | `docs/reference/GETTING_STARTED.md` | Beginner guide (install, first program) |
+| **Stdlib Reference** | `docs/reference/STDLIB_REFERENCE.md` | All standard library APIs |
+| **AI Workflow** | `AGENTS.md` | Mandatory rules, reading order, validation checklist |
+| **Development Playbook** | `docs/guides/AILANG_DEVELOPMENT_PLAYBOOK.md` | Engineering workflow, dependency planning |
+| **Project Governance** | `docs/governance/GOVERNANCE.md` | Processes, policies, decision-making |
+| **Performance / Runtime** | `docs/performance/runtime_optimization_001/analysis.md` | Canonical profiling data |
+| **Tooling Architecture** | `docs/architecture/TOOLING_ARCHITECTURE.md` | DX tool conventions, CLI, reports |
+| **Package Manager Design** | `docs/architecture/PACKAGE_MANAGER_DESIGN.md` | DX-006 specification |
+
+---
+
+*Audit completed and partially executed in M16 (Documentation Architecture Cleanup).*
