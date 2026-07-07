@@ -10,9 +10,10 @@ until this document has been reviewed. Update AGENTS.md reading order after revi
 
 | Attribute | Value |
 |:----------|:------|
-| **Current Version** | v0.3.0 |
-| **Current Milestone** | v0.3.1 — DX-006 Package Manager (Architecture Design Complete) |
+| **Current Version** | v0.3.1 |
+| **Current Milestone** | DX-006 — AILang Package Manager (Implementation) |
 | **Project Phase** | Platform & Developer Experience Engineering |
+| **Project Maturity** | ≈95% (relative to v1.0 roadmap) |
 
 --------------------------------------
 
@@ -133,14 +134,16 @@ in the ecosystem that makes AILang productive for both human and AI developers.
 
 ## Current Work
 
-**DX-006 — Package Manager — Architecture Design Phase** 📋
+**DX-006 — AILang Package Manager** 📋
 
 ### Status
-- **Phase:** Tooling Architecture & Package Manager Design
+- **Phase:** Package Manager Implementation
 - **Runtime:** Frozen pending new bottleneck evidence
-- **v0.3.1 Goal:** Complete DX-006 (Package Manager) design and implementation
+- **v0.3.1 Goal:** Implement DX-006 AILang Package Manager
 - **Architecture Design:** ✅ Complete & Accepted
-- **Implementation:** 📋 Not started
+- **Implementation:** 📋 In progress
+
+> **Naming convention:** User-facing milestones use product names (e.g., "AILang Package Manager") rather than DX numbers. DX numbers (DX-006, DX-007, etc.) remain for internal planning.
 
 ### Architecture Milestone (M15) — Tooling Architecture & Package Manager Design
 
@@ -185,13 +188,13 @@ Before beginning DX-006 implementation, a documentation cleanup milestone was in
 
 ## Next Priority Queue
 
-### v0.3.1 — DX-006 Package Manager Implementation
+### v0.3.1 — AILang Package Manager
 
  | # | Tool | Goal | Priority |
 |:-:|------|------|:--------:|
-| 1 | **DX-006** | Package Manager — `ail init`, `ail install`, dependency resolution | **Highest** |
-| 2 | **DX-007** | LSP (Language Server Protocol) — editor intelligence | High |
-| 3 | **DX-008** | Code Formatter (`ail fmt`) — formalize and harden | Medium |
+| 1 | **AILang Package Manager** | `ail init`, `ail install`, dependency resolution | **Highest** |
+| 2 | **AILang LSP** (DX-007) | Language Server Protocol — editor intelligence | High |
+| 3 | **AILang Formatter** (DX-008) | `ail fmt` — formalize and harden | Medium |
 
 ### Maintenance
 - 📋 **Community feedback collection** — Gather real-world usage data
@@ -260,6 +263,7 @@ Before beginning DX-006 implementation, a documentation cleanup milestone was in
 | Item | Version | Date |
 |------|---------|------|
 | **M16** — Documentation Architecture Cleanup (ADR fix, status consolidation, AI guidance, archive, .gitignore) | v0.3.1 | 2026-07-07 |
+| **DX-006** — AILang Package Manager — implementation started | v0.3.1 | 2026-07-07 |
 | **M15** — Tooling Architecture & Package Manager Design (TOOLING_ARCHITECTURE.md + PACKAGE_MANAGER_DESIGN.md) | v0.3.1 | 2026-07-07 |
 | **DX-005** — Test Generator — **Complete & Accepted** | v0.3.0 | 2026-07-07 |
 | **DX-004** — Benchmark Runner — **Complete & Accepted** | v0.3.0 | 2026-07-07 |

@@ -2,7 +2,7 @@
 
 **Specification-first design document for the AILang package manager.**
 
-Status: **DRAFT** — not yet approved for implementation.
+Status: **APPROVED** — implementation in progress (DX-006).
 
 ---
 
