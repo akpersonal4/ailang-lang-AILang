@@ -54,6 +54,8 @@ The cache stores the binding's owning `Environment` pointer, not the value. This
 
 ### Evidence
 
+> **Canonical source:** `docs/performance/runtime_optimization_001/analysis.md` contains the full profiling investigation. The tables below are a summary.
+
 #### Before Cache (pre-v0.2.0)
 
 | App | Runtime (s) | `resolve` calls | `resolve` internal time (s) | `resolve` % runtime |

@@ -482,18 +482,11 @@ No baseline files found. The benchmark runner's `--baseline` flag saves baseline
 
 ---
 
-### R7: Consolidate Performance/Runtime Documentation
+### R7: Consolidate Performance/Runtime Documentation ✅
 
-**Problem:** The same profiling statistics (85.4%, 1.6M calls, 144 depth, 230M steps) are repeated in 6+ files across `docs/runtime/` and `docs/performance/`. The `performance/` directory is the original investigation; `runtime/` is the implementation registry. Neither references the other.
+**Problem:** The same profiling statistics (85.4%, 1.6M calls, 144 depth, 230M steps) were repeated in 6+ files across `docs/runtime/` and `docs/performance/`. The `performance/` directory is the original investigation; `runtime/` is the implementation registry.
 
-**Recommendation:**
-- In `docs/runtime/optimizations.md` and `docs/runtime/lookup_cache/design.md`, replace the inline problem statement with a cross-reference: "See `docs/performance/runtime_optimization_001/analysis.md` for the full profiling data."
-- Keep the `performance/` directory as-is (it's an investigation archive).
-- Keep summary numbers in the runtime docs for readability, but reduce to 1-2 sentences.
-
-**Benefits:** Eliminates 5-way duplication. Single source of truth for profiling data.
-**Risk:** Low — no content removed, only refactored.
-**Impact:** Edit 2 files in `docs/runtime/` to add cross-references.
+**Resolution:** Added canonical-source note in `docs/runtime/optimizations.md` referencing `docs/performance/runtime_optimization_001/analysis.md`. Cross-references were already present in all related documents — this formalizes the single-source-of-truth relationship.
 
 ---
 
