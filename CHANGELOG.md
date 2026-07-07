@@ -1,5 +1,31 @@
 # Changelog
 
+## 0.3.1
+
+### DX-006 — AILang Package Manager
+
+- **Manifest parser**: `ail.toml` parsing via `tomllib` with full validation (package name, semver, dependency format)
+- **`ail init`**: Project initialization — creates `ail.toml`, `main.ail` stub, and `ail.lock`
+- **Local package support**: `path=` dependencies resolved, copied to `lib/<name>/`, full transitive dependency support
+- **Git package support**: `git=` dependencies shallow-cloned, tag/branch/rev checkout, transitive support
+- **Dependency resolver**: Recursive resolution with topological sort and circular dependency detection
+- **Lock file**: `ail.lock` with TOML format, versioned schema, `input_hash` staleness detection, fast replay
+- **Checksum verification**: SHA-256 integrity hashing for all installed packages
+- **Installation engine**: Full orchestration with `--no-lock`, `--offline`, `--frozen-lockfile` flags
+- **Exit codes**: Per TOOLING_ARCHITECTURE.md conventions (0=success, 1=failure, 3=internal error)
+- **Acceptance tests**: 8/8 tests passing covering init, parse, install, and lock file generation
+- **Documentation**: PACKAGE_MANAGER_DESIGN.md approved, tool README created
+
+### M16 — Documentation Architecture Cleanup
+
+- **ADR collision resolved**: Separate ADR files renumbered ADR-001/002/003 → ADR-010/011/012
+- **Status duplication eliminated**: PROJECT_PHASE.md, ROADMAP.md, CURRENT_MILESTONE.md archived; DEVELOPMENT_STATUS.md now canonical
+- **AI guidance consolidated**: MASTER_ENGINEERING_PROMPT.md, FOR_FUTURE_AI.md archived; AGENTS.md canonical
+- **v0.1.0 sprint reports archived**: 21 files moved to `docs/archive/v0.1.0/`
+- **`generated/` added to `.gitignore`**: 9 tracked generated files removed from git tracking
+- **Documentation Ownership Matrix created**: 15 document types with canonical owners
+- **Cross-references updated**: RELEASE_PROCESS.md, AI_MODEL_GUIDE.md, PROJECT_MEMORY.md
+
 ## 0.1.0
 
 ### Standard Library v1.0

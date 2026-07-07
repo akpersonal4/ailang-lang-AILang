@@ -141,7 +141,7 @@ in the ecosystem that makes AILang productive for both human and AI developers.
 - **Runtime:** Frozen pending new bottleneck evidence
 - **v0.3.1 Goal:** Implement DX-006 AILang Package Manager
 - **Architecture Design:** ✅ Complete & Accepted
-- **Implementation:** 📋 In progress
+- **Implementation:** ✅ **Complete** — see details below
 
 > **Naming convention:** User-facing milestones use product names (e.g., "AILang Package Manager") rather than DX numbers. DX numbers (DX-006, DX-007, etc.) remain for internal planning.
 
@@ -173,9 +173,24 @@ Before writing implementation code for DX-006, two architecture documents were c
   13 sections covering motivation, project manifest, package repository, dependency resolution, CLI commands (6: init, add, remove, install, update, list), lock file, cache, checksum verification, DX tool integration
 - **10 Open Questions**: See `docs/architecture/PACKAGE_MANAGER_DESIGN.md §13` — must be resolved before implementation
 
-### M16 — Documentation Architecture Cleanup (Current)
+### DX-006 Implementation Status
 
-Before beginning DX-006 implementation, a documentation cleanup milestone was introduced:
+| Component | Status | Details |
+|-----------|:------:|---------|
+| Manifest parser (`ail.toml`) | ✅ | Full TOML validation, kebab-case name check, semver validation, BOM handling |
+| `ail init` | ✅ | Creates project structure (ail.toml, main.ail, ail.lock) |
+| Local package install | ✅ | Resolves path deps, copies to `lib/<name>/`, full transitive resolution |
+| Git package install | ✅ | Shallow clone, tag/branch/rev support, transitive resolution |
+| Dependency resolver | ✅ | Recursive resolution, topological sort, circular dep detection |
+| Lock file (`ail.lock`) | ✅ | TOML format, versioned schema, input_hash staleness detection, replay |
+| Cache management | ✅ | SHA-256 checksums, package cleanup, `.ail/cache/` layout |
+| Installation engine | ✅ | Full orchestration, --no-lock, --offline, --frozen-lockfile flags |
+| Acceptance tests | ✅ | 8/8 tests passing (name validation, init, parse, install, lock) |
+| `ail add` / `ail remove` / `ail update` / `ail list` | 📋 | CLI stubs created, implementation deferred to v1.1 |
+
+### M16 — Documentation Architecture Cleanup (Complete)
+
+Before DX-006 implementation began, a documentation cleanup milestone was completed:
 - ADR numbering collision resolved (ADR-001→ADR-010, etc.)
 - Status documents consolidated (PROJECT_PHASE.md, ROADMAP.md, CURRENT_MILESTONE.md → archived)
 - AI guidance consolidated (see AGENTS.md)
@@ -263,7 +278,7 @@ Before beginning DX-006 implementation, a documentation cleanup milestone was in
 | Item | Version | Date |
 |------|---------|------|
 | **M16** — Documentation Architecture Cleanup (ADR fix, status consolidation, AI guidance, archive, .gitignore) | v0.3.1 | 2026-07-07 |
-| **DX-006** — AILang Package Manager — implementation started | v0.3.1 | 2026-07-07 |
+| **DX-006** — AILang Package Manager — implementation complete (manifest, init, install, lock, resolver) | v0.3.1 | 2026-07-07 |
 | **M15** — Tooling Architecture & Package Manager Design (TOOLING_ARCHITECTURE.md + PACKAGE_MANAGER_DESIGN.md) | v0.3.1 | 2026-07-07 |
 | **DX-005** — Test Generator — **Complete & Accepted** | v0.3.0 | 2026-07-07 |
 | **DX-004** — Benchmark Runner — **Complete & Accepted** | v0.3.0 | 2026-07-07 |
