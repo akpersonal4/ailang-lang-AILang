@@ -1,0 +1,229 @@
+"""Dependency resolution — resolves ail.toml dependencies to a flat dependency tree."""
+
+from __future__ import annotations
+
+from pathlib import Path
+
+from tools.ail_package_manager.cache import clone_git_dep, resolve_local_dep
+from tools.ail_package_manager.lock import (
+    deps_hash_matches,
+    read_lock_packages,
+)
+from tools.ail_package_manager.manifest import find_manifest, parse_manifest
+from tools.ail_package_manager.models import (
+    DependencySpec,
+    LockFilePackage,
+    ProjectManifest,
+    ResolvedDependency,
+)
+
+
+def resolve(
+    project_root: Path,
+    manifest: ProjectManifest,
+    manifest_path: Path,
+    lock_path: Path,
+    cache_dir: Path,
+    use_lock: bool = True,
+) -> list[ResolvedDependency]:
+    """Resolve all dependencies into a flat dependency list.
+
+    If a valid lock file exists and use_lock is True, replay from lock.
+    Otherwise, resolve from scratch.
+
+    Returns a list of ResolvedDependency in dependency order
+    (dependencies before dependents).
+    """
+    if use_lock and deps_hash_matches(manifest_path, lock_path):
+        return _resolve_from_lock(
+            project_root, lock_path, manifest_path, cache_dir
+        )
+
+    return _resolve_fresh(
+        project_root, manifest, manifest_path, cache_dir
+    )
+
+
+def _resolve_from_lock(
+    project_root: Path,
+    lock_path: Path,
+    manifest_path: Path,
+    cache_dir: Path,
+) -> list[ResolvedDependency]:
+    """Replay dependency resolution from an existing lock file."""
+    lock_packages = read_lock_packages(lock_path)
+    resolved = []
+
+    for pkg in lock_packages:
+        rd = ResolvedDependency(
+            name=pkg.name,
+            version=pkg.version,
+            source=pkg.source,
+            checksum=pkg.checksum,
+            dependencies=pkg.dependencies,
+            path=pkg.path,
+            git=pkg.git,
+        )
+        resolved.append(rd)
+
+    return resolved
+
+
+def _resolve_fresh(
+    project_root: Path,
+    manifest: ProjectManifest,
+    manifest_path: Path,
+    cache_dir: Path,
+) -> list[ResolvedDependency]:
+    """Resolve dependencies from scratch."""
+    resolved: dict[str, ResolvedDependency] = {}
+    _resolve_deps(
+        deps=manifest.dependencies,
+        project_root=project_root,
+        manifest_path=manifest_path,
+        cache_dir=cache_dir,
+        resolved=resolved,
+        visited=set(),
+        chain=None,
+    )
+
+    # Topological sort: dependencies before dependents
+    return _topological_sort(resolved)
+
+
+def _resolve_deps(
+    deps: dict[str, DependencySpec],
+    project_root: Path,
+    manifest_path: Path,
+    cache_dir: Path,
+    resolved: dict[str, ResolvedDependency],
+    visited: set[str],
+    chain: list[str] | None,
+) -> None:
+    """Recursively resolve a set of dependencies.
+
+    Raises ValueError on circular dependency or resolution failure.
+    """
+    if chain is None:
+        chain = []
+    if chain:
+        current = chain[-1]
+
+    for dep_name, dep_spec in deps.items():
+        if dep_name in visited:
+            continue
+
+        if dep_name in chain:
+            cycle = " -> ".join(chain + [dep_name])
+            raise ValueError(f"Circular dependency detected: {cycle}")
+
+        visited.add(dep_name)
+        chain.append(dep_name)
+
+        if dep_spec.path:
+            _resolve_local_dep(
+                dep_spec, project_root, cache_dir, resolved, visited, chain
+            )
+        elif dep_spec.git:
+            _resolve_git_dep(
+                dep_spec, cache_dir, resolved, visited, chain
+            )
+        else:
+            # Registry dependency (future) — skip for v1
+            resolved[dep_name] = ResolvedDependency(
+                name=dep_name,
+                version=dep_spec.version_req if dep_spec.version_req != "*" else "0.0.0",
+                source="registry",
+                dependencies=[],
+            )
+
+        chain.pop()
+
+
+def _resolve_local_dep(
+    dep_spec: DependencySpec,
+    project_root: Path,
+    cache_dir: Path,
+    resolved: dict[str, ResolvedDependency],
+    visited: set[str],
+    chain: list[str],
+) -> None:
+    """Resolve a local path dependency and its transitive deps."""
+    dep_manifest, checksum = resolve_local_dep(dep_spec, project_root, cache_dir)
+
+    resolved[dep_spec.name] = ResolvedDependency(
+        name=dep_spec.name,
+        version=dep_manifest.version,
+        source="local",
+        path=None,
+        checksum=checksum,
+        dependencies=list(dep_manifest.dependencies.keys()),
+    )
+
+    # Resolve transitive dependencies
+    _resolve_deps(
+        deps=dep_manifest.dependencies,
+        project_root=project_root,
+        manifest_path=None,
+        cache_dir=cache_dir,
+        resolved=resolved,
+        visited=visited,
+        chain=chain,
+    )
+
+
+def _resolve_git_dep(
+    dep_spec: DependencySpec,
+    cache_dir: Path,
+    resolved: dict[str, ResolvedDependency],
+    visited: set[str],
+    chain: list[str],
+) -> None:
+    """Resolve a Git dependency and its transitive deps."""
+    dep_manifest, checksum, clone_path = clone_git_dep(dep_spec, cache_dir)
+
+    resolved[dep_spec.name] = ResolvedDependency(
+        name=dep_spec.name,
+        version=dep_manifest.version,
+        source="git",
+        git=dep_spec.git,
+        tag=dep_spec.tag,
+        checksum=checksum,
+        dependencies=list(dep_manifest.dependencies.keys()),
+    )
+
+    # Resolve transitive dependencies using the cloned repo as project_root
+    parent_dir = clone_path.parent
+    _resolve_deps(
+        deps=dep_manifest.dependencies,
+        project_root=parent_dir,
+        manifest_path=None,
+        cache_dir=cache_dir,
+        resolved=resolved,
+        visited=visited,
+        chain=chain,
+    )
+
+
+def _topological_sort(
+    resolved: dict[str, ResolvedDependency],
+) -> list[ResolvedDependency]:
+    """Sort resolved dependencies so dependencies come before dependents."""
+    sorted_list: list[ResolvedDependency] = []
+    visited: set[str] = set()
+
+    def visit(name: str) -> None:
+        if name in visited:
+            return
+        visited.add(name)
+        dep = resolved.get(name)
+        if dep is None:
+            return
+        for child_name in dep.dependencies:
+            visit(child_name)
+        sorted_list.append(dep)
+
+    for name in resolved:
+        visit(name)
+
+    return sorted_list

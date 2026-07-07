@@ -13,6 +13,7 @@ import sys
 from pathlib import Path
 
 from tools.ail_package_manager.init import init_project
+from tools.ail_package_manager.installer import install
 from tools.ail_package_manager.manifest import find_manifest, parse_manifest
 
 
@@ -51,12 +52,12 @@ def cmd_remove(args: argparse.Namespace) -> int:
 
 
 def cmd_install(args: argparse.Namespace) -> int:
-    manifest_path = find_manifest(Path.cwd())
-    if manifest_path is None:
-        print("Error: No ail.toml found in current or parent directories", file=sys.stderr)
-        return 3
-    print("ail install (not yet implemented)")
-    return 1
+    return install(
+        project_root=Path.cwd(),
+        no_lock=args.no_lock,
+        offline=args.offline,
+        frozen_lockfile=args.frozen_lockfile,
+    )
 
 
 def cmd_update(args: argparse.Namespace) -> int:

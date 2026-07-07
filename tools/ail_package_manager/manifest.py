@@ -66,8 +66,11 @@ def parse_manifest(path: Path) -> ProjectManifest:
         raise ValueError(f"Not a file: {path}")
 
     try:
-        with open(path, "rb") as f:
-            data = tomllib.load(f)
+        raw = path.read_bytes()
+        # Strip UTF-8 BOM if present (common on Windows)
+        if raw.startswith(b"\xef\xbb\xbf"):
+            raw = raw[3:]
+        data = tomllib.loads(raw.decode("utf-8"))
     except tomllib.TOMLDecodeError as e:
         raise ValueError(f"Invalid TOML in {path}: {e}")
 
