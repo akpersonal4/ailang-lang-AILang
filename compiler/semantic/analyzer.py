@@ -151,6 +151,7 @@ class SemanticAnalyzer:
                     f"Duplicate import of {module_path}",
                     None,
                     None,
+                    file_path=self.symbol_table._file_path,
                 )
                 self.symbol_table.reporter.report(diagnostic)
             return
@@ -179,6 +180,7 @@ class SemanticAnalyzer:
                     f"Symbol not found in module: {module_path}",
                     None,
                     None,
+                    file_path=self.symbol_table._file_path,
                 )
                 self.symbol_table.reporter.report(diagnostic)
                 return

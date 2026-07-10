@@ -21,8 +21,9 @@ class Parser:
         self,
         tokens: list[Token],
         reporter: DiagnosticReporter | None = None,
+        source_path: str | None = None,
     ) -> None:
-        self.stream = TokenStream(tokens, reporter)
+        self.stream = TokenStream(tokens, reporter, source_path)
 
     @property
     def tokens(self) -> list[Token]:
@@ -144,7 +145,7 @@ class Parser:
                 self.stream.advance()
             else:
                 self.stream.report("Expected identifier after 'as'", "PAR003")
-        self.stream.expect(TokenKind.SEMICOLON)
+        self.stream.match(TokenKind.SEMICOLON)
         if alias:
             module_path.children.append(
                 CSTNode("Alias", token=Token(TokenKind.IDENTIFIER, alias, 0, 0))

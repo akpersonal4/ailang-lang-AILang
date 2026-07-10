@@ -13,7 +13,7 @@ def parse_variable_declaration(stream: TokenStream) -> CSTNode:
     declaration.children.append(parse_identifier(stream))
     stream.expect(TokenKind.ASSIGN)
     declaration.children.append(parse_expression(stream))
-    stream.expect(TokenKind.SEMICOLON)
+    stream.match(TokenKind.SEMICOLON)
     declaration.end_span = stream.previous().end_offset
     return declaration
 

@@ -73,8 +73,10 @@ class LexicalError(ValueError):
 
 
 class Lexer:
-    def __init__(self, reporter: DiagnosticReporter | None = None) -> None:
+    def __init__(self, reporter: DiagnosticReporter | None = None,
+                 source_path: str | None = None) -> None:
         self.reporter = reporter
+        self._source_path = source_path
 
     def tokenize(self, text: str) -> list[Token]:
         tokens: list[Token] = []
@@ -111,6 +113,7 @@ class Lexer:
                 message,
                 line_number,
                 column_number,
+                file_path=self._source_path,
             )
             if self.reporter is not None:
                 self.reporter.report(diagnostic)

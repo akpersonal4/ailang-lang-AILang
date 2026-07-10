@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from compiler.diagnostics import Diagnostic, DiagnosticReporter, ErrorCode, Severity
+from compiler.diagnostics import Diagnostic, DiagnosticFormatter, DiagnosticReporter, ErrorCode, Severity
 
 
 @dataclass
@@ -48,6 +48,7 @@ class SymbolTable:
     ) -> None:
         self.reporter = reporter
         self._source_lines: list[str] | None = None
+        self._file_path: str | None = None
         self.scopes: list[Scope] = [Scope()]
         self.node_scopes: dict[int, Scope] = {}
 
@@ -58,6 +59,10 @@ class SymbolTable:
         session so that error positions reference the correct file.
         """
         self._source_lines = source_text.split("\n") if source_text else None
+
+    def set_file_path(self, file_path: str | None) -> None:
+        """Set the source file path for diagnostic output."""
+        self._file_path = file_path
 
     def enter_scope(self, node: object | None = None) -> None:
         if node is not None and id(node) in self.node_scopes:
@@ -109,13 +114,24 @@ class SymbolTable:
         symbol = active_scope.resolve(name)
         if symbol is not None:
             return symbol
+
+        # Build known names from all scopes for suggestion
+        known_names: set[str] = set()
+        scope: Scope | None = active_scope
+        while scope is not None:
+            known_names.update(scope.symbols.keys())
+            scope = scope.parent
+
+        suggestion = DiagnosticFormatter.find_suggestion(name, known_names)
         self._report_error(
-            f"Undefined identifier: {name}", "SEM002", start_span, end_span
+            f"Undefined identifier: {name}", "SEM002", start_span, end_span,
+            suggestion=suggestion,
         )
         return None
 
     def _report_error(
-        self, message: str, code: str, start_span: int | None, end_span: int | None
+        self, message: str, code: str, start_span: int | None, end_span: int | None,
+        suggestion: str | None = None,
     ) -> None:
         if self.reporter is None:
             return
@@ -140,5 +156,7 @@ class SymbolTable:
             message,
             line,
             column,
+            self._file_path,
+            suggestion,
         )
         self.reporter.report(diagnostic)

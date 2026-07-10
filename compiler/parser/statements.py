@@ -55,7 +55,7 @@ def parse_return_statement(stream: TokenStream) -> CSTNode:
     statement.start_span = stream.current().start_offset
     stream.expect(TokenKind.RETURN)
     statement.children.append(parse_expression(stream))
-    stream.expect(TokenKind.SEMICOLON)
+    stream.match(TokenKind.SEMICOLON)
     statement.end_span = stream.previous().end_offset
     return statement
 
@@ -64,7 +64,7 @@ def parse_expression_statement(stream: TokenStream) -> CSTNode:
     statement = CSTNode("ExpressionStatement")
     statement.start_span = stream.current().start_offset
     statement.children.append(parse_expression(stream))
-    stream.expect(TokenKind.SEMICOLON)
+    stream.match(TokenKind.SEMICOLON)
     statement.end_span = stream.previous().end_offset
     return statement
 

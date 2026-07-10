@@ -65,4 +65,4 @@ def test_formatter_emits_deterministic_output() -> None:
 
     rendered = formatter.format(diagnostic)
 
-    assert rendered == "ERROR E004 (line 4, column 2): Unexpected token ';'"
+    assert rendered == "(line 4, column 2)  ERROR E004: Unexpected token ';'"

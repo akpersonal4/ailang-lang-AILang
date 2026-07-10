@@ -8,10 +8,10 @@ from typing import cast
 
 from compiler.ast.builder import ASTBuilder
 from compiler.ast.nodes import ProgramNode
-from compiler.diagnostics import DiagnosticReporter
+from compiler.diagnostics import Diagnostic, DiagnosticReporter, ErrorCode, Severity
 from compiler.ir.builder import IRBuilder
 from compiler.ir.nodes import ProgramIR
-from compiler.lexer import Lexer
+from compiler.lexer import Lexer, LexicalError
 from compiler.parser import Parser
 from compiler.semantic.analyzer import SemanticAnalyzer
 from compiler.semantic.symbol_table import SymbolTable
@@ -97,13 +97,15 @@ class CompilationSession:
         for module_name in self._graph.topological_sort():
             if module_name not in self._asts:
                 source = self._sources[module_name]
-                lexer = Lexer()
-                parser = Parser(lexer.tokenize(source.text))
+                file_path = str(source.path)
+                lexer = Lexer(source_path=file_path)
+                parser = Parser(lexer.tokenize(source.text), source_path=file_path)
                 cst = parser.parse_program()
                 ast = cast(ProgramNode, ASTBuilder().build(cst))
                 self._asts[module_name] = ast
 
-    def discover(self, entry_path: str | Path) -> None:
+    def discover(self, entry_path: str | Path,
+                 reporter: DiagnosticReporter | None = None) -> None:
         """Discover all modules starting from an entry point.
 
         Traverses import declarations recursively and builds the
@@ -111,8 +113,8 @@ class CompilationSession:
         """
         entry_file = Path(entry_path).resolve()
         self._discover_stdlib_modules()
-        self._discover_recursive(entry_file, None)
-        self._compile_all()
+        self._discover_recursive(entry_file, None, reporter)
+        self._compile_all(reporter)
 
     def _discover_stdlib_modules(self) -> None:
         """Register standard library modules from the project tree."""
@@ -135,15 +137,25 @@ class CompilationSession:
             current = current.parent
 
     def _path_to_module_name(self, file_path: Path) -> str:
-        """Convert a file path to a module name relative to root or stdlib."""
-        stdlib_root = self._root / "stdlib"
-        if stdlib_root in file_path.parents or file_path == stdlib_root:
-            try:
-                relative = file_path.relative_to(stdlib_root)
-            except ValueError:
-                relative = file_path
-            stem = relative.with_suffix("")
-            return ".".join(stem.parts)
+        """Convert a file path to a module name relative to root or stdlib.
+
+        Walks up from self._root looking for the stdlib/ directory that
+        contains the file, to handle cases where stdlib is discovered
+        via upward traversal (e.g. root is a subdirectory of the project).
+        """
+        current = self._root.resolve()
+        while True:
+            stdlib_dir = current / "stdlib"
+            if stdlib_dir in file_path.parents or file_path == stdlib_dir:
+                try:
+                    relative = file_path.relative_to(stdlib_dir)
+                except ValueError:
+                    relative = file_path
+                stem = relative.with_suffix("")
+                return ".".join(stem.parts)
+            if current == current.parent:
+                break
+            current = current.parent
 
         try:
             relative = file_path.relative_to(self._root)
@@ -153,7 +165,8 @@ class CompilationSession:
         stem = relative.with_suffix("")
         return ".".join(stem.parts)
 
-    def _discover_recursive(self, file_path: Path, importer: str | None) -> None:
+    def _discover_recursive(self, file_path: Path, importer: str | None,
+                            reporter: DiagnosticReporter | None = None) -> None:
         """Recursively discover modules and add to graph."""
         module_name = self._path_to_module_name(file_path)
         if module_name in self._sources:
@@ -170,9 +183,14 @@ class CompilationSession:
             self._graph.add_dependency(importer, module_name)
 
         # Parse and extract imports
-        lexer = Lexer()
-        parser = Parser(lexer.tokenize(source.text))
-        cst = parser.parse_program()
+        try:
+            lexer = Lexer(reporter, source_path=str(source.path))
+            tokens = lexer.tokenize(source.text)
+            parser = Parser(tokens, reporter, source_path=str(source.path))
+            cst = parser.parse_program()
+        except LexicalError:
+            # Lexer error during discovery — skip import extraction
+            return
 
         # Extract imports and discover them
         for child in cst.children:
@@ -188,21 +206,49 @@ class CompilationSession:
                 if segments:
                     try:
                         sub_path = self._resolver.resolve(tuple(segments))
-                        self._discover_recursive(sub_path, module_name)
+                        self._discover_recursive(sub_path, module_name, reporter)
                     except Exception:
                         # Will be reported during semantic analysis
                         pass
 
-    def _compile_all(self) -> None:
+    def _compile_all(self, reporter: DiagnosticReporter | None = None) -> None:
         """Compile all discovered modules in dependency order."""
         for module_name in self._graph.topological_sort():
+            if module_name in self._asts:
+                continue
             if module_name in self._sources:
                 source = self._sources[module_name]
-                lexer = Lexer()
-                parser = Parser(lexer.tokenize(source.text))
-                cst = parser.parse_program()
-                ast = cast(ProgramNode, ASTBuilder().build(cst))
-                self._asts[module_name] = ast
+                file_path = str(source.path)
+                try:
+                    lexer = Lexer(reporter, source_path=file_path)
+                    tokens = lexer.tokenize(source.text)
+                    parser = Parser(tokens, reporter, source_path=file_path)
+                    cst = parser.parse_program()
+                    ast = cast(ProgramNode, ASTBuilder().build(cst))
+                    self._asts[module_name] = ast
+                except LexicalError as e:
+                    if reporter is not None:
+                        diag = Diagnostic(
+                            e.diagnostic.severity,
+                            e.diagnostic.error_code,
+                            e.diagnostic.message,
+                            e.diagnostic.line,
+                            e.diagnostic.column,
+                            file_path=file_path,
+                        )
+                        reporter.report(diag)
+                    self._asts[module_name] = ProgramNode(())
+                except ValueError as e:
+                    msg = str(e) or "Compilation error"
+                    if reporter is not None:
+                        diag = Diagnostic(
+                            Severity.ERROR,
+                            ErrorCode("CMP001", msg),
+                            msg,
+                            file_path=file_path,
+                        )
+                        reporter.report(diag)
+                    self._asts[module_name] = ProgramNode(())
 
     def analyze(self, reporter: DiagnosticReporter | None = None) -> None:
         """Run semantic analysis on all modules.
@@ -224,8 +270,6 @@ class CompilationSession:
                 Severity.ERROR,
                 MOD001_CIRCULAR_IMPORT,
                 f"Circular import detected: {modules}",
-                None,
-                None,
             )
             reporter.report(diagnostic)
             self._cycle_detected = True
@@ -264,10 +308,10 @@ class CompilationSession:
 
         # Then analyze each module in its own scope.
         for module_name in self._graph.topological_sort():
-            # Set source text per-module so error positions reference the
-            # correct file.
             if module_name in self._sources:
-                symbol_table.set_source_text(self._sources[module_name].text)
+                source = self._sources[module_name]
+                symbol_table.set_source_text(source.text)
+                symbol_table.set_file_path(str(source.path))
             self._analyze_module(module_name, symbol_table)
 
     def _register_export(

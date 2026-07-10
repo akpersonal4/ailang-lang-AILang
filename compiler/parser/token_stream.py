@@ -11,9 +11,11 @@ class TokenStream:
         self,
         tokens: list[Token],
         reporter: DiagnosticReporter | None = None,
+        source_path: str | None = None,
     ) -> None:
         self.tokens = tokens
         self.reporter = reporter
+        self.source_path = source_path
         self.index = 0
 
     def current(self) -> Token:
@@ -62,6 +64,7 @@ class TokenStream:
             message,
             self.current().line,
             self.current().column,
+            file_path=self.source_path,
         )
         if self.reporter is not None:
             self.reporter.report(diagnostic)

@@ -47,10 +47,12 @@ class TypeChecker:
         symbol_table: SymbolTable,
         reporter: DiagnosticReporter | None = None,
         source_text: str | None = None,
+        file_path: str | None = None,
     ) -> None:
         self.symbol_table = symbol_table
         self.reporter = reporter or DiagnosticReporter()
         self._source_lines = source_text.split("\n") if source_text else None
+        self._file_path: str | None = file_path
         self.current_function_return_type: Type | None = None
 
     def check(self, node: ASTNode) -> None:
@@ -383,5 +385,6 @@ class TypeChecker:
             message,
             line,
             column,
+            self._file_path,
         )
         self.reporter.report(diagnostic)

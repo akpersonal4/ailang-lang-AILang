@@ -55,11 +55,18 @@ def _get_version() -> str:
 # =============================================================================
 
 
-def _compile(source_path: Path) -> CompilationSession | None:
-    """Compile a source file and return the session, or None on error."""
+def _compile(
+    source_path: Path,
+    json_mode: bool = False,
+) -> tuple[CompilationSession | None, DiagnosticReporter]:
+    """Compile a source file and return the session and reporter.
+
+    Returns:
+        tuple of (session, reporter) where session is None on error.
+    """
     if not source_path.exists():
         print(f"Error: File not found: {source_path}", file=sys.stderr)
-        return None
+        return None, DiagnosticReporter()
 
     stdlib_dir = _find_stdlib()
     root_dir = stdlib_dir.parent
@@ -69,21 +76,18 @@ def _compile(source_path: Path) -> CompilationSession | None:
     session._resolver = type(session._resolver)(root_dir)
 
     reporter = DiagnosticReporter()
-    try:
-        session.discover(source_path)
-    except ValueError as e:
-        print(f"Error: {e}", file=sys.stderr)
-        return None
+    session.discover(source_path, reporter)
 
     session.analyze(reporter)
 
     if reporter.error_count > 0:
-        formatter = DiagnosticFormatter()
-        for diagnostic in reporter.diagnostics:
-            print(formatter.format(diagnostic), file=sys.stderr)
-        return None
+        if not json_mode:
+            formatter = DiagnosticFormatter()
+            for diagnostic in reporter.diagnostics:
+                print(formatter.format(diagnostic), file=sys.stderr)
+        return None, reporter
 
-    return session
+    return session, reporter
 
 
 def cmd_run(args: list[str]) -> int:
@@ -99,7 +103,7 @@ def cmd_run(args: list[str]) -> int:
     # args[0] is the source file; everything after is user-provided.
     runtime_builtins._program_argv = args[1:]
 
-    session = _compile(source_path)
+    session, _ = _compile(source_path)
     if session is None:
         return 1
 
@@ -127,19 +131,63 @@ def cmd_run(args: list[str]) -> int:
         return 1
 
 
+def _format_errors_json(filepath: str, reporter: DiagnosticReporter) -> str:
+    """Format diagnostics as JSON for machine consumption."""
+    import json
+
+    errors = [
+        {
+            "file": d.file_path or filepath,
+            "line": d.line,
+            "column": d.column,
+            "code": d.error_code.code,
+            "message": d.message,
+            "severity": d.severity.name.lower(),
+            "suggestion": d.suggestion,
+        }
+        for d in reporter.diagnostics
+    ]
+    return json.dumps({"passed": False, "errors": errors}, indent=2)
+
+
 def cmd_build(args: list[str]) -> int:
     """Compile an AILang program and check for errors (no execution)."""
-    if not args:
+    json_mode = False
+    paths: list[str] = []
+
+    remaining = list(args)
+    while remaining:
+        arg = remaining.pop(0)
+        if arg == "--json":
+            json_mode = True
+        elif arg.startswith("-"):
+            print(f"Unknown option: {arg}", file=sys.stderr)
+            print(f"Usage: {PROG} build [--json] <file>", file=sys.stderr)
+            return 1
+        else:
+            paths.append(arg)
+
+    if not paths:
         print("Error: missing file argument", file=sys.stderr)
-        print(f"Usage: {PROG} build <file>", file=sys.stderr)
+        print(f"Usage: {PROG} build [--json] <file>", file=sys.stderr)
         return 1
 
-    source_path = Path(args[0]).resolve()
-    session = _compile(source_path)
+    source_path = Path(paths[0]).resolve()
+    session, reporter = _compile(source_path, json_mode)
+
     if session is None:
+        if json_mode:
+            print(_format_errors_json(str(source_path), reporter))
         return 1
 
-    print(f"Build successful: {source_path}")
+    if json_mode:
+        # Build was successful, no errors
+        import json
+
+        result = {"passed": True, "errors": []}
+        print(json.dumps(result))
+    else:
+        print(f"Build successful: {source_path}")
     return 0
 
 
@@ -333,6 +381,12 @@ def cmd_version(args: list[str]) -> int:
     return 0
 
 
+def cmd_order(args: list[str]) -> int:
+    """Run the dependency ordering assistant."""
+    import subprocess
+    return subprocess.run([sys.executable, "-m", "tools.ail_order"] + args).returncode
+
+
 def cmd_help(args: list[str]) -> int:
     """Print help information."""
     print(_get_version())
@@ -340,12 +394,16 @@ def cmd_help(args: list[str]) -> int:
     print("Usage:")
     print(f"  {PROG} run <file>       Compile and run an AILang program")
     print(f"  {PROG} build <file>     Compile and check for errors (no execution)")
+    print(f"  {PROG} build --json     Compile and output JSON diagnostics")
     print(f"  {PROG} check <file>     Compile and check for errors (alias for build)")
     print(f"  {PROG} fmt <file_or_dir>  Format AILang source file(s)")
     print(f"  {PROG} fmt --check       Check formatting (exit 0/1)")
     print(f"  {PROG} fmt --diff        Show unified diff of formatting changes")
     print(f"  {PROG} fmt --stdin       Read from stdin, write formatted to stdout")
     print(f"  {PROG} fmt --quiet       Suppress status output")
+    print(f"  {PROG} order <target>    Analyze dependency ordering of .ail files")
+    print(f"  {PROG} order --json      Output machine-readable JSON")
+    print(f"  {PROG} order --fix       Apply automatic reordering")
     print(f"  {PROG} lsp              Start the LSP server (stdin/stdout)")
     print(f"  {PROG} version          Print version information")
     print(f"  {PROG} help             Print this help message")
@@ -353,11 +411,15 @@ def cmd_help(args: list[str]) -> int:
     print("Examples:")
     print(f"  {PROG} run hello.ail")
     print(f"  {PROG} build hello.ail")
+    print(f"  {PROG} build --json hello.ail")
     print(f"  {PROG} fmt hello.ail")
     print(f"  {PROG} fmt --check hello.ail")
     print(f"  {PROG} fmt --diff hello.ail")
     print(f"  {PROG} fmt apps/")
     print(f"  {PROG} fmt --check apps/ stdlib/")
+    print(f"  {PROG} order hello.ail")
+    print(f"  {PROG} order --json apps/")
+    print(f"  {PROG} order --fix hello.ail")
     print(f"  {PROG} version")
     print(f"  {PROG} hello.ail")
     return 0
@@ -376,6 +438,7 @@ def main(argv: list[str] | None = None) -> int:
         "check": cmd_check,
         "fmt": cmd_fmt,
         "lsp": cmd_lsp,
+        "order": cmd_order,
         "version": cmd_version,
         "help": cmd_help,
     }

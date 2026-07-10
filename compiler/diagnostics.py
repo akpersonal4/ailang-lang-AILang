@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import difflib
 from dataclasses import dataclass
 from enum import Enum
 
@@ -45,6 +46,8 @@ class Diagnostic:
     message: str
     line: int | None = None
     column: int | None = None
+    file_path: str | None = None  # Source file path for multi-module compilation
+    suggestion: str | None = None  # Optional suggestion for typo fixes
 
 
 class DiagnosticReporter:
@@ -74,9 +77,24 @@ class DiagnosticReporter:
 class DiagnosticFormatter:
     def format(self, diagnostic: Diagnostic) -> str:
         location = ""
-        if diagnostic.line is not None and diagnostic.column is not None:
-            location = f" (line {diagnostic.line}, column {diagnostic.column})"
-        return (
-            f"{diagnostic.severity.name} {diagnostic.error_code.code}"
-            f"{location}: {diagnostic.message}"
+        if diagnostic.file_path is not None:
+            if diagnostic.line is not None and diagnostic.column is not None:
+                location = f"{diagnostic.file_path}:{diagnostic.line}:{diagnostic.column}"
+            else:
+                location = f"{diagnostic.file_path}"
+        elif diagnostic.line is not None and diagnostic.column is not None:
+            location = f"(line {diagnostic.line}, column {diagnostic.column})"
+
+        result = (
+            f"{location}  {diagnostic.severity.name} {diagnostic.error_code.code}:"
+            f" {diagnostic.message}"
         )
+        if diagnostic.suggestion:
+            result += f"\n\nDid you mean: {diagnostic.suggestion}?"
+        return result
+
+    @staticmethod
+    def find_suggestion(unknown_name: str, known_names: set[str]) -> str | None:
+        """Find a close matching identifier for spell-check suggestions."""
+        matches = difflib.get_close_matches(unknown_name, known_names, n=1, cutoff=0.6)
+        return matches[0] if matches else None
