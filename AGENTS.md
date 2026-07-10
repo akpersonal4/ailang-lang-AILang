@@ -27,6 +27,17 @@ Before writing any AILang code, read these files in order:
 
 > Developers first need to know **what is happening today** before learning **how the language works**.
 
+### 2.1a Benchmark Evidence (read when working on benchmarks)
+
+When working on engineering benchmarks, B2–B6, or inventory comparison:
+
+| Order | File |
+|:----:|------|
+| 1 | `docs/ENGINEERING_BENCHMARK_PLAN.md` — B1–B7 methodology |
+| 2 | `docs/benchmarks/INVENTORY_SCALABILITY_BENCHMARK.md` — 8,515 LOC AILang inventory system |
+| 3 | `docs/benchmarks/INVENTORY_PYTHON_COMPARISON.md` — Empirical AILang vs Python head-to-head |
+| 4 | `docs/benchmarks/INVENTORY_BENCHMARK_HARNESS.md` — B2–B6 execution protocol (exact prompts, models, stopping conditions) |
+
 ### 2.2 Before Modifying Runtime/Compiler Internals
 
 Before modifying any file in:
@@ -51,11 +62,12 @@ AI MUST read these files in order:
 
 ## 3. Engineering Workflow
 
-1. **Plan** — dependency map, stdlib audit, guard audit
-2. **Write** — bottom-up (Level 0 utilities → Level N `main()`)
-3. **Build** — `ail build <file>`
-4. **Run** — `ail run <file>`
-5. **Verify** — pass Validation Checklist
+1. **Canonical First** — Before creating a new document, search for an existing canonical document. Extend it if appropriate. Only create if genuinely new responsibility.
+2. **Plan** — dependency map, stdlib audit, guard audit
+3. **Write** — bottom-up (Level 0 utilities → Level N `main()`)
+4. **Build** — `ail build <file>`
+5. **Run** — `ail run <file>`
+6. **Verify** — pass Validation Checklist
 
 ---
 
@@ -81,7 +93,7 @@ AI MUST read these files in order:
 ## 5. Common Pitfalls
 
 - **Forward reference:** `Undefined identifier: X` → move X before its caller
-- **Missing stdlib:** `split`, `find`, `join`, `sort`, `list.copy` don't exist → write custom (see Playbook)
+- **Missing stdlib:** `sort`, `list.copy` don't exist → write custom (see Playbook)
 - **Wrong map key:** Keys mismatch between `map.set` and `map.get` → audit key names
 - **Variable collision:** `let i = 0` in multiple functions → use unique names
 - **File too large:** ~100 functions / 1000+ LOC → forward reference ordering becomes error-prone; plan to split early

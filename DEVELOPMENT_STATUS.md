@@ -10,10 +10,25 @@ until this document has been reviewed. Update AGENTS.md reading order after revi
 
 | Attribute | Value |
 |:----------|:------|
-| **Current Version** | v0.5.0 |
-| **Current Milestone** | DX-008 — AILang Formatter |
-| **Project Phase** | Platform & Developer Experience Engineering |
-| **Project Maturity** | ≈96% (relative to v1.0 roadmap) |
+| **Current Version** | v0.8.0 |
+| **Current Milestone** | Compiler Diagnostics Improvement Program |
+| **Project Phase** | Engineering Optimization |
+
+### Maturity Assessment
+
+| Area | Status |
+|------|--------|
+| Language | 100% |
+| Compiler | 99.9% |
+| Runtime | 99% |
+| Formatter | 99% |
+| Platform Services | 100% |
+| Platform Integration | 100% |
+| Documentation | 100% |
+| Governance | 100% |
+| Validation Framework | 100% |
+| Engineering Benchmarks | B1 framework active, B1.1 provider integration active, B2–B7 executed — evidence collected, **v0.7.0 optimization complete** |
+| AI Provider Abstraction | 4 providers (OpenAI, Anthropic, Google, Local), calibration module, B1 integration |
 
 --------------------------------------
 
@@ -33,6 +48,10 @@ until this document has been reviewed. Update AGENTS.md reading order after revi
 - [x] Idempotency verified across 165 valid .ail files (0 failures)
 - [x] Comment-aware inline detection (no false positives from `//` inside strings)
 - [x] Bug Fix Sprint #001 (6 bugs fixed, 522→624 tests)
+- [x] Diagnostics Improvement: `file:line:col` source locations in error messages
+- [x] Diagnostics Improvement: spell-check suggestions for undefined identifiers (SEM002)
+- [x] Diagnostics Improvement: multi-error reporting (all errors collected before analysis)
+- [x] Diagnostics Improvement: JSON diagnostics include `file`, `severity`, `suggestion` fields
 
 ### Language
 - [x] Core syntax (functions, variables, conditionals)
@@ -52,11 +71,11 @@ until this document has been reviewed. Update AGENTS.md reading order after revi
 ### Stdlib
 - [x] **string** — concat, equals, uppercase, lowercase, length, contains, starts_with, ends_with, trim, substring, find, find_from, split
 - [x] **math** — add, sub, mul, div, abs, min, max
-- [x] **list** — new, append, len, get, contains, remove, clear
+- [x] **list** — new, append, len, get, contains, remove, clear, sum, find_by_key
 - [x] **array** — new, push, len, get, contains, remove, clear
 - [x] **map** — new, set, get, has, delete, keys, clear
 - [x] **set** — new, add, contains, len, remove, clear
-- [x] **file** — exists, read, write, append, remove
+- [x] **file** — exists, read, write, append, remove, listdir
 - [x] **path** — join, basename, dirname, extension, normalize
 - [x] **json** — parse, stringify
 - [x] **csv** — parse, parse_header, stringify
@@ -78,6 +97,10 @@ until this document has been reviewed. Update AGENTS.md reading order after revi
 - [x] B08: Mini SQL Engine (839 LOC)
 - [x] B09: Hotel Management System (1,510 LOC)
 - [x] B09b: Spreadsheet Formula Engine (1,325 LOC)
+- [x] Inventory System (AILang): 4,009 app + 4,506 test = 8,515 LOC, 38/38 pass, 0.219s build
+- [x] Inventory System (Python mirror): 2,614 app + 3,644 test = 6,258 LOC, 38/38 pass
+- [x] Inventory Python Empirical Comparison: `docs/benchmarks/INVENTORY_PYTHON_COMPARISON.md`
+- [x] Inventory Benchmark Harness (B2–B6 spec): `docs/benchmarks/INVENTORY_BENCHMARK_HARNESS.md`
 
 ### Applications
 - [x] apps/ — 27 applications validated
@@ -107,7 +130,8 @@ until this document has been reviewed. Update AGENTS.md reading order after revi
 - [x] AI_MODEL_GUIDE.md
 - [x] ARCHITECTURE_DECISIONS.md (9 ADRs)
 - [x] GOVERNANCE.md
-- [x] PROJECT_PHILOSOPHY.md
+- [x] PROJECT_CONSTITUTION.md
+- [x] VISION_AND_DIFFERENTIATION.md
 - [x] LANGUAGE_EVOLUTION.md
 - [x] RELEASE_PROCESS.md
 - [x] AI_MODEL_GUIDE.md
@@ -138,6 +162,43 @@ in the ecosystem that makes AILang productive for both human and AI developers.
 ---
 
 ## Current Work
+
+**DX-009 — Compiler Diagnostics Improvement** ✅
+
+### Status
+- **Phase:** Diagnostics Improvement — Complete
+- **Runtime:** Frozen
+- **v0.8.0 Goal:** Compiler errors show `file:line:col` instead of line number ranges; spell-check suggestions for undefined identifiers; multi-error reporting (collect all errors before stopping); JSON diagnostics include `severity`, `file`, and `suggestion` fields
+- **Architecture Design:** ✅ Integrated directly into `Diagnostic`/`DiagnosticFormatter` (no separate doc needed)
+- **Implementation:** ✅ Complete
+
+### Key Design Decisions (DX-009)
+
+| Decision | Choice | Rationale |
+|----------|--------|-----------|
+| Source location format | `file:line:col  SEVERITY CODE: message` | Full path + severity + code in standard tool-friendly format |
+| Suggestion engine | `difflib.get_close_matches` (cutoff 0.6) | Zero dependencies, works on any identifier collision |
+| Multi-error collection | `DiagnosticReporter` threaded through `discover()` path | Lex/parse errors collected before analysis begins |
+| Semicolons | Optional (`match` instead of `expect`) | Parser continues after missing semicolon instead of stopping |
+| LSP | No changes needed | `from_compiler_diagnostic` already handles new fields via `getattr`; LSP uses URI path, not per-diagnostic file |
+
+### DX-009 Deliverables
+
+| Component | Status | Details |
+|-----------|:------:|---------|
+| `file_path` in `Diagnostic` | ✅ | Optional field, threaded through all error-reporting paths |
+| `suggestion` in `Diagnostic` | ✅ | Populated for SEM002 (undefined identifier) via `difflib` |
+| `DiagnosticFormatter.format()` | ✅ | Now outputs `file:line:col  SEVERITY CODE: message` |
+| `DiagnosticFormatter.find_suggestion()` | ✅ | Static method, uses `difflib.get_close_matches` |
+| SymbolTable suggestion integration | ✅ | `resolve()` collects known names from all scopes; passes suggestion to `_report_error` |
+| TypeChecker `file_path` | ✅ | Passed through constructor |
+| Lexer `source_path` | ✅ | Passed through constructor |
+| TokenStream `source_path` | ✅ | Passed through constructor |
+| Parser `source_path` | ✅ | Passed through to TokenStream |
+| Reporter threading | ✅ | `discover()` → `_discover_recursive()` → `_compile_all()` → Lexer/Parser |
+| CLI error output | ✅ | Uses new `format()` for text; JSON includes `file`, `severity`, `suggestion` |
+| Semicolons optional | ✅ | `stream.expect(SEMICOLON)` → `stream.match(SEMICOLON)` at 4 call sites |
+| Test suite | ✅ | 308+ tests passing (core + LSP + stdlib) |
 
 **DX-008 — AILang Formatter** ✅
 
@@ -178,17 +239,20 @@ in the ecosystem that makes AILang productive for both human and AI developers.
 
 ## Next Priority Queue
 
-### v0.6.0 — Ecosystem Maturity
+### v0.6.x — Engineering Benchmark Program
 
-| # | Tool | Goal | Priority |
-|:-:|------|------|:--------:|
-| 1 | **AILang LSP** (DX-007) | ✅ Complete — Language Server with Go to Definition, Hover, Completion, Diagnostics, References, Rename, Symbols, Code Actions |
-| 2 | **AILang Formatter** (DX-008) | ✅ Complete — Production-ready formatter with --diff, --quiet, directory-wide formatting; idempotency verified repo-wide |
-| 3 | **Documentation website** | Create hosted documentation site | Medium |
-| 4 | **PyPI package** | `pip install ailang` | Medium |
+| # | Benchmark | Goal | Priority |
+|:-:|-----------|------|:--------:|
+| 1 | **B1** (AI Understanding) | ✅ Complete — framework, datasets, 44 tests, automated execution |
+| 2 | **B1.1** (Provider Integration) | ✅ Complete — 4 providers, calibration, 37 tests, B1 extended |
+| 3 | **B2** (Feature Implementation) | ✅ Complete — 3 levels (sum_even, pipeline, diff) in AILang + Python |
+| 4 | **B3** (Bug Fix) | ✅ Complete — 5 bugs (off-by-one, undefined-id, guard, comparison, infinite) |
+| 5 | **B4** (Refactoring) | ✅ Complete — rename + extract function, zero regressions |
+| 6 | **B5** (Upgrade) | ✅ Complete — signature change, CLI conversion, zero regressions |
+| 7 | **B6** (Maintenance) | ✅ Complete — multi-step feature add, edge case handling |
+| 8 | **B7** (AI Context) | ✅ Complete — with-guide vs without-guide comparison (3× savings) |
 
 ### Maintenance
-- 📋 **Community feedback collection** — Gather real-world usage data
 - 📋 **Documentation website** — Create hosted documentation site
 - 📋 **PyPI package** — `pip install ailang`
 
@@ -196,11 +260,13 @@ in the ecosystem that makes AILang productive for both human and AI developers.
 
 ## Forward-Looking Roadmap
 
+> See `PRODUCT_ROADMAP.md` (canonical roadmap) for the complete milestone history and future plans.
+
 | Milestone | Focus | Target |
 |-----------|-------|:------:|
-| **v0.4.0** | DX-007 Language Server — architecture, consolidation, symbol search, code actions | Current |
-| **v0.5.0** | ✅ DX-008 Formatter — production-ready, repo-wide idempotent | Current |
-| **v0.6.x** | Ecosystem maturity — docs site, PyPI package, community | Next |
+| **v0.6.0** | ✅ B1 Engineering Benchmark Framework | Previous |
+| **v0.6.1** | ✅ B1.1 AI Provider Integration & Calibration | Current |
+| **v0.6.x** | B2–B7 benchmark execution, evidence collection | Next |
 | **v1.0** | Language freeze with full backward-compatibility guarantees | Planned |
 | **Post-1.0** | Self-hosting, JIT, advanced features (evidence-driven) | Future |
 
@@ -222,7 +288,6 @@ in the ecosystem that makes AILang productive for both human and AI developers.
 *Requires ≥2 benchmarks requesting before consideration per GOVERNANCE.md*
 
 ### Waiting
-- Source line numbers in errors (poor DX for large files)
 - Wildcard imports (not in spec)
 
 --------------------------------------
@@ -253,6 +318,12 @@ in the ecosystem that makes AILang productive for both human and AI developers.
 
 | Item | Version | Date |
 |------|---------|------|
+| **v0.7.0** — Engineering Optimization — `file.listdir`, `convert.to_number` fix, `list.sum`, `list.find_by_key`. B2 L2: 3→1 iterations (67%). HYPOTHESIS_STATUS.md created. | v0.7.0 | 2026-07-07 |
+| **v0.8.0** — Compiler Diagnostics Improvement — `file:line:col` source locations, SEM002 suggestions, multi-error reporting, JSON diagnostics enhanced. Semicolons optional. 308+ tests passing. | v0.8.0 | 2026-07-08 |
+| **B2–B7** — Engineering Benchmark Evidence — 6 benchmarks (Feature Implementation, Bug Fix, Refactoring, Upgrade, Maintenance, AI Context) executed AILang vs Python — see ENGINEERING_EVIDENCE_REPORT.md | v0.6.2 | 2026-07-07 |
+| **B1.1** — AI Provider Integration & Calibration — 4 providers (OpenAI, Anthropic, Google, Local), calibration module, B1 extended with provider abstraction, `python -m benchmarks calibrate` | v0.6.1 | 2026-07-07 |
+| **B1** — Engineering Benchmark Framework — measurement infrastructure, 3 datasets, 44 tests, `python -m benchmarks {setup,b1,list,test}` | v0.6.0 | 2026-07-07 |
+| **M19** — Documentation Canonicalization (consolidated PROJECT_VISION + PROJECT_PHILOSOPHY → VISION_AND_DIFFERENTIATION + CONSTITUTION; PRODUCT_ROADMAP.md canonical; benchmark methodology/evidence separated) | v0.5.0 | 2026-07-07 |
 | **DX-008** — AILang Formatter — architecture, --diff, --quiet, dir-wide, lexer stability, string-aware comments, repo-wide idempotency (82 tests) | v0.5.0 | 2026-07-07 |
 | **DX-007** — AILang Language Server — architecture, consolidation, symbol search, code actions (103 tests) | v0.4.0 | 2026-07-07 |
 | **M16** — Documentation Architecture Cleanup (ADR fix, status consolidation, AI guidance, archive, .gitignore) | v0.3.1 | 2026-07-07 |
@@ -281,7 +352,6 @@ in the ecosystem that makes AILang productive for both human and AI developers.
 ## Known Issues
 
 ### Non-blocking
-- Source line numbers not included in error messages
 - Float literals rejected with LEX004 (intentional design decision)
 - (resolved) DX-003 directory analysis timeout — now configurable via `--timeout` (default: 300s)
 
@@ -312,7 +382,11 @@ in the ecosystem that makes AILang productive for both human and AI developers.
 | **v0.3.0** | ✅ **Complete** | DX-004 Benchmark Runner + DX-005 Test Generator |
 | **v0.4.0** | ✅ Complete | DX-007 Language Server |
 | **v0.5.0** | ✅ **Complete** | DX-008 AILang Formatter — production-ready |
-| **v0.6.x** | 📋 Planned | Ecosystem maturity — docs site, PyPI package |
+| **v0.6.0** | ✅ **Complete** | B1 Engineering Benchmark Framework |
+| **v0.6.1** | ✅ **Complete** | B1.1 AI Provider Integration & Calibration |
+| **v0.6.2** | ✅ **Complete** | B2–B7 Engineering Benchmark Execution — see ENGINEERING_EVIDENCE_REPORT.md |
+| **v0.7.0** | ✅ **Complete** | Engineering Optimization Program — `file.listdir`, `convert.to_number` fix, `list.sum`, `list.find_by_key`. B2 L2: 3→1 iterations (67% reduction) |
+| **v0.8.0** | ✅ **Complete** | Compiler Diagnostics Improvement Program — `file:line:col` source locations, spell-check suggestions (SEM002), multi-error collection, JSON diagnostics enhanced |
 | **v1.0** | 📋 Planned | Full backward compatibility |
 
 --------------------------------------
@@ -327,7 +401,9 @@ in the ecosystem that makes AILang productive for both human and AI developers.
 4. **AILANG_DEVELOPMENT_PLAYBOOK.md** ← Dependency planning workflow
 5. **ARCHITECTURE_DECISIONS.md** ← Why decisions were made
 6. **LANGUAGE_SPEC.md** ← Language specification
-7. **Documentation Ownership Matrix** (above) ← Know where every doc type lives
+7. **VISION_AND_DIFFERENTIATION.md** ← Project vision, hypothesis, and differentiation
+8. **PROJECT_CONSTITUTION.md** ← Immutable rules
+9. **Documentation Ownership Matrix** (below) ← Know where every doc type lives
 
 ### Validation Checklist (must pass before merge)
 
@@ -356,12 +432,14 @@ Every completed task follows this flow. Nothing gets lost.
 
 ## Documentation Ownership Matrix
 
-| Topic | Owner Document |
-|-------|----------------|
+| Topic | Canonical Document |
+|-------|-------------------|
+| **Vision** | `docs/governance/VISION_AND_DIFFERENTIATION.md` |
+| **Constitution** | `docs/governance/PROJECT_CONSTITUTION.md` |
+| **Roadmap** | `PRODUCT_ROADMAP.md` |
 | **Current Status** | `DEVELOPMENT_STATUS.md` — this file |
+| **History / Memory** | `PROJECT_MEMORY.md` |
 | **Release History** | `CHANGELOG.md` |
-| **Architecture Decisions** | `docs/architecture/ARCHITECTURE_DECISIONS.md` (inline ADRs) + `docs/adr/ADR-*.md` (separate ADRs) |
-| **Historical Decisions** | `PROJECT_MEMORY.md` |
 | **Language Specification** | `docs/reference/LANGUAGE_SPEC.md` |
 | **Language Tutorial** | `docs/reference/LANGUAGE_TOUR.md` |
 | **Getting Started** | `docs/reference/GETTING_STARTED.md` |
@@ -369,10 +447,15 @@ Every completed task follows this flow. Nothing gets lost.
 | **AI Workflow** | `AGENTS.md` |
 | **Development Playbook** | `docs/guides/AILANG_DEVELOPMENT_PLAYBOOK.md` |
 | **Project Governance** | `docs/governance/GOVERNANCE.md` |
+| **Architecture Decisions** | `docs/architecture/ARCHITECTURE_DECISIONS.md` (inline ADRs) + `docs/adr/ADR-*.md` (separate ADRs) |
 | **Performance / Runtime** | `docs/performance/runtime_optimization_001/analysis.md` |
 | **Tooling Architecture** | `docs/architecture/TOOLING_ARCHITECTURE.md` |
 | **Package Manager Design** | `docs/architecture/PACKAGE_MANAGER_DESIGN.md` |
 | **LSP Architecture** | `docs/architecture/LSP_ARCHITECTURE.md` |
+| **Benchmarks (Methodology)** | `docs/ENGINEERING_BENCHMARK_PLAN.md` |
+| **Benchmarks (Results)** | `docs/benchmarks/AILANG_BENCHMARK_WHITEPAPER.md` |
+| **Benchmarks (Inventory vs Python)** | `docs/benchmarks/INVENTORY_PYTHON_COMPARISON.md` |
+| **Benchmarks (Inventory Harness)** | `docs/benchmarks/INVENTORY_BENCHMARK_HARNESS.md` |
 
 Every document type has exactly one owner. If you need to add information, first check which document owns it. If no document owns it, create a new owner file or add a row to this matrix.
 
@@ -382,6 +465,6 @@ Every document type has exactly one owner. If you need to add information, first
 
 | Field | Value |
 |:------|:------|
-| **Date** | 2026-07-07 |
-| **Version** | v0.5.0 |
-| **Milestone** | DX-008 — AILang Formatter |
+| **Date** | 2026-07-08 |
+| **Version** | v0.8.0 |
+| **Milestone** | Compiler Diagnostics Improvement Program |

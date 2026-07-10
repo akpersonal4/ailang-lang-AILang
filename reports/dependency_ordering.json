@@ -1,0 +1,840 @@
+{
+  "metadata": {
+    "tool": "ail_order",
+    "version": "0.1.0",
+    "timestamp": "2026-07-08T17:24:18.136552+00:00"
+  },
+  "summary": {
+    "total": 9,
+    "functions": 68,
+    "errors": 4,
+    "warnings": 0,
+    "cycles": 0
+  },
+  "files": [
+    {
+      "metadata": {
+        "tool": "ail_order",
+        "version": "0.1.0",
+        "timestamp": "2026-07-08T17:24:18.136552+00:00"
+      },
+      "summary": {
+        "total": 3,
+        "errors": 0,
+        "warnings": 0,
+        "cycles": 0,
+        "unreachable": 0,
+        "duplicates": 0
+      },
+      "levels": {
+        "0": [
+          "audit_log",
+          "audit_list",
+          "audit_list_by_entity"
+        ]
+      },
+      "functions": [
+        {
+          "name": "audit_log",
+          "line": 4,
+          "level": 0,
+          "calls": []
+        },
+        {
+          "name": "audit_list",
+          "line": 17,
+          "level": 0,
+          "calls": []
+        },
+        {
+          "name": "audit_list_by_entity",
+          "line": 21,
+          "level": 0,
+          "calls": []
+        }
+      ],
+      "cycles": [],
+      "unreachable": [],
+      "duplicates": [],
+      "findings": []
+    },
+    {
+      "metadata": {
+        "tool": "ail_order",
+        "version": "0.1.0",
+        "timestamp": "2026-07-08T17:24:18.136552+00:00"
+      },
+      "summary": {
+        "total": 3,
+        "errors": 3,
+        "warnings": 0,
+        "cycles": 0,
+        "unreachable": 0,
+        "duplicates": 0
+      },
+      "levels": {
+        "0": [
+          "auth_check_role",
+          "auth_list_contains_rec"
+        ],
+        "1": [
+          "auth_has_permission"
+        ]
+      },
+      "functions": [
+        {
+          "name": "auth_check_role",
+          "line": 4,
+          "level": 0,
+          "calls": []
+        },
+        {
+          "name": "auth_has_permission",
+          "line": 29,
+          "level": 1,
+          "calls": [
+            "auth_list_contains_rec",
+            "auth_list_contains_rec",
+            "auth_list_contains_rec"
+          ]
+        },
+        {
+          "name": "auth_list_contains_rec",
+          "line": 96,
+          "level": 0,
+          "calls": [
+            "auth_list_contains_rec"
+          ]
+        }
+      ],
+      "cycles": [],
+      "unreachable": [],
+      "duplicates": [],
+      "findings": [
+        {
+          "severity": "error",
+          "message": "Forward reference: 'auth_list_contains_rec' called before definition",
+          "line": 29,
+          "function": "auth_has_permission",
+          "suggestion": "Move 'auth_list_contains_rec' before 'auth_has_permission' or call order"
+        },
+        {
+          "severity": "error",
+          "message": "Forward reference: 'auth_list_contains_rec' called before definition",
+          "line": 29,
+          "function": "auth_has_permission",
+          "suggestion": "Move 'auth_list_contains_rec' before 'auth_has_permission' or call order"
+        },
+        {
+          "severity": "error",
+          "message": "Forward reference: 'auth_list_contains_rec' called before definition",
+          "line": 29,
+          "function": "auth_has_permission",
+          "suggestion": "Move 'auth_list_contains_rec' before 'auth_has_permission' or call order"
+        }
+      ]
+    },
+    {
+      "metadata": {
+        "tool": "ail_order",
+        "version": "0.1.0",
+        "timestamp": "2026-07-08T17:24:18.136552+00:00"
+      },
+      "summary": {
+        "total": 7,
+        "errors": 0,
+        "warnings": 0,
+        "cycles": 0,
+        "unreachable": 0,
+        "duplicates": 0
+      },
+      "levels": {
+        "0": [
+          "category_list_by_parent_rec",
+          "category_create",
+          "category_get",
+          "category_update",
+          "category_delete",
+          "category_list",
+          "category_list_by_parent"
+        ]
+      },
+      "functions": [
+        {
+          "name": "category_list_by_parent_rec",
+          "line": 6,
+          "level": 0,
+          "calls": [
+            "category_list_by_parent_rec"
+          ]
+        },
+        {
+          "name": "category_create",
+          "line": 18,
+          "level": 0,
+          "calls": []
+        },
+        {
+          "name": "category_get",
+          "line": 31,
+          "level": 0,
+          "calls": []
+        },
+        {
+          "name": "category_update",
+          "line": 35,
+          "level": 0,
+          "calls": []
+        },
+        {
+          "name": "category_delete",
+          "line": 39,
+          "level": 0,
+          "calls": []
+        },
+        {
+          "name": "category_list",
+          "line": 43,
+          "level": 0,
+          "calls": []
+        },
+        {
+          "name": "category_list_by_parent",
+          "line": 47,
+          "level": 0,
+          "calls": [
+            "category_list_by_parent_rec"
+          ]
+        }
+      ],
+      "cycles": [],
+      "unreachable": [],
+      "duplicates": [],
+      "findings": []
+    },
+    {
+      "metadata": {
+        "tool": "ail_order",
+        "version": "0.1.0",
+        "timestamp": "2026-07-08T17:24:18.136552+00:00"
+      },
+      "summary": {
+        "total": 7,
+        "errors": 0,
+        "warnings": 0,
+        "cycles": 0,
+        "unreachable": 0,
+        "duplicates": 0
+      },
+      "levels": {
+        "0": [
+          "customer_search_rec",
+          "customer_create",
+          "customer_get",
+          "customer_update",
+          "customer_delete",
+          "customer_list",
+          "customer_search"
+        ]
+      },
+      "functions": [
+        {
+          "name": "customer_search_rec",
+          "line": 6,
+          "level": 0,
+          "calls": [
+            "customer_search_rec"
+          ]
+        },
+        {
+          "name": "customer_create",
+          "line": 20,
+          "level": 0,
+          "calls": []
+        },
+        {
+          "name": "customer_get",
+          "line": 35,
+          "level": 0,
+          "calls": []
+        },
+        {
+          "name": "customer_update",
+          "line": 39,
+          "level": 0,
+          "calls": []
+        },
+        {
+          "name": "customer_delete",
+          "line": 45,
+          "level": 0,
+          "calls": []
+        },
+        {
+          "name": "customer_list",
+          "line": 49,
+          "level": 0,
+          "calls": []
+        },
+        {
+          "name": "customer_search",
+          "line": 53,
+          "level": 0,
+          "calls": [
+            "customer_search_rec"
+          ]
+        }
+      ],
+      "cycles": [],
+      "unreachable": [],
+      "duplicates": [],
+      "findings": []
+    },
+    {
+      "metadata": {
+        "tool": "ail_order",
+        "version": "0.1.0",
+        "timestamp": "2026-07-08T17:24:18.136552+00:00"
+      },
+      "summary": {
+        "total": 16,
+        "errors": 1,
+        "warnings": 0,
+        "cycles": 0,
+        "unreachable": 0,
+        "duplicates": 0
+      },
+      "levels": {
+        "0": [
+          "helpers_repeat_char",
+          "helpers_pad_number",
+          "helpers_current_timestamp",
+          "helpers_unix_timestamp",
+          "helpers_generate_id",
+          "helpers_safe_string",
+          "helpers_is_empty_list",
+          "helpers_copy_map_iter",
+          "helpers_copy_map",
+          "helpers_list_contains_rec",
+          "helpers_list_contains",
+          "helpers_format_currency",
+          "helpers_string_to_number",
+          "helpers_get_map_value_safe"
+        ],
+        "1": [
+          "helpers_find_in_list_rec",
+          "helpers_find_in_list"
+        ]
+      },
+      "functions": [
+        {
+          "name": "helpers_repeat_char",
+          "line": 8,
+          "level": 0,
+          "calls": [
+            "helpers_repeat_char"
+          ]
+        },
+        {
+          "name": "helpers_pad_number",
+          "line": 15,
+          "level": 0,
+          "calls": [
+            "helpers_repeat_char"
+          ]
+        },
+        {
+          "name": "helpers_current_timestamp",
+          "line": 25,
+          "level": 0,
+          "calls": []
+        },
+        {
+          "name": "helpers_unix_timestamp",
+          "line": 29,
+          "level": 0,
+          "calls": []
+        },
+        {
+          "name": "helpers_generate_id",
+          "line": 33,
+          "level": 0,
+          "calls": [
+            "helpers_unix_timestamp",
+            "helpers_pad_number"
+          ]
+        },
+        {
+          "name": "helpers_safe_string",
+          "line": 41,
+          "level": 0,
+          "calls": []
+        },
+        {
+          "name": "helpers_is_empty_list",
+          "line": 48,
+          "level": 0,
+          "calls": []
+        },
+        {
+          "name": "helpers_copy_map_iter",
+          "line": 55,
+          "level": 0,
+          "calls": [
+            "helpers_copy_map_iter"
+          ]
+        },
+        {
+          "name": "helpers_copy_map",
+          "line": 65,
+          "level": 0,
+          "calls": [
+            "helpers_copy_map_iter"
+          ]
+        },
+        {
+          "name": "helpers_find_in_list_rec",
+          "line": 71,
+          "level": 1,
+          "calls": [
+            "helpers_get_map_value_safe",
+            "helpers_find_in_list_rec"
+          ]
+        },
+        {
+          "name": "helpers_find_in_list",
+          "line": 83,
+          "level": 1,
+          "calls": [
+            "helpers_find_in_list_rec"
+          ]
+        },
+        {
+          "name": "helpers_list_contains_rec",
+          "line": 87,
+          "level": 0,
+          "calls": [
+            "helpers_list_contains_rec"
+          ]
+        },
+        {
+          "name": "helpers_list_contains",
+          "line": 97,
+          "level": 0,
+          "calls": [
+            "helpers_list_contains_rec"
+          ]
+        },
+        {
+          "name": "helpers_format_currency",
+          "line": 101,
+          "level": 0,
+          "calls": []
+        },
+        {
+          "name": "helpers_string_to_number",
+          "line": 105,
+          "level": 0,
+          "calls": []
+        },
+        {
+          "name": "helpers_get_map_value_safe",
+          "line": 113,
+          "level": 0,
+          "calls": []
+        }
+      ],
+      "cycles": [],
+      "unreachable": [],
+      "duplicates": [],
+      "findings": [
+        {
+          "severity": "error",
+          "message": "Forward reference: 'helpers_get_map_value_safe' called before definition",
+          "line": 71,
+          "function": "helpers_find_in_list_rec",
+          "suggestion": "Move 'helpers_get_map_value_safe' before 'helpers_find_in_list_rec' or call order"
+        }
+      ]
+    },
+    {
+      "metadata": {
+        "tool": "ail_order",
+        "version": "0.1.0",
+        "timestamp": "2026-07-08T17:24:18.137735+00:00"
+      },
+      "summary": {
+        "total": 6,
+        "errors": 0,
+        "warnings": 0,
+        "cycles": 0,
+        "unreachable": 0,
+        "duplicates": 0
+      },
+      "levels": {
+        "0": [
+          "add_item",
+          "total_value_helper",
+          "total_value",
+          "display_inventory_helper",
+          "display_inventory",
+          "main"
+        ]
+      },
+      "functions": [
+        {
+          "name": "add_item",
+          "line": 3,
+          "level": 0,
+          "calls": []
+        },
+        {
+          "name": "total_value_helper",
+          "line": 12,
+          "level": 0,
+          "calls": [
+            "total_value_helper"
+          ]
+        },
+        {
+          "name": "total_value",
+          "line": 19,
+          "level": 0,
+          "calls": [
+            "total_value_helper"
+          ]
+        },
+        {
+          "name": "display_inventory_helper",
+          "line": 23,
+          "level": 0,
+          "calls": [
+            "print",
+            "display_inventory_helper"
+          ]
+        },
+        {
+          "name": "display_inventory",
+          "line": 30,
+          "level": 0,
+          "calls": [
+            "display_inventory_helper"
+          ]
+        },
+        {
+          "name": "main",
+          "line": 34,
+          "level": 0,
+          "calls": [
+            "print",
+            "add_item",
+            "add_item",
+            "add_item",
+            "print",
+            "display_inventory",
+            "print",
+            "total_value"
+          ]
+        }
+      ],
+      "cycles": [],
+      "unreachable": [],
+      "duplicates": [],
+      "findings": []
+    },
+    {
+      "metadata": {
+        "tool": "ail_order",
+        "version": "0.1.0",
+        "timestamp": "2026-07-08T17:24:18.137735+00:00"
+      },
+      "summary": {
+        "total": 7,
+        "errors": 0,
+        "warnings": 0,
+        "cycles": 0,
+        "unreachable": 0,
+        "duplicates": 0
+      },
+      "levels": {
+        "0": [
+          "product_create_search_rec",
+          "product_create",
+          "product_get",
+          "product_update",
+          "product_delete",
+          "product_list",
+          "product_search"
+        ]
+      },
+      "functions": [
+        {
+          "name": "product_create_search_rec",
+          "line": 6,
+          "level": 0,
+          "calls": [
+            "product_create_search_rec"
+          ]
+        },
+        {
+          "name": "product_create",
+          "line": 20,
+          "level": 0,
+          "calls": []
+        },
+        {
+          "name": "product_get",
+          "line": 39,
+          "level": 0,
+          "calls": []
+        },
+        {
+          "name": "product_update",
+          "line": 43,
+          "level": 0,
+          "calls": []
+        },
+        {
+          "name": "product_delete",
+          "line": 49,
+          "level": 0,
+          "calls": []
+        },
+        {
+          "name": "product_list",
+          "line": 53,
+          "level": 0,
+          "calls": []
+        },
+        {
+          "name": "product_search",
+          "line": 57,
+          "level": 0,
+          "calls": [
+            "product_create_search_rec"
+          ]
+        }
+      ],
+      "cycles": [],
+      "unreachable": [],
+      "duplicates": [],
+      "findings": []
+    },
+    {
+      "metadata": {
+        "tool": "ail_order",
+        "version": "0.1.0",
+        "timestamp": "2026-07-08T17:24:18.137735+00:00"
+      },
+      "summary": {
+        "total": 12,
+        "errors": 0,
+        "warnings": 0,
+        "cycles": 0,
+        "unreachable": 0,
+        "duplicates": 0
+      },
+      "levels": {
+        "0": [
+          "storage_collection_path",
+          "storage_find_first_rec",
+          "storage_apply_changes",
+          "storage_load",
+          "storage_save",
+          "storage_add",
+          "storage_list",
+          "storage_get_by_id",
+          "storage_update_rec",
+          "storage_update",
+          "storage_delete_rec",
+          "storage_delete"
+        ]
+      },
+      "functions": [
+        {
+          "name": "storage_collection_path",
+          "line": 9,
+          "level": 0,
+          "calls": []
+        },
+        {
+          "name": "storage_find_first_rec",
+          "line": 13,
+          "level": 0,
+          "calls": [
+            "storage_find_first_rec"
+          ]
+        },
+        {
+          "name": "storage_apply_changes",
+          "line": 26,
+          "level": 0,
+          "calls": [
+            "storage_apply_changes"
+          ]
+        },
+        {
+          "name": "storage_load",
+          "line": 35,
+          "level": 0,
+          "calls": [
+            "storage_collection_path"
+          ]
+        },
+        {
+          "name": "storage_save",
+          "line": 50,
+          "level": 0,
+          "calls": [
+            "storage_collection_path"
+          ]
+        },
+        {
+          "name": "storage_add",
+          "line": 57,
+          "level": 0,
+          "calls": [
+            "storage_load",
+            "storage_save"
+          ]
+        },
+        {
+          "name": "storage_list",
+          "line": 63,
+          "level": 0,
+          "calls": [
+            "storage_load"
+          ]
+        },
+        {
+          "name": "storage_get_by_id",
+          "line": 67,
+          "level": 0,
+          "calls": [
+            "storage_load",
+            "storage_find_first_rec"
+          ]
+        },
+        {
+          "name": "storage_update_rec",
+          "line": 72,
+          "level": 0,
+          "calls": [
+            "storage_apply_changes",
+            "storage_update_rec"
+          ]
+        },
+        {
+          "name": "storage_update",
+          "line": 85,
+          "level": 0,
+          "calls": [
+            "storage_load",
+            "storage_update_rec",
+            "storage_save"
+          ]
+        },
+        {
+          "name": "storage_delete_rec",
+          "line": 94,
+          "level": 0,
+          "calls": [
+            "storage_delete_rec"
+          ]
+        },
+        {
+          "name": "storage_delete",
+          "line": 105,
+          "level": 0,
+          "calls": [
+            "storage_load",
+            "storage_save",
+            "storage_delete_rec"
+          ]
+        }
+      ],
+      "cycles": [],
+      "unreachable": [],
+      "duplicates": [],
+      "findings": []
+    },
+    {
+      "metadata": {
+        "tool": "ail_order",
+        "version": "0.1.0",
+        "timestamp": "2026-07-08T17:24:18.137735+00:00"
+      },
+      "summary": {
+        "total": 7,
+        "errors": 0,
+        "warnings": 0,
+        "cycles": 0,
+        "unreachable": 0,
+        "duplicates": 0
+      },
+      "levels": {
+        "0": [
+          "vendor_search_rec",
+          "vendor_create",
+          "vendor_get",
+          "vendor_update",
+          "vendor_delete",
+          "vendor_list",
+          "vendor_search"
+        ]
+      },
+      "functions": [
+        {
+          "name": "vendor_search_rec",
+          "line": 6,
+          "level": 0,
+          "calls": [
+            "vendor_search_rec"
+          ]
+        },
+        {
+          "name": "vendor_create",
+          "line": 20,
+          "level": 0,
+          "calls": []
+        },
+        {
+          "name": "vendor_get",
+          "line": 36,
+          "level": 0,
+          "calls": []
+        },
+        {
+          "name": "vendor_update",
+          "line": 40,
+          "level": 0,
+          "calls": []
+        },
+        {
+          "name": "vendor_delete",
+          "line": 46,
+          "level": 0,
+          "calls": []
+        },
+        {
+          "name": "vendor_list",
+          "line": 50,
+          "level": 0,
+          "calls": []
+        },
+        {
+          "name": "vendor_search",
+          "line": 54,
+          "level": 0,
+          "calls": [
+            "vendor_search_rec"
+          ]
+        }
+      ],
+      "cycles": [],
+      "unreachable": [],
+      "duplicates": [],
+      "findings": []
+    }
+  ]
+}

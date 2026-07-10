@@ -1,0 +1,200 @@
+// Customer Management Module
+// Level 2-3: Create, update, delete, search customers; status; notes
+
+import string;
+import list;
+import map;
+import json;
+import file;
+import time;
+import convert;
+
+let DATA_PATH = "apps/mini_crm/data/customers.json";
+
+// ============================================================
+// Level 0: Utilities for this module (no dependencies)
+// ============================================================
+
+// Find index by key (recursive)
+fn find_index_by_key(items, key_name, key_val, idx) {
+    if (idx >= list.len(items)) { return -1 }
+    let item = list.get(items, idx);
+    if (map.has(item, key_name)) {
+        if (string.equals(convert.to_string(map.get(item, key_name)), convert.to_string(key_val))) {
+            return idx
+        }
+    }
+    return find_index_by_key(items, key_name, key_val, idx + 1)
+}
+
+// ============================================================
+// Level 1: Storage utilities
+// ============================================================
+
+fn load_customers() {
+    if (!file.exists(DATA_PATH)) { return list.new() }
+    let content = file.read(DATA_PATH);
+    if (string.length(content) == 0) { return list.new() }
+    return json.parse(content)
+}
+
+fn save_customers(customers) {
+    let content = json.stringify(customers);
+    file.write(DATA_PATH, content);
+    return 0
+}
+
+// ============================================================
+// Level 2: Customer CRUD operations
+// ============================================================
+
+fn make_customer(id, name, email, phone, company, status, notes) {
+    let c = map.new();
+    map.set(c, "id", id);
+    map.set(c, "name", name);
+    map.set(c, "email", email);
+    map.set(c, "phone", phone);
+    map.set(c, "company", company);
+    map.set(c, "status", status);
+    map.set(c, "notes", notes);
+    map.set(c, "created", time.now());
+    map.set(c, "loyalty_points", 0);
+    return c
+}
+
+fn customer_create(id, name, email, phone, company) {
+    let customers = load_customers();
+    let idx = find_index_by_key(customers, "id", id, 0);
+    if (idx >= 0) { return "Error: Customer already exists" }
+    let customer = make_customer(id, name, email, phone, company, "ACTIVE", "");
+    list.append(customers, customer);
+    save_customers(customers);
+    return string.concat("Customer ", string.concat(id, " created"))
+}
+
+fn customer_list_all() {
+    return load_customers()
+}
+
+fn customer_find_by_id(customer_id) {
+    let customers = load_customers();
+    let idx = find_index_by_key(customers, "id", customer_id, 0);
+    if (idx < 0) { return json.parse("null") }
+    return list.get(customers, idx)
+}
+
+fn customer_update(customer_id, name, email, phone, company, status, notes) {
+    let customers = load_customers();
+    let idx = find_index_by_key(customers, "id", customer_id, 0);
+    if (idx < 0) { return "Error: Customer not found" }
+    let c = list.get(customers, idx);
+    if (string.length(name) > 0) { map.set(c, "name", name) }
+    if (string.length(email) > 0) { map.set(c, "email", email) }
+    if (string.length(phone) > 0) { map.set(c, "phone", phone) }
+    if (string.length(company) > 0) { map.set(c, "company", company) }
+    if (string.length(status) > 0) { map.set(c, "status", status) }
+    if (string.length(notes) > 0) { map.set(c, "notes", notes) }
+    save_customers(customers);
+    return string.concat("Customer ", string.concat(customer_id, " updated"))
+}
+
+fn customer_delete(customer_id) {
+    let customers = load_customers();
+    let idx = find_index_by_key(customers, "id", customer_id, 0);
+    if (idx < 0) { return "Error: Customer not found" }
+    let c = list.get(customers, idx);
+    list.remove(customers, c);
+    save_customers(customers);
+    return string.concat("Customer ", string.concat(customer_id, " deleted"))
+}
+
+// ============================================================
+// Level 3: Customer search and query (depends on Level 2)
+// ============================================================
+
+fn customer_search_by_name_helper(customers, substr, idx, results) {
+    if (idx >= list.len(customers)) { return results }
+    let c = list.get(customers, idx);
+    if (map.has(c, "name")) {
+        let name = map.get(c, "name");
+        if (string.contains(string.lowercase(name), string.lowercase(substr))) {
+            list.append(results, c)
+        }
+    }
+    return customer_search_by_name_helper(customers, substr, idx + 1, results)
+}
+
+fn customer_search_by_name(name_substr) {
+    let customers = load_customers();
+    let results = list.new();
+    return customer_search_by_name_helper(customers, name_substr, 0, results)
+}
+
+fn customer_search_by_company_helper(customers, substr, idx, results) {
+    if (idx >= list.len(customers)) { return results }
+    let c = list.get(customers, idx);
+    if (map.has(c, "company")) {
+        let company = map.get(c, "company");
+        if (string.length(company) > 0 && string.contains(string.lowercase(company), string.lowercase(substr))) {
+            list.append(results, c)
+        }
+    }
+    return customer_search_by_company_helper(customers, substr, idx + 1, results)
+}
+
+fn customer_search_by_company(company_substr) {
+    let customers = load_customers();
+    let results = list.new();
+    return customer_search_by_company_helper(customers, company_substr, 0, results)
+}
+
+// ============================================================
+// Level 4: Customer status and notes (depends on Level 1-3)
+// ============================================================
+
+fn customer_set_status(customer_id, status) {
+    let customers = load_customers();
+    let idx = find_index_by_key(customers, "id", customer_id, 0);
+    if (idx < 0) { return "Error: Customer not found" }
+    let c = list.get(customers, idx);
+    map.set(c, "status", status);
+    save_customers(customers);
+    return string.concat("Customer ", string.concat(customer_id, string.concat(" status set to ", status)))
+}
+
+fn customer_add_note(customer_id, note) {
+    let customers = load_customers();
+    let idx = find_index_by_key(customers, "id", customer_id, 0);
+    if (idx < 0) { return "Error: Customer not found" }
+    let c = list.get(customers, idx);
+    let existing_notes = "";
+    if (map.has(c, "notes")) { existing_notes = map.get(c, "notes") }
+    let updated_notes = string.concat(existing_notes, string.concat("; ", note));
+    map.set(c, "notes", updated_notes);
+    save_customers(customers);
+    return "Note added"
+}
+
+fn customer_get_status(customer_id) {
+    let c = customer_find_by_id(customer_id);
+    let none = json.parse("null");
+    if (string.equals(convert.to_string(c), convert.to_string(none))) { return "" }
+    if (map.has(c, "status")) { return map.get(c, "status") }
+    return ""
+}
+
+fn customer_count_by_status_helper(customers, status_val, idx, count) {
+    if (idx >= list.len(customers)) { return count }
+    let c = list.get(customers, idx);
+    if (map.has(c, "status")) {
+        if (string.equals(map.get(c, "status"), status_val)) {
+            return customer_count_by_status_helper(customers, status_val, idx + 1, count + 1)
+        }
+    }
+    return customer_count_by_status_helper(customers, status_val, idx + 1, count)
+}
+
+fn customer_count_by_status(status_val) {
+    let customers = load_customers();
+    return customer_count_by_status_helper(customers, status_val, 0, 0)
+}

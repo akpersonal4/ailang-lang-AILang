@@ -89,6 +89,6 @@
 
 - [Governance](GOVERNANCE.md) — Proposal process, freeze policy, rejected-forever list, backward compatibility
 - [Project Constitution](PROJECT_CONSTITUTION.md) — Immutable rules for AILang development
-- [Product Roadmap](PRODUCT_ROADMAP.md) — Forward-looking feature planning
+- [Product Roadmap](../../PRODUCT_ROADMAP.md) — Forward-looking feature planning
 - [CHANGELOG.md](../CHANGELOG.md) — Version history and release notes
 - [CONTRIBUTING.md](CONTRIBUTING.md) — How to propose changes

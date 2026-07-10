@@ -5,6 +5,7 @@ from __future__ import annotations
 import shutil
 from pathlib import Path
 
+from ail_platform.report_schema import ExitCode
 from tools.ail_package_manager.cache import (
     clone_git_dep,
     copy_package_to_lib,
@@ -21,26 +22,22 @@ def install(
     offline: bool = False,
     frozen_lockfile: bool = False,
 ) -> int:
-    """Install all dependencies declared in ail.toml.
-
-    Returns 0 on success, 1 on resolution/download failure, 3 on internal error.
-    """
+    """Install all dependencies declared in ail.toml."""
     manifest_path = find_manifest(project_root)
     if manifest_path is None:
         print("Error: No ail.toml found")
-        return 3
+        return ExitCode.INTERNAL_ERROR
 
     try:
         manifest = parse_manifest(manifest_path)
     except ValueError as e:
         print(f"Error: {e}")
-        return 3
+        return ExitCode.INTERNAL_ERROR
 
     if not manifest.dependencies:
         print("No dependencies to install")
-        return 0
+        return ExitCode.SUCCESS
 
-    # Setup directories
     lib_dir = project_root / "lib"
     cache_dir = project_root / ".ail" / "cache"
     lock_path = project_root / "ail.lock"
@@ -48,11 +45,9 @@ def install(
     lib_dir.mkdir(parents=True, exist_ok=True)
     cache_dir.mkdir(parents=True, exist_ok=True)
 
-    # Check for frozen lockfile
     if frozen_lockfile and lock_path.exists():
         print("Checking lock file consistency...")
 
-    # Resolve dependencies
     print(f"Resolving dependencies for '{manifest.name}'...")
 
     try:
@@ -66,15 +61,14 @@ def install(
         )
     except ValueError as e:
         print(f"Resolution error: {e}", file=__import__("sys").stderr)
-        return 1
+        return ExitCode.FAILURE
 
     if frozen_lockfile and lock_path.exists():
         from tools.ail_package_manager.lock import deps_hash_matches
         if not deps_hash_matches(manifest_path, lock_path):
             print("Error: Lock file is stale (--frozen-lockfile)", file=__import__("sys").stderr)
-            return 1
+            return ExitCode.FAILURE
 
-    # Install each resolved package
     installed_names: set[str] = set()
     for dep in resolved:
         print(f"  Installing {dep.name} v{dep.version} ({dep.source})...")
@@ -93,24 +87,22 @@ def install(
                     copy_package_to_lib(clone_path, lib_dir, dep.name)
                 except ValueError as e:
                     print(f"  Error installing {dep.name}: {e}", file=__import__("sys").stderr)
-                    return 1
+                    return ExitCode.FAILURE
 
         elif dep.source == "registry":
             if offline:
                 print(f"  Error: {dep.name} requires network (--offline)", file=__import__("sys").stderr)
-                return 1
+                return ExitCode.FAILURE
             print(f"  Warning: Registry support not yet implemented. Skipping {dep.name}")
 
         installed_names.add(dep.name)
 
-    # Clean up lib/ — remove packages no longer needed
     from tools.ail_package_manager.cache import clean_lib
     clean_lib(lib_dir, installed_names)
 
-    # Generate lock file
     if not no_lock:
         lock_content = generate_lock(resolved, manifest_path)
         write_lock(lock_path, lock_content)
 
     print(f"\nInstalled {len(resolved)} packages")
-    return 0
+    return ExitCode.SUCCESS

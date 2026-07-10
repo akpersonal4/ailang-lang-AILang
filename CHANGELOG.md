@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.8.0
+
+### DX-006 — AILang Dependency Ordering Assistant (`ail order`)
+
+- **Tool implementation**: `tools/ail_order/` — analyzes .ail files for dependency ordering issues
+- **Function discovery**: `discovery.py` extracts function names, calls, and line numbers from source files
+- **Graph analysis**: `graph.py` computes topological levels and detects forward references/cycles
+- **Automatic fix mode**: `fixer.py` reorders functions while preserving comments and formatting
+- **Report generation**: `reporter.py` produces Markdown and JSON reports for CI/LSP integration
+- **CLI integration**: `ail order` command added to compiler CLI with `--json`, `--fix`, `--quiet`, `--stdout` flags
+- **Detection capabilities**: 
+  - Forward reference violations (function called before definition)
+  - Circular function dependencies
+  - Unreachable functions (not reachable from main)
+  - Duplicate function declarations
+- **Project analysis**: Full directory analysis with cross-file insights and report generation
+- **12 acceptance tests**, 8 regression tests, 8 AI validation tests — all passing
+
 ## 0.4.0
 
 ### DX-007 — AILang Language Server
@@ -11,6 +29,130 @@
 - **Code Actions foundation**: `textDocument/codeAction` — quick fix scaffolding for import errors, undefined stdlib references, and unused variable warnings
 - **Server capabilities extended**: `workspaceSymbolProvider: true` and `codeActionProvider: true` added to initialize response
 - **103 tests**, all passing (up from 99) — 4 new tests for workspace symbols and code actions
+
+## 0.5.0
+
+### DX-008 — AILang Formatter
+
+- **Architecture document**: `docs/architecture/FORMATTER_ARCHITECTURE.md` — canonical style, CLI flags, token-based formatting, comment handling, idempotency requirement, acceptance criteria
+- **`ail fmt` CLI**: `--diff` (show changes), `--quiet` (errors only), directory-wide formatting, single-file formatting, stdin mode
+- **Token-based formatting**: All 17 token types handled with canonical style rules (4-space indent, space around operators/`:`, newline after `{`, same-line `} else {`)
+- **String-aware comment handling**: Inline comments inside string literals preserved (not misidentified as comments)
+- **Lexer compatibility**: Reuses existing lexer with zero modifications
+- **Repo-wide idempotency**: `--check` mode verifies formatting on all `.ail` files; verified idempotent across the entire repository
+- **82 tests**: 71 formatter tests + 11 CLI tests, all passing
+- **Zero semantic changes**: no modifications to compiler, runtime, or language specification
+
+### M19 — Documentation Canonicalization
+
+- **Consolidated PROJECT_VISION.md + PROJECT_PHILOSOPHY.md** into `VISION_AND_DIFFERENTIATION.md`
+- **Expanded PROJECT_CONSTITUTION.md** with Documentation Rule (§3) and Canonical First Rule (§4)
+- **Created `PRODUCT_ROADMAP.md`** at repository root as the single canonical roadmap
+- **Moved benchmark methodology** from whitepaper section into `ENGINEERING_BENCHMARK_PLAN.md`
+- **Eliminated 7 obsolete/archive files** — ROADMAP.md, PRODUCT_ROADMAP.md (old), etc.
+- **Canonical First Rule** added to AGENTS.md workflow and Constitution
+- **Cross-references updated** across all affected documents
+
+### Quality Gates
+
+- **854 tests**, all passing (772 existing + 82 new formatter)
+- DX-008 (ail fmt): PASS — 82 tests
+- Documentation canonicalization: PASS — no broken links
+
+## 0.7.0
+
+### Engineering Optimization Program (Evidence-Driven Stdlib Evolution)
+
+- **Evidence Analysis**: Reviewed B2–B7 benchmark data. Identified stdlib gaps as #1 friction source (42% of B2 errors).
+- **`file.listdir(path)`**: New stdlib API returning sorted directory entries. Python `os.listdir()` backend. Available via `import file; file.listdir(path)`.
+- **`list.sum(values)`**: New stdlib API returning sum of numeric list items. 3+ independent app pattern threshold met (STDLIB_GAP_ANALYSIS.md).
+- **`list.find_by_key(values, key, value)`**: New stdlib API for finding first map in list with matching property. 3+ app threshold met.
+- **`convert.to_number(value)`**: Fixed — was a no-op identity function. Now correctly converts string/int to integer (same semantics as `to_int`).
+- **`docs/HYPOTHESIS_STATUS.md`**: Created — tracks all 7 engineering hypotheses with evidence status (3 Supported, 1 Partially Supported, 2 Inconclusive, 1 Not Yet Tested).
+- **AGENTS.md updated**: Removed `convert.to_number` no-op pitfall. Updated missing stdlib list to reflect available APIs.
+- **STDLIB_REFERENCE.md updated**: Added documentation for all 4 new/changed APIs. Updated "Known Missing Operations" section.
+
+### Measured Improvement
+
+| Metric | Before (v0.6.x) | After (v0.7.0) | Improvement |
+|--------|:-:|:-:|:-:|
+| B2 L2 (CSV pipeline) | 3 iterations | 1 iteration | **67%** |
+| B2 total | 7 iterations | 5 iterations | **29%** |
+| B2–B6 total | 18 iterations | 16 iterations | **11%** |
+| AILang vs Python ratio | 1.38× | 1.23× | **11% closer** |
+
+### Quality Gates
+
+- All new APIs verified: `file.listdir`, `list.sum`, `list.find_by_key`, `convert.to_number` — build+run confirmed
+- Existing test suite: 18 stdlib tests pass, zero regressions
+- ENGINEERING_EVIDENCE_REPORT.md: updated with before/after comparison
+- HYPOTHESIS_STATUS.md: created with evidence references
+- All P0 APIs implemented (no scope changes)
+
+## 0.6.2
+
+### B2–B7 — Engineering Benchmark Execution
+
+- **B2 Feature Implementation**: 3 levels (sum_even, CSV pipeline, file diff) in AILang + Python — AILang 2.3× more iterations, all compile-time errors
+- **B3 Bug Fix**: 5 bugs (off-by-one, undefined-id, map guard, comparison, infinite recursion) — AILang 1.2× more iterations, 80% first-fix compile rate
+- **B4 Refactoring**: Rename + extract function — parity (1.0×), zero regressions in both languages
+- **B5 Upgrade**: Signature change + CLI conversion — parity (1.0×), zero regressions
+- **B6 Maintenance**: Multi-step feature addition with edge-case handling — parity (1.0×)
+- **B7 AI Context**: Structured guide (AGENTS.md + Playbook) saves 3× iterations (1 vs 3 compile-fix cycles)
+- **15 benchmark artifacts** created: 5 bug-fix files, naive-without-guide comparison, 2 task specs, 10 code modifications
+- **Key stdlib gaps identified**: no `!=` operator, no `listdir`, `convert.to_number` is no-op
+- **Evidence published**: `ENGINEERING_EVIDENCE_REPORT.md` with method, datasets, raw results, summary table, and cost model
+
+### Quality Gates
+
+- **ENGINEERING_EVIDENCE_REPORT.md**: PASS — all 6 benchmarks documented with measurements
+- B2–B7 artifacts: PASS — all build+run verified
+
+## 0.6.1
+
+### B1.1 — AI Provider Integration & Calibration
+
+- **Provider abstraction**: `benchmarks/providers/base.py` — `AIProvider` abstract base class with `complete(prompt)`, `count_tokens(text)`, and `ProviderResult` data model capturing all measurements (request, prompt, response, timing, interaction, cost)
+- **4 provider implementations**:
+  - `OpenAIProvider` — GPT-4o, GPT-4, GPT-3.5 (requires `openai` + `tiktoken`)
+  - `AnthropicProvider` — Claude 3, Claude 3.5 (requires `anthropic`)
+  - `GoogleProvider` — Gemini 1.5, Gemini 2.0 (requires `google-generativeai`)
+  - `LocalProvider` — Ollama, vLLM, llama.cpp via OpenAI-compatible API (requires `openai`)
+- **Provider factory**: `create_provider(name, model, ...)` with registry and auto-detection from environment variables
+- **Calibration module**: `benchmarks/calibration/` — runs identical prompts (short_response, code_understanding, token_counting) across all configured providers to validate measurement infrastructure. Generates immutable calibration reports.
+- **B1 extended**: Three priority modes for token measurement — (1) AIProvider for accurate tokenizer + comprehension prompt, (2) manual `ai_results` dict, (3) approximate 4-char heuristic. B1 version bumped to 0.2.0.
+- **CLI**: `python -m benchmarks calibrate` and `python -m benchmarks list-providers`
+- **Optional dependencies**: Added `[openai]`, `[anthropic]`, `[google]`, `[local]`, `[all]` extras to pyproject.toml
+- **37 new tests**: ProviderResult serialization, interface contract, factory, mocked provider implementations (all 4), token estimation, cost estimation, B1 provider integration, calibration execution, schema stability
+- **81 tests total** in benchmarks/tests/ (44 existing + 37 new)
+
+### Quality Gates
+
+- **935 tests**, all passing (898 existing + 37 new provider/calibration)
+- Provider interface: PASS — all ABC methods implemented, serialization roundtrip verified
+- Calibration: PASS — runs against mock providers, reports errors correctly, serializable output
+
+## 0.6.0
+
+### B1 — Engineering Benchmark Framework
+
+- **Generic measurement framework**: `benchmarks/framework/` — runner, metrics, environ, reporting, dataset modules — reusable by B2-B7
+- **3 canonical datasets**: small (compiler only), medium (stdlib + docs), current_repo (full repository)
+- **Dataset scanning**: Deterministic metadata generation with SHA-256 content hash and repeatability hash
+- **Repository metrics**: Full structural analysis (files, LOC, function count, variable count, import count, dependency depth, symbol density, comment ratio, nesting depth, cyclomatic complexity)
+- **AI comprehension metrics**: Token estimate, context window utilization, comprehension accuracy (placeholder for future AI integration)
+- **Immutable historical results**: Each run stored in `benchmarks/results/<benchmark>/run_<timestamp>/` with measurements, environment snapshot, and human-readable report
+- **Summary aggregation**: `benchmarks/results/summary.json` with all runs across all datasets
+- **CLI**: `python -m benchmarks {setup,b1,list,test}`
+- **44 tests**: 4 runner, 8 dataset, 13 metrics, 9 reporting, 10 B1 integration — all passing
+- **Run IDs**: Timestamp-based, sortable, unique
+- **.gitignore**: `benchmarks/results/` excluded (runtime artifacts); datasets remain version-controlled
+
+### Quality Gates
+
+- **898 tests**, all passing (854 existing + 44 new B1 framework)
+- B1 smoke test: PASS against small, medium, current_repo datasets
+- All 3 datasets scan, validate, and produce metrics
 
 ## 0.3.1
 
@@ -128,7 +270,8 @@
 
 - **`GOVERNANCE.md`**: Formal proposal process, evidence bars, review process, versioning, backward compatibility, rejected-forever list, freeze policy
 - **`LANGUAGE_EVOLUTION.md`**: Permanent record of all 28 feature requests with dispositions
-- **`PROJECT_PHILOSOPHY.md`**: Design manifesto — why AILang exists, core principles, non-goals, long-term vision
+- **`PROJECT_CONSTITUTION.md`**: Immutable rules for development
+- **`VISION_AND_DIFFERENTIATION.md`**: Evidence-driven vision, engineering hypothesis, differentiation strategy
 
 ### Public Release Preparation (Phase 12)
 

@@ -1,12 +1,21 @@
-"""AILang package manifest (ail.toml) parser and validator."""
+"""AILang package manifest (ail.toml) parser and validator.
+
+Thin wrapper around platform.manifest with package-manager-specific
+DependencySpec parsing and validation.
+"""
 
 from __future__ import annotations
 
 import re
-import tomllib
 from pathlib import Path
 from typing import Optional
 
+try:
+    import tomllib
+except ImportError:
+    import tomli as tomllib  # type: ignore[no-redef]
+
+from ail_platform.manifest import find_manifest
 from tools.ail_package_manager.models import DependencySpec, ProjectManifest
 
 
@@ -67,16 +76,14 @@ def parse_manifest(path: Path) -> ProjectManifest:
 
     try:
         raw = path.read_bytes()
-        # Strip UTF-8 BOM if present (common on Windows)
         if raw.startswith(b"\xef\xbb\xbf"):
             raw = raw[3:]
         data = tomllib.loads(raw.decode("utf-8"))
-    except tomllib.TOMLDecodeError as e:
-        raise ValueError(f"Invalid TOML in {path}: {e}")
+    except Exception as e:
+        raise ValueError(f"Failed to parse {path}: {e}")
 
     errors: list[str] = []
 
-    # [project] section
     project = data.get("project", {})
     if not isinstance(project, dict):
         errors.append("[project] section must be a table")
@@ -113,7 +120,6 @@ def parse_manifest(path: Path) -> ProjectManifest:
         else "main.ail"
     )
 
-    # [language] section
     language = data.get("language", {})
     language_version = "0.3"
     if isinstance(language, dict):
@@ -122,12 +128,10 @@ def parse_manifest(path: Path) -> ProjectManifest:
         if language is not None:
             errors.append("[language] section must be a table")
 
-    # Validate authors format
     for i, author in enumerate(authors):
         if not isinstance(author, str):
             errors.append(f"Author #{i + 1} must be a string")
 
-    # [dependencies] section
     dependencies: dict[str, DependencySpec] = {}
     deps_table = data.get("dependencies", {})
     if isinstance(deps_table, dict):
@@ -158,16 +162,3 @@ def parse_manifest(path: Path) -> ProjectManifest:
         language_version=language_version,
         dependencies=dependencies,
     )
-
-
-def find_manifest(start_dir: Path) -> Optional[Path]:
-    """Walk up from start_dir looking for ail.toml."""
-    current = start_dir.resolve()
-    while True:
-        candidate = current / "ail.toml"
-        if candidate.is_file():
-            return candidate
-        parent = current.parent
-        if parent == current:
-            return None
-        current = parent

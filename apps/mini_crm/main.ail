@@ -1,0 +1,1045 @@
+// Mini CRM Platform - AILang Implementation
+// Target: 800-1500 LOC, Production-style structure
+// Modules: Customer, Product, Invoice, User, Search, Reporting, Export, Audit
+
+import string;
+import list;
+import map;
+import json;
+import file;
+import time;
+import convert;
+import io;
+import environment;
+import system;
+
+// ============================================================
+// Level 0: Global Utilities (no dependencies)
+// ============================================================
+
+// Find index by key in list of maps
+fn find_index_by_key(items, key_name, key_val, idx) {
+    if (idx >= list.len(items)) { return -1 }
+    let item = list.get(items, idx);
+    if (map.has(item, key_name)) {
+        if (string.equals(convert.to_string(map.get(item, key_name)), convert.to_string(key_val))) {
+            return idx
+        }
+    }
+    return find_index_by_key(items, key_name, key_val, idx + 1)
+}
+
+// Join strings with separator (recursive)
+fn join_with_sep(items, sep, idx, acc) {
+    if (idx >= list.len(items)) { return acc }
+    if (idx > 0) { acc = acc + sep }
+    acc = acc + convert.to_string(list.get(items, idx));
+    return join_with_sep(items, sep, idx + 1, acc)
+}
+
+// String to int safe conversion
+fn str_to_int_safe(s) {
+    return convert.to_int(s)
+}
+
+// ============================================================
+// Level 1: Storage Layer (no module dependencies)
+// ============================================================
+
+let CUSTOMERS_PATH = "apps/mini_crm/data/customers.json";
+let PRODUCTS_PATH = "apps/mini_crm/data/products.json";
+let INVOICES_PATH = "apps/mini_crm/data/invoices.json";
+let USERS_PATH = "apps/mini_crm/data/users.json";
+let AUDIT_PATH = "apps/mini_crm/data/audit.json";
+
+fn load_json_list(filepath) {
+    if (!file.exists(filepath)) { return list.new() }
+    let content = file.read(filepath);
+    if (string.length(content) == 0) { return list.new() }
+    return json.parse(content)
+}
+
+fn save_json_list(filepath, items) {
+    let content = json.stringify(items);
+    file.write(filepath, content);
+    return 0
+}
+
+// ID generation
+fn gen_next_id(items, prefix, idx, max_num) {
+    if (idx >= list.len(items)) {
+        if (max_num == 0) { return string.concat(prefix, "001") }
+        if (max_num < 9) { return string.concat(string.concat(prefix, "00"), convert.to_string(max_num + 1)) }
+        if (max_num < 99) { return string.concat(string.concat(prefix, "0"), convert.to_string(max_num + 1)) }
+        return string.concat(prefix, convert.to_string(max_num + 1))
+    }
+    let item = list.get(items, idx);
+    if (map.has(item, "id")) {
+        let id_str = convert.to_string(map.get(item, "id"));
+        let id_len = string.length(id_str);
+        if (id_len > string.length(prefix)) {
+            let num_part = string.substring(id_str, string.length(prefix), id_len);
+            if (string.equals(num_part, "0") || str_to_int_safe(num_part) > 0) {
+                let num_val = str_to_int_safe(num_part);
+                if (num_val > max_num) {
+                    return gen_next_id(items, prefix, idx + 1, num_val)
+                }
+            }
+        }
+    }
+    return gen_next_id(items, prefix, idx + 1, max_num)
+}
+
+fn generate_id(prefix, items) {
+    return gen_next_id(items, prefix, 0, 0)
+}
+
+// ============================================================
+// Level 2: Customer Module
+// ============================================================
+
+fn make_customer(id, name, email, phone, company, status, notes) {
+    let c = map.new();
+    map.set(c, "id", id);
+    map.set(c, "name", name);
+    map.set(c, "email", email);
+    map.set(c, "phone", phone);
+    map.set(c, "company", company);
+    map.set(c, "status", status);
+    map.set(c, "notes", notes);
+    map.set(c, "created", time.now());
+    map.set(c, "loyalty_points", 0);
+    return c
+}
+
+// Customer search helpers (must be before customer_search_by_name)
+fn customer_search_by_name_helper(customers, substr, idx, results) {
+    if (idx >= list.len(customers)) { return results }
+    let c = list.get(customers, idx);
+    if (map.has(c, "name")) {
+        let name = map.get(c, "name");
+        if (string.contains(string.lowercase(name), string.lowercase(substr))) {
+            list.append(results, c)
+        }
+    }
+    return customer_search_by_name_helper(customers, substr, idx + 1, results)
+}
+
+fn customer_count_by_status_helper(customers, status_val, idx, count) {
+    if (idx >= list.len(customers)) { return count }
+    let c = list.get(customers, idx);
+    if (map.has(c, "status")) {
+        if (string.equals(map.get(c, "status"), status_val)) {
+            return customer_count_by_status_helper(customers, status_val, idx + 1, count + 1)
+        }
+    }
+    return customer_count_by_status_helper(customers, status_val, idx + 1, count)
+}
+
+fn customer_create(id, name, email, phone, company) {
+    let customers = load_json_list(CUSTOMERS_PATH);
+    let idx = find_index_by_key(customers, "id", id, 0);
+    if (idx >= 0) { return "Error: Customer already exists" }
+    let customer = make_customer(id, name, email, phone, company, "ACTIVE", "");
+    list.append(customers, customer);
+    save_json_list(CUSTOMERS_PATH, customers);
+    return string.concat("Customer ", string.concat(id, " created"))
+}
+
+fn customer_list_all() {
+    return load_json_list(CUSTOMERS_PATH)
+}
+
+fn customer_find_by_id(customer_id) {
+    let customers = load_json_list(CUSTOMERS_PATH);
+    let idx = find_index_by_key(customers, "id", customer_id, 0);
+    if (idx < 0) { return json.parse("null") }
+    return list.get(customers, idx)
+}
+
+fn customer_update(customer_id, name, email, phone, company, status, notes) {
+    let customers = load_json_list(CUSTOMERS_PATH);
+    let idx = find_index_by_key(customers, "id", customer_id, 0);
+    if (idx < 0) { return "Error: Customer not found" }
+    let c = list.get(customers, idx);
+    if (string.length(name) > 0) { map.set(c, "name", name) }
+    if (string.length(email) > 0) { map.set(c, "email", email) }
+    if (string.length(phone) > 0) { map.set(c, "phone", phone) }
+    if (string.length(company) > 0) { map.set(c, "company", company) }
+    if (string.length(status) > 0) { map.set(c, "status", status) }
+    if (string.length(notes) > 0) { map.set(c, "notes", notes) }
+    save_json_list(CUSTOMERS_PATH, customers);
+    return string.concat("Customer ", string.concat(customer_id, " updated"))
+}
+
+fn customer_delete(customer_id) {
+    let customers = load_json_list(CUSTOMERS_PATH);
+    let idx = find_index_by_key(customers, "id", customer_id, 0);
+    if (idx < 0) { return "Error: Customer not found" }
+    let c = list.get(customers, idx);
+    list.remove(customers, c);
+    save_json_list(CUSTOMERS_PATH, customers);
+    return string.concat("Customer ", string.concat(customer_id, " deleted"))
+}
+
+fn customer_search_by_name(name_substr) {
+    let customers = load_json_list(CUSTOMERS_PATH);
+    let results = list.new();
+    return customer_search_by_name_helper(customers, name_substr, 0, results)
+}
+
+fn customer_set_status(customer_id, status) {
+    let customers = load_json_list(CUSTOMERS_PATH);
+    let idx = find_index_by_key(customers, "id", customer_id, 0);
+    if (idx < 0) { return "Error: Customer not found" }
+    let c = list.get(customers, idx);
+    map.set(c, "status", status);
+    save_json_list(CUSTOMERS_PATH, customers);
+    return string.concat("Customer ", string.concat(customer_id, string.concat(" status set to ", status)))
+}
+
+fn customer_add_note(customer_id, note) {
+    let customers = load_json_list(CUSTOMERS_PATH);
+    let idx = find_index_by_key(customers, "id", customer_id, 0);
+    if (idx < 0) { return "Error: Customer not found" }
+    let c = list.get(customers, idx);
+    let existing_notes = "";
+    if (map.has(c, "notes")) { existing_notes = map.get(c, "notes") }
+    let updated_notes = "";
+    if (string.length(existing_notes) > 0) {
+        updated_notes = string.concat(string.concat(existing_notes, "; "), note)
+    } else {
+        updated_notes = note
+    }
+    map.set(c, "notes", updated_notes);
+    save_json_list(CUSTOMERS_PATH, customers);
+    return "Note added"
+}
+
+// Loyalty points - earn on purchases
+fn customer_add_loyalty_points(customer_id, points) {
+    let customers = load_json_list(CUSTOMERS_PATH);
+    let idx = find_index_by_key(customers, "id", customer_id, 0);
+    if (idx < 0) { return "Error: Customer not found" }
+    let c = list.get(customers, idx);
+    if (map.has(c, "loyalty_points")) {
+        let current = map.get(c, "loyalty_points");
+        map.set(c, "loyalty_points", current + points)
+    } else {
+        map.set(c, "loyalty_points", points)
+    }
+    save_json_list(CUSTOMERS_PATH, customers);
+    return "Loyalty points added"
+}
+
+fn customer_get_loyalty_points(customer_id) {
+    let c = customer_find_by_id(customer_id);
+    let none = json.parse("null");
+    if (string.equals(convert.to_string(c), convert.to_string(none))) { return 0 }
+    if (map.has(c, "loyalty_points")) { return map.get(c, "loyalty_points") }
+    return 0
+}
+
+// Customer tags - add/remove tags
+fn customer_add_tag(customer_id, tag) {
+    let customers = load_json_list(CUSTOMERS_PATH);
+    let idx = find_index_by_key(customers, "id", customer_id, 0);
+    if (idx < 0) { return "Error: Customer not found" }
+    let c = list.get(customers, idx);
+    let tags = list.new();
+    if (map.has(c, "tags")) { tags = map.get(c, "tags") }
+    list.append(tags, tag);
+    map.set(c, "tags", tags);
+    save_json_list(CUSTOMERS_PATH, customers);
+    return "Tag added"
+}
+
+// Helper must be defined before customer_remove_tag
+fn customer_remove_tag_helper(customers, customer_id, tags, tag, idx, new_tags) {
+    if (idx >= list.len(tags)) {
+        // Write back
+        let cust_idx = find_index_by_key(customers, "id", customer_id, 0);
+        let c = list.get(customers, cust_idx);
+        map.set(c, "tags", new_tags);
+        save_json_list(CUSTOMERS_PATH, customers);
+        return "Tag removed"
+    }
+    let t = list.get(tags, idx);
+    if (!string.equals(t, tag)) {
+        list.append(new_tags, t)
+    }
+    return customer_remove_tag_helper(customers, customer_id, tags, tag, idx + 1, new_tags)
+}
+
+fn customer_remove_tag(customer_id, tag) {
+    let customers = load_json_list(CUSTOMERS_PATH);
+    let idx = find_index_by_key(customers, "id", customer_id, 0);
+    if (idx < 0) { return "Error: Customer not found" }
+    let c = list.get(customers, idx);
+    if (!map.has(c, "tags")) {
+        save_json_list(CUSTOMERS_PATH, customers);
+        return "Tag removed"
+    }
+    let tags = map.get(c, "tags");
+    let new_tags = list.new();
+    return customer_remove_tag_helper(customers, customer_id, tags, tag, 0, new_tags)
+}
+
+fn customer_tags(customer_id) {
+    let c = customer_find_by_id(customer_id);
+    let none = json.parse("null");
+    if (string.equals(convert.to_string(c), convert.to_string(none))) { return list.new() }
+    if (map.has(c, "tags")) { return map.get(c, "tags") }
+    return list.new()
+}
+
+fn customer_count_by_status(status_val) {
+    let customers = load_json_list(CUSTOMERS_PATH);
+    return customer_count_by_status_helper(customers, status_val, 0, 0)
+}
+
+// ============================================================
+// Level 3: Product Module
+// ============================================================
+
+fn make_product(id, name, category, price, inventory) {
+    let p = map.new();
+    map.set(p, "id", id);
+    map.set(p, "name", name);
+    map.set(p, "category", category);
+    map.set(p, "price", price);
+    map.set(p, "inventory", inventory);
+    map.set(p, "created", time.now());
+    return p
+}
+
+fn product_search_by_name_helper(products, substr, idx, results) {
+    if (idx >= list.len(products)) { return results }
+    let p = list.get(products, idx);
+    if (map.has(p, "name")) {
+        let name = map.get(p, "name");
+        if (string.contains(string.lowercase(name), string.lowercase(substr))) {
+            list.append(results, p)
+        }
+    }
+    return product_search_by_name_helper(products, substr, idx + 1, results)
+}
+
+fn product_count_by_category_helper(products, category, idx, count) {
+    if (idx >= list.len(products)) { return count }
+    let p = list.get(products, idx);
+    if (map.has(p, "category")) {
+        if (string.equals(map.get(p, "category"), category)) {
+            return product_count_by_category_helper(products, category, idx + 1, count + 1)
+        }
+    }
+    return product_count_by_category_helper(products, category, idx + 1, count)
+}
+
+fn product_create(id, name, category, price, inventory) {
+    let products = load_json_list(PRODUCTS_PATH);
+    let idx = find_index_by_key(products, "id", id, 0);
+    if (idx >= 0) { return "Error: Product already exists" }
+    let product = make_product(id, name, category, price, inventory);
+    list.append(products, product);
+    save_json_list(PRODUCTS_PATH, products);
+    return string.concat("Product ", string.concat(id, " created"))
+}
+
+fn product_list_all() {
+    return load_json_list(PRODUCTS_PATH)
+}
+
+fn product_find_by_id(product_id) {
+    let products = load_json_list(PRODUCTS_PATH);
+    let idx = find_index_by_key(products, "id", product_id, 0);
+    if (idx < 0) { return json.parse("null") }
+    return list.get(products, idx)
+}
+
+fn product_update(id, name, category, price, inventory) {
+    let products = load_json_list(PRODUCTS_PATH);
+    let idx = find_index_by_key(products, "id", id, 0);
+    if (idx < 0) { return "Error: Product not found" }
+    let p = list.get(products, idx);
+    if (string.length(name) > 0) { map.set(p, "name", name) }
+    if (string.length(category) > 0) { map.set(p, "category", category) }
+    if (price > 0) { map.set(p, "price", price) }
+    if (inventory >= 0) { map.set(p, "inventory", inventory) }
+    save_json_list(PRODUCTS_PATH, products);
+    return string.concat("Product ", string.concat(id, " updated"))
+}
+
+fn product_delete(product_id) {
+    let products = load_json_list(PRODUCTS_PATH);
+    let idx = find_index_by_key(products, "id", product_id, 0);
+    if (idx < 0) { return "Error: Product not found" }
+    let p = list.get(products, idx);
+    list.remove(products, p);
+    save_json_list(PRODUCTS_PATH, products);
+    return string.concat("Product ", string.concat(product_id, " deleted"))
+}
+
+fn product_search_by_name(name_substr) {
+    let products = load_json_list(PRODUCTS_PATH);
+    let results = list.new();
+    return product_search_by_name_helper(products, name_substr, 0, results)
+}
+
+fn product_get_price(product_id) {
+    let p = product_find_by_id(product_id);
+    let none = json.parse("null");
+    if (string.equals(convert.to_string(p), convert.to_string(none))) { return 0 }
+    if (map.has(p, "price")) { return map.get(p, "price") }
+    return 0
+}
+
+fn product_get_inventory(product_id) {
+    let p = product_find_by_id(product_id);
+    let none = json.parse("null");
+    if (string.equals(convert.to_string(p), convert.to_string(none))) { return 0 }
+    if (map.has(p, "inventory")) { return map.get(p, "inventory") }
+    return 0
+}
+
+fn product_decrement_inventory(product_id, amount) {
+    let products = load_json_list(PRODUCTS_PATH);
+    let idx = find_index_by_key(products, "id", product_id, 0);
+    if (idx < 0) { return "Error: Product not found" }
+    let p = list.get(products, idx);
+    if (map.has(p, "inventory")) {
+        let inv = map.get(p, "inventory");
+        map.set(p, "inventory", inv - amount)
+    }
+    save_json_list(PRODUCTS_PATH, products);
+    return "OK"
+}
+
+// Product bundles - products that contain other products
+fn make_product_bundle(id, component_ids, bundle_price) {
+    let b = map.new();
+    map.set(b, "id", id);
+    map.set(b, "type", "bundle");
+    map.set(b, "components", component_ids);
+    map.set(b, "bundle_price", bundle_price);
+    return b
+}
+
+fn product_create_bundle(id, component_ids, bundle_price) {
+    let products = load_json_list(PRODUCTS_PATH);
+    let idx = find_index_by_key(products, "id", id, 0);
+    if (idx >= 0) { return "Error: Product already exists" }
+    let bundle = make_product_bundle(id, component_ids, bundle_price);
+    list.append(products, bundle);
+    save_json_list(PRODUCTS_PATH, products);
+    return string.concat("Bundle ", string.concat(id, " created"))
+}
+
+fn product_is_bundle(product_id) {
+    let p = product_find_by_id(product_id);
+    let none = json.parse("null");
+    if (string.equals(convert.to_string(p), convert.to_string(none))) { return false }
+    if (map.has(p, "type")) {
+        return string.equals(map.get(p, "type"), "bundle")
+    }
+    return false
+}
+
+fn product_count_by_category(category) {
+    let products = load_json_list(PRODUCTS_PATH);
+    return product_count_by_category_helper(products, category, 0, 0)
+}
+
+// ============================================================
+// Level 4: Invoice Module - Invoice Items
+// ============================================================
+
+fn make_invoice_item(product_id, quantity, unit_price) {
+    let i = map.new();
+    map.set(i, "product_id", product_id);
+    map.set(i, "quantity", quantity);
+    map.set(i, "unit_price", unit_price);
+    map.set(i, "total", quantity * unit_price);
+    return i
+}
+
+// ============================================================
+// Level 5: Invoice Module - Core Invoice Operations
+// ============================================================
+
+fn make_invoice(id, customer_id, items, subtotal, tax, total) {
+    let inv = map.new();
+    map.set(inv, "id", id);
+    map.set(inv, "customer_id", customer_id);
+    map.set(inv, "items", items);
+    map.set(inv, "subtotal", subtotal);
+    map.set(inv, "tax", tax);
+    map.set(inv, "total", total);
+    map.set(inv, "created", time.now());
+    map.set(inv, "status", "DRAFT");
+    return inv
+}
+
+// GST calculation (18% default for this system)
+fn invoice_calculate_gst(subtotal, gst_rate) {
+    return convert.to_int(subtotal * gst_rate / 100)
+}
+
+// Discount engine - two types: percentage or fixed amount
+fn invoice_apply_discount(subtotal, discount_type, discount_value) {
+    if (discount_type == "percent") {
+        return convert.to_int(subtotal * (100 - discount_value) / 100)
+    }
+    if (discount_type == "fixed") {
+        return subtotal - discount_value
+    }
+    return subtotal
+}
+
+// Invoice helper functions
+fn invoice_calculate_subtotal(items, idx, total) {
+    if (idx >= list.len(items)) { return total }
+    let item = list.get(items, idx);
+    if (map.has(item, "total")) {
+        return invoice_calculate_subtotal(items, idx + 1, total + map.get(item, "total"))
+    }
+    return invoice_calculate_subtotal(items, idx + 1, total)
+}
+
+fn invoice_calculate_tax(subtotal, tax_rate) {
+    return convert.to_int(subtotal * tax_rate / 100)
+}
+
+// Invoice main functions
+fn invoice_create(id, customer_id) {
+    let invoices = load_json_list(INVOICES_PATH);
+    let idx = find_index_by_key(invoices, "id", id, 0);
+    if (idx >= 0) { return "Error: Invoice already exists" }
+    let inv = make_invoice(id, customer_id, list.new(), 0, 0, 0);
+    list.append(invoices, inv);
+    save_json_list(INVOICES_PATH, invoices);
+    return string.concat("Invoice ", string.concat(id, " created"))
+}
+
+fn invoice_list_all() {
+    return load_json_list(INVOICES_PATH)
+}
+
+fn invoice_find_by_id(invoice_id) {
+    let invoices = load_json_list(INVOICES_PATH);
+    let idx = find_index_by_key(invoices, "id", invoice_id, 0);
+    if (idx < 0) { return json.parse("null") }
+    return list.get(invoices, idx)
+}
+
+fn invoice_add_item(invoice_id, product_id, quantity) {
+    let invoices = load_json_list(INVOICES_PATH);
+    let idx = find_index_by_key(invoices, "id", invoice_id, 0);
+    if (idx < 0) { return "Error: Invoice not found" }
+    let inv = list.get(invoices, idx);
+    let price = product_get_price(product_id);
+    let item = make_invoice_item(product_id, quantity, price);
+    let items = list.new();
+    if (map.has(inv, "items")) { items = map.get(inv, "items") }
+    list.append(items, item);
+    map.set(inv, "items", items);
+    let sub = invoice_calculate_subtotal(items);
+    let tax = invoice_calculate_tax(sub, 0);
+    map.set(inv, "subtotal", sub);
+    map.set(inv, "tax", tax);
+    map.set(inv, "total", sub + tax);
+    save_json_list(INVOICES_PATH, invoices);
+    return "Item added"
+}
+
+fn invoice_get_total(invoice_id) {
+    let inv = invoice_find_by_id(invoice_id);
+    let none = json.parse("null");
+    if (string.equals(convert.to_string(inv), convert.to_string(none))) { return 0 }
+    if (map.has(inv, "total")) { return map.get(inv, "total") }
+    return 0
+}
+
+fn invoice_get_subtotal(invoice_id) {
+    let inv = invoice_find_by_id(invoice_id);
+    let none = json.parse("null");
+    if (string.equals(convert.to_string(inv), convert.to_string(none))) { return 0 }
+    if (map.has(inv, "subtotal")) { return map.get(inv, "subtotal") }
+    return 0
+}
+
+fn invoice_set_status(invoice_id, status) {
+    let invoices = load_json_list(INVOICES_PATH);
+    let idx = find_index_by_key(invoices, "id", invoice_id, 0);
+    if (idx < 0) { return "Error: Invoice not found" }
+    let inv = list.get(invoices, idx);
+    map.set(inv, "status", status);
+    save_json_list(INVOICES_PATH, invoices);
+    return string.concat("Invoice ", string.concat(invoice_id, " status set to ", status))
+}
+
+fn invoice_get_history_helper(invoices, customer_id, idx, results) {
+    if (idx >= list.len(invoices)) { return results }
+    let inv = list.get(invoices, idx);
+    if (map.has(inv, "customer_id")) {
+        if (string.equals(map.get(inv, "customer_id"), customer_id)) {
+            list.append(results, inv)
+        }
+    }
+    return invoice_get_history_helper(invoices, customer_id, idx + 1, results)
+}
+
+fn invoice_get_history(customer_id) {
+    let invoices = load_json_list(INVOICES_PATH);
+    let results = list.new();
+    return invoice_get_history_helper(invoices, customer_id, 0, results)
+}
+
+// ============================================================
+// Level 6: User Module
+// ============================================================
+
+fn make_user(id, username, role, permissions) {
+    let u = map.new();
+    map.set(u, "id", id);
+    map.set(u, "username", username);
+    map.set(u, "role", role);
+    map.set(u, "permissions", permissions);
+    map.set(u, "created", time.now());
+    map.set(u, "activity", list.new());
+    return u
+}
+
+fn user_create(id, username, role) {
+    let users = load_json_list(USERS_PATH);
+    let idx = find_index_by_key(users, "id", id, 0);
+    if (idx >= 0) { return "Error: User already exists" }
+    let perms = list.new();
+    list.append(perms, "read");
+    if (string.equals(role, "admin") || string.equals(role, "ADMIN")) {
+        list.append(perms, "write");
+        list.append(perms, "delete");
+        list.append(perms, "admin");
+    } else {
+        if (string.equals(role, "manager") || string.equals(role, "MANAGER")) {
+            list.append(perms, "write");
+        }
+    }
+    let user = make_user(id, username, string.lowercase(role), perms);
+    list.append(users, user);
+    save_json_list(USERS_PATH, users);
+    return string.concat("User ", string.concat(id, " created"))
+}
+
+fn user_list_all() {
+    return load_json_list(USERS_PATH)
+}
+
+fn user_find_by_id(user_id) {
+    let users = load_json_list(USERS_PATH);
+    let idx = find_index_by_key(users, "id", user_id, 0);
+    if (idx < 0) { return json.parse("null") }
+    return list.get(users, idx)
+}
+
+fn user_has_permission(user_id, permission) {
+    let u = user_find_by_id(user_id);
+    let none = json.parse("null");
+    if (string.equals(convert.to_string(u), convert.to_string(none))) { return false }
+    if (map.has(u, "permissions")) {
+        let perms = map.get(u, "permissions");
+        return list.contains(perms, permission)
+    }
+    return false
+}
+
+fn user_add_activity(user_id, action) {
+    let users = load_json_list(USERS_PATH);
+    let idx = find_index_by_key(users, "id", user_id, 0);
+    if (idx < 0) { return "Error: User not found" }
+    let u = list.get(users, idx);
+    let activity = list.new();
+    if (map.has(u, "activity")) { activity = map.get(u, "activity") }
+    let entry = map.new();
+    map.set(entry, "action", action);
+    map.set(entry, "timestamp", time.now());
+    list.append(activity, entry);
+    map.set(u, "activity", activity);
+    save_json_list(USERS_PATH, users);
+    return "Activity logged"
+}
+
+// ============================================================
+// Level 7: Audit Module
+// ============================================================
+
+fn audit_log(action, user_id, details) {
+    let logs = load_json_list(AUDIT_PATH);
+    let entry = map.new();
+    map.set(entry, "action", action);
+    map.set(entry, "user_id", user_id);
+    map.set(entry, "details", details);
+    map.set(entry, "timestamp", time.now());
+    list.append(logs, entry);
+    save_json_list(AUDIT_PATH, logs);
+    return 0
+}
+
+fn audit_list_by_user_helper(logs, user_id, idx, results) {
+    if (idx >= list.len(logs)) { return results }
+    let entry = list.get(logs, idx);
+    if (map.has(entry, "user_id")) {
+        if (string.equals(map.get(entry, "user_id"), user_id)) {
+            list.append(results, entry)
+        }
+    }
+    return audit_list_by_user_helper(logs, user_id, idx + 1, results)
+}
+
+fn audit_list_all() {
+    return load_json_list(AUDIT_PATH)
+}
+
+fn audit_list_by_user(user_id) {
+    let logs = load_json_list(AUDIT_PATH);
+    let results = list.new();
+    return audit_list_by_user_helper(logs, user_id, 0, results)
+}
+
+// ============================================================
+// Level 8: Search Module (cross-module)
+// ============================================================
+
+fn search_all_entities(query) {
+    let results = map.new();
+    map.set(results, "customers", customer_search_by_name(query));
+    map.set(results, "products", product_search_by_name(query));
+    return results
+}
+
+// ============================================================
+// Level 9: Report Module
+// ============================================================
+
+fn invoice_totals_sum(invoices, idx, total) {
+    if (idx >= list.len(invoices)) { return total }
+    let inv = list.get(invoices, idx);
+    if (map.has(inv, "total")) {
+        return invoice_totals_sum(invoices, idx + 1, total + map.get(inv, "total"))
+    }
+    return invoice_totals_sum(invoices, idx + 1, total)
+}
+
+fn product_inventory_sum(products, idx, total) {
+    if (idx >= list.len(products)) { return total }
+    let p = list.get(products, idx);
+    if (map.has(p, "inventory")) {
+        return product_inventory_sum(products, idx + 1, total + map.get(p, "inventory"))
+    }
+    return product_inventory_sum(products, idx + 1, total)
+}
+
+fn report_sales_summary() {
+    let invoices = load_json_list(INVOICES_PATH);
+    let total_revenue = invoice_totals_sum(invoices, 0, 0);
+    let invoice_count = list.len(invoices);
+    let avg_invoice = convert.to_int(total_revenue / invoice_count);
+    let result = map.new();
+    map.set(result, "total_revenue", total_revenue);
+    map.set(result, "invoice_count", invoice_count);
+    map.set(result, "avg_invoice", avg_invoice);
+    return result
+}
+
+fn report_customer_summary() {
+    let customers = load_json_list(CUSTOMERS_PATH);
+    let active = customer_count_by_status("ACTIVE");
+    let inactive = customer_count_by_status("INACTIVE");
+    let result = map.new();
+    map.set(result, "total_customers", list.len(customers));
+    map.set(result, "active", active);
+    map.set(result, "inactive", inactive);
+    return result
+}
+
+fn report_product_summary() {
+    let products = load_json_list(PRODUCTS_PATH);
+    let total_inventory = product_inventory_sum(products, 0, 0);
+    let result = map.new();
+    map.set(result, "total_products", list.len(products));
+    map.set(result, "total_inventory", total_inventory);
+    return result
+}
+
+// ============================================================
+// Level 10: Export Module
+// ============================================================
+
+fn export_to_json(data, filepath) {
+    let content = json.stringify(data);
+    file.write(filepath, content);
+    return 0
+}
+
+fn export_csv_row_cols(item, columns, idx, row) {
+    if (idx >= list.len(columns)) { return join_with_sep(row, ",", 0, "") }
+    let col_name = list.get(columns, idx);
+    let val = "";
+    if (map.has(item, col_name)) { val = convert.to_string(map.get(item, col_name)) }
+    list.append(row, val);
+    return export_csv_row_cols(item, columns, idx + 1, row)
+}
+
+fn export_to_csv(data_list, columns, idx, lines) {
+    if (idx >= list.len(data_list)) { return lines }
+    let item = list.get(data_list, idx);
+    let row = list.new();
+    let row_str = export_csv_row_cols(item, columns, 0, row);
+    list.append(lines, row_str);
+    return export_to_csv(data_list, columns, idx + 1, lines)
+}
+
+fn export_customers_csv(filepath) {
+    let customers = customer_list_all();
+    let columns = list.new();
+    list.append(columns, "id");
+    list.append(columns, "name");
+    list.append(columns, "email");
+    list.append(columns, "company");
+    list.append(columns, "status");
+    let lines = export_to_csv(customers, columns, 0, list.new());
+    let content = join_with_sep(lines, "\n", 0, "");
+    file.write(filepath, content);
+    return "Exported " + convert.to_string(list.len(customers)) + " customers"
+}
+
+fn export_products_csv(filepath) {
+    let products = product_list_all();
+    let columns = list.new();
+    list.append(columns, "id");
+    list.append(columns, "name");
+    list.append(columns, "category");
+    list.append(columns, "price");
+    list.append(columns, "inventory");
+    let lines = export_to_csv(products, columns, 0, list.new());
+    let content = join_with_sep(lines, "\n", 0, "");
+    file.write(filepath, content);
+    return "Exported " + convert.to_string(list.len(products)) + " products"
+}
+
+fn export_invoices_csv(filepath) {
+    let invoices = invoice_list_all();
+    let columns = list.new();
+    list.append(columns, "id");
+    list.append(columns, "customer_id");
+    list.append(columns, "subtotal");
+    list.append(columns, "tax");
+    list.append(columns, "total");
+    let lines = export_to_csv(invoices, columns, 0, list.new());
+    let content = join_with_sep(lines, "\n", 0, "");
+    file.write(filepath, content);
+    return "Exported " + convert.to_string(list.len(invoices)) + " invoices"
+}
+
+// ============================================================
+// Level 11: Display Utilities
+// ============================================================
+
+fn display_customer(c) {
+    let none = json.parse("null");
+    if (string.equals(convert.to_string(c), convert.to_string(none))) {
+        io.writeln("Customer not found");
+        return 0
+    }
+    io.writeln("  ID: " + convert.to_string(map.get(c, "id")));
+    io.writeln("  Name: " + convert.to_string(map.get(c, "name")));
+    io.writeln("  Company: " + convert.to_string(map.get(c, "company")));
+    io.writeln("  Status: " + convert.to_string(map.get(c, "status")));
+    return 0
+}
+
+fn display_customer_list(customers, idx) {
+    if (idx >= list.len(customers)) { return 0 }
+    let c = list.get(customers, idx);
+    display_customer(c);
+    io.writeln("  ---");
+    return display_customer_list(customers, idx + 1)
+}
+
+// ============================================================
+// Level 12: CLI Dispatch
+// ============================================================
+
+fn cmd_customer_add(args, start) {
+    let argcnt = list.len(args);
+    if (argcnt < start + 4) { return "Usage: customer add <id> <name> <email> <phone> [company]" }
+    let id = list.get(args, start);
+    let name = list.get(args, start + 1);
+    let email = list.get(args, start + 2);
+    let phone = list.get(args, start + 3);
+    let company = "";
+    if (argcnt > start + 4) { company = list.get(args, start + 4) }
+    return customer_create(id, name, email, phone, company)
+}
+
+fn cmd_customer_list() {
+    let customers = customer_list_all();
+    if (list.len(customers) == 0) { return "No customers found" }
+    display_customer_list(customers, 0);
+    return convert.to_string(list.len(customers)) + " customer(s)"
+}
+
+fn cmd_customer_search(args, start) {
+    if (list.len(args) <= start) { return "Usage: customer search <query>" }
+    let query = list.get(args, start);
+    let results = customer_search_by_name(query);
+    if (list.len(results) == 0) { return "No customers found matching " + query }
+    display_customer_list(results, 0);
+    return convert.to_string(list.len(results)) + " match(es)"
+}
+
+fn cmd_customer_dispatch(args, start) {
+    let argcnt = list.len(args);
+    if (start >= argcnt) { return "Error: Missing customer subcommand" }
+    let subcmd = string.lowercase(list.get(args, start));
+    if (string.equals(subcmd, "add")) { return cmd_customer_add(args, start + 1) }
+    if (string.equals(subcmd, "list")) { return cmd_customer_list() }
+    if (string.equals(subcmd, "search")) { return cmd_customer_search(args, start + 1) }
+    return "Error: Unknown customer subcommand: " + subcmd
+}
+
+fn cmd_product_add(args, start) {
+    let argcnt = list.len(args);
+    if (argcnt < start + 4) { return "Usage: product add <id> <name> <category> <price> [inventory]" }
+    let id = list.get(args, start);
+    let name = list.get(args, start + 1);
+    let category = list.get(args, start + 2);
+    let price = str_to_int_safe(list.get(args, start + 3));
+    let inv = 0;
+    if (argcnt > start + 4) { inv = str_to_int_safe(list.get(args, start + 4)) }
+    return product_create(id, name, category, price, inv)
+}
+
+fn cmd_product_list() {
+    let products = product_list_all();
+    if (list.len(products) == 0) { return "No products found" }
+    return convert.to_string(list.len(products)) + " product(s)"
+}
+
+fn cmd_product_dispatch(args, start) {
+    let argcnt = list.len(args);
+    if (start >= argcnt) { return "Error: Missing product subcommand" }
+    let subcmd = string.lowercase(list.get(args, start));
+    if (string.equals(subcmd, "add")) { return cmd_product_add(args, start + 1) }
+    if (string.equals(subcmd, "list")) { return cmd_product_list() }
+    return "Error: Unknown product subcommand: " + subcmd
+}
+
+fn cmd_invoice_create(args, start) {
+    let argcnt = list.len(args);
+    if (argcnt < start + 2) { return "Usage: invoice create <id> <customer_id>" }
+    let id = list.get(args, start);
+    let cust_id = list.get(args, start + 1);
+    return invoice_create(id, cust_id)
+}
+
+fn cmd_invoice_dispatch(args, start) {
+    let argcnt = list.len(args);
+    if (start >= argcnt) { return "Error: Missing invoice subcommand" }
+    let subcmd = string.lowercase(list.get(args, start));
+    if (string.equals(subcmd, "create")) { return cmd_invoice_create(args, start + 1) }
+    return "Error: Unknown invoice subcommand: " + subcmd
+}
+
+fn cmd_report_sales() {
+    let r = report_sales_summary();
+    io.writeln("=== Sales Summary ===");
+    io.writeln("Total Revenue: " + convert.to_string(map.get(r, "total_revenue")));
+    io.writeln("Invoice Count: " + convert.to_string(map.get(r, "invoice_count")));
+    return ""
+}
+
+fn cmd_report_customers() {
+    let r = report_customer_summary();
+    io.writeln("=== Customer Summary ===");
+    io.writeln("Total: " + convert.to_string(map.get(r, "total_customers")));
+    io.writeln("Active: " + convert.to_string(map.get(r, "active")));
+    return ""
+}
+
+fn cmd_report_dispatch(args, start) {
+    let argcnt = list.len(args);
+    if (start >= argcnt) { return "Error: Missing report subcommand" }
+    let subcmd = string.lowercase(list.get(args, start));
+    if (string.equals(subcmd, "sales")) { return cmd_report_sales() }
+    if (string.equals(subcmd, "customers")) { return cmd_report_customers() }
+    return "Error: Unknown report subcommand: " + subcmd
+}
+
+fn cmd_export_customers() {
+    return export_customers_csv("apps/mini_crm/data/customers_export.csv")
+}
+
+fn cmd_export_dispatch(args, start) {
+    let argcnt = list.len(args);
+    if (start >= argcnt) { return "Error: Missing export subcommand" }
+    let subcmd = string.lowercase(list.get(args, start));
+    if (string.equals(subcmd, "customers")) { return cmd_export_customers() }
+    return "Error: Unknown export subcommand: " + subcmd
+}
+
+fn show_usage() {
+    io.writeln("Mini CRM Platform - AILang Implementation");
+    io.writeln("");
+    io.writeln("Customer Commands:");
+    io.writeln("  customer add <id> <name> <email> <phone> [company]");
+    io.writeln("  customer list");
+    io.writeln("  customer search <query>");
+    io.writeln("");
+    io.writeln("Product Commands:");
+    io.writeln("  product add <id> <name> <category> <price> [inventory]");
+    io.writeln("  product list");
+    io.writeln("");
+    io.writeln("Invoice Commands:");
+    io.writeln("  invoice create <id> <customer_id>");
+    io.writeln("");
+    io.writeln("Report Commands:");
+    io.writeln("  report sales");
+    io.writeln("  report customers");
+    io.writeln("");
+    io.writeln("Export Commands:");
+    io.writeln("  export customers");
+    return 0
+}
+
+// ============================================================
+// Level 13: Main Entry Point
+// ============================================================
+
+fn main() {
+    let args = environment.args();
+    let argcnt = list.len(args);
+    if (argcnt < 1) {
+        show_usage();
+        return 0
+    }
+    let cmd = string.lowercase(list.get(args, 0));
+    let result = "";
+    if (string.equals(cmd, "customer")) { result = cmd_customer_dispatch(args, 1) }
+    else if (string.equals(cmd, "product")) { result = cmd_product_dispatch(args, 1) }
+    else if (string.equals(cmd, "invoice")) { result = cmd_invoice_dispatch(args, 1) }
+    else if (string.equals(cmd, "report")) { result = cmd_report_dispatch(args, 1) }
+    else if (string.equals(cmd, "export")) { result = cmd_export_dispatch(args, 1) }
+    else if (string.equals(cmd, "help") || string.equals(cmd, "--help") || string.equals(cmd, "-h")) {
+        show_usage();
+        return 0
+    }
+    else {
+        show_usage();
+        return 0
+    }
+    if (string.length(result) > 0) {
+        io.writeln(result)
+    }
+    return 0
+}

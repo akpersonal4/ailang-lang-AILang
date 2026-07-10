@@ -11,15 +11,12 @@ import time
 import argparse
 from pathlib import Path
 
+from ail_platform.project import get_project_root
+from ail_platform.report_schema import ExitCode
 from tools.ail_benchmark.discovery import discover_benchmarks, discover_all_apps
 from tools.ail_benchmark.runner import run_benchmark
 from tools.ail_benchmark.compare import save_baseline, load_baseline, detect_regressions
 from tools.ail_benchmark.reporter import generate_json_report, generate_markdown_report
-
-
-def get_project_root() -> Path:
-    """Return the project root directory."""
-    return Path(__file__).resolve().parent.parent.parent
 
 
 def stats_to_dict(stats) -> dict:
@@ -175,7 +172,7 @@ def main() -> int:
         )
     except ValueError as e:
         print(f"Error: {e}", file=sys.stderr)
-        return 3
+        return ExitCode.INTERNAL_ERROR
 
     if not benchmarks:
         print("Error: No benchmark applications found.", file=sys.stderr)
@@ -195,7 +192,7 @@ def main() -> int:
                 "Check suite definitions in discovery.py",
                 file=sys.stderr,
             )
-        return 3
+        return ExitCode.INTERNAL_ERROR
 
     if not args.quiet:
         print(f"\nAILang Benchmark Runner ({args.suite} suite)")
@@ -314,7 +311,6 @@ def main() -> int:
         print(f"Saved baseline: {saved}")
 
     # Step 8: Determine exit code (precedence: internal error > failure > regression > success)
-    internal_error = False
     has_failure = False
     has_regression = False
 
@@ -325,14 +321,12 @@ def main() -> int:
         if reg.get("detected"):
             has_regression = True
 
-    if internal_error:
-        return 3
     if has_failure:
-        return 1
+        return ExitCode.FAILURE
     if has_regression:
-        return 2
+        return ExitCode.REGRESSION
 
-    return 0
+    return ExitCode.SUCCESS
 
 
 if __name__ == "__main__":

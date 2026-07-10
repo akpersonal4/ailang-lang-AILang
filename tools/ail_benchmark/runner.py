@@ -9,6 +9,8 @@ import sys
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
+
+from ail_platform.project import get_project_root
 from typing import Any
 
 
@@ -64,11 +66,6 @@ class BenchmarkResult:
     regression: RegressionInfo = field(default_factory=RegressionInfo)
     memory_kb: float | None = None
     baseline: dict[str, float] | None = None
-
-
-def get_project_root() -> Path:
-    """Return the project root directory."""
-    return Path(__file__).resolve().parent.parent.parent
 
 
 def perform_measurement(

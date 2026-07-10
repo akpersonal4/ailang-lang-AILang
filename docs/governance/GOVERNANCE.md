@@ -252,4 +252,4 @@ theoretical discussions.
 | [RELEASE_PROCESS.md](RELEASE_PROCESS.md) | Version bumping, branching, and release checklist |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Day-to-day developer workflow |
 | [LANGUAGE_SPEC.md](../LANGUAGE_SPEC.md) | Canonical specification of the language |
-| [PRODUCT_ROADMAP.md](PRODUCT_ROADMAP.md) | Long-term feature planning |
+| [PRODUCT_ROADMAP.md](../../PRODUCT_ROADMAP.md) | Long-term feature planning |

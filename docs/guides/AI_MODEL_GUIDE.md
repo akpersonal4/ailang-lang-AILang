@@ -89,6 +89,32 @@ You MUST check examples/patterns/ for pre-written recipes before writing filter/
 
 ---
 
+## Benchmark Models & Providers
+
+AILang's Engineering Benchmark framework (`benchmarks/providers/`) supports 4 AI providers. The benchmark protocol (`docs/benchmarks/INVENTORY_BENCHMARK_HARNESS.md`) requires a minimum of 3 models, one per tier:
+
+| Tier | Provider | Model |
+|:----:|----------|-------|
+| 1 | Anthropic | `claude-sonnet-4-20250514` |
+| 2 | OpenAI | `gpt-4o-2025-05-13` |
+| 3 | Open-weight | `deepseek-coder-v2` or `llama-4-70b` |
+
+**Provider abstraction:** `benchmarks/providers/base.py` defines the `AIProvider` interface. Concrete implementations: `openai_provider.py`, `anthropic_provider.py`, `google_provider.py`, `local_provider.py`.
+
+**Configuration:** API keys via environment variables:
+```
+ANTHROPIC_API_KEY=sk-...
+OPENAI_API_KEY=sk-...
+DEEPSEEK_API_KEY=...
+GOOGLE_API_KEY=...
+```
+
+**Calibration:** `python -m benchmarks calibrate` validates measurement consistency across providers before a benchmark run.
+
+**Temperature:** All benchmark runs use temperature `0.0` for deterministic output.
+
+---
+
 ## CI Pipeline
 
 A GitHub Actions workflow (`.github/workflows/ci.yml`) validates every PR against:

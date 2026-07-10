@@ -1,0 +1,1245 @@
+{
+  "metadata": {
+    "tool": "ail_order",
+    "version": "0.1.0",
+    "timestamp": "2026-07-07T22:24:32.392401+00:00"
+  },
+  "summary": {
+    "total": 16,
+    "functions": 83,
+    "errors": 1,
+    "warnings": 0,
+    "cycles": 0
+  },
+  "files": [
+    {
+      "metadata": {
+        "tool": "ail_order",
+        "version": "0.1.0",
+        "timestamp": "2026-07-07T22:24:32.392401+00:00"
+      },
+      "summary": {
+        "total": 7,
+        "errors": 0,
+        "warnings": 0,
+        "cycles": 0,
+        "unreachable": 0,
+        "duplicates": 0
+      },
+      "levels": {
+        "0": [
+          "new",
+          "push",
+          "len",
+          "get",
+          "contains",
+          "remove",
+          "clear"
+        ]
+      },
+      "functions": [
+        {
+          "name": "new",
+          "line": 0,
+          "level": 0,
+          "calls": [
+            "ew",
+            "list_new"
+          ]
+        },
+        {
+          "name": "push",
+          "line": 4,
+          "level": 0,
+          "calls": [
+            "ush",
+            "list_append"
+          ]
+        },
+        {
+          "name": "len",
+          "line": 8,
+          "level": 0,
+          "calls": [
+            "en",
+            "list_len"
+          ]
+        },
+        {
+          "name": "get",
+          "line": 12,
+          "level": 0,
+          "calls": [
+            "et",
+            "list_get"
+          ]
+        },
+        {
+          "name": "contains",
+          "line": 16,
+          "level": 0,
+          "calls": [
+            "ontains",
+            "list_contains"
+          ]
+        },
+        {
+          "name": "remove",
+          "line": 20,
+          "level": 0,
+          "calls": [
+            "emove",
+            "list_remove"
+          ]
+        },
+        {
+          "name": "clear",
+          "line": 24,
+          "level": 0,
+          "calls": [
+            "lear",
+            "list_clear"
+          ]
+        }
+      ],
+      "cycles": [],
+      "unreachable": [],
+      "duplicates": [],
+      "findings": []
+    },
+    {
+      "metadata": {
+        "tool": "ail_order",
+        "version": "0.1.0",
+        "timestamp": "2026-07-07T22:24:32.392401+00:00"
+      },
+      "summary": {
+        "total": 4,
+        "errors": 0,
+        "warnings": 0,
+        "cycles": 0,
+        "unreachable": 0,
+        "duplicates": 0
+      },
+      "levels": {
+        "0": [
+          "to_string",
+          "to_int",
+          "to_bool",
+          "to_number"
+        ]
+      },
+      "functions": [
+        {
+          "name": "to_string",
+          "line": 0,
+          "level": 0,
+          "calls": [
+            "o_string",
+            "__native_to_string"
+          ]
+        },
+        {
+          "name": "to_int",
+          "line": 4,
+          "level": 0,
+          "calls": [
+            "o_int",
+            "__native_to_int"
+          ]
+        },
+        {
+          "name": "to_bool",
+          "line": 8,
+          "level": 0,
+          "calls": [
+            "o_bool"
+          ]
+        },
+        {
+          "name": "to_number",
+          "line": 15,
+          "level": 0,
+          "calls": [
+            "o_number",
+            "__native_to_int"
+          ]
+        }
+      ],
+      "cycles": [],
+      "unreachable": [],
+      "duplicates": [],
+      "findings": []
+    },
+    {
+      "metadata": {
+        "tool": "ail_order",
+        "version": "0.1.0",
+        "timestamp": "2026-07-07T22:24:32.392401+00:00"
+      },
+      "summary": {
+        "total": 3,
+        "errors": 0,
+        "warnings": 0,
+        "cycles": 0,
+        "unreachable": 0,
+        "duplicates": 0
+      },
+      "levels": {
+        "0": [
+          "parse",
+          "parse_header",
+          "stringify"
+        ]
+      },
+      "functions": [
+        {
+          "name": "parse",
+          "line": 0,
+          "level": 0,
+          "calls": [
+            "arse",
+            "csv_parse"
+          ]
+        },
+        {
+          "name": "parse_header",
+          "line": 4,
+          "level": 0,
+          "calls": [
+            "arse_header",
+            "csv_parse_header"
+          ]
+        },
+        {
+          "name": "stringify",
+          "line": 8,
+          "level": 0,
+          "calls": [
+            "tringify",
+            "csv_stringify"
+          ]
+        }
+      ],
+      "cycles": [],
+      "unreachable": [],
+      "duplicates": [],
+      "findings": []
+    },
+    {
+      "metadata": {
+        "tool": "ail_order",
+        "version": "0.1.0",
+        "timestamp": "2026-07-07T22:24:32.392401+00:00"
+      },
+      "summary": {
+        "total": 3,
+        "errors": 0,
+        "warnings": 0,
+        "cycles": 0,
+        "unreachable": 0,
+        "duplicates": 0
+      },
+      "levels": {
+        "0": [
+          "get",
+          "cwd",
+          "args"
+        ]
+      },
+      "functions": [
+        {
+          "name": "get",
+          "line": 0,
+          "level": 0,
+          "calls": [
+            "et",
+            "env_get"
+          ]
+        },
+        {
+          "name": "cwd",
+          "line": 4,
+          "level": 0,
+          "calls": [
+            "wd",
+            "env_cwd"
+          ]
+        },
+        {
+          "name": "args",
+          "line": 8,
+          "level": 0,
+          "calls": [
+            "rgs",
+            "env_args"
+          ]
+        }
+      ],
+      "cycles": [],
+      "unreachable": [],
+      "duplicates": [],
+      "findings": []
+    },
+    {
+      "metadata": {
+        "tool": "ail_order",
+        "version": "0.1.0",
+        "timestamp": "2026-07-07T22:24:32.392401+00:00"
+      },
+      "summary": {
+        "total": 6,
+        "errors": 0,
+        "warnings": 0,
+        "cycles": 0,
+        "unreachable": 0,
+        "duplicates": 0
+      },
+      "levels": {
+        "0": [
+          "exists",
+          "read",
+          "write",
+          "append",
+          "remove",
+          "listdir"
+        ]
+      },
+      "functions": [
+        {
+          "name": "exists",
+          "line": 0,
+          "level": 0,
+          "calls": [
+            "xists",
+            "file_exists"
+          ]
+        },
+        {
+          "name": "read",
+          "line": 4,
+          "level": 0,
+          "calls": [
+            "ead",
+            "file_read"
+          ]
+        },
+        {
+          "name": "write",
+          "line": 8,
+          "level": 0,
+          "calls": [
+            "rite",
+            "file_write"
+          ]
+        },
+        {
+          "name": "append",
+          "line": 12,
+          "level": 0,
+          "calls": [
+            "ppend",
+            "file_append"
+          ]
+        },
+        {
+          "name": "remove",
+          "line": 16,
+          "level": 0,
+          "calls": [
+            "emove",
+            "file_remove"
+          ]
+        },
+        {
+          "name": "listdir",
+          "line": 20,
+          "level": 0,
+          "calls": [
+            "istdir",
+            "file_listdir"
+          ]
+        }
+      ],
+      "cycles": [],
+      "unreachable": [],
+      "duplicates": [],
+      "findings": []
+    },
+    {
+      "metadata": {
+        "tool": "ail_order",
+        "version": "0.1.0",
+        "timestamp": "2026-07-07T22:24:32.393401+00:00"
+      },
+      "summary": {
+        "total": 3,
+        "errors": 0,
+        "warnings": 0,
+        "cycles": 0,
+        "unreachable": 0,
+        "duplicates": 0
+      },
+      "levels": {
+        "0": [
+          "write",
+          "writeln",
+          "println"
+        ]
+      },
+      "functions": [
+        {
+          "name": "write",
+          "line": 0,
+          "level": 0,
+          "calls": [
+            "rite",
+            "print"
+          ]
+        },
+        {
+          "name": "writeln",
+          "line": 5,
+          "level": 0,
+          "calls": [
+            "riteln",
+            "print"
+          ]
+        },
+        {
+          "name": "println",
+          "line": 10,
+          "level": 0,
+          "calls": [
+            "rintln",
+            "print"
+          ]
+        }
+      ],
+      "cycles": [],
+      "unreachable": [],
+      "duplicates": [],
+      "findings": []
+    },
+    {
+      "metadata": {
+        "tool": "ail_order",
+        "version": "0.1.0",
+        "timestamp": "2026-07-07T22:24:32.393401+00:00"
+      },
+      "summary": {
+        "total": 2,
+        "errors": 0,
+        "warnings": 0,
+        "cycles": 0,
+        "unreachable": 0,
+        "duplicates": 0
+      },
+      "levels": {
+        "0": [
+          "parse",
+          "stringify"
+        ]
+      },
+      "functions": [
+        {
+          "name": "parse",
+          "line": 0,
+          "level": 0,
+          "calls": [
+            "arse",
+            "json_parse"
+          ]
+        },
+        {
+          "name": "stringify",
+          "line": 4,
+          "level": 0,
+          "calls": [
+            "tringify",
+            "json_stringify"
+          ]
+        }
+      ],
+      "cycles": [],
+      "unreachable": [],
+      "duplicates": [],
+      "findings": []
+    },
+    {
+      "metadata": {
+        "tool": "ail_order",
+        "version": "0.1.0",
+        "timestamp": "2026-07-07T22:24:32.393401+00:00"
+      },
+      "summary": {
+        "total": 9,
+        "errors": 0,
+        "warnings": 0,
+        "cycles": 0,
+        "unreachable": 0,
+        "duplicates": 0
+      },
+      "levels": {
+        "0": [
+          "new",
+          "append",
+          "len",
+          "get",
+          "contains",
+          "remove",
+          "clear",
+          "sum",
+          "find_by_key"
+        ]
+      },
+      "functions": [
+        {
+          "name": "new",
+          "line": 0,
+          "level": 0,
+          "calls": [
+            "ew",
+            "list_new"
+          ]
+        },
+        {
+          "name": "append",
+          "line": 4,
+          "level": 0,
+          "calls": [
+            "ppend",
+            "list_append"
+          ]
+        },
+        {
+          "name": "len",
+          "line": 8,
+          "level": 0,
+          "calls": [
+            "en",
+            "list_len"
+          ]
+        },
+        {
+          "name": "get",
+          "line": 12,
+          "level": 0,
+          "calls": [
+            "et",
+            "list_get"
+          ]
+        },
+        {
+          "name": "contains",
+          "line": 16,
+          "level": 0,
+          "calls": [
+            "ontains",
+            "list_contains"
+          ]
+        },
+        {
+          "name": "remove",
+          "line": 20,
+          "level": 0,
+          "calls": [
+            "emove",
+            "list_remove"
+          ]
+        },
+        {
+          "name": "clear",
+          "line": 24,
+          "level": 0,
+          "calls": [
+            "lear",
+            "list_clear"
+          ]
+        },
+        {
+          "name": "sum",
+          "line": 28,
+          "level": 0,
+          "calls": [
+            "um",
+            "list_sum"
+          ]
+        },
+        {
+          "name": "find_by_key",
+          "line": 32,
+          "level": 0,
+          "calls": [
+            "ind_by_key",
+            "list_find_by_key"
+          ]
+        }
+      ],
+      "cycles": [],
+      "unreachable": [],
+      "duplicates": [],
+      "findings": []
+    },
+    {
+      "metadata": {
+        "tool": "ail_order",
+        "version": "0.1.0",
+        "timestamp": "2026-07-07T22:24:32.393401+00:00"
+      },
+      "summary": {
+        "total": 7,
+        "errors": 0,
+        "warnings": 0,
+        "cycles": 0,
+        "unreachable": 0,
+        "duplicates": 0
+      },
+      "levels": {
+        "0": [
+          "new",
+          "set",
+          "get",
+          "has",
+          "delete",
+          "keys",
+          "clear"
+        ]
+      },
+      "functions": [
+        {
+          "name": "new",
+          "line": 0,
+          "level": 0,
+          "calls": [
+            "ew",
+            "dict_new"
+          ]
+        },
+        {
+          "name": "set",
+          "line": 4,
+          "level": 0,
+          "calls": [
+            "et",
+            "dict_set"
+          ]
+        },
+        {
+          "name": "get",
+          "line": 8,
+          "level": 0,
+          "calls": [
+            "et",
+            "dict_get"
+          ]
+        },
+        {
+          "name": "has",
+          "line": 12,
+          "level": 0,
+          "calls": [
+            "dict_has"
+          ]
+        },
+        {
+          "name": "delete",
+          "line": 16,
+          "level": 0,
+          "calls": [
+            "elete",
+            "dict_delete"
+          ]
+        },
+        {
+          "name": "keys",
+          "line": 20,
+          "level": 0,
+          "calls": [
+            "eys",
+            "dict_keys"
+          ]
+        },
+        {
+          "name": "clear",
+          "line": 24,
+          "level": 0,
+          "calls": [
+            "lear",
+            "dict_clear"
+          ]
+        }
+      ],
+      "cycles": [],
+      "unreachable": [],
+      "duplicates": [],
+      "findings": []
+    },
+    {
+      "metadata": {
+        "tool": "ail_order",
+        "version": "0.1.0",
+        "timestamp": "2026-07-07T22:24:32.393401+00:00"
+      },
+      "summary": {
+        "total": 7,
+        "errors": 0,
+        "warnings": 0,
+        "cycles": 0,
+        "unreachable": 0,
+        "duplicates": 0
+      },
+      "levels": {
+        "0": [
+          "add",
+          "sub",
+          "mul",
+          "div",
+          "abs",
+          "min",
+          "max"
+        ]
+      },
+      "functions": [
+        {
+          "name": "add",
+          "line": 0,
+          "level": 0,
+          "calls": [
+            "dd"
+          ]
+        },
+        {
+          "name": "sub",
+          "line": 4,
+          "level": 0,
+          "calls": [
+            "ub"
+          ]
+        },
+        {
+          "name": "mul",
+          "line": 8,
+          "level": 0,
+          "calls": [
+            "ul"
+          ]
+        },
+        {
+          "name": "div",
+          "line": 12,
+          "level": 0,
+          "calls": [
+            "iv"
+          ]
+        },
+        {
+          "name": "abs",
+          "line": 16,
+          "level": 0,
+          "calls": [
+            "bs"
+          ]
+        },
+        {
+          "name": "min",
+          "line": 23,
+          "level": 0,
+          "calls": [
+            "in"
+          ]
+        },
+        {
+          "name": "max",
+          "line": 30,
+          "level": 0,
+          "calls": [
+            "ax"
+          ]
+        }
+      ],
+      "cycles": [],
+      "unreachable": [],
+      "duplicates": [],
+      "findings": []
+    },
+    {
+      "metadata": {
+        "tool": "ail_order",
+        "version": "0.1.0",
+        "timestamp": "2026-07-07T22:24:32.393401+00:00"
+      },
+      "summary": {
+        "total": 5,
+        "errors": 0,
+        "warnings": 0,
+        "cycles": 0,
+        "unreachable": 0,
+        "duplicates": 0
+      },
+      "levels": {
+        "0": [
+          "join",
+          "basename",
+          "dirname",
+          "extension",
+          "normalize"
+        ]
+      },
+      "functions": [
+        {
+          "name": "join",
+          "line": 0,
+          "level": 0,
+          "calls": [
+            "oin",
+            "path_join"
+          ]
+        },
+        {
+          "name": "basename",
+          "line": 4,
+          "level": 0,
+          "calls": [
+            "asename",
+            "path_basename"
+          ]
+        },
+        {
+          "name": "dirname",
+          "line": 8,
+          "level": 0,
+          "calls": [
+            "irname",
+            "path_dirname"
+          ]
+        },
+        {
+          "name": "extension",
+          "line": 12,
+          "level": 0,
+          "calls": [
+            "xtension",
+            "path_extension"
+          ]
+        },
+        {
+          "name": "normalize",
+          "line": 16,
+          "level": 0,
+          "calls": [
+            "ormalize",
+            "path_normalize"
+          ]
+        }
+      ],
+      "cycles": [],
+      "unreachable": [],
+      "duplicates": [],
+      "findings": []
+    },
+    {
+      "metadata": {
+        "tool": "ail_order",
+        "version": "0.1.0",
+        "timestamp": "2026-07-07T22:24:32.393401+00:00"
+      },
+      "summary": {
+        "total": 3,
+        "errors": 0,
+        "warnings": 0,
+        "cycles": 0,
+        "unreachable": 0,
+        "duplicates": 0
+      },
+      "levels": {
+        "0": [
+          "int",
+          "float",
+          "choice"
+        ]
+      },
+      "functions": [
+        {
+          "name": "int",
+          "line": 0,
+          "level": 0,
+          "calls": [
+            "nt",
+            "random_int"
+          ]
+        },
+        {
+          "name": "float",
+          "line": 4,
+          "level": 0,
+          "calls": [
+            "loat",
+            "random_float"
+          ]
+        },
+        {
+          "name": "choice",
+          "line": 8,
+          "level": 0,
+          "calls": [
+            "hoice",
+            "random_choice"
+          ]
+        }
+      ],
+      "cycles": [],
+      "unreachable": [],
+      "duplicates": [],
+      "findings": []
+    },
+    {
+      "metadata": {
+        "tool": "ail_order",
+        "version": "0.1.0",
+        "timestamp": "2026-07-07T22:24:32.393401+00:00"
+      },
+      "summary": {
+        "total": 6,
+        "errors": 0,
+        "warnings": 0,
+        "cycles": 0,
+        "unreachable": 0,
+        "duplicates": 0
+      },
+      "levels": {
+        "0": [
+          "new",
+          "add",
+          "contains",
+          "len",
+          "remove",
+          "clear"
+        ]
+      },
+      "functions": [
+        {
+          "name": "new",
+          "line": 0,
+          "level": 0,
+          "calls": [
+            "ew",
+            "set_new"
+          ]
+        },
+        {
+          "name": "add",
+          "line": 4,
+          "level": 0,
+          "calls": [
+            "dd",
+            "set_add"
+          ]
+        },
+        {
+          "name": "contains",
+          "line": 8,
+          "level": 0,
+          "calls": [
+            "ontains",
+            "set_contains"
+          ]
+        },
+        {
+          "name": "len",
+          "line": 12,
+          "level": 0,
+          "calls": [
+            "en",
+            "set_len"
+          ]
+        },
+        {
+          "name": "remove",
+          "line": 16,
+          "level": 0,
+          "calls": [
+            "emove",
+            "set_remove"
+          ]
+        },
+        {
+          "name": "clear",
+          "line": 20,
+          "level": 0,
+          "calls": [
+            "lear",
+            "set_clear"
+          ]
+        }
+      ],
+      "cycles": [],
+      "unreachable": [],
+      "duplicates": [],
+      "findings": []
+    },
+    {
+      "metadata": {
+        "tool": "ail_order",
+        "version": "0.1.0",
+        "timestamp": "2026-07-07T22:24:32.393401+00:00"
+      },
+      "summary": {
+        "total": 13,
+        "errors": 1,
+        "warnings": 0,
+        "cycles": 0,
+        "unreachable": 0,
+        "duplicates": 0
+      },
+      "levels": {
+        "0": [
+          "concat",
+          "equals",
+          "uppercase",
+          "lowercase",
+          "length",
+          "starts_with",
+          "ends_with",
+          "trim",
+          "substring",
+          "find",
+          "find_from",
+          "split"
+        ],
+        "1": [
+          "contains"
+        ]
+      },
+      "functions": [
+        {
+          "name": "concat",
+          "line": 0,
+          "level": 0,
+          "calls": [
+            "oncat"
+          ]
+        },
+        {
+          "name": "equals",
+          "line": 4,
+          "level": 0,
+          "calls": [
+            "quals"
+          ]
+        },
+        {
+          "name": "uppercase",
+          "line": 8,
+          "level": 0,
+          "calls": [
+            "ppercase",
+            "upper"
+          ]
+        },
+        {
+          "name": "lowercase",
+          "line": 12,
+          "level": 0,
+          "calls": [
+            "owercase",
+            "lower"
+          ]
+        },
+        {
+          "name": "length",
+          "line": 16,
+          "level": 0,
+          "calls": [
+            "ength",
+            "__len__"
+          ]
+        },
+        {
+          "name": "contains",
+          "line": 20,
+          "level": 1,
+          "calls": [
+            "ontains",
+            "find"
+          ]
+        },
+        {
+          "name": "starts_with",
+          "line": 24,
+          "level": 0,
+          "calls": [
+            "tarts_with",
+            "startswith"
+          ]
+        },
+        {
+          "name": "ends_with",
+          "line": 28,
+          "level": 0,
+          "calls": [
+            "nds_with",
+            "endswith"
+          ]
+        },
+        {
+          "name": "trim",
+          "line": 32,
+          "level": 0,
+          "calls": [
+            "rim",
+            "strip"
+          ]
+        },
+        {
+          "name": "substring",
+          "line": 36,
+          "level": 0,
+          "calls": [
+            "ubstring",
+            "string_substring"
+          ]
+        },
+        {
+          "name": "find",
+          "line": 40,
+          "level": 0,
+          "calls": [
+            "ind",
+            "string_find"
+          ]
+        },
+        {
+          "name": "find_from",
+          "line": 44,
+          "level": 0,
+          "calls": [
+            "ind_from",
+            "string_find"
+          ]
+        },
+        {
+          "name": "split",
+          "line": 48,
+          "level": 0,
+          "calls": [
+            "plit",
+            "string_split"
+          ]
+        }
+      ],
+      "cycles": [],
+      "unreachable": [],
+      "duplicates": [],
+      "findings": [
+        {
+          "severity": "error",
+          "message": "Forward reference: 'find' called before definition",
+          "line": 20,
+          "function": "contains",
+          "suggestion": "Move 'find' before 'contains' or call order"
+        }
+      ]
+    },
+    {
+      "metadata": {
+        "tool": "ail_order",
+        "version": "0.1.0",
+        "timestamp": "2026-07-07T22:24:32.393401+00:00"
+      },
+      "summary": {
+        "total": 1,
+        "errors": 0,
+        "warnings": 0,
+        "cycles": 0,
+        "unreachable": 0,
+        "duplicates": 0
+      },
+      "levels": {
+        "0": [
+          "exit"
+        ]
+      },
+      "functions": [
+        {
+          "name": "exit",
+          "line": 0,
+          "level": 0,
+          "calls": [
+            "xit",
+            "system_exit"
+          ]
+        }
+      ],
+      "cycles": [],
+      "unreachable": [],
+      "duplicates": [],
+      "findings": []
+    },
+    {
+      "metadata": {
+        "tool": "ail_order",
+        "version": "0.1.0",
+        "timestamp": "2026-07-07T22:24:32.393401+00:00"
+      },
+      "summary": {
+        "total": 4,
+        "errors": 0,
+        "warnings": 0,
+        "cycles": 0,
+        "unreachable": 0,
+        "duplicates": 0
+      },
+      "levels": {
+        "0": [
+          "now",
+          "timestamp",
+          "sleep",
+          "format"
+        ]
+      },
+      "functions": [
+        {
+          "name": "now",
+          "line": 0,
+          "level": 0,
+          "calls": [
+            "ow",
+            "time_now"
+          ]
+        },
+        {
+          "name": "timestamp",
+          "line": 4,
+          "level": 0,
+          "calls": [
+            "imestamp",
+            "time_timestamp"
+          ]
+        },
+        {
+          "name": "sleep",
+          "line": 8,
+          "level": 0,
+          "calls": [
+            "leep",
+            "time_sleep"
+          ]
+        },
+        {
+          "name": "format",
+          "line": 12,
+          "level": 0,
+          "calls": [
+            "ormat",
+            "time_format"
+          ]
+        }
+      ],
+      "cycles": [],
+      "unreachable": [],
+      "duplicates": [],
+      "findings": []
+    }
+  ]
+}

@@ -3,26 +3,12 @@
 
 """AILang Doctor - repository health checker for AILang project."""
 
-import os
-import re
-import json
 import hashlib
+import json
+import re
 from pathlib import Path
 
-
-def get_project_root() -> Path:
-    """Return the project root directory."""
-    return Path(__file__).resolve().parent.parent.parent
-
-
-def read_file_safe(path: Path) -> str | None:
-    """Read a file if it exists, return None otherwise. Returns None for binary/unreadable files."""
-    if path.exists():
-        try:
-            return path.read_text(encoding="utf-8")
-        except (UnicodeDecodeError, OSError):
-            return None
-    return None
+from ail_platform.project import get_project_root, read_file_safe
 
 
 def find_markdown_files(root: Path) -> list[Path]:
@@ -417,14 +403,9 @@ def main() -> int:
     """Main entry point for the ail doctor tool."""
     root = get_project_root()
     output_path = root / "generated" / "DOCTOR_REPORT.md"
-
-    # Ensure generated directory exists
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    # Generate content
     content = generate_report()
-
-    # Write output
     output_path.write_text(content, encoding="utf-8")
     print(f"Generated: {output_path}")
 

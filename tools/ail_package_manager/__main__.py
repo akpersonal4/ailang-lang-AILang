@@ -1,10 +1,4 @@
-"""AILang Package Manager — dependency management for AILang projects.
-
-Exit codes:
-    0 = Success
-    1 = Operation failed (resolution, download, checksum)
-    3 = Internal error (invalid args, missing manifest, I/O error)
-"""
+"""AILang Package Manager — dependency management for AILang projects."""
 
 from __future__ import annotations
 
@@ -12,13 +6,11 @@ import argparse
 import sys
 from pathlib import Path
 
+from ail_platform.project import get_project_root
+from ail_platform.report_schema import ExitCode
 from tools.ail_package_manager.init import init_project
 from tools.ail_package_manager.installer import install
 from tools.ail_package_manager.manifest import find_manifest, parse_manifest
-
-
-def get_project_root() -> Path:
-    return Path(__file__).resolve().parent.parent.parent
 
 
 def cmd_init(args: argparse.Namespace) -> int:
@@ -37,18 +29,18 @@ def cmd_add(args: argparse.Namespace) -> int:
     manifest_path = find_manifest(Path.cwd())
     if manifest_path is None:
         print("Error: No ail.toml found in current or parent directories", file=sys.stderr)
-        return 3
+        return ExitCode.INTERNAL_ERROR
     print(f"ail add: {args.package} (not yet implemented)")
-    return 1
+    return ExitCode.FAILURE
 
 
 def cmd_remove(args: argparse.Namespace) -> int:
     manifest_path = find_manifest(Path.cwd())
     if manifest_path is None:
         print("Error: No ail.toml found in current or parent directories", file=sys.stderr)
-        return 3
+        return ExitCode.INTERNAL_ERROR
     print(f"ail remove: {args.package} (not yet implemented)")
-    return 1
+    return ExitCode.FAILURE
 
 
 def cmd_install(args: argparse.Namespace) -> int:
@@ -64,19 +56,19 @@ def cmd_update(args: argparse.Namespace) -> int:
     manifest_path = find_manifest(Path.cwd())
     if manifest_path is None:
         print("Error: No ail.toml found in current or parent directories", file=sys.stderr)
-        return 3
+        return ExitCode.INTERNAL_ERROR
     pkg = args.package
     print(f"ail update {pkg or '(all)'} (not yet implemented)")
-    return 1
+    return ExitCode.FAILURE
 
 
 def cmd_list(args: argparse.Namespace) -> int:
     manifest_path = find_manifest(Path.cwd())
     if manifest_path is None:
         print("Error: No ail.toml found in current or parent directories", file=sys.stderr)
-        return 3
+        return ExitCode.INTERNAL_ERROR
     print("ail list (not yet implemented)")
-    return 1
+    return ExitCode.FAILURE
 
 
 def main() -> int:
@@ -128,7 +120,7 @@ def main() -> int:
 
     if args.command is None:
         parser.print_help()
-        return 0
+        return ExitCode.SUCCESS
 
     command_map = {
         "init": cmd_init,
@@ -142,7 +134,7 @@ def main() -> int:
     handler = command_map.get(args.command)
     if handler is None:
         print(f"Error: Unknown command '{args.command}'", file=sys.stderr)
-        return 3
+        return ExitCode.INTERNAL_ERROR
 
     return handler(args)
 

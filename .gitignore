@@ -40,3 +40,6 @@ htmlcov/
 
 # Generated files (regeneratable by DX tools)
 generated/
+
+# Benchmark results (immutable runtime artifacts, not committed)
+benchmarks/results/

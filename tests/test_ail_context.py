@@ -21,7 +21,7 @@ def test_context_tool_generates_file():
     assert "Project Overview" in content
     assert "Do Not Change Rules" in content
     assert "v0.2.0" in content
-    assert "624 tests" in content
+    assert "772 tests" in content
 
 
 def test_context_is_ai_friendly():

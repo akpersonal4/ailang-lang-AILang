@@ -3,21 +3,10 @@
 
 """AILang Context Generator - creates PROJECT_CONTEXT.md for AI consumption."""
 
-import os
 import json
 from pathlib import Path
 
-
-def get_project_root() -> Path:
-    """Return the project root directory."""
-    return Path(__file__).resolve().parent.parent.parent
-
-
-def read_file_safe(path: Path) -> str | None:
-    """Read a file if it exists, return None otherwise."""
-    if path.exists():
-        return path.read_text(encoding="utf-8")
-    return None
+from ail_platform.project import get_project_root
 
 
 def extract_summary(content: str | None, max_lines: int = 20) -> str:

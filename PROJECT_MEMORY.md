@@ -7,10 +7,10 @@ Project history, key decisions, and evolution timeline for AI coding assistants.
 ## Project Identity
 
 - **Language:** AILang — AI-first, deterministic, specification-driven
-- **Version:** v0.3.0
+- **Version:** v0.7.0
 - **Compiler:** 40 Python source files, ~4,000 LOC
-- **Standard Library:** 16 `.ail` modules
-- **Test Suite:** 772 passing tests across 84 test scripts
+- **Standard Library:** 16 `.ail` modules (extended: `file.listdir`, `list.sum`, `list.find_by_key`; fixed: `convert.to_number`)
+- **Test Suite:** 893+ passing tests across 103 test scripts (772 existing + 82 formatter + 44 B1 framework + 37 providers/calibration)
 - **Applications:** 66+ across `apps/`, `ai_benchmarks/`, `examples/patterns/`
 
 ---
@@ -85,7 +85,6 @@ per-environment after the first successful resolution.
 | `string.join` missing | Requires 10 LOC recursive impl | 2/10 benchmarks |
 | `list.sort` missing | Requires 20 LOC selection sort | 3/10 benchmarks |
 | No source line numbers in errors | Poor DX — must search 500+ LOC files | 5/10 benchmarks |
-| `ail fmt` spurious SEMICOLON error | Formatter unusable on valid code | 6/10 benchmarks |
 
 ---
 
@@ -243,6 +242,106 @@ A chronological record of every major engineering phase, with results, lessons, 
 | **Lessons** | Design-first prevents architecture drift. The `ail.toml` project manifest serves as a single source of truth for all DX tools (package manager, benchmark runner, test generator, LSP, formatter). Writing the design document revealed 10 open questions that would have been discovered mid-implementation. |
 | **Documents** | `docs/architecture/TOOLING_ARCHITECTURE.md`, `docs/architecture/PACKAGE_MANAGER_DESIGN.md` |
 
+### M16 — Documentation Architecture Cleanup
+
+| Aspect | Detail |
+|--------|--------|
+| **What** | Resolved ADR collision (ADR-001/002/003 → ADR-010/011/012). Archived PROJECT_PHASE.md, ROADMAP.md, CURRENT_MILESTONE.md (DEVELOPMENT_STATUS.md now canonical). Archived MASTER_ENGINEERING_PROMPT.md, FOR_FUTURE_AI.md (AGENTS.md canonical). Archived 21 v0.1.0 sprint reports to `docs/archive/v0.1.0/`. Added `generated/` to .gitignore. Created Documentation Ownership Matrix (15 document types with canonical owners). Updated cross-references in RELEASE_PROCESS.md, AI_MODEL_GUIDE.md, PROJECT_MEMORY.md. |
+| **Why** | Eliminate documentation duplication and establish clear canonical ownership for every document type before the project scales further. |
+| **Result** | Single canonical document per responsibility. Documentation Ownership Matrix prevents future drift. 21 redundant files archived. |
+| **Lessons** | Cross-references must be updated as part of any archival to prevent stale links. |
+| **Documents** | `DEVELOPMENT_STATUS.md`, `AGENTS.md`, `docs/guides/ARCHITECTURE_DOCUMENTATION_REPORT.md` |
+
+### M17 — Cross-Repository Analysis & Architecture Documentation
+
+| Aspect | Detail |
+|--------|--------|
+| **What** | Created a comprehensive cross-repository analysis of the entire AiLang codebase as a reference AI repository understanding dataset. Expanded ARCHITECTURE_DECISIONS.md from 9 to 19 ADRs. Created definitive documents: PROJECT_CONSTITUTION.md (governance), VISION_AND_DIFFERENTIATION.md (vision/strategy), ENGINEERING_BENCHMARK_PLAN.md (benchmark methodology). Regenerated all AI benchmark artifacts. |
+| **Why** | Needed BEFORE designing benchmarks — understand the architecture's decisions before attempting to measure them. CTO directive: "get the documents right" first. |
+| **Result** | 19 ADRs covering all architectural decisions with rationale and evidence. Three new definitive documents. All AI benchmark artifacts updated. |
+| **Lessons** | Architecture documentation must precede benchmark design. You cannot measure what you haven't defined. |
+| **Documents** | `docs/architecture/ARCHITECTURE_DECISIONS.md`, `docs/governance/PROJECT_CONSTITUTION.md`, `docs/governance/VISION_AND_DIFFERENTIATION.md`, `docs/benchmarks/ENGINEERING_BENCHMARK_PLAN.md` |
+
+### M18 — Engineering Benchmark Program Charter
+
+| Aspect | Detail |
+|--------|--------|
+| **What** | Structured the entire 7-benchmark Engineering Benchmark Program (B1-B7) with formal charters, acceptance criteria, and evidence collection methodology. Published AILANG_BENCHMARK_WHITEPAPER.md as the canonical synthesis of all benchmark knowledge. |
+| **Why** | Needed a single authoritative document describing what the benchmarks measure, how they work, and what results mean — separating methodology from evidence. |
+| **Result** | 7 benchmark charters (B1-B7) each with hypothesis, methodology, acceptance criteria, and dataset requirements. Whitepaper replaces scattered benchmark documentation. |
+| **Lessons** | Benchmark methodology must be separated from benchmark results. The whitepaper is the permanent synthesis; individual reports are ephemeral. |
+| **Documents** | `docs/benchmarks/AILANG_BENCHMARK_WHITEPAPER.md`, `docs/benchmarks/ENGINEERING_BENCHMARK_PLAN.md` |
+
+### M19 — Documentation Canonicalization (v0.5.0)
+
+| Aspect | Detail |
+|--------|--------|
+| **What** | Consolidated PROJECT_VISION.md + PROJECT_PHILOSOPHY.md into VISION_AND_DIFFERENTIATION.md. Expanded PROJECT_CONSTITUTION.md with Documentation Rule and Canonical First Rule. Created PRODUCT_ROADMAP.md at root as canonical roadmap. Moved benchmark methodology from whitepaper to ENGINEERING_BENCHMARK_PLAN.md. |
+| **Why** | 4 documents describing "roadmap" (PROJECT_VISION.md, PROJECT_PHILOSOPHY.md, ROADMAP.md, PRODUCT_ROADMAP.md) created confusion about which was canonical. CTO directed consolidation. |
+| **Result** | From 5 documents to 3 canonical sources (VISION_AND_DIFFERENTIATION.md + CONSTITUTION + PRODUCT_ROADMAP.md). Canonical First Rule added to AGENTS.md and Constitution. Eliminated 7 obsolete/archive files. |
+| **Lessons** | Before creating a new document, search for an existing canonical first. Extend it rather than creating a new file. |
+| **Documents** | `PRODUCT_ROADMAP.md`, `docs/governance/PROJECT_CONSTITUTION.md`, `docs/governance/VISION_AND_DIFFERENTIATION.md` |
+
+### B1 — Engineering Benchmark Framework (v0.6.0)
+
+| Aspect | Detail |
+|--------|--------|
+| **What** | Implemented the B1 AI Repository Understanding Benchmark: generic measurement framework (runner, metrics, environ, reporting, dataset modules in `benchmarks/framework/`), 3 canonical datasets (small/medium/current_repo), 44 acceptance/regression/smoke tests, automated via `python -m benchmarks {setup,b1,list,test}`. |
+| **Why** | B1 is the foundational benchmark measuring the AI repository understanding problem that AILang is designed to solve. Framework must be generic (reusable by B2-B7) before any benchmark execution. |
+| **Result** | Framework reusable across all 7 engineering benchmarks. 44/44 tests passing. Deterministic dataset scanning with SHA-256 metadata. Immutable historical results. Summary aggregation across runs. |
+| **Lessons** | Framework must be generic and separate from any specific benchmark's methodology. Datasets frozen by SHA-256 metadata. Run IDs are timestamp-based and sortable. |
+| **Documents** | `benchmarks/framework/`, `benchmarks/datasets/`, `benchmarks/b1_understanding/`, `benchmarks/tests/` |
+
+### B1.1 — AI Provider Integration & Calibration (v0.6.1)
+
+| Aspect | Detail |
+|--------|--------|
+| **What** | Built a provider-independent AI benchmark layer: 4 provider implementations (OpenAI, Anthropic, Google, Local) implementing a common `AIProvider` interface with `ProviderResult` data model for all measurements. Created calibration module that runs identical prompts across all providers to validate measurement infrastructure. Extended B1 to use provider abstraction (3 priority modes: provider → manual dict → approximate). Added `python -m benchmarks calibrate` and `list-providers` commands. |
+| **Why** | The benchmark framework must be capable of executing identical benchmark scenarios against multiple AI systems using a common interface, without the benchmark framework knowing which provider is executing. This milestone is about measurement infrastructure, not provider comparison. |
+| **Result** | Provider abstraction with factory, 4 implementations, calibration module, B1 extended, 37 new tests (81 total in benchmarks/tests/). ProviderResult captures all request/response/timing/cost measurements without estimation. Calibration validates measurement consistency across providers. |
+| **Lessons** | Provider implementations must use lazy imports for external packages so the framework works without optional dependencies. Mock-based testing verifies the interface contract without requiring API keys. Cost estimation uses published pricing but is flagged as approximate. |
+| **Documents** | `benchmarks/providers/`, `benchmarks/calibration/`, `benchmarks/tests/test_providers.py`, `benchmarks/tests/test_calibration.py` |
+
+### v0.7.0 — Engineering Optimization Program (Evidence-Driven Stdlib Evolution)
+
+| Aspect | Detail |
+|--------|--------|
+| **What** | Analyzed benchmark evidence (B2–B7) to identify #1 friction source: stdlib gaps causing 42% of feature-implementation errors. Added `file.listdir(path)`, `list.sum(values)`, `list.find_by_key(values, key, value)`. Fixed `convert.to_number` no-op. Created HYPOTHESIS_STATUS.md tracking 7 hypotheses with evidence. |
+| **Why** | Benchmark evidence showed AILang requires 1.38× more iterations than Python, with 42% of B2 errors caused by stdlib limitations. Optimization needed before v1.0. |
+| **Result** | B2 L2 improved from 3→1 iterations (67%). B2 total from 7→5 (29%). Overall AILang vs Python ratio from 1.38× to 1.23×. All existing tests pass with zero regressions. |
+| **Lessons** | Single-error-at-a-time compiler reporting is the next bottleneck (not addressed here, out of scope). Stdlib gaps are the highest-leverage optimization target. The evidence-first methodology (build measure, identify, fix, re-measure) works. |
+| **Documents** | `ENGINEERING_EVIDENCE_REPORT.md`, `docs/HYPOTHESIS_STATUS.md`, `stdlib/file.ail`, `stdlib/list.ail`, `stdlib/convert.ail` |
+
+### M20 — Dependency Ordering Assistant (`ail order`)
+
+| Aspect | Detail |
+|--------|--------|
+| **What** | Implemented `tools/ail_order/` — analyzes .ail files for dependency ordering issues. Detects forward references, circular dependencies, unreachable functions, duplicate declarations. Provides topological ordering recommendations. |
+| **Why** | Benchmark evidence (Mini CRM) showed ~1 iteration penalty due to forward reference violations. Provides compiler-generated ordering hints to reduce iteration without changing language semantics. |
+| **Result** | Tool analyzes single files and directories. Provides human-readable output and machine-readable JSON. Supports `--fix` mode for automatic reordering. 28 tests (12 acceptance, 8 regression, 8 AI validation) all passing. |
+| **Lessons** | Forward reference detection is the primary value — not automatic reordering. The analysis in DEPENDENCY_ORDERING_ANALYSIS.md correctly identified the need for hints over automation. |
+| **Documents** | `tools/ail_order/`, `docs/architecture/DEPENDENCY_ORDERING_ANALYSIS.md` |
+
+### B2–B7 — Engineering Benchmark Execution (v0.6.2)
+
+| Aspect | Detail |
+|--------|--------|
+| **What** | Executed 6 engineering benchmarks (B2–B7) comparing AILang vs Python across feature implementation, bug fixing, refactoring, upgrades, maintenance, and AI context. Generated ENGINEERING_EVIDENCE_REPORT.md with raw measurements, environment, and observations. |
+| **Why** | Needed objective, reproducible evidence of AILang's engineering cost relative to Python — the project's primary hypothesis requires measurement before claims. |
+| **Result** | AILang: 18 iterations total (B2–B6). Python: 13 iterations total. Ratio: 1.38× more iterations for AILang. All AILang errors are compile-time (zero silent runtime failures). Refactoring/upgrade/maintenance at parity (1.0×). AI structured context saves 3× iterations (B7). Key stdlib gaps identified: no `!=` operator, no `listdir`, `convert.to_number` is no-op. |
+| **Lessons** | The compiler's single-error-at-a-time reporting inflates iteration counts. Stdlib gaps are the #1 friction point (42% of B2 errors). Bottom-up ordering is net neutral for refactoring. |
+| **Documents** | `ENGINEERING_EVIDENCE_REPORT.md` |
+
+### M21 — Inventory Python Equivalent + Empirical AILang vs Python Comparison
+
+| Aspect | Detail |
+|--------|--------|
+| **What** | Built a complete Python 3.12 mirror of the AILang Inventory Management System at `apps/inventory_py/` (same function names, same test logic, same PASS/FAIL format). Fixed 9 parallel-agent-generated test failures → 38/38 pass. Created two canonical benchmark docs. |
+| **Why** | The INVENTORY_SCALABILITY_BENCHMARK proved AILang scales to 8,515 LOC but was criticized for not proving AI-coding ease, dev speed, quality, maintainability, patching, or security. A head-to-head Python equivalent is required by the Engineering Benchmark Plan (B2–B6). |
+| **Result** | **AILang:** 4,009 app + 4,506 test = 8,515 LOC, 407 app functions, 38/38 tests pass, 0.219s full build, 0.173s test run. **Python:** 2,614 app + 3,644 test = 6,258 LOC, 353 app functions, 38/38 tests pass, 0.194s test run. AILang compiles 55× faster cold-start, catches 100% structural errors at compile in 1 pass; Python needs N runtime iterations. AILang is 33% more verbose per function (recursion + unique var names). |
+| **Lessons** | AILang's compiler is a batch correctness gate — all import/name errors surface in one compile vs Python's sequential runtime discovery. Both systems exhibited identical data-bleed bugs (fixed identically via storage_clear_all + reseed). AILang eliminates null-pointer, code-injection, and implicit-coercion at the language level. The B2–B6 AI-iteration measurement remains unexecuted (requires provider queries). |
+| **Documents** | `docs/benchmarks/INVENTORY_PYTHON_COMPARISON.md`, `docs/benchmarks/INVENTORY_BENCHMARK_HARNESS.md`, `apps/inventory_py/` |
+
 ### Governance
 
 - **Benchmark Feedback Loop:** Single-app findings stay in benchmark reports. Only ≥2 independent apps promote lessons to Playbook/AGENTS.md.
@@ -295,8 +394,11 @@ Root
 │       └── v0.2.0/                    ← v0.2-specific reports
 │
 ├── compiler/                         ← 40 Python files
-├── tests/                            ← 677 tests
-├── apps/                             ← ~60 applications
+├── benchmarks/                       ← B1-B7 framework, providers, calibration, datasets, b1_understanding, tests
+├── tests/                            ← Existing tests (82 formatter + 44 B1 framework)
+├── apps/
+│   ├── inventory/                    ← Largest AILang app: 4,009 LOC + 4,506 test = 8,515 total, 38/38 pass
+│   └── inventory_py/                 ← Python 3.12 mirror: 2,614 LOC + 3,644 test = 6,258 total, 38/38 pass
 ├── tools/
 │   ├── common/                       ← Shared DX tooling library
 │   ├── ail_context/                  ← DX-001
@@ -308,5 +410,6 @@ Root
 │   └── generated/                    ← Auto-generated test files
 ├── ai_benchmarks/                    ← 3 large benchmarks
 ├── examples/patterns/                ← 10 pattern files
+├── PRODUCT_ROADMAP.md                ← Canonical product roadmap
 └── .github/workflows/ci.yml          ← CI pipeline
 ```

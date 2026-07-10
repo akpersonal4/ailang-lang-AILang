@@ -7,6 +7,8 @@ import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from ail_platform.project import get_project_root
+
 
 @dataclass
 class Benchmark:
@@ -19,8 +21,6 @@ class Benchmark:
     args: list[str] | None = None
 
 
-# Suite definitions — explicit, versioned, documented
-# The canonical suite matches docs/guides/AILANG_DEVELOPMENT_PLAYBOOK.md
 SUITE_DEFINITIONS: dict[str, list[str]] = {
     "quick": [
         "dice_roller",
@@ -35,17 +35,9 @@ SUITE_DEFINITIONS: dict[str, list[str]] = {
     ],
 }
 
-# Extra CLI arguments required by specific benchmark apps.
-# Key = app name (must match dir under apps/), value = list of args.
-# These are appended to the `ail run` command for that benchmark.
 BENCHMARK_ARGS: dict[str, list[str]] = {
     "static_analyzer": ["apps/static_analyzer/main.ail"],
 }
-
-
-def get_project_root() -> Path:
-    """Return the project root directory."""
-    return Path(__file__).resolve().parent.parent.parent
 
 
 def discover_all_apps(root: Path) -> list[Benchmark]:

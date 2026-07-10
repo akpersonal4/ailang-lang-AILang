@@ -3,17 +3,13 @@
 
 """AILang Static Analyzer wrapper - discovers .ail files, runs analyzer, produces reports."""
 
-import os
-import sys
 import json
-import glob
 import subprocess
+import sys
 from pathlib import Path
 
-
-def get_project_root() -> Path:
-    """Return the project root directory."""
-    return Path(__file__).resolve().parent.parent.parent
+from ail_platform.project import get_project_root
+from ail_platform.report_schema import ExitCode
 
 
 def discover_ail_files(target: Path) -> list[Path]:
@@ -236,7 +232,7 @@ def main() -> int:
 
     if not ail_files:
         print(f"Error: No .ail files found in {target_path}", file=sys.stderr)
-        return 2
+        return ExitCode.FAILURE
 
     thresholds = {
         "max_depth": args.max_depth,
@@ -244,7 +240,6 @@ def main() -> int:
         "many_functions_threshold": args.many_functions_threshold,
     }
 
-    # Run analyzer on all files
     results = []
     raw_outputs = []
     for ail_file in ail_files:
@@ -253,27 +248,22 @@ def main() -> int:
         raw_outputs.append(raw)
         print(f"Analyzed: {ail_file}")
 
-    # Generate outputs
     json_output = json.dumps(results, indent=2)
     markdown_output = generate_markdown_report(results, raw_outputs, thresholds)
 
-    # Ensure generated directory exists
     output_dir = root / "generated"
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    # Determine what to write
     json_path = output_dir / "STATIC_ANALYZER_REPORT.json"
     md_path = output_dir / "STATIC_ANALYZER_REPORT.md"
 
-    exit_code = 0
+    exit_code = ExitCode.SUCCESS
 
-    # Check for warnings
     if any(r["total_lines"] > thresholds["large_file_threshold"] for r in results):
-        exit_code = 1
+        exit_code = ExitCode.FAILURE
     if any(r["functions"] > thresholds["many_functions_threshold"] for r in results):
-        exit_code = 1
+        exit_code = ExitCode.FAILURE
 
-    # Write outputs
     if not args.json_only:
         md_path.write_text(markdown_output, encoding="utf-8")
         print(f"\nGenerated: {md_path}")
