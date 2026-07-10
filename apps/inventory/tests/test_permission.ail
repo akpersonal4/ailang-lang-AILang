@@ -1,0 +1,151 @@
+import list;
+import map;
+import string;
+import convert;
+import helpers;
+import storage;
+import permission;
+
+fn test_permission_define() {
+    let tpActions = list.new();
+    list.append(tpActions, "create");
+    list.append(tpActions, "read");
+    list.append(tpActions, "update");
+    let tpResult = permission.permission_define("admin", "product", tpActions);
+    if (tpResult == false) {
+        print("FAIL: permission_define returned false");
+        return false;
+    }
+    let tpId = helpers.helpers_get_map_value_safe(tpResult, "id", "");
+    if (tpId == "") {
+        print("FAIL: permission_define - no id");
+        return false;
+    }
+    let tpRole = helpers.helpers_get_map_value_safe(tpResult, "role", "");
+    if (tpRole != "admin") {
+        print("FAIL: permission_define - role mismatch");
+        return false;
+    }
+    let tpResource = helpers.helpers_get_map_value_safe(tpResult, "resource", "");
+    if (tpResource != "product") {
+        print("FAIL: permission_define - resource mismatch");
+        return false;
+    }
+    print("PASS: permission_define");
+    return true;
+}
+
+fn test_permission_check_exists() {
+    let tcActions = list.new();
+    list.append(tcActions, "create");
+    list.append(tcActions, "read");
+    list.append(tcActions, "update");
+    permission.permission_define("editor", "article", tcActions);
+    let tcResult = permission.permission_check("editor", "article", "read");
+    if (tcResult != true) {
+        print("FAIL: permission_check_exists - expected true, got false");
+        return false;
+    }
+    print("PASS: permission_check_exists");
+    return true;
+}
+
+fn test_permission_check_missing() {
+    let tcResult = permission.permission_check("editor", "article", "delete");
+    if (tcResult != false) {
+        print("FAIL: permission_check_missing - expected false, got true");
+        return false;
+    }
+    print("PASS: permission_check_missing");
+    return true;
+}
+
+fn test_permission_add_action_and_check() {
+    let taActions = list.new();
+    list.append(taActions, "create");
+    list.append(taActions, "read");
+    permission.permission_define("manager", "report", taActions);
+    let taResult = permission.permission_check("manager", "report", "delete");
+    if (taResult != false) {
+        print("FAIL: permission_add_action - expected false before add");
+        return false;
+    }
+    permission.permission_add_action("manager", "report", "delete");
+    let taCheckAfter = permission.permission_check("manager", "report", "delete");
+    if (taCheckAfter != true) {
+        print("FAIL: permission_add_action - expected true after add");
+        return false;
+    }
+    print("PASS: permission_add_action_and_check");
+    return true;
+}
+
+fn test_permission_remove_action() {
+    let trActions = list.new();
+    list.append(trActions, "create");
+    list.append(trActions, "read");
+    list.append(trActions, "update");
+    permission.permission_define("operator", "machine", trActions);
+    let trBefore = permission.permission_check("operator", "machine", "update");
+    if (trBefore != true) {
+        print("FAIL: permission_remove_action - expected true before remove");
+        return false;
+    }
+    permission.permission_remove_action("operator", "machine", "update");
+    let trAfter = permission.permission_check("operator", "machine", "update");
+    if (trAfter != false) {
+        print("FAIL: permission_remove_action - expected false after remove");
+        return false;
+    }
+    print("PASS: permission_remove_action");
+    return true;
+}
+
+fn test_permission_list_roles() {
+    let tlActions = list.new();
+    list.append(tlActions, "read");
+    permission.permission_define("viewer", "dashboard", tlActions);
+    permission.permission_define("viewer", "report", tlActions);
+    let tlRoles = permission.permission_list_roles();
+    let tlLen = list.len(tlRoles);
+    if (tlLen == 0) {
+        print("FAIL: permission_list_roles - empty list");
+        return false;
+    }
+    let tlFoundViewer = helpers.helpers_list_contains(tlRoles, "viewer");
+    if (tlFoundViewer == false) {
+        print("FAIL: permission_list_roles - viewer not found");
+        return false;
+    }
+    print("PASS: permission_list_roles (" + convert.to_string(tlLen) + " roles)");
+    return true;
+}
+
+fn main() {
+    let tpr1 = test_permission_define();
+    if (tpr1 == false) {
+        return 1;
+    }
+    let tpr2 = test_permission_check_exists();
+    if (tpr2 == false) {
+        return 1;
+    }
+    let tpr3 = test_permission_check_missing();
+    if (tpr3 == false) {
+        return 1;
+    }
+    let tpr4 = test_permission_add_action_and_check();
+    if (tpr4 == false) {
+        return 1;
+    }
+    let tpr5 = test_permission_remove_action();
+    if (tpr5 == false) {
+        return 1;
+    }
+    let tpr6 = test_permission_list_roles();
+    if (tpr6 == false) {
+        return 1;
+    }
+    print("ALL PERMISSION TESTS PASSED");
+    return 0;
+}

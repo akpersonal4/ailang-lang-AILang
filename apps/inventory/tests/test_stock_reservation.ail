@@ -1,0 +1,142 @@
+import list;
+import map;
+import string;
+import convert;
+import helpers;
+import storage;
+import stock_movement;
+import stock_reservation;
+
+fn test_rsrv_create_and_get() {
+    let trsProd = map.new();
+    map.set(trsProd, "id", "RSRV-TEST-PROD-1");
+    map.set(trsProd, "name", "Reservation Test Product");
+    storage.storage_add("products", trsProd);
+    stock_movement.movement_create("RSRV-TEST-PROD-1", "inbound", 100, "manual", "INIT", "Initial stock");
+    let trsRes = stock_reservation.reservation_create("RSRV-TEST-ORDER-1", "RSRV-TEST-PROD-1", 30);
+    if (trsRes == false) {
+        print("FAIL: reservation_create returned false");
+        return false;
+    }
+    let trsId = helpers.helpers_get_map_value_safe(trsRes, "id", "");
+    if (trsId == "") {
+        print("FAIL: reservation has no id");
+        return false;
+    }
+    let trsFetched = stock_reservation.reservation_get_by_id(trsId);
+    if (trsFetched == false) {
+        print("FAIL: could not fetch reservation by id");
+        return false;
+    }
+    print("PASS: reservation_create and get_by_id");
+    return true;
+}
+
+fn test_rsrv_list_by_order() {
+    let trsoProd = map.new();
+    map.set(trsoProd, "id", "RSRV-TEST-PROD-2");
+    map.set(trsoProd, "name", "Reservation List Product");
+    storage.storage_add("products", trsoProd);
+    stock_movement.movement_create("RSRV-TEST-PROD-2", "inbound", 100, "manual", "INIT", "Initial stock");
+    stock_reservation.reservation_create("RSRV-TEST-ORDER-2", "RSRV-TEST-PROD-2", 20);
+    stock_reservation.reservation_create("RSRV-TEST-ORDER-2", "RSRV-TEST-PROD-2", 30);
+    let trsoList = stock_reservation.reservation_list_by_order("RSRV-TEST-ORDER-2");
+    let trsoLen = list.len(trsoList);
+    if (trsoLen != 2) {
+        print("FAIL: expected 2 reservations, got " + convert.to_string(trsoLen));
+        return false;
+    }
+    print("PASS: reservation_list_by_order");
+    return true;
+}
+
+fn test_rsrv_fulfill() {
+    let trfProd = map.new();
+    map.set(trfProd, "id", "RSRV-TEST-PROD-3");
+    map.set(trfProd, "name", "Fulfill Product");
+    storage.storage_add("products", trfProd);
+    stock_movement.movement_create("RSRV-TEST-PROD-3", "inbound", 100, "manual", "INIT", "Initial stock");
+    let trfRes = stock_reservation.reservation_create("RSRV-TEST-ORDER-3", "RSRV-TEST-PROD-3", 10);
+    let trfId = helpers.helpers_get_map_value_safe(trfRes, "id", "");
+    let trfResult = stock_reservation.reservation_fulfill(trfId);
+    if (trfResult == false) {
+        print("FAIL: fulfill returned false");
+        return false;
+    }
+    let trfFetched = stock_reservation.reservation_get_by_id(trfId);
+    let trfStatus = helpers.helpers_get_map_value_safe(trfFetched, "status", "");
+    if (trfStatus != "fulfilled") {
+        print("FAIL: expected status fulfilled, got " + trfStatus);
+        return false;
+    }
+    print("PASS: reservation_fulfill");
+    return true;
+}
+
+fn test_rsrv_cancel() {
+    let trcProd = map.new();
+    map.set(trcProd, "id", "RSRV-TEST-PROD-4");
+    map.set(trcProd, "name", "Cancel Product");
+    storage.storage_add("products", trcProd);
+    stock_movement.movement_create("RSRV-TEST-PROD-4", "inbound", 100, "manual", "INIT", "Initial stock");
+    let trcRes = stock_reservation.reservation_create("RSRV-TEST-ORDER-4", "RSRV-TEST-PROD-4", 10);
+    let trcId = helpers.helpers_get_map_value_safe(trcRes, "id", "");
+    let trcResult = stock_reservation.reservation_cancel(trcId);
+    if (trcResult == false) {
+        print("FAIL: cancel returned false");
+        return false;
+    }
+    let trcFetched = stock_reservation.reservation_get_by_id(trcId);
+    let trcStatus = helpers.helpers_get_map_value_safe(trcFetched, "status", "");
+    if (trcStatus != "cancelled") {
+        print("FAIL: expected status cancelled, got " + trcStatus);
+        return false;
+    }
+    print("PASS: reservation_cancel");
+    return true;
+}
+
+fn test_rsrv_check_availability() {
+    let trcaProd = map.new();
+    map.set(trcaProd, "id", "RSRV-TEST-PROD-5");
+    map.set(trcaProd, "name", "Availability Product");
+    storage.storage_add("products", trcaProd);
+    stock_movement.movement_create("RSRV-TEST-PROD-5", "inbound", 50, "manual", "INIT", "Initial stock");
+    let trcaAvailable = stock_reservation.reservation_check_availability("RSRV-TEST-PROD-5", 30);
+    if (trcaAvailable != true) {
+        print("FAIL: expected true for available stock");
+        return false;
+    }
+    let trcaNotAvailable = stock_reservation.reservation_check_availability("RSRV-TEST-PROD-5", 100);
+    if (trcaNotAvailable != false) {
+        print("FAIL: expected false for insufficient stock");
+        return false;
+    }
+    print("PASS: reservation_check_availability");
+    return true;
+}
+
+fn main() {
+    let tr1 = test_rsrv_create_and_get();
+    if (tr1 == false) {
+        return 1;
+    }
+    let tr2 = test_rsrv_list_by_order();
+    if (tr2 == false) {
+        return 1;
+    }
+    let tr3 = test_rsrv_fulfill();
+    if (tr3 == false) {
+        return 1;
+    }
+    let tr4 = test_rsrv_cancel();
+    if (tr4 == false) {
+        return 1;
+    }
+    let tr5 = test_rsrv_check_availability();
+    if (tr5 == false) {
+        return 1;
+    }
+    print("ALL STOCK RESERVATION TESTS PASSED");
+    return 0;
+}

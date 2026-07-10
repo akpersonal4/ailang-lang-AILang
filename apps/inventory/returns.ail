@@ -1,0 +1,73 @@
+import storage;
+import helpers;
+import list;
+import map;
+import string;
+
+fn returns_list_by_order_rec(rtlrItems, rtlrOrderId, rtlrIdx, rtlrAcc) {
+    if (rtlrIdx >= list.len(rtlrItems)) {
+        return rtlrAcc;
+    }
+    let rtlrItem = list.get(rtlrItems, rtlrIdx);
+    let rtlrItemOrderId = helpers.helpers_get_map_value_safe(rtlrItem, "order_id", "");
+    if (rtlrItemOrderId == rtlrOrderId) {
+        list.append(rtlrAcc, rtlrItem);
+    }
+    return returns_list_by_order_rec(rtlrItems, rtlrOrderId, rtlrIdx + 1, rtlrAcc);
+}
+
+fn returns_create(rtrnSoOrderId, rtrnProductId, rtrnQuantity, rtrnReason, rtrnReturnBy) {
+    let rtrnReturn = map.new();
+    let rtrnId = helpers.helpers_generate_id("RET-");
+    let rtrnNow = helpers.helpers_current_timestamp();
+    map.set(rtrnReturn, "id", rtrnId);
+    map.set(rtrnReturn, "order_id", rtrnSoOrderId);
+    map.set(rtrnReturn, "product_id", rtrnProductId);
+    map.set(rtrnReturn, "quantity", rtrnQuantity);
+    map.set(rtrnReturn, "reason", rtrnReason);
+    map.set(rtrnReturn, "return_by", rtrnReturnBy);
+    map.set(rtrnReturn, "status", "pending");
+    map.set(rtrnReturn, "created_at", rtrnNow);
+    map.set(rtrnReturn, "updated_at", rtrnNow);
+    storage.storage_add("returns", rtrnReturn);
+    return rtrnReturn;
+}
+
+fn returns_get_by_id(rtgReturnId) {
+    return storage.storage_get_by_id("returns", rtgReturnId);
+}
+
+fn returns_list() {
+    return storage.storage_list("returns");
+}
+
+fn returns_list_by_order(rtloOrderId) {
+    let rtloAll = storage.storage_list("returns");
+    let rtloResults = list.new();
+    return returns_list_by_order_rec(rtloAll, rtloOrderId, 0, rtloResults);
+}
+
+fn returns_approve(rtapReturnId) {
+    let rtapChanges = map.new();
+    let rtapNow = helpers.helpers_current_timestamp();
+    map.set(rtapChanges, "status", "approved");
+    map.set(rtapChanges, "updated_at", rtapNow);
+    return storage.storage_update("returns", rtapReturnId, rtapChanges);
+}
+
+fn returns_reject(rtrejReturnId, rtrejReason) {
+    let rtrejChanges = map.new();
+    let rtrejNow = helpers.helpers_current_timestamp();
+    map.set(rtrejChanges, "status", "rejected");
+    map.set(rtrejChanges, "rejection_reason", rtrejReason);
+    map.set(rtrejChanges, "updated_at", rtrejNow);
+    return storage.storage_update("returns", rtrejReturnId, rtrejChanges);
+}
+
+fn returns_complete(rtcmpReturnId) {
+    let rtcmpChanges = map.new();
+    let rtcmpNow = helpers.helpers_current_timestamp();
+    map.set(rtcmpChanges, "status", "completed");
+    map.set(rtcmpChanges, "updated_at", rtcmpNow);
+    return storage.storage_update("returns", rtcmpReturnId, rtcmpChanges);
+}

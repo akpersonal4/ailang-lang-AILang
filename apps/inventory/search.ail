@@ -1,0 +1,33 @@
+import storage;
+import helpers;
+import list;
+import map;
+import string;
+
+fn search_all_rec(saItems, saTerm, saType, saIdx, saResult) {
+    if (saIdx >= list.len(saItems)) {
+        return saResult;
+    }
+    let saItem = list.get(saItems, saIdx);
+    let saName = helpers.helpers_get_map_value_safe(saItem, "name", "");
+    let saNameLower = string.lowercase(saName);
+    let saTermLower = string.lowercase(saTerm);
+    if (string.contains(saNameLower, saTermLower)) {
+        let saEntry = map.new();
+        map.set(saEntry, "type", saType);
+        map.set(saEntry, "id", helpers.helpers_get_map_value_safe(saItem, "id", ""));
+        list.append(saResult, saEntry);
+    }
+    return search_all_rec(saItems, saTerm, saType, saIdx + 1, saResult);
+}
+
+fn search_all(saTerm) {
+    let saProducts = storage.storage_list("products");
+    let saCustomers = storage.storage_list("customers");
+    let saVendors = storage.storage_list("vendors");
+    let saResult = list.new();
+    saResult = search_all_rec(saProducts, saTerm, "product", 0, saResult);
+    saResult = search_all_rec(saCustomers, saTerm, "customer", 0, saResult);
+    saResult = search_all_rec(saVendors, saTerm, "vendor", 0, saResult);
+    return saResult;
+}

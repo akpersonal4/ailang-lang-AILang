@@ -1,0 +1,122 @@
+import list;
+import map;
+import string;
+import convert;
+import helpers;
+import storage;
+import category;
+import product;
+
+fn test_product_create() {
+    let tpcCat = category.category_create("ProdTestCat", "Category for product create test", "");
+    let tpcCatId = helpers.helpers_get_map_value_safe(tpcCat, "id", "");
+    if (tpcCatId == "") {
+        print("FAIL: product_create - category id missing");
+        return false;
+    }
+    let tpcResult = product.product_create("ProdCreateTest", "A product for create test", "PCR-001", tpcCatId, 150, 90, "pcs");
+    if (tpcResult == false) {
+        print("FAIL: product_create returned false");
+        return false;
+    }
+    let tpcId = helpers.helpers_get_map_value_safe(tpcResult, "id", "");
+    if (tpcId == "") {
+        print("FAIL: product_create - product id missing");
+        return false;
+    }
+    let tpcName = helpers.helpers_get_map_value_safe(tpcResult, "name", "");
+    if (tpcName != "ProdCreateTest") {
+        print("FAIL: product_create - expected ProdCreateTest, got " + tpcName);
+        return false;
+    }
+    print("PASS: product_create");
+    return true;
+}
+
+fn test_product_get_by_id_missing() {
+    let tpgmResult = product.product_get("NONEXISTENT-PRODUCT-ID");
+    if (tpgmResult != false) {
+        print("FAIL: product_get_by_id_missing - expected false");
+        return false;
+    }
+    print("PASS: product_get_by_id_missing");
+    return true;
+}
+
+fn test_product_get_by_id() {
+    let tpgCat = category.category_create("ProdGetCat", "Category for get test", "");
+    let tpgCatId = helpers.helpers_get_map_value_safe(tpgCat, "id", "");
+    let tpgCreated = product.product_create("ProdGetTest", "A product for get test", "PGT-001", tpgCatId, 200, 120, "pcs");
+    let tpgId = helpers.helpers_get_map_value_safe(tpgCreated, "id", "");
+    let tpgFound = product.product_get(tpgId);
+    if (tpgFound == false) {
+        print("FAIL: product_get_by_id returned false for existing product");
+        return false;
+    }
+    let tpgName = helpers.helpers_get_map_value_safe(tpgFound, "name", "");
+    if (tpgName != "ProdGetTest") {
+        print("FAIL: product_get_by_id - expected ProdGetTest, got " + tpgName);
+        return false;
+    }
+    print("PASS: product_get_by_id");
+    return true;
+}
+
+fn test_product_search() {
+    let tpsCat = category.category_create("ProdSearchCat", "Category for search test", "");
+    let tpsCatId = helpers.helpers_get_map_value_safe(tpsCat, "id", "");
+    let tpsUniqueName = "ZUniqueSearchItem_" + convert.to_string(helpers.helpers_unix_timestamp());
+    product.product_create(tpsUniqueName, "For search test", "PSR-001", tpsCatId, 50, 30, "pcs");
+    let tpsResults = product.product_search("ZUniqueSearchItem");
+    if (list.len(tpsResults) == 0) {
+        print("FAIL: product_search - expected at least 1 result");
+        return false;
+    }
+    let tpsFirst = list.get(tpsResults, 0);
+    let tpsFirstName = helpers.helpers_get_map_value_safe(tpsFirst, "name", "");
+    if (tpsFirstName != tpsUniqueName) {
+        print("FAIL: product_search - expected " + tpsUniqueName + ", got " + tpsFirstName);
+        return false;
+    }
+    print("PASS: product_search");
+    return true;
+}
+
+fn test_product_list() {
+    let tplCat = category.category_create("ProdListCat", "Category for list test", "");
+    let tplCatId = helpers.helpers_get_map_value_safe(tplCat, "id", "");
+    product.product_create("ProdListItem1", "First list item", "PLI-001", tplCatId, 10, 5, "pcs");
+    product.product_create("ProdListItem2", "Second list item", "PLI-002", tplCatId, 20, 10, "pcs");
+    let tplAll = product.product_list();
+    if (list.len(tplAll) == 0) {
+        print("FAIL: product_list returned empty list");
+        return false;
+    }
+    print("PASS: product_list (" + convert.to_string(list.len(tplAll)) + " items)");
+    return true;
+}
+
+fn main() {
+    let tpr1 = test_product_create();
+    if (tpr1 == false) {
+        return 1;
+    }
+    let tpr2 = test_product_get_by_id_missing();
+    if (tpr2 == false) {
+        return 1;
+    }
+    let tpr3 = test_product_get_by_id();
+    if (tpr3 == false) {
+        return 1;
+    }
+    let tpr4 = test_product_search();
+    if (tpr4 == false) {
+        return 1;
+    }
+    let tpr5 = test_product_list();
+    if (tpr5 == false) {
+        return 1;
+    }
+    print("ALL PRODUCT TESTS PASSED");
+    return 0;
+}

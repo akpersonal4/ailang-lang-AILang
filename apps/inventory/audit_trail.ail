@@ -1,0 +1,84 @@
+import list;
+import map;
+import string;
+import convert;
+import helpers;
+import storage;
+
+fn at_range_rec(arItems, arStart, arEnd, arIdx, arAcc) {
+    let arLen = list.len(arItems);
+    if (arIdx < arLen) {
+        let arItem = list.get(arItems, arIdx);
+        let arCreated = helpers.helpers_get_map_value_safe(arItem, "created_at", "");
+        if (arCreated >= arStart && arCreated <= arEnd) {
+            list.append(arAcc, arItem);
+        }
+        return at_range_rec(arItems, arStart, arEnd, arIdx + 1, arAcc);
+    }
+    return arAcc;
+}
+
+fn at_user_rec(arItems, arUserName, arIdx, arAcc) {
+    let arLen = list.len(arItems);
+    if (arIdx < arLen) {
+        let arItem = list.get(arItems, arIdx);
+        let arCreator = helpers.helpers_get_map_value_safe(arItem, "created_by", "");
+        if (arCreator == arUserName) {
+            list.append(arAcc, arItem);
+        }
+        return at_user_rec(arItems, arUserName, arIdx + 1, arAcc);
+    }
+    return arAcc;
+}
+
+fn at_summary_rec(arItems, arIdx, arAcc) {
+    let arLen = list.len(arItems);
+    if (arIdx < arLen) {
+        let arItem = list.get(arItems, arIdx);
+        let arAction = helpers.helpers_get_map_value_safe(arItem, "action", "");
+        let arCurrentCount = helpers.helpers_get_map_value_safe(arAcc, arAction, 0);
+        map.set(arAcc, arAction, arCurrentCount + 1);
+        return at_summary_rec(arItems, arIdx + 1, arAcc);
+    }
+    return arAcc;
+}
+
+fn at_recent_rec(arItems, arIdx, arEnd, arAcc) {
+    if (arIdx < arEnd) {
+        list.append(arAcc, list.get(arItems, arIdx));
+        return at_recent_rec(arItems, arIdx + 1, arEnd, arAcc);
+    }
+    return arAcc;
+}
+
+fn audit_trail_list_by_date_range(arStartDate, arEndDate) {
+    let arAll = storage.storage_list("audit_log");
+    let arResults = list.new();
+    return at_range_rec(arAll, arStartDate, arEndDate, 0, arResults);
+}
+
+fn audit_trail_list_by_user(arUserName) {
+    let arAll = storage.storage_list("audit_log");
+    let arResults = list.new();
+    return at_user_rec(arAll, arUserName, 0, arResults);
+}
+
+fn audit_trail_summary_by_action() {
+    let arAll = storage.storage_list("audit_log");
+    let arAcc = map.new();
+    return at_summary_rec(arAll, 0, arAcc);
+}
+
+fn audit_trail_recent(arCount) {
+    let arAll = storage.storage_list("audit_log");
+    let arLen = list.len(arAll);
+    let arResult = list.new();
+    if (arLen == 0) {
+        return arResult;
+    }
+    let arStart = 0;
+    if (arLen > arCount) {
+        arStart = arLen - arCount;
+    }
+    return at_recent_rec(arAll, arStart, arLen, arResult);
+}

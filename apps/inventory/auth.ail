@@ -1,0 +1,102 @@
+import list;
+import map;
+import string;
+
+fn auth_check_role(userRole, requiredRole) {
+    if (userRole == "admin") {
+        return true;
+    }
+    if (userRole == "manager" && requiredRole == "admin") {
+        return false;
+    }
+    if (userRole == "manager" && requiredRole == "manager") {
+        return true;
+    }
+    if (userRole == "manager" && requiredRole == "staff") {
+        return true;
+    }
+    if (userRole == "staff" && requiredRole == "admin") {
+        return false;
+    }
+    if (userRole == "staff" && requiredRole == "manager") {
+        return false;
+    }
+    if (userRole == "staff" && requiredRole == "staff") {
+        return true;
+    }
+    return false;
+}
+
+fn auth_list_contains_rec(lcItems, lcValue, lcIdx) {
+    if (lcIdx >= list.len(lcItems)) {
+        return false;
+    }
+    if (list.get(lcItems, lcIdx) == lcValue) {
+        return true;
+    }
+    return auth_list_contains_rec(lcItems, lcValue, lcIdx + 1);
+}
+
+fn auth_has_permission(userRole, permission) {
+    let adminPermissions = list.new();
+    list.append(adminPermissions, "product.create");
+    list.append(adminPermissions, "product.edit");
+    list.append(adminPermissions, "product.delete");
+    list.append(adminPermissions, "product.view");
+    list.append(adminPermissions, "category.create");
+    list.append(adminPermissions, "category.edit");
+    list.append(adminPermissions, "category.delete");
+    list.append(adminPermissions, "stock.inbound");
+    list.append(adminPermissions, "stock.outbound");
+    list.append(adminPermissions, "stock.adjust");
+    list.append(adminPermissions, "stock.transfer");
+    list.append(adminPermissions, "order.create");
+    list.append(adminPermissions, "order.confirm");
+    list.append(adminPermissions, "order.ship");
+    list.append(adminPermissions, "order.cancel");
+    list.append(adminPermissions, "report.view");
+    list.append(adminPermissions, "export.data");
+    list.append(adminPermissions, "customer.create");
+    list.append(adminPermissions, "customer.edit");
+    list.append(adminPermissions, "vendor.create");
+    list.append(adminPermissions, "vendor.edit");
+    list.append(adminPermissions, "audit.view");
+    let managerPermissions = list.new();
+    list.append(managerPermissions, "product.create");
+    list.append(managerPermissions, "product.edit");
+    list.append(managerPermissions, "product.view");
+    list.append(managerPermissions, "category.create");
+    list.append(managerPermissions, "category.edit");
+    list.append(managerPermissions, "stock.inbound");
+    list.append(managerPermissions, "stock.outbound");
+    list.append(managerPermissions, "stock.adjust");
+    list.append(managerPermissions, "stock.transfer");
+    list.append(managerPermissions, "order.create");
+    list.append(managerPermissions, "order.confirm");
+    list.append(managerPermissions, "order.ship");
+    list.append(managerPermissions, "order.cancel");
+    list.append(managerPermissions, "report.view");
+    list.append(managerPermissions, "export.data");
+    list.append(managerPermissions, "customer.create");
+    list.append(managerPermissions, "customer.edit");
+    list.append(managerPermissions, "vendor.create");
+    list.append(managerPermissions, "vendor.edit");
+    let staffPermissions = list.new();
+    list.append(staffPermissions, "product.view");
+    list.append(staffPermissions, "stock.inbound");
+    list.append(staffPermissions, "stock.outbound");
+    list.append(staffPermissions, "order.create");
+    list.append(staffPermissions, "report.view");
+    list.append(staffPermissions, "customer.create");
+    list.append(staffPermissions, "vendor.create");
+    if (userRole == "admin") {
+        return auth_list_contains_rec(adminPermissions, permission, 0);
+    }
+    if (userRole == "manager") {
+        return auth_list_contains_rec(managerPermissions, permission, 0);
+    }
+    if (userRole == "staff") {
+        return auth_list_contains_rec(staffPermissions, permission, 0);
+    }
+    return false;
+}

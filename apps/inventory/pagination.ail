@@ -1,0 +1,64 @@
+import list;
+import map;
+import helpers;
+
+fn pagination_slice_rec(psItems, psStart, psEnd, psIdx, psResult) {
+    if (psIdx >= list.len(psItems)) {
+        return psResult;
+    }
+    if (psIdx >= psStart && psIdx < psEnd) {
+        let psItem = list.get(psItems, psIdx);
+        list.append(psResult, psItem);
+    }
+    return pagination_slice_rec(psItems, psStart, psEnd, psIdx + 1, psResult);
+}
+
+fn pagination_paginate(pgItems, pgPageNum, pgPageSize) {
+    let pgStart = (pgPageNum - 1) * pgPageSize;
+    let pgEnd = pgStart + pgPageSize;
+    if (pgStart >= list.len(pgItems)) {
+        let pgEmpty = list.new();
+        return pgEmpty;
+    }
+    return pagination_slice_rec(pgItems, pgStart, pgEnd, 0, list.new());
+}
+
+fn pagination_pages_rec(ppItems, ppPageSize, ppCount) {
+    if (ppCount * ppPageSize >= list.len(ppItems)) {
+        return ppCount;
+    }
+    return pagination_pages_rec(ppItems, ppPageSize, ppCount + 1);
+}
+
+fn pagination_total_pages(tpItems, tpPageSize) {
+    if (list.len(tpItems) == 0) {
+        return 0;
+    }
+    return pagination_pages_rec(tpItems, tpPageSize, 1);
+}
+
+fn pagination_page_info(piItems, piPageNum, piPageSize) {
+    let piSubset = pagination_paginate(piItems, piPageNum, piPageSize);
+    let piTotalPages = pagination_total_pages(piItems, piPageSize);
+    let piTotalItems = list.len(piItems);
+    let piHasPrev = piPageNum > 1;
+    let piHasNext = piPageNum < piTotalPages;
+    let piInfo = map.new();
+    map.set(piInfo, "items", piSubset);
+    map.set(piInfo, "page", piPageNum);
+    map.set(piInfo, "page_size", piPageSize);
+    map.set(piInfo, "total_pages", piTotalPages);
+    map.set(piInfo, "total_items", piTotalItems);
+    map.set(piInfo, "has_prev", piHasPrev);
+    map.set(piInfo, "has_next", piHasNext);
+    return piInfo;
+}
+
+fn pagination_page_items(pimInfo) {
+    let pimEmpty = list.new();
+    return helpers.helpers_get_map_value_safe(pimInfo, "items", pimEmpty);
+}
+
+fn pagination_has_next(phnInfo) {
+    return helpers.helpers_get_map_value_safe(phnInfo, "has_next", false);
+}

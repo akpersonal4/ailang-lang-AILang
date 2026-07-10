@@ -1,0 +1,113 @@
+import list;
+import map;
+import string;
+import convert;
+import helpers;
+import storage;
+import reorder;
+
+fn test_reorder_set_and_get_level() {
+    let trsResult = reorder.reorder_set_level("ROR-PROD-001", 10, 100, 20);
+    if (trsResult == false) {
+        print("FAIL: reorder_set_level returned false");
+        return false;
+    }
+    let trsLevel = reorder.reorder_get_level("ROR-PROD-001");
+    if (trsLevel == false) {
+        print("FAIL: reorder_get_level returned false for existing level");
+        return false;
+    }
+    let trsMin = helpers.helpers_get_map_value_safe(trsLevel, "min_level", 0);
+    if (trsMin != 10) {
+        print("FAIL: reorder_get_level - min_level mismatch");
+        return false;
+    }
+    let trsMax = helpers.helpers_get_map_value_safe(trsLevel, "max_level", 0);
+    if (trsMax != 100) {
+        print("FAIL: reorder_get_level - max_level mismatch");
+        return false;
+    }
+    let trsQty = helpers.helpers_get_map_value_safe(trsLevel, "reorder_qty", 0);
+    if (trsQty != 20) {
+        print("FAIL: reorder_get_level - reorder_qty mismatch");
+        return false;
+    }
+    print("PASS: reorder_set_and_get_level");
+    return true;
+}
+
+fn test_reorder_check() {
+    let trcLevel = reorder.reorder_get_level("ROR-PROD-001");
+    if (trcLevel == false) {
+        print("FAIL: reorder_check - no level config found");
+        return false;
+    }
+    let trcNeeded = reorder.reorder_check("ROR-PROD-001");
+    if (trcNeeded == false) {
+        print("FAIL: reorder_check - expected true (current_stock 0 < min_level 10)");
+        return false;
+    }
+    print("PASS: reorder_check");
+    return true;
+}
+
+fn test_reorder_check_missing() {
+    let trcmNeeded = reorder.reorder_check("NONEXISTENT-PROD");
+    if (trcmNeeded != false) {
+        print("FAIL: reorder_check_missing - expected false");
+        return false;
+    }
+    print("PASS: reorder_check_missing");
+    return true;
+}
+
+fn test_reorder_list_needed() {
+    reorder.reorder_set_level("ROR-PROD-002", 5, 50, 10);
+    let trnNeeded = reorder.reorder_list_needed();
+    if (trnNeeded == false) {
+        print("FAIL: reorder_list_needed returned false");
+        return false;
+    }
+    let trnLen = list.len(trnNeeded);
+    if (trnLen == 0) {
+        print("FAIL: reorder_list_needed - expected at least 1 product needing reorder");
+        return false;
+    }
+    print("PASS: reorder_list_needed (" + convert.to_string(trnLen) + " items)");
+    return true;
+}
+
+fn test_reorder_calculate_lead_time_demand() {
+    let trcResult = reorder.reorder_calculate_lead_time_demand(10, 5);
+    if (trcResult != 50) {
+        print("FAIL: reorder_calculate_lead_time_demand - expected 50, got " + convert.to_string(trcResult));
+        return false;
+    }
+    print("PASS: reorder_calculate_lead_time_demand");
+    return true;
+}
+
+fn main() {
+    let tr1 = test_reorder_set_and_get_level();
+    if (tr1 == false) {
+        return 1;
+    }
+    let tr2 = test_reorder_check();
+    if (tr2 == false) {
+        return 1;
+    }
+    let tr3 = test_reorder_check_missing();
+    if (tr3 == false) {
+        return 1;
+    }
+    let tr4 = test_reorder_list_needed();
+    if (tr4 == false) {
+        return 1;
+    }
+    let tr5 = test_reorder_calculate_lead_time_demand();
+    if (tr5 == false) {
+        return 1;
+    }
+    print("ALL REORDER TESTS PASSED");
+    return 0;
+}

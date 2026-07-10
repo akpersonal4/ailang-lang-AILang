@@ -1,0 +1,122 @@
+import list;
+import map;
+import string;
+import convert;
+import helpers;
+import storage;
+import warehouse;
+
+fn test_warehouse_create() {
+    let twcResult = warehouse.warehouse_create("Main Warehouse", "WH-001", "123 Main St", "New York", "USA");
+    if (twcResult == false) {
+        print("FAIL: warehouse_create returned false");
+        return false;
+    }
+    let twcId = helpers.helpers_get_map_value_safe(twcResult, "id", "");
+    if (twcId == "") {
+        print("FAIL: warehouse_create - no id");
+        return false;
+    }
+    let twcName = helpers.helpers_get_map_value_safe(twcResult, "name", "");
+    if (twcName != "Main Warehouse") {
+        print("FAIL: warehouse_create - name mismatch");
+        return false;
+    }
+    let twcCode = helpers.helpers_get_map_value_safe(twcResult, "code", "");
+    if (twcCode != "WH-001") {
+        print("FAIL: warehouse_create - code mismatch");
+        return false;
+    }
+    let twcCity = helpers.helpers_get_map_value_safe(twcResult, "city", "");
+    if (twcCity != "New York") {
+        print("FAIL: warehouse_create - city mismatch");
+        return false;
+    }
+    print("PASS: warehouse_create");
+    return true;
+}
+
+fn test_warehouse_get_by_id_missing() {
+    let twgmResult = warehouse.warehouse_get_by_id("NONEXISTENT-WH-ID");
+    if (twgmResult != false) {
+        print("FAIL: warehouse_get_by_id_missing - expected false");
+        return false;
+    }
+    print("PASS: warehouse_get_by_id_missing");
+    return true;
+}
+
+fn test_warehouse_get_by_id() {
+    let twgCreated = warehouse.warehouse_create("GetTest WH", "WH-GET", "456 Oak Ave", "Chicago", "USA");
+    let twgId = helpers.helpers_get_map_value_safe(twgCreated, "id", "");
+    let twgFound = warehouse.warehouse_get_by_id(twgId);
+    if (twgFound == false) {
+        print("FAIL: warehouse_get_by_id returned false for existing warehouse");
+        return false;
+    }
+    let twgName = helpers.helpers_get_map_value_safe(twgFound, "name", "");
+    if (twgName != "GetTest WH") {
+        print("FAIL: warehouse_get_by_id - name mismatch");
+        return false;
+    }
+    print("PASS: warehouse_get_by_id");
+    return true;
+}
+
+fn test_warehouse_search_by_name() {
+    let twsCreated = warehouse.warehouse_create("SearchTest Warehouse", "SRC-001", "789 Pine Rd", "Houston", "USA");
+    let twsResults = warehouse.warehouse_search("SearchTest");
+    if (twsResults == false) {
+        print("FAIL: warehouse_search_by_name returned false");
+        return false;
+    }
+    let twsLen = list.len(twsResults);
+    if (twsLen == 0) {
+        print("FAIL: warehouse_search_by_name - no results");
+        return false;
+    }
+    let twsFirst = list.get(twsResults, 0);
+    let twsFirstName = helpers.helpers_get_map_value_safe(twsFirst, "name", "");
+    if (twsFirstName != "SearchTest Warehouse") {
+        print("FAIL: warehouse_search_by_name - wrong name");
+        return false;
+    }
+    print("PASS: warehouse_search_by_name (" + convert.to_string(twsLen) + " items)");
+    return true;
+}
+
+fn test_warehouse_search_by_code() {
+    let twscResults = warehouse.warehouse_search("SRC-001");
+    let twscLen = list.len(twscResults);
+    if (twscLen == 0) {
+        print("FAIL: warehouse_search_by_code - no results");
+        return false;
+    }
+    print("PASS: warehouse_search_by_code (" + convert.to_string(twscLen) + " items)");
+    return true;
+}
+
+fn main() {
+    let twr1 = test_warehouse_create();
+    if (twr1 == false) {
+        return 1;
+    }
+    let twr2 = test_warehouse_get_by_id_missing();
+    if (twr2 == false) {
+        return 1;
+    }
+    let twr3 = test_warehouse_get_by_id();
+    if (twr3 == false) {
+        return 1;
+    }
+    let twr4 = test_warehouse_search_by_name();
+    if (twr4 == false) {
+        return 1;
+    }
+    let twr5 = test_warehouse_search_by_code();
+    if (twr5 == false) {
+        return 1;
+    }
+    print("ALL WAREHOUSE TESTS PASSED");
+    return 0;
+}

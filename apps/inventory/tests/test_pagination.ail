@@ -1,0 +1,126 @@
+import list;
+import map;
+import convert;
+import helpers;
+import pagination;
+
+fn test_pagination_basic() {
+    let tpItems = list.new();
+    list.append(tpItems, "a");
+    list.append(tpItems, "b");
+    list.append(tpItems, "c");
+    list.append(tpItems, "d");
+    list.append(tpItems, "e");
+    let tpResult = pagination.pagination_paginate(tpItems, 1, 2);
+    if (list.len(tpResult) != 2) {
+        print("FAIL: expected 2 items, got " + convert.to_string(list.len(tpResult)));
+        return false;
+    }
+    let tpFirst = list.get(tpResult, 0);
+    if (tpFirst != "a") {
+        print("FAIL: expected 'a', got " + tpFirst);
+        return false;
+    }
+    print("PASS: pagination_basic");
+    return true;
+}
+
+fn test_pagination_page_2() {
+    let tpItems = list.new();
+    list.append(tpItems, "a");
+    list.append(tpItems, "b");
+    list.append(tpItems, "c");
+    list.append(tpItems, "d");
+    list.append(tpItems, "e");
+    let tpResult = pagination.pagination_paginate(tpItems, 2, 2);
+    if (list.len(tpResult) != 2) {
+        print("FAIL: expected 2 items for page 2, got " + convert.to_string(list.len(tpResult)));
+        return false;
+    }
+    let tpFirst = list.get(tpResult, 0);
+    if (tpFirst != "c") {
+        print("FAIL: expected 'c', got " + tpFirst);
+        return false;
+    }
+    print("PASS: pagination_page_2");
+    return true;
+}
+
+fn test_pagination_out_of_range() {
+    let tpItems = list.new();
+    list.append(tpItems, "a");
+    list.append(tpItems, "b");
+    let tpResult = pagination.pagination_paginate(tpItems, 999, 10);
+    if (list.len(tpResult) != 0) {
+        print("FAIL: expected empty list for out-of-range page");
+        return false;
+    }
+    print("PASS: pagination_out_of_range");
+    return true;
+}
+
+fn test_pagination_total_pages() {
+    let tpItems = list.new();
+    list.append(tpItems, "a");
+    list.append(tpItems, "b");
+    list.append(tpItems, "c");
+    list.append(tpItems, "d");
+    list.append(tpItems, "e");
+    list.append(tpItems, "f");
+    list.append(tpItems, "g");
+    list.append(tpItems, "h");
+    list.append(tpItems, "i");
+    list.append(tpItems, "j");
+    let tpTotal = pagination.pagination_total_pages(tpItems, 3);
+    if (tpTotal != 4) {
+        print("FAIL: expected 4 pages, got " + convert.to_string(tpTotal));
+        return false;
+    }
+    print("PASS: pagination_total_pages");
+    return true;
+}
+
+fn test_pagination_page_info() {
+    let tpItems = list.new();
+    list.append(tpItems, "a");
+    list.append(tpItems, "b");
+    list.append(tpItems, "c");
+    let tpInfo = pagination.pagination_page_info(tpItems, 1, 2);
+    let tpItemsResult = pagination.pagination_page_items(tpInfo);
+    if (list.len(tpItemsResult) != 2) {
+        print("FAIL: page_info items count wrong");
+        return false;
+    }
+    let tpHN = pagination.pagination_has_next(tpInfo);
+    if (tpHN != true) {
+        print("FAIL: expected has_next true");
+        return false;
+    }
+    print("PASS: pagination_page_info");
+    return true;
+}
+
+fn main() {
+    let tp1 = test_pagination_basic();
+    if (tp1 == false) {
+        return 1;
+    }
+    let tp2 = test_pagination_page_2();
+    if (tp2 == false) {
+        return 1;
+    }
+    let tp3 = test_pagination_out_of_range();
+    if (tp3 == false) {
+        return 1;
+    }
+    let tp4 = test_pagination_total_pages();
+    if (tp4 == false) {
+        return 1;
+    }
+    let tp5 = test_pagination_page_info();
+    if (tp5 == false) {
+        return 1;
+    }
+    print("ALL PAGINATION TESTS PASSED");
+    return 0;
+}

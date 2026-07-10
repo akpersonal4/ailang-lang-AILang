@@ -1,0 +1,174 @@
+import list;
+import map;
+import string;
+import convert;
+import helpers;
+import storage;
+import warehouse;
+import reorder;
+import currency;
+import tax;
+import supplier;
+import batch;
+import serial_number;
+import payment;
+import returns;
+import shipping;
+import workflow;
+
+fn seed_warehouses() {
+    warehouse.warehouse_create("Main Warehouse", "WH-MAIN", "123 Main St", "New York", "US");
+    warehouse.warehouse_create("Secondary Warehouse", "WH-SEC", "456 Oak Ave", "Los Angeles", "US");
+    print("Seeded 2 warehouses");
+    return true;
+}
+
+fn seed_reorder_levels() {
+    let srlAllProducts = storage.storage_list("products");
+    let srlLen = list.len(srlAllProducts);
+    if (srlLen > 0) {
+        let srlFirst = list.get(srlAllProducts, 0);
+        let srlFirstId = helpers.helpers_get_map_value_safe(srlFirst, "id", "");
+        reorder.reorder_set_level(srlFirstId, 10, 100, 25);
+    }
+    if (srlLen > 1) {
+        let srlSecond = list.get(srlAllProducts, 1);
+        let srlSecondId = helpers.helpers_get_map_value_safe(srlSecond, "id", "");
+        reorder.reorder_set_level(srlSecondId, 10, 100, 25);
+    }
+    print("Seeded reorder levels");
+    return true;
+}
+
+fn seed_currencies() {
+    currency.currency_set_rate("USD", "EUR", 92 / 100);
+    currency.currency_set_rate("USD", "GBP", 79 / 100);
+    print("Seeded 2 currency rates");
+    return true;
+}
+
+fn seed_taxes() {
+    tax.tax_create("VAT 20%", 20, "GB", "");
+    tax.tax_create("Sales Tax 8%", 8, "US", "");
+    print("Seeded 2 tax rates");
+    return true;
+}
+
+fn seed_suppliers() {
+    supplier.supplier_create("Acme Supplies", "John Acme", "acme@example.com", "555-1001", "123 Supply Lane", "net_30", 14, 5);
+    supplier.supplier_create("Global Parts", "Jane Global", "global@example.com", "555-1002", "456 Parts Blvd", "net_60", 21, 4);
+    print("Seeded 2 suppliers");
+    return true;
+}
+
+fn seed_batches() {
+    let sbAllProducts = storage.storage_list("products");
+    let sbLen = list.len(sbAllProducts);
+    if (sbLen > 0) {
+        let sbFirst = list.get(sbAllProducts, 0);
+        let sbFirstId = helpers.helpers_get_map_value_safe(sbFirst, "id", "");
+        batch.batch_create(sbFirstId, "BAT-2024-001", 100, "2025-12-31", "2024-01-15");
+    }
+    if (sbLen > 1) {
+        let sbSecond = list.get(sbAllProducts, 1);
+        let sbSecondId = helpers.helpers_get_map_value_safe(sbSecond, "id", "");
+        batch.batch_create(sbSecondId, "BAT-2024-002", 200, "2025-06-30", "2024-02-01");
+    }
+    print("Seeded batches");
+    return true;
+}
+
+fn seed_serials() {
+    let ssAllProducts = storage.storage_list("products");
+    let ssLen = list.len(ssAllProducts);
+    if (ssLen > 0) {
+        let ssFirst = list.get(ssAllProducts, 0);
+        let ssFirstId = helpers.helpers_get_map_value_safe(ssFirst, "id", "");
+        let ssAllBatches = storage.storage_list("batches");
+        let ssBatchId = "";
+        if (list.len(ssAllBatches) > 0) {
+            let ssFirstBatch = list.get(ssAllBatches, 0);
+            ssBatchId = helpers.helpers_get_map_value_safe(ssFirstBatch, "id", "");
+        }
+        serial_number.serial_register(ssFirstId, "SN-2024-00001", ssBatchId);
+        serial_number.serial_register(ssFirstId, "SN-2024-00002", ssBatchId);
+    }
+    print("Seeded serial numbers");
+    return true;
+}
+
+fn seed_payments() {
+    let spAllInvoices = storage.storage_list("invoices");
+    let spLen = list.len(spAllInvoices);
+    if (spLen > 0) {
+        let spFirst = list.get(spAllInvoices, 0);
+        let spFirstId = helpers.helpers_get_map_value_safe(spFirst, "id", "");
+        let spTotal = helpers.helpers_get_map_value_safe(spFirst, "total_amount", 0);
+        payment.payment_create(spFirstId, spTotal, "card", "Demo User");
+    }
+    print("Seeded payments");
+    return true;
+}
+
+fn seed_returns() {
+    let srAllSales = storage.storage_list("sales_orders");
+    let srLen = list.len(srAllSales);
+    let srAllProducts = storage.storage_list("products");
+    let srProdId = "";
+    if (list.len(srAllProducts) > 0) {
+        let srFirstProd = list.get(srAllProducts, 0);
+        srProdId = helpers.helpers_get_map_value_safe(srFirstProd, "id", "");
+    }
+    if (srLen > 0) {
+        let srFirstOrder = list.get(srAllSales, 0);
+        let srOrderId = helpers.helpers_get_map_value_safe(srFirstOrder, "id", "");
+        returns.returns_create(srOrderId, srProdId, 1, "Damaged item", "Demo User");
+    }
+    print("Seeded returns");
+    return true;
+}
+
+fn seed_shippings() {
+    let sshAllSales = storage.storage_list("sales_orders");
+    let sshLen = list.len(sshAllSales);
+    if (sshLen > 0) {
+        let sshFirst = list.get(sshAllSales, 0);
+        let sshOrderId = helpers.helpers_get_map_value_safe(sshFirst, "id", "");
+        shipping.shipping_create(sshOrderId, "FedEx", "TRACK-001", "123 Main St, New York", "Demo User");
+    }
+    print("Seeded shippings");
+    return true;
+}
+
+fn seed_workflows() {
+    let swAllSales = storage.storage_list("sales_orders");
+    let swLen = list.len(swAllSales);
+    if (swLen > 0) {
+        let swFirst = list.get(swAllSales, 0);
+        let swOrderId = helpers.helpers_get_map_value_safe(swFirst, "id", "");
+        workflow.workflow_create(swOrderId, "sales_order", 2500);
+    }
+    if (swLen > 1) {
+        let swSecond = list.get(swAllSales, 1);
+        let swOrderId = helpers.helpers_get_map_value_safe(swSecond, "id", "");
+        workflow.workflow_create(swOrderId, "sales_order", 7500);
+    }
+    print("Seeded workflows");
+    return true;
+}
+
+fn seed_all() {
+    seed_warehouses();
+    seed_reorder_levels();
+    seed_currencies();
+    seed_taxes();
+    seed_suppliers();
+    seed_batches();
+    seed_serials();
+    seed_payments();
+    seed_returns();
+    seed_shippings();
+    seed_workflows();
+    print("All seed data created");
+    return true;
+}

@@ -1,0 +1,52 @@
+import storage;
+import helpers;
+import list;
+import map;
+import string;
+
+fn category_list_by_parent_rec(clpbAll, clpbParentId, clpbResults, clpbIdx) {
+    if (clpbIdx >= list.len(clpbAll)) {
+        return clpbResults;
+    }
+    let clpbItem = list.get(clpbAll, clpbIdx);
+    let clpbParent = helpers.helpers_get_map_value_safe(clpbItem, "parent_id", "");
+    if (clpbParent == clpbParentId) {
+        list.append(clpbResults, clpbItem);
+    }
+    return category_list_by_parent_rec(clpbAll, clpbParentId, clpbResults, clpbIdx + 1);
+}
+
+fn category_create(ccName, ccDescription, ccParentId) {
+    let ccCategory = map.new();
+    let ccId = helpers.helpers_generate_id("CAT-");
+    let ccNow = helpers.helpers_current_timestamp();
+    map.set(ccCategory, "id", ccId);
+    map.set(ccCategory, "name", ccName);
+    map.set(ccCategory, "description", ccDescription);
+    map.set(ccCategory, "parent_id", ccParentId);
+    map.set(ccCategory, "created_at", ccNow);
+    storage.storage_add("categories", ccCategory);
+    return ccCategory;
+}
+
+fn category_get(cgId) {
+    return storage.storage_get_by_id("categories", cgId);
+}
+
+fn category_update(cuId, cuChanges) {
+    return storage.storage_update("categories", cuId, cuChanges);
+}
+
+fn category_delete(cdId) {
+    return storage.storage_delete("categories", cdId);
+}
+
+fn category_list() {
+    return storage.storage_list("categories");
+}
+
+fn category_list_by_parent(clpParentId) {
+    let clpAll = storage.storage_list("categories");
+    let clpResults = list.new();
+    return category_list_by_parent_rec(clpAll, clpParentId, clpResults, 0);
+}

@@ -1,0 +1,144 @@
+import list;
+import map;
+import string;
+import convert;
+import helpers;
+import storage;
+
+fn wfgor_find_by_order_rec(wfgorItems, wfgorOrderId, wfgorIdx) {
+    if (wfgorIdx >= list.len(wfgorItems)) {
+        return false;
+    }
+    let wfgorItem = list.get(wfgorItems, wfgorIdx);
+    let wfgorItemOrderId = helpers.helpers_get_map_value_safe(wfgorItem, "order_id", "");
+    if (wfgorItemOrderId == wfgorOrderId) {
+        return wfgorItem;
+    }
+    return wfgor_find_by_order_rec(wfgorItems, wfgorOrderId, wfgorIdx + 1);
+}
+
+fn wfpar_filter_pending_rec(wfparItems, wfparResults, wfparIdx) {
+    if (wfparIdx >= list.len(wfparItems)) {
+        return wfparResults;
+    }
+    let wfparItem = list.get(wfparItems, wfparIdx);
+    let wfparStage = helpers.helpers_get_map_value_safe(wfparItem, "stage", "");
+    if (wfparStage == "pending") {
+        list.append(wfparResults, wfparItem);
+    } else if (wfparStage == "approved_by_manager") {
+        list.append(wfparResults, wfparItem);
+    }
+    return wfpar_filter_pending_rec(wfparItems, wfparResults, wfparIdx + 1);
+}
+
+fn workflow_create(wfcrOrderId, wfcrOrderType, wfcrAmount) {
+    let wfcrWorkflow = map.new();
+    let wfcrId = helpers.helpers_generate_id("WF-");
+    let wfcrNow = helpers.helpers_current_timestamp();
+    map.set(wfcrWorkflow, "id", wfcrId);
+    map.set(wfcrWorkflow, "order_id", wfcrOrderId);
+    map.set(wfcrWorkflow, "order_type", wfcrOrderType);
+    map.set(wfcrWorkflow, "amount", wfcrAmount);
+    map.set(wfcrWorkflow, "stage", "pending");
+    map.set(wfcrWorkflow, "approver", "");
+    map.set(wfcrWorkflow, "reject_reason", "");
+    map.set(wfcrWorkflow, "created_at", wfcrNow);
+    map.set(wfcrWorkflow, "updated_at", wfcrNow);
+    storage.storage_add("workflows", wfcrWorkflow);
+    return wfcrWorkflow;
+}
+
+fn workflow_get_by_id(wfgiId) {
+    return storage.storage_get_by_id("workflows", wfgiId);
+}
+
+fn workflow_get_by_order(wfgoOrderId) {
+    let wfgoAll = storage.storage_list("workflows");
+    return wfgor_find_by_order_rec(wfgoAll, wfgoOrderId, 0);
+}
+
+fn workflow_approve_manager(wfamId, wfamApprover) {
+    let wfamWorkflow = storage.storage_get_by_id("workflows", wfamId);
+    if (wfamWorkflow == false) {
+        return false;
+    }
+    let wfamNow = helpers.helpers_current_timestamp();
+    let wfamChanges = map.new();
+    map.set(wfamChanges, "approver", wfamApprover);
+    map.set(wfamChanges, "updated_at", wfamNow);
+    let wfamAmount = helpers.helpers_get_map_value_safe(wfamWorkflow, "amount", 0);
+    if (wfamAmount <= 5000) {
+        map.set(wfamChanges, "stage", "approved");
+    } else {
+        map.set(wfamChanges, "stage", "approved_by_manager");
+    }
+    return storage.storage_update("workflows", wfamId, wfamChanges);
+}
+
+fn workflow_approve_director(wfadId, wfadApprover) {
+    let wfadWorkflow = storage.storage_get_by_id("workflows", wfadId);
+    if (wfadWorkflow == false) {
+        return false;
+    }
+    let wfadStage = helpers.helpers_get_map_value_safe(wfadWorkflow, "stage", "");
+    if (wfadStage != "approved_by_manager") {
+        return false;
+    }
+    let wfadNow = helpers.helpers_current_timestamp();
+    let wfadChanges = map.new();
+    map.set(wfadChanges, "stage", "approved_by_director");
+    map.set(wfadChanges, "approver", wfadApprover);
+    map.set(wfadChanges, "updated_at", wfadNow);
+    return storage.storage_update("workflows", wfadId, wfadChanges);
+}
+
+fn workflow_fulfill(wffId) {
+    let wffWorkflow = storage.storage_get_by_id("workflows", wffId);
+    if (wffWorkflow == false) {
+        return false;
+    }
+    let wffChanges = map.new();
+    map.set(wffChanges, "stage", "fulfilled");
+    let wffNow = helpers.helpers_current_timestamp();
+    map.set(wffChanges, "updated_at", wffNow);
+    return storage.storage_update("workflows", wffId, wffChanges);
+}
+
+fn workflow_close(wfclId) {
+    let wfclWorkflow = storage.storage_get_by_id("workflows", wfclId);
+    if (wfclWorkflow == false) {
+        return false;
+    }
+    let wfclChanges = map.new();
+    map.set(wfclChanges, "stage", "closed");
+    let wfclNow = helpers.helpers_current_timestamp();
+    map.set(wfclChanges, "updated_at", wfclNow);
+    return storage.storage_update("workflows", wfclId, wfclChanges);
+}
+
+fn workflow_reject(wfrId, wfrReason) {
+    let wfrWorkflow = storage.storage_get_by_id("workflows", wfrId);
+    if (wfrWorkflow == false) {
+        return false;
+    }
+    let wfrChanges = map.new();
+    map.set(wfrChanges, "stage", "rejected");
+    map.set(wfrChanges, "reject_reason", wfrReason);
+    let wfrNow = helpers.helpers_current_timestamp();
+    map.set(wfrChanges, "updated_at", wfrNow);
+    return storage.storage_update("workflows", wfrId, wfrChanges);
+}
+
+fn workflow_get_stage(wfgsId) {
+    let wfgsWorkflow = storage.storage_get_by_id("workflows", wfgsId);
+    if (wfgsWorkflow == false) {
+        return "";
+    }
+    return helpers.helpers_get_map_value_safe(wfgsWorkflow, "stage", "");
+}
+
+fn workflow_pending_approvals() {
+    let wfpaAll = storage.storage_list("workflows");
+    let wfpaResults = list.new();
+    return wfpar_filter_pending_rec(wfpaAll, wfpaResults, 0);
+}

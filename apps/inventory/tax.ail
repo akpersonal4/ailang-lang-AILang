@@ -1,0 +1,61 @@
+import list;
+import map;
+import string;
+import convert;
+import helpers;
+import storage;
+
+fn tax_list_by_country_rec(tlcrItems, tlcrCountry, tlcrIdx, tlcrAcc) {
+    if (tlcrIdx >= list.len(tlcrItems)) {
+        return tlcrAcc;
+    }
+    let tlcrItem = list.get(tlcrItems, tlcrIdx);
+    let tlcrItemCountry = helpers.helpers_get_map_value_safe(tlcrItem, "country", "");
+    if (tlcrItemCountry == tlcrCountry) {
+        list.append(tlcrAcc, tlcrItem);
+    }
+    return tax_list_by_country_rec(tlcrItems, tlcrCountry, tlcrIdx + 1, tlcrAcc);
+}
+
+fn tax_create(txName, txRate, txCountry, txRegion) {
+    let txRule = map.new();
+    let txId = helpers.helpers_generate_id("TAX-");
+    let txNow = helpers.helpers_current_timestamp();
+    map.set(txRule, "id", txId);
+    map.set(txRule, "name", txName);
+    map.set(txRule, "rate", txRate);
+    map.set(txRule, "country", txCountry);
+    map.set(txRule, "region", txRegion);
+    map.set(txRule, "created_at", txNow);
+    storage.storage_add("tax_rates", txRule);
+    return txRule;
+}
+
+fn tax_get_by_id(txTaxId) {
+    return storage.storage_get_by_id("tax_rates", txTaxId);
+}
+
+fn tax_list() {
+    return storage.storage_list("tax_rates");
+}
+
+fn tax_calculate(tcAmount, tcTaxId) {
+    let tcTax = storage.storage_get_by_id("tax_rates", tcTaxId);
+    if (tcTax == false) {
+        return 0;
+    }
+    let tcRate = helpers.helpers_get_map_value_safe(tcTax, "rate", 0);
+    return tcAmount * tcRate / 100;
+}
+
+fn tax_list_by_country(txCountry) {
+    let txAll = storage.storage_list("tax_rates");
+    let txResults = list.new();
+    return tax_list_by_country_rec(txAll, txCountry, 0, txResults);
+}
+
+fn tax_update_rate(turTaxId, turNewRate) {
+    let turChanges = map.new();
+    map.set(turChanges, "rate", turNewRate);
+    return storage.storage_update("tax_rates", turTaxId, turChanges);
+}

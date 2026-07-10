@@ -1,0 +1,119 @@
+import list;
+import map;
+import string;
+import convert;
+import helpers;
+import storage;
+import payment;
+
+fn test_payment_create() {
+    let tpcResult = payment.payment_create("INV-PC-001", 500, "card", "Alice");
+    if (tpcResult == false) {
+        print("FAIL: payment_create returned false");
+        return false;
+    }
+    let tpcId = helpers.helpers_get_map_value_safe(tpcResult, "id", "");
+    if (tpcId == "") {
+        print("FAIL: payment_create - payment id missing");
+        return false;
+    }
+    let tpcStatus = helpers.helpers_get_map_value_safe(tpcResult, "status", "");
+    if (tpcStatus != "completed") {
+        print("FAIL: payment_create - expected status completed, got " + tpcStatus);
+        return false;
+    }
+    let tpcAmount = helpers.helpers_get_map_value_safe(tpcResult, "amount", 0);
+    if (tpcAmount != 500) {
+        print("FAIL: payment_create - expected amount 500, got " + convert.to_string(tpcAmount));
+        return false;
+    }
+    print("PASS: payment_create");
+    return true;
+}
+
+fn test_payment_get_by_id_missing() {
+    let tpgmResult = payment.payment_get_by_id("NONEXISTENT-PAYMENT-ID");
+    if (tpgmResult != false) {
+        print("FAIL: payment_get_by_id_missing - expected false");
+        return false;
+    }
+    print("PASS: payment_get_by_id_missing");
+    return true;
+}
+
+fn test_payment_list_by_invoice() {
+    let tplbi1 = payment.payment_create("INV-LIST-001", 200, "cash", "Bob");
+    let tplbi2 = payment.payment_create("INV-LIST-001", 300, "card", "Bob");
+    let tplbiResults = payment.payment_list_by_invoice("INV-LIST-001");
+    let tplbiLen = list.len(tplbiResults);
+    if (tplbiLen < 2) {
+        print("FAIL: payment_list_by_invoice - expected at least 2, got " + convert.to_string(tplbiLen));
+        return false;
+    }
+    print("PASS: payment_list_by_invoice (" + convert.to_string(tplbiLen) + " items)");
+    return true;
+}
+
+fn test_payment_total_by_invoice() {
+    let tptbi1 = payment.payment_create("INV-TOT-001", 150, "card", "Carol");
+    let tptbi2 = payment.payment_create("INV-TOT-001", 250, "cash", "Carol");
+    let tptbiTotal = payment.payment_total_by_invoice("INV-TOT-001");
+    if (tptbiTotal != 400) {
+        print("FAIL: payment_total_by_invoice - expected 400, got " + convert.to_string(tptbiTotal));
+        return false;
+    }
+    print("PASS: payment_total_by_invoice (" + convert.to_string(tptbiTotal) + ")");
+    return true;
+}
+
+fn test_payment_refund() {
+    let tprOrig = payment.payment_create("INV-REF-001", 1000, "bank_transfer", "Dave");
+    let tprOrigId = helpers.helpers_get_map_value_safe(tprOrig, "id", "");
+    let tprRefund = payment.payment_refund(tprOrigId, "Customer requested refund");
+    if (tprRefund == false) {
+        print("FAIL: payment_refund returned false");
+        return false;
+    }
+    let tprRefundStatus = helpers.helpers_get_map_value_safe(tprRefund, "status", "");
+    if (tprRefundStatus != "refund") {
+        print("FAIL: payment_refund - expected status refund, got " + tprRefundStatus);
+        return false;
+    }
+    let tprRefundAmount = helpers.helpers_get_map_value_safe(tprRefund, "amount", 0);
+    if (tprRefundAmount >= 0) {
+        print("FAIL: payment_refund - expected negative amount, got " + convert.to_string(tprRefundAmount));
+        return false;
+    }
+    let tprRefundReason = helpers.helpers_get_map_value_safe(tprRefund, "reason", "");
+    if (tprRefundReason != "Customer requested refund") {
+        print("FAIL: payment_refund - reason mismatch, got " + tprRefundReason);
+        return false;
+    }
+    print("PASS: payment_refund");
+    return true;
+}
+
+fn main() {
+    let tp1 = test_payment_create();
+    if (tp1 == false) {
+        return 1;
+    }
+    let tp2 = test_payment_get_by_id_missing();
+    if (tp2 == false) {
+        return 1;
+    }
+    let tp3 = test_payment_list_by_invoice();
+    if (tp3 == false) {
+        return 1;
+    }
+    let tp4 = test_payment_total_by_invoice();
+    if (tp4 == false) {
+        return 1;
+    }
+    let tp5 = test_payment_refund();
+    if (tp5 == false) {
+        return 1;
+    }
+    print("ALL PAYMENT TESTS PASSED");
+    return 0;
+}

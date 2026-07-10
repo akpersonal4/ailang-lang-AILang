@@ -1,0 +1,136 @@
+import list;
+import map;
+import string;
+import convert;
+import helpers;
+import storage;
+import export_csv_export;
+import export_json_export;
+
+fn te_create_product() {
+    let tepProduct = map.new();
+    map.set(tepProduct, "id", "TEXP-PRD-001");
+    map.set(tepProduct, "name", "Export Test Product");
+    map.set(tepProduct, "sku", "EXP-001");
+    map.set(tepProduct, "category_id", "");
+    map.set(tepProduct, "unit_price", 75);
+    map.set(tepProduct, "cost_price", 40);
+    map.set(tepProduct, "unit", "pcs");
+    map.set(tepProduct, "active", true);
+    let tepNow = helpers.helpers_current_timestamp();
+    map.set(tepProduct, "created_at", tepNow);
+    map.set(tepProduct, "updated_at", "");
+    storage.storage_add("products", tepProduct);
+    let tepLoaded = helpers.helpers_find_in_list(storage.storage_list("products"), "id", "TEXP-PRD-001");
+    if (tepLoaded == false) {
+        return false;
+    }
+    return true;
+}
+
+fn te_create_customer() {
+    let tecCustomer = map.new();
+    map.set(tecCustomer, "id", "TEXP-CUS-001");
+    map.set(tecCustomer, "name", "Export Test Customer");
+    map.set(tecCustomer, "email", "export@test.com");
+    map.set(tecCustomer, "phone", "555-EXP");
+    map.set(tecCustomer, "active", true);
+    let tecNow = helpers.helpers_current_timestamp();
+    map.set(tecCustomer, "created_at", tecNow);
+    map.set(tecCustomer, "updated_at", tecNow);
+    storage.storage_add("customers", tecCustomer);
+    let tecLoaded = helpers.helpers_find_in_list(storage.storage_list("customers"), "id", "TEXP-CUS-001");
+    if (tecLoaded == false) {
+        return false;
+    }
+    return true;
+}
+
+fn te_test_csv_products() {
+    let tecpCsv = export_csv_export.csv_products();
+    let tecpLen = string.length(tecpCsv);
+    if (tecpLen == 0) {
+        print("FAIL: csv_products returned empty string");
+        return false;
+    }
+    if (string.starts_with(tecpCsv, "id,name,sku,unit_price,unit") == false) {
+        print("FAIL: csv_products missing header");
+        return false;
+    }
+    print("PASS: csv_products");
+    return true;
+}
+
+fn te_test_csv_customers() {
+    let teccCsv = export_csv_export.csv_customers();
+    let teccLen = string.length(teccCsv);
+    if (teccLen == 0) {
+        print("FAIL: csv_customers returned empty string");
+        return false;
+    }
+    if (string.starts_with(teccCsv, "id,name,email,phone") == false) {
+        print("FAIL: csv_customers missing header");
+        return false;
+    }
+    print("PASS: csv_customers");
+    return true;
+}
+
+fn te_test_json_products() {
+    let tejpJson = export_json_export.json_export_products();
+    let tejpLen = string.length(tejpJson);
+    if (tejpLen == 0) {
+        print("FAIL: json_export_products returned empty string");
+        return false;
+    }
+    if (string.starts_with(tejpJson, "[") == false) {
+        print("FAIL: json_export_products not valid JSON array");
+        return false;
+    }
+    print("PASS: json_export_products");
+    return true;
+}
+
+fn te_test_json_customers() {
+    let tejcJson = export_json_export.json_export_customers();
+    let tejcLen = string.length(tejcJson);
+    if (tejcLen == 0) {
+        print("FAIL: json_export_customers returned empty string");
+        return false;
+    }
+    if (string.starts_with(tejcJson, "[") == false) {
+        print("FAIL: json_export_customers not valid JSON array");
+        return false;
+    }
+    print("PASS: json_export_customers");
+    return true;
+}
+
+fn main() {
+    let tm1 = te_create_product();
+    if (tm1 == false) {
+        return 1;
+    }
+    let tm2 = te_create_customer();
+    if (tm2 == false) {
+        return 1;
+    }
+    let tm3 = te_test_csv_products();
+    if (tm3 == false) {
+        return 1;
+    }
+    let tm4 = te_test_csv_customers();
+    if (tm4 == false) {
+        return 1;
+    }
+    let tm5 = te_test_json_products();
+    if (tm5 == false) {
+        return 1;
+    }
+    let tm6 = te_test_json_customers();
+    if (tm6 == false) {
+        return 1;
+    }
+    print("ALL EXPORT TESTS PASSED");
+    return 0;
+}

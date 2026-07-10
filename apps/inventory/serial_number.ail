@@ -1,0 +1,107 @@
+import list;
+import map;
+import string;
+import convert;
+import helpers;
+import storage;
+
+fn serial_find_rec(sfrItems, sfrProductId, sfrSerialNum, sfrIdx) {
+    if (sfrIdx >= list.len(sfrItems)) {
+        return false;
+    }
+    let sfrItem = list.get(sfrItems, sfrIdx);
+    let sfrItemProductId = helpers.helpers_get_map_value_safe(sfrItem, "product_id", "");
+    let sfrItemSerialNum = helpers.helpers_get_map_value_safe(sfrItem, "serial_number", "");
+    if (sfrItemProductId == sfrProductId) {
+        if (sfrItemSerialNum == sfrSerialNum) {
+            return sfrItem;
+        }
+    }
+    return serial_find_rec(sfrItems, sfrProductId, sfrSerialNum, sfrIdx + 1);
+}
+
+fn serial_list_by_product_rec(slbprItems, slbprProductId, slbprIdx, slbprAcc) {
+    if (slbprIdx >= list.len(slbprItems)) {
+        return slbprAcc;
+    }
+    let slbprItem = list.get(slbprItems, slbprIdx);
+    let slbprItemProductId = helpers.helpers_get_map_value_safe(slbprItem, "product_id", "");
+    if (slbprItemProductId == slbprProductId) {
+        list.append(slbprAcc, slbprItem);
+    }
+    return serial_list_by_product_rec(slbprItems, slbprProductId, slbprIdx + 1, slbprAcc);
+}
+
+fn serial_list_by_status_rec(slbsrItems, slbsrStatus, slbsrIdx, slbsrAcc) {
+    if (slbsrIdx >= list.len(slbsrItems)) {
+        return slbsrAcc;
+    }
+    let slbsrItem = list.get(slbsrItems, slbsrIdx);
+    let slbsrItemStatus = helpers.helpers_get_map_value_safe(slbsrItem, "status", "");
+    if (slbsrItemStatus == slbsrStatus) {
+        list.append(slbsrAcc, slbsrItem);
+    }
+    return serial_list_by_status_rec(slbsrItems, slbsrStatus, slbsrIdx + 1, slbsrAcc);
+}
+
+fn serial_list_available_rec(slarItems, slarProductId, slarIdx, slarAcc) {
+    if (slarIdx >= list.len(slarItems)) {
+        return slarAcc;
+    }
+    let slarItem = list.get(slarItems, slarIdx);
+    let slarItemProductId = helpers.helpers_get_map_value_safe(slarItem, "product_id", "");
+    let slarItemStatus = helpers.helpers_get_map_value_safe(slarItem, "status", "");
+    if (slarItemProductId == slarProductId) {
+        if (slarItemStatus == "available") {
+            list.append(slarAcc, slarItem);
+        }
+    }
+    return serial_list_available_rec(slarItems, slarProductId, slarIdx + 1, slarAcc);
+}
+
+fn serial_register(srProductId, srSerialNumber, srBatchId) {
+    let srEntry = map.new();
+    let srId = helpers.helpers_generate_id("SER-");
+    let srNow = helpers.helpers_current_timestamp();
+    map.set(srEntry, "id", srId);
+    map.set(srEntry, "product_id", srProductId);
+    map.set(srEntry, "serial_number", srSerialNumber);
+    map.set(srEntry, "batch_id", srBatchId);
+    map.set(srEntry, "status", "available");
+    map.set(srEntry, "created_at", srNow);
+    storage.storage_add("serial_numbers", srEntry);
+    return srEntry;
+}
+
+fn serial_get_by_id(snSerialId) {
+    return storage.storage_get_by_id("serial_numbers", snSerialId);
+}
+
+fn serial_find_by_serial(sfbsProductId, sfbsSerialNumber) {
+    let sfbsAll = storage.storage_list("serial_numbers");
+    return serial_find_rec(sfbsAll, sfbsProductId, sfbsSerialNumber, 0);
+}
+
+fn serial_list_by_product(snProductId) {
+    let snAll = storage.storage_list("serial_numbers");
+    let snResults = list.new();
+    return serial_list_by_product_rec(snAll, snProductId, 0, snResults);
+}
+
+fn serial_list_by_status(snStatus) {
+    let snAll = storage.storage_list("serial_numbers");
+    let snResults = list.new();
+    return serial_list_by_status_rec(snAll, snStatus, 0, snResults);
+}
+
+fn serial_update_status(susSerialId, susNewStatus) {
+    let susChanges = map.new();
+    map.set(susChanges, "status", susNewStatus);
+    return storage.storage_update("serial_numbers", susSerialId, susChanges);
+}
+
+fn serial_list_available(snProductId) {
+    let snAll = storage.storage_list("serial_numbers");
+    let snResults = list.new();
+    return serial_list_available_rec(snAll, snProductId, 0, snResults);
+}

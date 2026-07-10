@@ -1,0 +1,114 @@
+import list;
+import map;
+import string;
+import convert;
+import helpers;
+import storage;
+import order_sales_order;
+
+fn test_so_get_nonexistent() {
+    let sonResult = order_sales_order.sales_get("NONEXISTENT-SO");
+    if (sonResult != false) {
+        print("FAIL: expected false for nonexistent sales order");
+        return false;
+    }
+    print("PASS: sales_get_nonexistent");
+    return true;
+}
+
+fn test_so_create_and_get() {
+    let socCust = map.new();
+    map.set(socCust, "id", "SO-CUST-1");
+    map.set(socCust, "name", "Test Customer");
+    storage.storage_add("customers", socCust);
+    let socOrder = order_sales_order.sales_create("SO-CUST-1", "Test order");
+    if (socOrder == false) {
+        print("FAIL: sales_create returned false");
+        return false;
+    }
+    let socId = helpers.helpers_get_map_value_safe(socOrder, "id", "");
+    let socGot = order_sales_order.sales_get(socId);
+    if (socGot == false) {
+        print("FAIL: sales_get returned false for created order");
+        return false;
+    }
+    let socStatus = helpers.helpers_get_map_value_safe(socGot, "status", "");
+    if (socStatus != "draft") {
+        print("FAIL: expected status draft, got " + socStatus);
+        return false;
+    }
+    let socCustId = helpers.helpers_get_map_value_safe(socGot, "customer_id", "");
+    if (socCustId != "SO-CUST-1") {
+        print("FAIL: expected customer_id SO-CUST-1, got " + socCustId);
+        return false;
+    }
+    print("PASS: sales_create and sales_get");
+    return true;
+}
+
+fn test_so_add_item_and_get_items() {
+    let soiCust = map.new();
+    map.set(soiCust, "id", "SO-CUST-2");
+    map.set(soiCust, "name", "Item Test Customer");
+    storage.storage_add("customers", soiCust);
+    let soiOrder = order_sales_order.sales_create("SO-CUST-2", "Item test");
+    let soiId = helpers.helpers_get_map_value_safe(soiOrder, "id", "");
+    let soiResult = order_sales_order.sales_add_item(soiId, "PROD-A", 5, 100);
+    if (soiResult == false) {
+        print("FAIL: sales_add_item returned false");
+        return false;
+    }
+    let soiItems = order_sales_order.sales_get_items(soiId);
+    let soiLen = list.len(soiItems);
+    if (soiLen != 1) {
+        print("FAIL: expected 1 item, got " + convert.to_string(soiLen));
+        return false;
+    }
+    let soiFirst = list.get(soiItems, 0);
+    let soiQty = helpers.helpers_get_map_value_safe(soiFirst, "quantity", 0);
+    if (soiQty != 5) {
+        print("FAIL: expected quantity 5, got " + convert.to_string(soiQty));
+        return false;
+    }
+    print("PASS: sales_add_item and sales_get_items");
+    return true;
+}
+
+fn test_so_confirm() {
+    let socfCust = map.new();
+    map.set(socfCust, "id", "SO-CUST-3");
+    map.set(socfCust, "name", "Confirm Test Customer");
+    storage.storage_add("customers", socfCust);
+    let socfOrder = order_sales_order.sales_create("SO-CUST-3", "Confirm test");
+    let socfId = helpers.helpers_get_map_value_safe(socfOrder, "id", "");
+    order_sales_order.sales_confirm(socfId);
+    let socfGot = order_sales_order.sales_get(socfId);
+    let socfStatus = helpers.helpers_get_map_value_safe(socfGot, "status", "");
+    if (socfStatus != "confirmed") {
+        print("FAIL: expected status confirmed, got " + socfStatus);
+        return false;
+    }
+    print("PASS: sales_confirm");
+    return true;
+}
+
+fn main() {
+    let so1 = test_so_get_nonexistent();
+    if (so1 == false) {
+        return 1;
+    }
+    let so2 = test_so_create_and_get();
+    if (so2 == false) {
+        return 1;
+    }
+    let so3 = test_so_add_item_and_get_items();
+    if (so3 == false) {
+        return 1;
+    }
+    let so4 = test_so_confirm();
+    if (so4 == false) {
+        return 1;
+    }
+    print("ALL SALES ORDER TESTS PASSED");
+    return 0;
+}

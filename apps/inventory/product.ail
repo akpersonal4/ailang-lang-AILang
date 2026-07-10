@@ -1,0 +1,119 @@
+import storage;
+import helpers;
+import list;
+import map;
+import string;
+import order_purchase_order;
+import stock_reservation;
+import stock_movement;
+
+fn product_create_search_rec(pcsrItems, pcsrQuery, pcsrResults, pcsrIdx) {
+    if (pcsrIdx >= list.len(pcsrItems)) {
+        return pcsrResults;
+    }
+    let pcsrItem = list.get(pcsrItems, pcsrIdx);
+    let pcsrName = helpers.helpers_get_map_value_safe(pcsrItem, "name", "");
+    let pcsrNameLower = string.lowercase(pcsrName);
+    let pcsrQueryLower = string.lowercase(pcsrQuery);
+    if (string.contains(pcsrNameLower, pcsrQueryLower)) {
+        list.append(pcsrResults, pcsrItem);
+    }
+    return product_create_search_rec(pcsrItems, pcsrQuery, pcsrResults, pcsrIdx + 1);
+}
+
+fn product_create(pcName, pcDescription, pcSku, pcCategoryId, pcUnitPrice, pcCostPrice, pcUnit) {
+    let pcProduct = map.new();
+    let pcId = helpers.helpers_generate_id("PRD-");
+    let pcNow = helpers.helpers_current_timestamp();
+    map.set(pcProduct, "id", pcId);
+    map.set(pcProduct, "name", pcName);
+    map.set(pcProduct, "description", pcDescription);
+    map.set(pcProduct, "sku", pcSku);
+    map.set(pcProduct, "category_id", pcCategoryId);
+    map.set(pcProduct, "unit_price", pcUnitPrice);
+    map.set(pcProduct, "cost_price", pcCostPrice);
+    map.set(pcProduct, "unit", pcUnit);
+    map.set(pcProduct, "active", true);
+    map.set(pcProduct, "created_at", pcNow);
+    map.set(pcProduct, "updated_at", "");
+    storage.storage_add("products", pcProduct);
+    return pcProduct;
+}
+
+fn product_get(pgId) {
+    return storage.storage_get_by_id("products", pgId);
+}
+
+fn product_update(puId, puChanges) {
+    let puNow = helpers.helpers_current_timestamp();
+    map.set(puChanges, "updated_at", puNow);
+    return storage.storage_update("products", puId, puChanges);
+}
+
+fn product_update_status(pusId, pusStatus) {
+    let pusChanges = map.new();
+    let pusNow = helpers.helpers_current_timestamp();
+    map.set(pusChanges, "active", pusStatus == "active");
+    map.set(pusChanges, "updated_at", pusNow);
+    return storage.storage_update("products", pusId, pusChanges);
+}
+
+fn product_deactivate_cascade_rec_cancel_pos(pdcPos, pdcIdx) {
+    if (pdcIdx >= list.len(pdcPos)) {
+        return true;
+    }
+    let pdcOrder = list.get(pdcPos, pdcIdx);
+    let pdcOrderId = helpers.helpers_get_map_value_safe(pdcOrder, "id", "");
+    if (pdcOrderId != "") {
+        order_purchase_order.purchase_cancel(pdcOrderId);
+    }
+    return product_deactivate_cascade_rec_cancel_pos(pdcPos, pdcIdx + 1);
+}
+
+fn product_deactivate_cascade_rec_cancel_reservations(pdcRes, pdcIdx) {
+    if (pdcIdx >= list.len(pdcRes)) {
+        return true;
+    }
+    let pdcResItem = list.get(pdcRes, pdcIdx);
+    let pdcResId = helpers.helpers_get_map_value_safe(pdcResItem, "id", "");
+    if (pdcResId != "") {
+        stock_reservation.reservation_cancel(pdcResId);
+    }
+    return product_deactivate_cascade_rec_cancel_reservations(pdcRes, pdcIdx + 1);
+}
+
+fn product_deactivate_cascade_rec_cancel_movements(pdcMov, pdcIdx) {
+    if (pdcIdx >= list.len(pdcMov)) {
+        return true;
+    }
+    let pdcMovItem = list.get(pdcMov, pdcIdx);
+    let pdcMovId = helpers.helpers_get_map_value_safe(pdcMovItem, "id", "");
+    if (pdcMovId != "") {
+        stock_movement.movement_update_status(pdcMovId, "cancelled");
+    }
+    return product_deactivate_cascade_rec_cancel_movements(pdcMov, pdcIdx + 1);
+}
+
+fn product_deactivate_cascade(pdcId) {
+    let pdcPos = order_purchase_order.purchase_list_by_product(pdcId);
+    product_deactivate_cascade_rec_cancel_pos(pdcPos, 0);
+    let pdcRes = stock_reservation.reservation_list_by_product(pdcId);
+    product_deactivate_cascade_rec_cancel_reservations(pdcRes, 0);
+    let pdcMov = stock_movement.movement_list_by_product(pdcId);
+    product_deactivate_cascade_rec_cancel_movements(pdcMov, 0);
+    return true;
+}
+
+fn product_delete(pdId) {
+    return storage.storage_delete("products", pdId);
+}
+
+fn product_list() {
+    return storage.storage_list("products");
+}
+
+fn product_search(psQuery) {
+    let psAll = storage.storage_list("products");
+    let psResults = list.new();
+    return product_create_search_rec(psAll, psQuery, psResults, 0);
+}

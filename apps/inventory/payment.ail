@@ -1,0 +1,108 @@
+import list;
+import map;
+import string;
+import convert;
+import helpers;
+import storage;
+
+fn payment_list_by_invoice_rec(plbirItems, plbirInvoiceId, plbirIdx, plbirAcc) {
+    if (plbirIdx >= list.len(plbirItems)) {
+        return plbirAcc;
+    }
+    let plbirItem = list.get(plbirItems, plbirIdx);
+    let plbirItemInvoiceId = helpers.helpers_get_map_value_safe(plbirItem, "invoice_id", "");
+    if (plbirItemInvoiceId == plbirInvoiceId) {
+        list.append(plbirAcc, plbirItem);
+    }
+    return payment_list_by_invoice_rec(plbirItems, plbirInvoiceId, plbirIdx + 1, plbirAcc);
+}
+
+fn payment_list_by_method_rec(plbmrItems, plbmrMethod, plbmrIdx, plbmrAcc) {
+    if (plbmrIdx >= list.len(plbmrItems)) {
+        return plbmrAcc;
+    }
+    let plbmrItem = list.get(plbmrItems, plbmrIdx);
+    let plbmrItemMethod = helpers.helpers_get_map_value_safe(plbmrItem, "method", "");
+    if (plbmrItemMethod == plbmrMethod) {
+        list.append(plbmrAcc, plbmrItem);
+    }
+    return payment_list_by_method_rec(plbmrItems, plbmrMethod, plbmrIdx + 1, plbmrAcc);
+}
+
+fn payment_total_by_invoice_rec(ptbirItems, ptbirInvoiceId, ptbirIdx, ptbirSum) {
+    if (ptbirIdx >= list.len(ptbirItems)) {
+        return ptbirSum;
+    }
+    let ptbirItem = list.get(ptbirItems, ptbirIdx);
+    let ptbirItemInvoiceId = helpers.helpers_get_map_value_safe(ptbirItem, "invoice_id", "");
+    let ptbirItemAmount = helpers.helpers_get_map_value_safe(ptbirItem, "amount", 0);
+    if (ptbirItemInvoiceId == ptbirInvoiceId) {
+        return payment_total_by_invoice_rec(ptbirItems, ptbirInvoiceId, ptbirIdx + 1, ptbirSum + ptbirItemAmount);
+    }
+    return payment_total_by_invoice_rec(ptbirItems, ptbirInvoiceId, ptbirIdx + 1, ptbirSum);
+}
+
+fn payment_create(pyInvoiceId, pyAmount, pyMethod, pyPaidBy) {
+    let pyPayment = map.new();
+    let pyId = helpers.helpers_generate_id("PAY-");
+    let pyNow = helpers.helpers_current_timestamp();
+    map.set(pyPayment, "id", pyId);
+    map.set(pyPayment, "invoice_id", pyInvoiceId);
+    map.set(pyPayment, "amount", pyAmount);
+    map.set(pyPayment, "method", pyMethod);
+    map.set(pyPayment, "paid_by", pyPaidBy);
+    map.set(pyPayment, "status", "completed");
+    map.set(pyPayment, "created_at", pyNow);
+    storage.storage_add("payments", pyPayment);
+    return pyPayment;
+}
+
+fn payment_get_by_id(pyPaymentId) {
+    return storage.storage_get_by_id("payments", pyPaymentId);
+}
+
+fn payment_list() {
+    return storage.storage_list("payments");
+}
+
+fn payment_list_by_invoice(pyInvoiceId) {
+    let pyAll = storage.storage_list("payments");
+    let pyResults = list.new();
+    return payment_list_by_invoice_rec(pyAll, pyInvoiceId, 0, pyResults);
+}
+
+fn payment_list_by_method(pyMethod) {
+    let pyAll = storage.storage_list("payments");
+    let pyResults = list.new();
+    return payment_list_by_method_rec(pyAll, pyMethod, 0, pyResults);
+}
+
+fn payment_total_by_invoice(pyInvoiceId) {
+    let pyAll = storage.storage_list("payments");
+    return payment_total_by_invoice_rec(pyAll, pyInvoiceId, 0, 0);
+}
+
+fn payment_refund(prPaymentId, prReason) {
+    let prOriginal = storage.storage_get_by_id("payments", prPaymentId);
+    if (prOriginal == false) {
+        return false;
+    }
+    let prOriginalInvoiceId = helpers.helpers_get_map_value_safe(prOriginal, "invoice_id", "");
+    let prOriginalAmount = helpers.helpers_get_map_value_safe(prOriginal, "amount", 0);
+    let prOriginalMethod = helpers.helpers_get_map_value_safe(prOriginal, "method", "");
+    let prOriginalPaidBy = helpers.helpers_get_map_value_safe(prOriginal, "paid_by", "");
+    let prRefundEntry = map.new();
+    let prRefundId = helpers.helpers_generate_id("PAY-");
+    let prNow = helpers.helpers_current_timestamp();
+    map.set(prRefundEntry, "id", prRefundId);
+    map.set(prRefundEntry, "invoice_id", prOriginalInvoiceId);
+    map.set(prRefundEntry, "amount", 0 - prOriginalAmount);
+    map.set(prRefundEntry, "method", prOriginalMethod);
+    map.set(prRefundEntry, "paid_by", prOriginalPaidBy);
+    map.set(prRefundEntry, "status", "refund");
+    map.set(prRefundEntry, "reason", prReason);
+    map.set(prRefundEntry, "original_payment_id", prPaymentId);
+    map.set(prRefundEntry, "created_at", prNow);
+    storage.storage_add("payments", prRefundEntry);
+    return prRefundEntry;
+}

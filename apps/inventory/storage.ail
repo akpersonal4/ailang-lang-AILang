@@ -1,0 +1,111 @@
+import file;
+import json;
+import path;
+import list;
+import map;
+import string;
+
+
+let STORAGE_DATA_DIR = "data";
+
+fn storage_collection_path(collName) {
+    return path.join(STORAGE_DATA_DIR, collName + ".json");
+}
+
+fn storage_find_first_rec(ffItems, ffKey, ffValue, ffIdx) {
+    if (ffIdx >= list.len(ffItems)) {
+        return false;
+    }
+    let ffItem = list.get(ffItems, ffIdx);
+    if (map.has(ffItem, ffKey)) {
+        if (map.get(ffItem, ffKey) == ffValue) {
+            return ffItem;
+        }
+    }
+    return storage_find_first_rec(ffItems, ffKey, ffValue, ffIdx + 1);
+}
+
+fn storage_apply_changes(acTarget, acSource, acKeys, acIdx) {
+    if (acIdx >= list.len(acKeys)) {
+        return acTarget;
+    }
+    let acKey = list.get(acKeys, acIdx);
+    map.set(acTarget, acKey, map.get(acSource, acKey));
+    return storage_apply_changes(acTarget, acSource, acKeys, acIdx + 1);
+}
+
+fn storage_load(collName) {
+    let collPath = storage_collection_path(collName);
+    if (file.exists(collPath) == false) {
+        let emptyResult = list.new();
+        return emptyResult;
+    }
+    let collContent = file.read(collPath);
+    let collParsed = json.parse(collContent);
+    if (collParsed == false) {
+        let emptyResult = list.new();
+        return emptyResult;
+    }
+    return collParsed;
+}
+
+fn storage_save(collName, collItems) {
+    let collPath = storage_collection_path(collName);
+    let collJson = json.stringify(collItems);
+    file.write(collPath, collJson);
+    return collItems;
+}
+
+fn storage_add(collName, addItem) {
+    let addItems = storage_load(collName);
+    list.append(addItems, addItem);
+    return storage_save(collName, addItems);
+}
+
+fn storage_list(collName) {
+    return storage_load(collName);
+}
+
+fn storage_get_by_id(collName, getId) {
+    let getItems = storage_load(collName);
+    return storage_find_first_rec(getItems, "id", getId, 0);
+}
+
+fn storage_update_rec(urItems, urId, urChanges, urIdx) {
+    if (urIdx >= list.len(urItems)) {
+        return false;
+    }
+    let urItem = list.get(urItems, urIdx);
+    if (map.get(urItem, "id") == urId) {
+        let urKeys = map.keys(urChanges);
+        storage_apply_changes(urItem, urChanges, urKeys, 0);
+        return urItems;
+    }
+    return storage_update_rec(urItems, urId, urChanges, urIdx + 1);
+}
+
+fn storage_update(collName, updId, updChanges) {
+    let updItems = storage_load(collName);
+    let updResult = storage_update_rec(updItems, updId, updChanges, 0);
+    if (updResult == false) {
+        return false;
+    }
+    return storage_save(collName, updResult);
+}
+
+fn storage_delete_rec(dlItems, dlId, dlResult, dlIdx) {
+    if (dlIdx >= list.len(dlItems)) {
+        return dlResult;
+    }
+    let dlItem = list.get(dlItems, dlIdx);
+    if (map.get(dlItem, "id") != dlId) {
+        list.append(dlResult, dlItem);
+    }
+    return storage_delete_rec(dlItems, dlId, dlResult, dlIdx + 1);
+}
+
+fn storage_delete(collName, delId) {
+    let delItems = storage_load(collName);
+    let delFiltered = list.new();
+    return storage_save(collName, storage_delete_rec(delItems, delId, delFiltered, 0));
+}

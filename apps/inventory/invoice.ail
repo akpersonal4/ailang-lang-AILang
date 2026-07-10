@@ -1,0 +1,76 @@
+import storage;
+import helpers;
+import list;
+import map;
+import string;
+import time;
+
+fn invoice_calculate_total_rec(ivctrItems, ivctrIdx, ivctrSum) {
+    if (ivctrIdx >= list.len(ivctrItems)) {
+        return ivctrSum;
+    }
+    let ivctrItem = list.get(ivctrItems, ivctrIdx);
+    let ivctrLineTotal = helpers.helpers_get_map_value_safe(ivctrItem, "line_total", 0);
+    return invoice_calculate_total_rec(ivctrItems, ivctrIdx + 1, ivctrSum + ivctrLineTotal);
+}
+
+fn invoice_list_by_customer_rec(ivlcrItems, ivlcrCustomerId, ivlcrIdx, ivlcrAcc) {
+    if (ivlcrIdx >= list.len(ivlcrItems)) {
+        return ivlcrAcc;
+    }
+    let ivlcrItem = list.get(ivlcrItems, ivlcrIdx);
+    let ivlcrItemCustId = helpers.helpers_get_map_value_safe(ivlcrItem, "customer_id", "");
+    if (ivlcrItemCustId == ivlcrCustomerId) {
+        list.append(ivlcrAcc, ivlcrItem);
+    }
+    return invoice_list_by_customer_rec(ivlcrItems, ivlcrCustomerId, ivlcrIdx + 1, ivlcrAcc);
+}
+
+fn invoice_create(ivcrOrderId, ivcrCustomerId, ivcrItems, ivcrTotalAmount) {
+    let ivcrInvoice = map.new();
+    let ivcrId = helpers.helpers_generate_id("INV-");
+    let ivcrNow = helpers.helpers_current_timestamp();
+    map.set(ivcrInvoice, "id", ivcrId);
+    map.set(ivcrInvoice, "order_id", ivcrOrderId);
+    map.set(ivcrInvoice, "customer_id", ivcrCustomerId);
+    map.set(ivcrInvoice, "items", ivcrItems);
+    map.set(ivcrInvoice, "total_amount", ivcrTotalAmount);
+    map.set(ivcrInvoice, "status", "draft");
+    map.set(ivcrInvoice, "created_at", ivcrNow);
+    map.set(ivcrInvoice, "updated_at", ivcrNow);
+    storage.storage_add("invoices", ivcrInvoice);
+    return ivcrInvoice;
+}
+
+fn invoice_get_by_id(ivgInvId) {
+    return storage.storage_get_by_id("invoices", ivgInvId);
+}
+
+fn invoice_list() {
+    return storage.storage_list("invoices");
+}
+
+fn invoice_list_by_customer(ivlcCustomerId) {
+    let ivlcAll = storage.storage_list("invoices");
+    let ivlcResults = list.new();
+    return invoice_list_by_customer_rec(ivlcAll, ivlcCustomerId, 0, ivlcResults);
+}
+
+fn invoice_update_status(ivupInvId, ivupNewStatus) {
+    let ivupChanges = map.new();
+    let ivupNow = helpers.helpers_current_timestamp();
+    map.set(ivupChanges, "status", ivupNewStatus);
+    map.set(ivupChanges, "updated_at", ivupNow);
+    return storage.storage_update("invoices", ivupInvId, ivupChanges);
+}
+
+fn invoice_calculate_total(ivctItems) {
+    return invoice_calculate_total_rec(ivctItems, 0, 0);
+}
+
+fn invoice_generate_number(ivgnSequence) {
+    let ivgnNow = time.now();
+    let ivgnYear = string.substring(ivgnNow, 0, 4);
+    let ivgnSeqStr = helpers.helpers_pad_number(ivgnSequence, 4);
+    return "INV-" + ivgnYear + "-" + ivgnSeqStr;
+}

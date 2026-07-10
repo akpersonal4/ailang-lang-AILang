@@ -1,0 +1,135 @@
+import list;
+import map;
+import string;
+import convert;
+import helpers;
+import storage;
+
+fn currency_default_rates() {
+    let cdrRates = map.new();
+    map.set(cdrRates, "USD_EUR", 92 / 100);
+    map.set(cdrRates, "USD_GBP", 79 / 100);
+    map.set(cdrRates, "USD_JPY", 149);
+    map.set(cdrRates, "USD_INR", 83);
+    return cdrRates;
+}
+
+fn currency_get_direct_rate(gdrFrom, gdrTo) {
+    if (gdrFrom == "USD") {
+        let gdrRates = currency_default_rates();
+        let gdrKey = "USD_" + gdrTo;
+        if (map.has(gdrRates, gdrKey)) {
+            return map.get(gdrRates, gdrKey);
+        }
+        return false;
+    }
+    if (gdrTo == "USD") {
+        let gdrRates = currency_default_rates();
+        let gdrKey = "USD_" + gdrFrom;
+        if (map.has(gdrRates, gdrKey)) {
+            return 1 / map.get(gdrRates, gdrKey);
+        }
+        return false;
+    }
+    let gdrRates = currency_default_rates();
+    let gdrFromKey = "USD_" + gdrFrom;
+    let gdrToKey = "USD_" + gdrTo;
+    if (map.has(gdrRates, gdrFromKey)) {
+        if (map.has(gdrRates, gdrToKey)) {
+            let gdrInUsd = 1 / map.get(gdrRates, gdrFromKey);
+            return gdrInUsd * map.get(gdrRates, gdrToKey);
+        }
+    }
+    return false;
+}
+
+fn currency_filter_key_rec(cfkItems, cfkKey, cfkIdx, cfkResult) {
+    if (cfkIdx >= list.len(cfkItems)) {
+        return cfkResult;
+    }
+    let cfkItem = list.get(cfkItems, cfkIdx);
+    let cfkItemKey = helpers.helpers_get_map_value_safe(cfkItem, "key", "");
+    if (cfkItemKey != cfkKey) {
+        list.append(cfkResult, cfkItem);
+    }
+    return currency_filter_key_rec(cfkItems, cfkKey, cfkIdx + 1, cfkResult);
+}
+
+fn currency_find_rate_rec(cfrItems, cfrKey, cfrIdx) {
+    if (cfrIdx >= list.len(cfrItems)) {
+        return false;
+    }
+    let cfrItem = list.get(cfrItems, cfrIdx);
+    let cfrItemKey = helpers.helpers_get_map_value_safe(cfrItem, "key", "");
+    if (cfrItemKey == cfrKey) {
+        return helpers.helpers_get_map_value_safe(cfrItem, "rate", false);
+    }
+    return currency_find_rate_rec(cfrItems, cfrKey, cfrIdx + 1);
+}
+
+fn currency_get_rate(cgrFrom, cgrTo) {
+    let cgrKey = cgrFrom + "_" + cgrTo;
+    let cgrStored = storage.storage_list("currency_rates");
+    let cgrFound = currency_find_rate_rec(cgrStored, cgrKey, 0);
+    if (cgrFound != false) {
+        return cgrFound;
+    }
+    return currency_get_direct_rate(cgrFrom, cgrTo);
+}
+
+fn currency_convert(ccAmount, ccFrom, ccTo) {
+    if (ccFrom == ccTo) {
+        return ccAmount;
+    }
+    let ccRate = currency_get_rate(ccFrom, ccTo);
+    if (ccRate != false) {
+        return ccAmount * ccRate;
+    }
+    let ccRevRate = currency_get_rate(ccTo, ccFrom);
+    if (ccRevRate != false) {
+        return ccAmount / ccRevRate;
+    }
+    return ccAmount;
+}
+
+fn currency_format(cfAmount, cfCode) {
+    let cfStr = convert.to_string(cfAmount);
+    if (cfCode == "USD") {
+        return "$" + cfStr;
+    }
+    if (cfCode == "EUR") {
+        return "€" + cfStr;
+    }
+    if (cfCode == "GBP") {
+        return "£" + cfStr;
+    }
+    if (cfCode == "JPY") {
+        return "¥" + cfStr;
+    }
+    if (cfCode == "INR") {
+        return "₹" + cfStr;
+    }
+    return cfStr;
+}
+
+fn currency_list() {
+    let clResult = list.new();
+    list.append(clResult, "USD");
+    list.append(clResult, "EUR");
+    list.append(clResult, "GBP");
+    list.append(clResult, "JPY");
+    list.append(clResult, "INR");
+    return clResult;
+}
+
+fn currency_set_rate(csrFrom, csrTo, csrRate) {
+    let csrKey = csrFrom + "_" + csrTo;
+    let csrExisting = storage.storage_list("currency_rates");
+    let csrFiltered = currency_filter_key_rec(csrExisting, csrKey, 0, list.new());
+    let csrEntry = map.new();
+    map.set(csrEntry, "key", csrKey);
+    map.set(csrEntry, "rate", csrRate);
+    list.append(csrFiltered, csrEntry);
+    storage.storage_save("currency_rates", csrFiltered);
+    return true;
+}

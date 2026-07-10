@@ -1,0 +1,191 @@
+import list;
+import map;
+import string;
+import convert;
+import helpers;
+import storage;
+import notification;
+import search;
+
+fn tn_create_product() {
+    let tnpProduct = map.new();
+    map.set(tnpProduct, "id", "TNOT-PRD-001");
+    map.set(tnpProduct, "name", "Test Notification Product");
+    map.set(tnpProduct, "sku", "NOT-001");
+    map.set(tnpProduct, "category_id", "");
+    map.set(tnpProduct, "unit_price", 30);
+    map.set(tnpProduct, "cost_price", 15);
+    map.set(tnpProduct, "unit", "pcs");
+    map.set(tnpProduct, "active", true);
+    let tnpNow = helpers.helpers_current_timestamp();
+    map.set(tnpProduct, "created_at", tnpNow);
+    map.set(tnpProduct, "updated_at", "");
+    storage.storage_add("products", tnpProduct);
+    let tnpLoaded = helpers.helpers_find_in_list(storage.storage_list("products"), "id", "TNOT-PRD-001");
+    if (tnpLoaded == false) {
+        return false;
+    }
+    return true;
+}
+
+fn tn_create_valuation_low() {
+    let tnvlVal = map.new();
+    map.set(tnvlVal, "id", "TNOT-VAL-001");
+    map.set(tnvlVal, "product_id", "TNOT-PRD-001");
+    map.set(tnvlVal, "method", "fifo");
+    map.set(tnvlVal, "current_cost", 15);
+    map.set(tnvlVal, "quantity_on_hand", 2);
+    let tnvlNow = helpers.helpers_current_timestamp();
+    map.set(tnvlVal, "last_updated", tnvlNow);
+    storage.storage_add("valuations", tnvlVal);
+    let tnvlLoaded = helpers.helpers_find_in_list(storage.storage_list("valuations"), "id", "TNOT-VAL-001");
+    if (tnvlLoaded == false) {
+        return false;
+    }
+    return true;
+}
+
+fn tn_create_valuation_out() {
+    let tnvoVal = map.new();
+    map.set(tnvoVal, "id", "TNOT-VAL-002");
+    map.set(tnvoVal, "product_id", "TNOT-PRD-002");
+    map.set(tnvoVal, "method", "fifo");
+    map.set(tnvoVal, "current_cost", 0);
+    map.set(tnvoVal, "quantity_on_hand", 0);
+    let tnvoNow = helpers.helpers_current_timestamp();
+    map.set(tnvoVal, "last_updated", tnvoNow);
+    storage.storage_add("valuations", tnvoVal);
+    let tnvoLoaded = helpers.helpers_find_in_list(storage.storage_list("valuations"), "id", "TNOT-VAL-002");
+    if (tnvoLoaded == false) {
+        return false;
+    }
+    return true;
+}
+
+fn tn_create_search_customer() {
+    let tnscCustomer = map.new();
+    map.set(tnscCustomer, "id", "TNOT-CUS-001");
+    map.set(tnscCustomer, "name", "Test Search Customer");
+    map.set(tnscCustomer, "email", "search@test.com");
+    map.set(tnscCustomer, "phone", "555-SRC");
+    map.set(tnscCustomer, "active", true);
+    let tnscNow = helpers.helpers_current_timestamp();
+    map.set(tnscCustomer, "created_at", tnscNow);
+    map.set(tnscCustomer, "updated_at", tnscNow);
+    storage.storage_add("customers", tnscCustomer);
+    let tnscLoaded = helpers.helpers_find_in_list(storage.storage_list("customers"), "id", "TNOT-CUS-001");
+    if (tnscLoaded == false) {
+        return false;
+    }
+    return true;
+}
+
+fn tn_create_search_vendor() {
+    let tnsvVendor = map.new();
+    map.set(tnsvVendor, "id", "TNOT-VEN-001");
+    map.set(tnsvVendor, "name", "Test Search Vendor");
+    map.set(tnsvVendor, "email", "vendor@test.com");
+    map.set(tnsvVendor, "phone", "555-VEN");
+    map.set(tnsvVendor, "contact_person", "SearchContact");
+    map.set(tnsvVendor, "active", true);
+    let tnsvNow = helpers.helpers_current_timestamp();
+    map.set(tnsvVendor, "created_at", tnsvNow);
+    map.set(tnsvVendor, "updated_at", tnsvNow);
+    storage.storage_add("vendors", tnsvVendor);
+    let tnsvLoaded = helpers.helpers_find_in_list(storage.storage_list("vendors"), "id", "TNOT-VEN-001");
+    if (tnsvLoaded == false) {
+        return false;
+    }
+    return true;
+}
+
+fn tn_find_result_rec(tnfrItems, tnfrTarget, tnfrIdx) {
+    if (tnfrIdx >= list.len(tnfrItems)) {
+        return false;
+    }
+    let tnfrItem = list.get(tnfrItems, tnfrIdx);
+    let tnfrProdId = helpers.helpers_get_map_value_safe(tnfrItem, "product_id", "");
+    if (tnfrProdId == tnfrTarget) {
+        return tnfrItem;
+    }
+    return tn_find_result_rec(tnfrItems, tnfrTarget, tnfrIdx + 1);
+}
+
+fn tn_find_result(tnfrItems, tnfrTarget) {
+    return tn_find_result_rec(tnfrItems, tnfrTarget, 0);
+}
+
+fn tn_test_low_stock() {
+    let tnlsItems = notification.notification_check_low_stock(5);
+    let tnlsCount = list.len(tnlsItems);
+    if (tnlsCount == 0) {
+        print("FAIL: notification_check_low_stock returned empty");
+        return false;
+    }
+    let tnlsFound = tn_find_result(tnlsItems, "TNOT-PRD-001");
+    if (tnlsFound == false) {
+        print("FAIL: low stock did not find TNOT-PRD-001 in results");
+        return false;
+    }
+    print("PASS: notification_check_low_stock (found " + convert.to_string(tnlsCount) + " low)");
+    return true;
+}
+
+fn tn_test_out_of_stock() {
+    let tnosItems = notification.notification_check_out_of_stock();
+    let tnosFound = tn_find_result(tnosItems, "TNOT-PRD-002");
+    if (tnosFound == false) {
+        print("FAIL: notification_check_out_of_stock did not find TNOT-PRD-002");
+        return false;
+    }
+    print("PASS: notification_check_out_of_stock");
+    return true;
+}
+
+fn tn_test_search() {
+    let tnsrResults = search.search_all("Test");
+    let tnsrCount = list.len(tnsrResults);
+    if (tnsrCount == 0) {
+        print("FAIL: search_all returned empty results");
+        return false;
+    }
+    print("PASS: search_all (" + convert.to_string(tnsrCount) + " results)");
+    return true;
+}
+
+fn main() {
+    let tm1 = tn_create_product();
+    if (tm1 == false) {
+        return 1;
+    }
+    let tm2 = tn_create_valuation_low();
+    if (tm2 == false) {
+        return 1;
+    }
+    let tm3 = tn_create_valuation_out();
+    if (tm3 == false) {
+        return 1;
+    }
+    let tm4 = tn_test_low_stock();
+    if (tm4 == false) {
+        return 1;
+    }
+    let tm5 = tn_test_out_of_stock();
+    if (tm5 == false) {
+        return 1;
+    }
+    let tm6 = tn_create_search_customer();
+    if (tm6 == false) {
+        return 1;
+    }
+    let tm7 = tn_create_search_vendor();
+    if (tm7 == false) {
+        return 1;
+    }
+    let tm8 = tn_test_search();
+    if (tm8 == false) {
+        return 1;
+    }
+    print("ALL NOTIFICATION AND SEARCH TESTS PASSED");
+    return 0;
+}

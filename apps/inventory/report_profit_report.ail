@@ -1,0 +1,43 @@
+import storage;
+import helpers;
+import list;
+import map;
+import string;
+import convert;
+
+fn profit_report_sales_sum_rec(psItems, psIdx, psSum) {
+    if (psIdx >= list.len(psItems)) {
+        return psSum;
+    }
+    let psItem = list.get(psItems, psIdx);
+    if (map.has(psItem, "total")) {
+        let psTotal = map.get(psItem, "total");
+        return profit_report_sales_sum_rec(psItems, psIdx + 1, psSum + convert.to_int(psTotal));
+    }
+    return profit_report_sales_sum_rec(psItems, psIdx + 1, psSum);
+}
+
+fn profit_report_purchase_sum_rec(ppItems, ppIdx, ppSum) {
+    if (ppIdx >= list.len(ppItems)) {
+        return ppSum;
+    }
+    let ppItem = list.get(ppItems, ppIdx);
+    if (map.has(ppItem, "total")) {
+        let ppTotal = map.get(ppItem, "total");
+        return profit_report_purchase_sum_rec(ppItems, ppIdx + 1, ppSum + convert.to_int(ppTotal));
+    }
+    return profit_report_purchase_sum_rec(ppItems, ppIdx + 1, ppSum);
+}
+
+fn profit_report_summary() {
+    let prSales = storage.storage_list("sales_orders");
+    let prPurchases = storage.storage_list("purchase_orders");
+    let prSalesTotal = profit_report_sales_sum_rec(prSales, 0, 0);
+    let prPurchaseTotal = profit_report_purchase_sum_rec(prPurchases, 0, 0);
+    let prResult = map.new();
+    map.set(prResult, "sales_total", prSalesTotal);
+    map.set(prResult, "sales_count", list.len(prSales));
+    map.set(prResult, "purchase_total", prPurchaseTotal);
+    map.set(prResult, "purchase_count", list.len(prPurchases));
+    return prResult;
+}

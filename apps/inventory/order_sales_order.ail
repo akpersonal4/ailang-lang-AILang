@@ -1,0 +1,145 @@
+import storage;
+import helpers;
+import list;
+import map;
+import string;
+import convert;
+import stock_movement;
+
+fn sales_calculate_line_total(soiQty, soiPrice) {
+    return soiQty * soiPrice;
+}
+
+fn sales_recalculate_total_rec(sotItems, sotOrderId, sotIdx, sotSum) {
+    if (sotIdx >= list.len(sotItems)) {
+        return sotSum;
+    }
+    let sotItem = list.get(sotItems, sotIdx);
+    if (helpers.helpers_get_map_value_safe(sotItem, "order_id", "") == sotOrderId) {
+        return sales_recalculate_total_rec(sotItems, sotOrderId, sotIdx + 1, sotSum + helpers.helpers_get_map_value_safe(sotItem, "line_total", 0));
+    }
+    return sales_recalculate_total_rec(sotItems, sotOrderId, sotIdx + 1, sotSum);
+}
+
+fn sales_get_items_rec(sgiItems, sgiOrderId, sgiResults, sgiIdx) {
+    if (sgiIdx >= list.len(sgiItems)) {
+        return sgiResults;
+    }
+    let sgiItem = list.get(sgiItems, sgiIdx);
+    let sgiItemOrderId = helpers.helpers_get_map_value_safe(sgiItem, "order_id", "");
+    if (sgiItemOrderId == sgiOrderId) {
+        list.append(sgiResults, sgiItem);
+    }
+    return sales_get_items_rec(sgiItems, sgiOrderId, sgiResults, sgiIdx + 1);
+}
+
+fn sales_list_by_customer_rec(lcItems, lcCustId, lcResults, lcIdx) {
+    if (lcIdx >= list.len(lcItems)) {
+        return lcResults;
+    }
+    let lcItem = list.get(lcItems, lcIdx);
+    let lcItemCustId = helpers.helpers_get_map_value_safe(lcItem, "customer_id", "");
+    if (lcItemCustId == lcCustId) {
+        list.append(lcResults, lcItem);
+    }
+    return sales_list_by_customer_rec(lcItems, lcCustId, lcResults, lcIdx + 1);
+}
+
+fn sales_ship_items_rec(ssItems, ssIdx) {
+    if (ssIdx >= list.len(ssItems)) {
+        return true;
+    }
+    let ssItem = list.get(ssItems, ssIdx);
+    let ssProdId = helpers.helpers_get_map_value_safe(ssItem, "product_id", "");
+    let ssQty = convert.to_int(helpers.helpers_get_map_value_safe(ssItem, "quantity", 0));
+    let ssNegQty = 0 - ssQty;
+    stock_movement.movement_create(ssProdId, "outbound", ssNegQty, "sales_order", helpers.helpers_get_map_value_safe(ssItem, "order_id", ""), "Sales order shipment");
+    return sales_ship_items_rec(ssItems, ssIdx + 1);
+}
+
+fn sales_recalculate_total(srtOrderId) {
+    let srtItems = storage.storage_list("sales_items");
+    let srtSum = sales_recalculate_total_rec(srtItems, srtOrderId, 0, 0);
+    let srtChanges = map.new();
+    let srtNow = helpers.helpers_current_timestamp();
+    map.set(srtChanges, "total", srtSum);
+    map.set(srtChanges, "updated_at", srtNow);
+    return storage.storage_update("sales_orders", srtOrderId, srtChanges);
+}
+
+fn sales_get_items(siOrderId) {
+    let siItems = storage.storage_list("sales_items");
+    let siResults = list.new();
+    return sales_get_items_rec(siItems, siOrderId, siResults, 0);
+}
+
+fn sales_list_by_customer(lccCustId) {
+    let lccAll = storage.storage_list("sales_orders");
+    let lccResults = list.new();
+    return sales_list_by_customer_rec(lccAll, lccCustId, lccResults, 0);
+}
+
+fn sales_create(sccCustomerId, sccNotes) {
+    let sccOrder = map.new();
+    let sccId = helpers.helpers_generate_id("SO-");
+    let sccNow = helpers.helpers_current_timestamp();
+    map.set(sccOrder, "id", sccId);
+    map.set(sccOrder, "customer_id", sccCustomerId);
+    map.set(sccOrder, "status", "draft");
+    map.set(sccOrder, "total", 0);
+    map.set(sccOrder, "notes", sccNotes);
+    map.set(sccOrder, "created_at", sccNow);
+    map.set(sccOrder, "updated_at", sccNow);
+    storage.storage_add("sales_orders", sccOrder);
+    return sccOrder;
+}
+
+fn sales_get(sgId) {
+    return storage.storage_get_by_id("sales_orders", sgId);
+}
+
+fn sales_list() {
+    return storage.storage_list("sales_orders");
+}
+
+fn sales_update_status(usOrderId, usNewStatus) {
+    let usChanges = map.new();
+    let usNow = helpers.helpers_current_timestamp();
+    map.set(usChanges, "status", usNewStatus);
+    map.set(usChanges, "updated_at", usNow);
+    return storage.storage_update("sales_orders", usOrderId, usChanges);
+}
+
+fn sales_confirm(scfOrderId) {
+    return sales_update_status(scfOrderId, "confirmed");
+}
+
+fn sales_add_item(saOrderId, saProductId, saQty, saPrice) {
+    let saLineTotal = sales_calculate_line_total(saQty, saPrice);
+    let saItem = map.new();
+    let saId = helpers.helpers_generate_id("SOI-");
+    let saNow = helpers.helpers_current_timestamp();
+    map.set(saItem, "id", saId);
+    map.set(saItem, "order_id", saOrderId);
+    map.set(saItem, "product_id", saProductId);
+    map.set(saItem, "quantity", saQty);
+    map.set(saItem, "unit_price", saPrice);
+    map.set(saItem, "line_total", saLineTotal);
+    storage.storage_add("sales_items", saItem);
+    sales_recalculate_total(saOrderId);
+    return true;
+}
+
+fn sales_ship(sshOrderId) {
+    sales_update_status(sshOrderId, "shipped");
+    let sshItems = sales_get_items(sshOrderId);
+    return sales_ship_items_rec(sshItems, 0);
+}
+
+fn sales_cancel(sclOrderId) {
+    return sales_update_status(sclOrderId, "cancelled");
+}
+
+fn sales_delete_by_id(sdOrderId) {
+    return storage.storage_delete("sales_orders", sdOrderId);
+}

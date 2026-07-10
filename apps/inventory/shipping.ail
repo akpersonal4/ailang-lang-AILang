@@ -1,0 +1,74 @@
+import storage;
+import helpers;
+import list;
+import map;
+import string;
+
+fn shipping_list_by_order_rec(shlrItems, shlrOrderId, shlrIdx, shlrAcc) {
+    if (shlrIdx >= list.len(shlrItems)) {
+        return shlrAcc;
+    }
+    let shlrItem = list.get(shlrItems, shlrIdx);
+    let shlrItemOrderId = helpers.helpers_get_map_value_safe(shlrItem, "order_id", "");
+    if (shlrItemOrderId == shlrOrderId) {
+        list.append(shlrAcc, shlrItem);
+    }
+    return shipping_list_by_order_rec(shlrItems, shlrOrderId, shlrIdx + 1, shlrAcc);
+}
+
+fn shipping_list_by_status_rec(shlsItems, shlsStatus, shlsIdx, shlsAcc) {
+    if (shlsIdx >= list.len(shlsItems)) {
+        return shlsAcc;
+    }
+    let shlsItem = list.get(shlsItems, shlsIdx);
+    let shlsItemStatus = helpers.helpers_get_map_value_safe(shlsItem, "status", "");
+    if (shlsItemStatus == shlsStatus) {
+        list.append(shlsAcc, shlsItem);
+    }
+    return shipping_list_by_status_rec(shlsItems, shlsStatus, shlsIdx + 1, shlsAcc);
+}
+
+fn shipping_create(shcrOrderId, shcrCarrier, shcrTrackingNumber, shcrShipAddress, shcrShippedBy) {
+    let shcrShipment = map.new();
+    let shcrId = helpers.helpers_generate_id("SHP-");
+    let shcrNow = helpers.helpers_current_timestamp();
+    map.set(shcrShipment, "id", shcrId);
+    map.set(shcrShipment, "order_id", shcrOrderId);
+    map.set(shcrShipment, "carrier", shcrCarrier);
+    map.set(shcrShipment, "tracking_number", shcrTrackingNumber);
+    map.set(shcrShipment, "ship_address", shcrShipAddress);
+    map.set(shcrShipment, "shipped_by", shcrShippedBy);
+    map.set(shcrShipment, "status", "pending");
+    map.set(shcrShipment, "created_at", shcrNow);
+    map.set(shcrShipment, "updated_at", shcrNow);
+    storage.storage_add("shipments", shcrShipment);
+    return shcrShipment;
+}
+
+fn shipping_get_by_id(shgShipId) {
+    return storage.storage_get_by_id("shipments", shgShipId);
+}
+
+fn shipping_list() {
+    return storage.storage_list("shipments");
+}
+
+fn shipping_list_by_order(shloOrderId) {
+    let shloAll = storage.storage_list("shipments");
+    let shloResults = list.new();
+    return shipping_list_by_order_rec(shloAll, shloOrderId, 0, shloResults);
+}
+
+fn shipping_update_status(shupShipId, shupNewStatus) {
+    let shupChanges = map.new();
+    let shupNow = helpers.helpers_current_timestamp();
+    map.set(shupChanges, "status", shupNewStatus);
+    map.set(shupChanges, "updated_at", shupNow);
+    return storage.storage_update("shipments", shupShipId, shupChanges);
+}
+
+fn shipping_list_by_status(shlsFilterStatus) {
+    let shlsAll = storage.storage_list("shipments");
+    let shlsResults = list.new();
+    return shipping_list_by_status_rec(shlsAll, shlsFilterStatus, 0, shlsResults);
+}

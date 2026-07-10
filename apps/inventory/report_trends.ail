@@ -1,0 +1,193 @@
+import list;
+import map;
+import string;
+import convert;
+import helpers;
+import storage;
+
+fn trend_find_max_idx_rec(tfmrItems, tfmrValueKey, tfmrIdx, tfmrBestIdx, tfmrBestVal) {
+    if (tfmrIdx >= list.len(tfmrItems)) {
+        return tfmrBestIdx;
+    }
+    let tfmrItem = list.get(tfmrItems, tfmrIdx);
+    let tfmrVal = helpers.helpers_get_map_value_safe(tfmrItem, tfmrValueKey, 0);
+    if (tfmrVal > tfmrBestVal) {
+        return trend_find_max_idx_rec(tfmrItems, tfmrValueKey, tfmrIdx + 1, tfmrIdx, tfmrVal);
+    }
+    return trend_find_max_idx_rec(tfmrItems, tfmrValueKey, tfmrIdx + 1, tfmrBestIdx, tfmrBestVal);
+}
+
+fn trend_remove_idx_rec(triItems, triSkipIdx, triResult, triIdx) {
+    if (triIdx >= list.len(triItems)) {
+        return triResult;
+    }
+    if (triIdx != triSkipIdx) {
+        list.append(triResult, list.get(triItems, triIdx));
+    }
+    return trend_remove_idx_rec(triItems, triSkipIdx, triResult, triIdx + 1);
+}
+
+fn trend_sort_descending_rec(tsdrItems, tsdrValueKey, tsdrResult) {
+    let tsdrLen = list.len(tsdrItems);
+    if (tsdrLen == 0) {
+        return tsdrResult;
+    }
+    let tsdrFirstVal = helpers.helpers_get_map_value_safe(list.get(tsdrItems, 0), tsdrValueKey, 0);
+    let tsdrMaxIdx = trend_find_max_idx_rec(tsdrItems, tsdrValueKey, 0, 0, tsdrFirstVal);
+    let tsdrMaxItem = list.get(tsdrItems, tsdrMaxIdx);
+    list.append(tsdrResult, tsdrMaxItem);
+    let tsdrRemaining = list.new();
+    let tsdrRest = trend_remove_idx_rec(tsdrItems, tsdrMaxIdx, tsdrRemaining, 0);
+    return trend_sort_descending_rec(tsdrRest, tsdrValueKey, tsdrResult);
+}
+
+fn trend_take_first_rec(tffrItems, tffrLimit, tffrResult, tffrIdx) {
+    if (tffrIdx >= list.len(tffrItems)) {
+        return tffrResult;
+    }
+    if (tffrIdx >= tffrLimit) {
+        return tffrResult;
+    }
+    list.append(tffrResult, list.get(tffrItems, tffrIdx));
+    return trend_take_first_rec(tffrItems, tffrLimit, tffrResult, tffrIdx + 1);
+}
+
+fn trend_group_sales_rec(tgsItems, tgsIdx, tgsAcc) {
+    if (tgsIdx >= list.len(tgsItems)) {
+        return tgsAcc;
+    }
+    let tgsItem = list.get(tgsItems, tgsIdx);
+    let tgsProdId = helpers.helpers_get_map_value_safe(tgsItem, "product_id", "");
+    let tgsQty = helpers.helpers_get_map_value_safe(tgsItem, "quantity", 0);
+    if (map.has(tgsAcc, tgsProdId)) {
+        let tgsExisting = map.get(tgsAcc, tgsProdId);
+        let tgsSum = helpers.helpers_get_map_value_safe(tgsExisting, "total_qty", 0);
+        map.set(tgsExisting, "total_qty", tgsSum + tgsQty);
+    } else {
+        let tgsNewEntry = map.new();
+        map.set(tgsNewEntry, "product_id", tgsProdId);
+        map.set(tgsNewEntry, "total_qty", tgsQty);
+        map.set(tgsAcc, tgsProdId, tgsNewEntry);
+    }
+    return trend_group_sales_rec(tgsItems, tgsIdx + 1, tgsAcc);
+}
+
+fn trend_monthly_group_rec(tmgrItems, tmgrIdx, tmgrAcc) {
+    if (tmgrIdx >= list.len(tmgrItems)) {
+        return tmgrAcc;
+    }
+    let tmgrItem = list.get(tmgrItems, tmgrIdx);
+    let tmgrCreated = helpers.helpers_get_map_value_safe(tmgrItem, "created_at", "");
+    if (string.length(tmgrCreated) >= 7) {
+        let tmgrMonth = string.substring(tmgrCreated, 0, 7);
+        let tmgrTotal = helpers.helpers_get_map_value_safe(tmgrItem, "total", 0);
+        if (map.has(tmgrAcc, tmgrMonth)) {
+            let tmgrExisting = map.get(tmgrAcc, tmgrMonth);
+            let tmgrCount = helpers.helpers_get_map_value_safe(tmgrExisting, "count", 0);
+            let tmgrSum = helpers.helpers_get_map_value_safe(tmgrExisting, "total", 0);
+            map.set(tmgrExisting, "count", tmgrCount + 1);
+            map.set(tmgrExisting, "total", tmgrSum + tmgrTotal);
+        } else {
+            let tmgrNewEntry = map.new();
+            map.set(tmgrNewEntry, "count", 1);
+            map.set(tmgrNewEntry, "total", tmgrTotal);
+            map.set(tmgrAcc, tmgrMonth, tmgrNewEntry);
+        }
+    }
+    return trend_monthly_group_rec(tmgrItems, tmgrIdx + 1, tmgrAcc);
+}
+
+fn trend_map_to_list_rec(tmtlKeys, tmtlAcc, tmtlResult, tmtlIdx) {
+    if (tmtlIdx >= list.len(tmtlKeys)) {
+        return tmtlResult;
+    }
+    let tmtlKey = list.get(tmtlKeys, tmtlIdx);
+    if (map.has(tmtlAcc, tmtlKey)) {
+        list.append(tmtlResult, map.get(tmtlAcc, tmtlKey));
+    }
+    return trend_map_to_list_rec(tmtlKeys, tmtlAcc, tmtlResult, tmtlIdx + 1);
+}
+
+fn trend_monthly_to_list_rec(tmtlrKeys, tmtlrAcc, tmtlrResult, tmtlrIdx) {
+    if (tmtlrIdx >= list.len(tmtlrKeys)) {
+        return tmtlrResult;
+    }
+    let tmtlrKey = list.get(tmtlrKeys, tmtlrIdx);
+    if (map.has(tmtlrAcc, tmtlrKey)) {
+        let tmtlrEntry = map.get(tmtlrAcc, tmtlrKey);
+        let tmtlrMonthEntry = map.new();
+        map.set(tmtlrMonthEntry, "month", tmtlrKey);
+        map.set(tmtlrMonthEntry, "count", helpers.helpers_get_map_value_safe(tmtlrEntry, "count", 0));
+        map.set(tmtlrMonthEntry, "total", helpers.helpers_get_map_value_safe(tmtlrEntry, "total", 0));
+        list.append(tmtlrResult, tmtlrMonthEntry);
+    }
+    return trend_monthly_to_list_rec(tmtlrKeys, tmtlrAcc, tmtlrResult, tmtlrIdx + 1);
+}
+
+fn trend_category_group_rec(tcgrItems, tcgrIdx, tcgrAcc) {
+    if (tcgrIdx >= list.len(tcgrItems)) {
+        return tcgrAcc;
+    }
+    let tcgrItem = list.get(tcgrItems, tcgrIdx);
+    let tcgrCatId = helpers.helpers_get_map_value_safe(tcgrItem, "category_id", "uncategorized");
+    if (map.has(tcgrAcc, tcgrCatId)) {
+        let tcgrCount = helpers.helpers_get_map_value_safe(tcgrAcc, tcgrCatId, 0);
+        map.set(tcgrAcc, tcgrCatId, tcgrCount + 1);
+    } else {
+        map.set(tcgrAcc, tcgrCatId, 1);
+    }
+    return trend_category_group_rec(tcgrItems, tcgrIdx + 1, tcgrAcc);
+}
+
+fn trend_category_to_list_rec(tctlKeys, tctlAcc, tctlResult, tctlIdx) {
+    if (tctlIdx >= list.len(tctlKeys)) {
+        return tctlResult;
+    }
+    let tctlKey = list.get(tctlKeys, tctlIdx);
+    let tctlEntry = map.new();
+    map.set(tctlEntry, "category_id", tctlKey);
+    map.set(tctlEntry, "count", helpers.helpers_get_map_value_safe(tctlAcc, tctlKey, 0));
+    list.append(tctlResult, tctlEntry);
+    return trend_category_to_list_rec(tctlKeys, tctlAcc, tctlResult, tctlIdx + 1);
+}
+
+fn trend_sort_descending(trendItems, trendValueKey) {
+    let trendResult = list.new();
+    return trend_sort_descending_rec(trendItems, trendValueKey, trendResult);
+}
+
+fn trend_monthly_sales() {
+    let tmsOrders = storage.storage_list("sales_orders");
+    let tmsGrouped = trend_monthly_group_rec(tmsOrders, 0, map.new());
+    let tmsKeys = map.keys(tmsGrouped);
+    let tmsResult = list.new();
+    return trend_monthly_to_list_rec(tmsKeys, tmsGrouped, tmsResult, 0);
+}
+
+fn trend_monthly_purchases() {
+    let tmpOrders = storage.storage_list("purchase_orders");
+    let tmpGrouped = trend_monthly_group_rec(tmpOrders, 0, map.new());
+    let tmpKeys = map.keys(tmpGrouped);
+    let tmpResult = list.new();
+    return trend_monthly_to_list_rec(tmpKeys, tmpGrouped, tmpResult, 0);
+}
+
+fn trend_top_products(tpLimit) {
+    let tpItems = storage.storage_list("sales_items");
+    let tpGrouped = trend_group_sales_rec(tpItems, 0, map.new());
+    let tpKeys = map.keys(tpGrouped);
+    let tpList = list.new();
+    let tpAll = trend_map_to_list_rec(tpKeys, tpGrouped, tpList, 0);
+    let tpSorted = trend_sort_descending(tpAll, "total_qty");
+    let tpResult = list.new();
+    return trend_take_first_rec(tpSorted, tpLimit, tpResult, 0);
+}
+
+fn trend_category_breakdown() {
+    let cbProducts = storage.storage_list("products");
+    let cbAcc = map.new();
+    let cbGrouped = trend_category_group_rec(cbProducts, 0, cbAcc);
+    let cbKeys = map.keys(cbGrouped);
+    let cbResult = list.new();
+    return trend_category_to_list_rec(cbKeys, cbGrouped, cbResult, 0);
+}

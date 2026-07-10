@@ -1,0 +1,141 @@
+import list;
+import map;
+import string;
+import convert;
+import helpers;
+import storage;
+
+fn permission_find_rec(pmItems, pmRole, pmResource, pmIdx) {
+    let pmLen = list.len(pmItems);
+    if (pmIdx < pmLen) {
+        let pmItem = list.get(pmItems, pmIdx);
+        let pmRoleVal = helpers.helpers_get_map_value_safe(pmItem, "role", "");
+        let pmResourceVal = helpers.helpers_get_map_value_safe(pmItem, "resource", "");
+        if (pmRoleVal == pmRole && pmResourceVal == pmResource) {
+            return pmItem;
+        }
+        return permission_find_rec(pmItems, pmRole, pmResource, pmIdx + 1);
+    }
+    return false;
+}
+
+fn permission_check_rec(pmItems, pmAction, pmIdx) {
+    let pmLen = list.len(pmItems);
+    if (pmIdx < pmLen) {
+        let pmItem = list.get(pmItems, pmIdx);
+        if (pmItem == pmAction) {
+            return true;
+        }
+        return permission_check_rec(pmItems, pmAction, pmIdx + 1);
+    }
+    return false;
+}
+
+fn permission_remove_action_rec(pmItems, pmRemoveAction, pmIdx, pmAcc) {
+    let pmLen = list.len(pmItems);
+    if (pmIdx < pmLen) {
+        let pmItem = list.get(pmItems, pmIdx);
+        if (pmItem != pmRemoveAction) {
+            list.append(pmAcc, pmItem);
+        }
+        return permission_remove_action_rec(pmItems, pmRemoveAction, pmIdx + 1, pmAcc);
+    }
+    return pmAcc;
+}
+
+fn permission_get_role_permissions_rec(pmItems, pmRoleName, pmIdx, pmAcc) {
+    let pmLen = list.len(pmItems);
+    if (pmIdx < pmLen) {
+        let pmItem = list.get(pmItems, pmIdx);
+        let pmItemRole = helpers.helpers_get_map_value_safe(pmItem, "role", "");
+        if (pmItemRole == pmRoleName) {
+            list.append(pmAcc, pmItem);
+        }
+        return permission_get_role_permissions_rec(pmItems, pmRoleName, pmIdx + 1, pmAcc);
+    }
+    return pmAcc;
+}
+
+fn permission_list_roles_rec(pmItems, pmIdx, pmAcc) {
+    let pmLen = list.len(pmItems);
+    if (pmIdx < pmLen) {
+        let pmItem = list.get(pmItems, pmIdx);
+        let pmRoleName = helpers.helpers_get_map_value_safe(pmItem, "role", "");
+        let pmExists = helpers.helpers_list_contains(pmAcc, pmRoleName);
+        if (pmExists == false && pmRoleName != "") {
+            list.append(pmAcc, pmRoleName);
+        }
+        return permission_list_roles_rec(pmItems, pmIdx + 1, pmAcc);
+    }
+    return pmAcc;
+}
+
+fn permission_define(pmRoleName, pmResource, pmActions) {
+    let pmRecord = map.new();
+    let pmId = helpers.helpers_generate_id("PERM-");
+    map.set(pmRecord, "id", pmId);
+    map.set(pmRecord, "role", pmRoleName);
+    map.set(pmRecord, "resource", pmResource);
+    map.set(pmRecord, "actions", pmActions);
+    storage.storage_add("permissions", pmRecord);
+    return pmRecord;
+}
+
+fn permission_get_role_permissions(pmRoleName) {
+    let pmAll = storage.storage_list("permissions");
+    let pmResults = list.new();
+    return permission_get_role_permissions_rec(pmAll, pmRoleName, 0, pmResults);
+}
+
+fn permission_get_resource_permissions(pmRoleName, pmResource) {
+    let pmAll = storage.storage_list("permissions");
+    return permission_find_rec(pmAll, pmRoleName, pmResource, 0);
+}
+
+fn permission_check(pmRoleName, pmResource, pmAction) {
+    let pmAll = storage.storage_list("permissions");
+    let pmRecord = permission_find_rec(pmAll, pmRoleName, pmResource, 0);
+    if (pmRecord == false) {
+        return false;
+    }
+    let pmActions = helpers.helpers_get_map_value_safe(pmRecord, "actions", list.new());
+    return permission_check_rec(pmActions, pmAction, 0);
+}
+
+fn permission_add_action(pmRoleName, pmResource, pmAction) {
+    let pmAll = storage.storage_list("permissions");
+    let pmRecord = permission_find_rec(pmAll, pmRoleName, pmResource, 0);
+    if (pmRecord == false) {
+        return false;
+    }
+    let pmId = helpers.helpers_get_map_value_safe(pmRecord, "id", "");
+    let pmActions = helpers.helpers_get_map_value_safe(pmRecord, "actions", list.new());
+    let pmExists = helpers.helpers_list_contains(pmActions, pmAction);
+    if (pmExists == false) {
+        list.append(pmActions, pmAction);
+    }
+    let pmChanges = map.new();
+    map.set(pmChanges, "actions", pmActions);
+    return storage.storage_update("permissions", pmId, pmChanges);
+}
+
+fn permission_remove_action(pmRoleName, pmResource, pmAction) {
+    let pmAll = storage.storage_list("permissions");
+    let pmRecord = permission_find_rec(pmAll, pmRoleName, pmResource, 0);
+    if (pmRecord == false) {
+        return false;
+    }
+    let pmId = helpers.helpers_get_map_value_safe(pmRecord, "id", "");
+    let pmActions = helpers.helpers_get_map_value_safe(pmRecord, "actions", list.new());
+    let pmFiltered = list.new();
+    let pmNewActions = permission_remove_action_rec(pmActions, pmAction, 0, pmFiltered);
+    let pmChanges = map.new();
+    map.set(pmChanges, "actions", pmNewActions);
+    return storage.storage_update("permissions", pmId, pmChanges);
+}
+
+fn permission_list_roles() {
+    let pmAll = storage.storage_list("permissions");
+    let pmRoles = list.new();
+    return permission_list_roles_rec(pmAll, 0, pmRoles);
+}

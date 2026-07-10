@@ -1,0 +1,26 @@
+import storage;
+import json;
+
+fn json_export_products() {
+    return json.stringify(storage.storage_list("products"));
+}
+
+fn json_export_customers() {
+    return json.stringify(storage.storage_list("customers"));
+}
+
+fn json_export_vendors() {
+    return json.stringify(storage.storage_list("vendors"));
+}
+
+fn json_export_movements() {
+    return json.stringify(storage.storage_list("movements"));
+}
+
+fn json_export_sales() {
+    return json.stringify(storage.storage_list("sales_orders"));
+}
+
+fn json_export_purchases() {
+    return json.stringify(storage.storage_list("purchase_orders"));
+}

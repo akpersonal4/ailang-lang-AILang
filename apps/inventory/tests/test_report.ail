@@ -1,0 +1,168 @@
+import list;
+import map;
+import string;
+import convert;
+import helpers;
+import storage;
+import report_stock_report;
+import report_sales_report;
+import report_profit_report;
+
+fn tr_create_customer() {
+    let trcCustomer = map.new();
+    map.set(trcCustomer, "id", "TREP-CUS-001");
+    map.set(trcCustomer, "name", "Report Customer");
+    map.set(trcCustomer, "email", "report@test.com");
+    map.set(trcCustomer, "phone", "555-REP");
+    map.set(trcCustomer, "active", true);
+    let trcNow = helpers.helpers_current_timestamp();
+    map.set(trcCustomer, "created_at", trcNow);
+    map.set(trcCustomer, "updated_at", trcNow);
+    storage.storage_add("customers", trcCustomer);
+    let trcLoaded = helpers.helpers_find_in_list(storage.storage_list("customers"), "id", "TREP-CUS-001");
+    if (trcLoaded == false) {
+        return false;
+    }
+    return true;
+}
+
+fn tr_create_product() {
+    let trpProduct = map.new();
+    map.set(trpProduct, "id", "TREP-PRD-001");
+    map.set(trpProduct, "name", "Report Test Product");
+    map.set(trpProduct, "sku", "RPT-001");
+    map.set(trpProduct, "category_id", "");
+    map.set(trpProduct, "unit_price", 50);
+    map.set(trpProduct, "cost_price", 25);
+    map.set(trpProduct, "unit", "pcs");
+    map.set(trpProduct, "active", true);
+    let trpNow = helpers.helpers_current_timestamp();
+    map.set(trpProduct, "created_at", trpNow);
+    map.set(trpProduct, "updated_at", "");
+    storage.storage_add("products", trpProduct);
+    let trpLoaded = helpers.helpers_find_in_list(storage.storage_list("products"), "id", "TREP-PRD-001");
+    if (trpLoaded == false) {
+        return false;
+    }
+    return true;
+}
+
+fn tr_create_movement() {
+    let trmMovement = map.new();
+    map.set(trmMovement, "id", "TREP-MOV-001");
+    map.set(trmMovement, "product_id", "TREP-PRD-001");
+    map.set(trmMovement, "type", "inbound");
+    map.set(trmMovement, "quantity", 100);
+    map.set(trmMovement, "reference_type", "manual");
+    map.set(trmMovement, "reference_id", "");
+    map.set(trmMovement, "notes", "Test movement");
+    let trmNow = helpers.helpers_current_timestamp();
+    map.set(trmMovement, "created_at", trmNow);
+    storage.storage_add("movements", trmMovement);
+    let trmLoaded = helpers.helpers_find_in_list(storage.storage_list("movements"), "id", "TREP-MOV-001");
+    if (trmLoaded == false) {
+        return false;
+    }
+    return true;
+}
+
+fn tr_create_sales_order() {
+    let trsoOrder = map.new();
+    map.set(trsoOrder, "id", "TREP-SO-001");
+    map.set(trsoOrder, "customer_id", "TREP-CUS-001");
+    map.set(trsoOrder, "status", "confirmed");
+    map.set(trsoOrder, "total", 500);
+    map.set(trsoOrder, "notes", "Test sales order");
+    let trsoNow = helpers.helpers_current_timestamp();
+    map.set(trsoOrder, "created_at", trsoNow);
+    map.set(trsoOrder, "updated_at", trsoNow);
+    storage.storage_add("sales_orders", trsoOrder);
+    return true;
+}
+
+fn tr_create_purchase_order() {
+    let trpoOrder = map.new();
+    map.set(trpoOrder, "id", "TREP-PO-001");
+    map.set(trpoOrder, "vendor_id", "TREP-VEN-001");
+    map.set(trpoOrder, "status", "received");
+    map.set(trpoOrder, "total", 300);
+    map.set(trpoOrder, "notes", "Test purchase order");
+    let trpoNow = helpers.helpers_current_timestamp();
+    map.set(trpoOrder, "created_at", trpoNow);
+    map.set(trpoOrder, "updated_at", trpoNow);
+    storage.storage_add("purchase_orders", trpoOrder);
+    return true;
+}
+
+fn tr_test_stock_report() {
+    let trsrProducts = report_stock_report.stock_report_all_products();
+    let trsrCount = list.len(trsrProducts);
+    if (trsrCount == 0) {
+        print("FAIL: stock_report_all_products returned empty list");
+        return false;
+    }
+    print("PASS: stock_report_all_products (" + convert.to_string(trsrCount) + " products)");
+    return true;
+}
+
+fn tr_test_sales_report() {
+    let trsrOrders = report_sales_report.sales_report_all();
+    let trsrCount = list.len(trsrOrders);
+    if (trsrCount == 0) {
+        print("FAIL: sales_report_all returned empty list");
+        return false;
+    }
+    print("PASS: sales_report_all (" + convert.to_string(trsrCount) + " orders)");
+    return true;
+}
+
+fn tr_test_profit_report() {
+    let trprSummary = report_profit_report.profit_report_summary();
+    let trprSalesTotal = helpers.helpers_get_map_value_safe(trprSummary, "sales_total", 0);
+    let trprPurchaseTotal = helpers.helpers_get_map_value_safe(trprSummary, "purchase_total", 0);
+    let trprSalesCount = helpers.helpers_get_map_value_safe(trprSummary, "sales_count", 0);
+    let trprPurchaseCount = helpers.helpers_get_map_value_safe(trprSummary, "purchase_count", 0);
+    if (trprSalesTotal == 0 && trprPurchaseTotal == 0) {
+        print("FAIL: profit_report_summary returned empty data");
+        return false;
+    }
+    print("PASS: profit_report_summary (sales: " + convert.to_string(trprSalesTotal) + ", purchases: " + convert.to_string(trprPurchaseTotal) + ")");
+    return true;
+}
+
+fn main() {
+    let tm1 = tr_create_customer();
+    if (tm1 == false) {
+        return 1;
+    }
+    let tm2 = tr_create_product();
+    if (tm2 == false) {
+        return 1;
+    }
+    let tm3 = tr_create_movement();
+    if (tm3 == false) {
+        return 1;
+    }
+    let tm4 = tr_create_sales_order();
+    if (tm4 == false) {
+        return 1;
+    }
+    let tm5 = tr_create_purchase_order();
+    if (tm5 == false) {
+        return 1;
+    }
+    let tm6 = tr_test_stock_report();
+    if (tm6 == false) {
+        return 1;
+    }
+    let tm7 = tr_test_sales_report();
+    if (tm7 == false) {
+        return 1;
+    }
+    let tm8 = tr_test_profit_report();
+    if (tm8 == false) {
+        return 1;
+    }
+    print("ALL REPORT TESTS PASSED");
+    return 0;
+}

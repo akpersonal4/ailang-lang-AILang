@@ -1,0 +1,85 @@
+import list;
+import map;
+import convert;
+import helpers;
+import storage;
+import dashboard;
+
+fn test_dashboard_summary() {
+    let tdResult = dashboard.dashboard_summary();
+    let tdProducts = helpers.helpers_get_map_value_safe(tdResult, "total_products", -1);
+    if (tdProducts < 0) {
+        print("FAIL: summary missing total_products");
+        return false;
+    }
+    let tdCategories = helpers.helpers_get_map_value_safe(tdResult, "total_categories", -1);
+    if (tdCategories < 0) {
+        print("FAIL: summary missing total_categories");
+        return false;
+    }
+    print("PASS: dashboard_summary");
+    return true;
+}
+
+fn test_dashboard_low_stock_count() {
+    let tdCount = dashboard.dashboard_low_stock_count(10);
+    if (tdCount < 0) {
+        print("FAIL: low_stock_count returned negative");
+        return false;
+    }
+    print("PASS: dashboard_low_stock_count (" + convert.to_string(tdCount) + " items)");
+    return true;
+}
+
+fn test_dashboard_top_products() {
+    let tdTop = dashboard.dashboard_top_products(3);
+    let tdLen = list.len(tdTop);
+    if (tdLen < 0) {
+        print("FAIL: top_products returned negative length");
+        return false;
+    }
+    if (tdLen > 1) {
+        let tdFirst = list.get(tdTop, 0);
+        let tdFirstVal = helpers.helpers_get_map_value_safe(tdFirst, "value", 0);
+        let tdLast = list.get(tdTop, tdLen - 1);
+        let tdLastVal = helpers.helpers_get_map_value_safe(tdLast, "value", 0);
+        if (tdFirstVal < tdLastVal) {
+            print("FAIL: top_products not sorted descending");
+            return false;
+        }
+    }
+    print("PASS: dashboard_top_products (" + convert.to_string(tdLen) + " items)");
+    return true;
+}
+
+fn test_dashboard_recent_movements() {
+    let tdRecent = dashboard.dashboard_recent_movements(5);
+    let tdLen = list.len(tdRecent);
+    if (tdLen < 0) {
+        print("FAIL: recent_movements returned negative length");
+        return false;
+    }
+    print("PASS: dashboard_recent_movements (" + convert.to_string(tdLen) + " items)");
+    return true;
+}
+
+fn main() {
+    let td1 = test_dashboard_summary();
+    if (td1 == false) {
+        return 1;
+    }
+    let td2 = test_dashboard_low_stock_count();
+    if (td2 == false) {
+        return 1;
+    }
+    let td3 = test_dashboard_top_products();
+    if (td3 == false) {
+        return 1;
+    }
+    let td4 = test_dashboard_recent_movements();
+    if (td4 == false) {
+        return 1;
+    }
+    print("ALL DASHBOARD TESTS PASSED");
+    return 0;
+}

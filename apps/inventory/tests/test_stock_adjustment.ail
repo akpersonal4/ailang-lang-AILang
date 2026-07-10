@@ -1,0 +1,109 @@
+import list;
+import map;
+import string;
+import convert;
+import helpers;
+import storage;
+import stock_movement;
+import stock_adjustment;
+
+fn test_adj_create_and_get() {
+    let tagProd = map.new();
+    map.set(tagProd, "id", "ADJ-TEST-PROD-1");
+    map.set(tagProd, "name", "Adjustment Test Product");
+    storage.storage_add("products", tagProd);
+    let tagAdj = stock_adjustment.adjustment_create("ADJ-TEST-PROD-1", 50, 60, "Test adjustment", "tester");
+    if (tagAdj == false) {
+        print("FAIL: adjustment_create returned false");
+        return false;
+    }
+    let tagId = helpers.helpers_get_map_value_safe(tagAdj, "id", "");
+    if (tagId == "") {
+        print("FAIL: adjustment has no id");
+        return false;
+    }
+    let tagFetched = stock_adjustment.adjustment_get_by_id(tagId);
+    if (tagFetched == false) {
+        print("FAIL: could not fetch adjustment by id");
+        return false;
+    }
+    let tagDiff = helpers.helpers_get_map_value_safe(tagFetched, "difference", 0);
+    if (tagDiff != 10) {
+        print("FAIL: expected difference 10, got " + convert.to_string(tagDiff));
+        return false;
+    }
+    print("PASS: adjustment_create and get_by_id");
+    return true;
+}
+
+fn test_adj_list_by_product() {
+    let talProd = map.new();
+    map.set(talProd, "id", "ADJ-TEST-PROD-2");
+    map.set(talProd, "name", "Adj List Product");
+    storage.storage_add("products", talProd);
+    stock_adjustment.adjustment_create("ADJ-TEST-PROD-2", 100, 120, "First adj", "tester");
+    stock_adjustment.adjustment_create("ADJ-TEST-PROD-2", 120, 110, "Second adj", "tester");
+    let talList = stock_adjustment.adjustment_list_by_product("ADJ-TEST-PROD-2");
+    let talLen = list.len(talList);
+    if (talLen != 2) {
+        print("FAIL: expected 2 adjustments, got " + convert.to_string(talLen));
+        return false;
+    }
+    print("PASS: adjustment_list_by_product");
+    return true;
+}
+
+fn test_adj_discrepancies() {
+    let tadProd = map.new();
+    map.set(tadProd, "id", "ADJ-TEST-PROD-3");
+    map.set(tadProd, "name", "Discrepancy Product");
+    storage.storage_add("products", tadProd);
+    stock_adjustment.adjustment_create("ADJ-TEST-PROD-3", 100, 105, "Small diff", "tester");
+    stock_adjustment.adjustment_create("ADJ-TEST-PROD-3", 50, 100, "Large diff", "tester");
+    let tadDisc = stock_adjustment.adjustment_get_discrepancies(10);
+    let tadLen = list.len(tadDisc);
+    if (tadLen == 0) {
+        print("FAIL: expected at least 1 discrepancy");
+        return false;
+    }
+    print("PASS: adjustment_get_discrepancies");
+    return true;
+}
+
+fn test_adj_summary() {
+    let tasProd = map.new();
+    map.set(tasProd, "id", "ADJ-TEST-PROD-4");
+    map.set(tasProd, "name", "Summary Product");
+    storage.storage_add("products", tasProd);
+    stock_adjustment.adjustment_create("ADJ-TEST-PROD-4", 50, 60, "Pos adj", "tester");
+    stock_adjustment.adjustment_create("ADJ-TEST-PROD-4", 100, 80, "Neg adj", "tester");
+    let tasSummary = stock_adjustment.adjustment_summary();
+    let tasTotal = helpers.helpers_get_map_value_safe(tasSummary, "total_adjustments", 0);
+    if (tasTotal == 0) {
+        print("FAIL: expected non-zero total_adjustments");
+        return false;
+    }
+    print("PASS: adjustment_summary");
+    return true;
+}
+
+fn main() {
+    let ta1 = test_adj_create_and_get();
+    if (ta1 == false) {
+        return 1;
+    }
+    let ta2 = test_adj_list_by_product();
+    if (ta2 == false) {
+        return 1;
+    }
+    let ta3 = test_adj_discrepancies();
+    if (ta3 == false) {
+        return 1;
+    }
+    let ta4 = test_adj_summary();
+    if (ta4 == false) {
+        return 1;
+    }
+    print("ALL STOCK ADJUSTMENT TESTS PASSED");
+    return 0;
+}

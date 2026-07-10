@@ -1,0 +1,115 @@
+import list;
+import map;
+import string;
+import convert;
+import helpers;
+import storage;
+import shipping;
+
+fn test_shipping_create() {
+    let tscResult = shipping.shipping_create("SO-SHP-001", "FedEx", "FX-123456789", "123 Main St, City", "Warehouse A");
+    if (tscResult == false) {
+        print("FAIL: shipping_create returned false");
+        return false;
+    }
+    let tscId = helpers.helpers_get_map_value_safe(tscResult, "id", "");
+    if (tscId == "") {
+        print("FAIL: shipping_create - no id generated");
+        return false;
+    }
+    let tscStatus = helpers.helpers_get_map_value_safe(tscResult, "status", "");
+    if (tscStatus != "pending") {
+        print("FAIL: shipping_create - expected status pending, got " + tscStatus);
+        return false;
+    }
+    let tscCarrier = helpers.helpers_get_map_value_safe(tscResult, "carrier", "");
+    if (tscCarrier != "FedEx") {
+        print("FAIL: shipping_create - carrier mismatch");
+        return false;
+    }
+    print("PASS: shipping_create");
+    return true;
+}
+
+fn test_shipping_get_by_id_missing() {
+    let tsgmResult = shipping.shipping_get_by_id("NONEXISTENT-SHIPMENT-ID");
+    if (tsgmResult != false) {
+        print("FAIL: shipping_get_by_id_missing - expected false");
+        return false;
+    }
+    print("PASS: shipping_get_by_id_missing");
+    return true;
+}
+
+fn test_shipping_update_status() {
+    let tsusCreated = shipping.shipping_create("SO-SHP-002", "UPS", "UP-987654321", "456 Oak Ave, Town", "Warehouse B");
+    let tsusId = helpers.helpers_get_map_value_safe(tsusCreated, "id", "");
+    let tsusUpdated = shipping.shipping_update_status(tsusId, "in_transit");
+    if (tsusUpdated == false) {
+        print("FAIL: shipping_update_status returned false");
+        return false;
+    }
+    let tsusFetched = shipping.shipping_get_by_id(tsusId);
+    let tsusStatus = helpers.helpers_get_map_value_safe(tsusFetched, "status", "");
+    if (tsusStatus != "in_transit") {
+        print("FAIL: shipping_update_status - expected in_transit, got " + tsusStatus);
+        return false;
+    }
+    print("PASS: shipping_update_status");
+    return true;
+}
+
+fn test_shipping_list_by_order() {
+    let tslo1 = shipping.shipping_create("SO-LIST-SHP", "USPS", "TRK-111", "Addr 1", "User X");
+    let tslo2 = shipping.shipping_create("SO-LIST-SHP", "DHL", "TRK-222", "Addr 2", "User Y");
+    let tsloResults = shipping.shipping_list_by_order("SO-LIST-SHP");
+    let tsloLen = list.len(tsloResults);
+    if (tsloLen < 2) {
+        print("FAIL: shipping_list_by_order - expected at least 2, got " + convert.to_string(tsloLen));
+        return false;
+    }
+    print("PASS: shipping_list_by_order (" + convert.to_string(tsloLen) + " items)");
+    return true;
+}
+
+fn test_shipping_list_by_status() {
+    let tsls1 = shipping.shipping_create("SO-STATUS-1", "FedEx", "FX-AAA", "Addr S1", "Ops 1");
+    let tsls1Id = helpers.helpers_get_map_value_safe(tsls1, "id", "");
+    shipping.shipping_update_status(tsls1Id, "delivered");
+    let tsls2 = shipping.shipping_create("SO-STATUS-2", "UPS", "UP-BBB", "Addr S2", "Ops 2");
+    let tsls2Id = helpers.helpers_get_map_value_safe(tsls2, "id", "");
+    shipping.shipping_update_status(tsls2Id, "delivered");
+    let tslsResults = shipping.shipping_list_by_status("delivered");
+    let tslsLen = list.len(tslsResults);
+    if (tslsLen < 2) {
+        print("FAIL: shipping_list_by_status - expected at least 2, got " + convert.to_string(tslsLen));
+        return false;
+    }
+    print("PASS: shipping_list_by_status (" + convert.to_string(tslsLen) + " items)");
+    return true;
+}
+
+fn main() {
+    let ts1 = test_shipping_create();
+    if (ts1 == false) {
+        return 1;
+    }
+    let ts2 = test_shipping_get_by_id_missing();
+    if (ts2 == false) {
+        return 1;
+    }
+    let ts3 = test_shipping_update_status();
+    if (ts3 == false) {
+        return 1;
+    }
+    let ts4 = test_shipping_list_by_order();
+    if (ts4 == false) {
+        return 1;
+    }
+    let ts5 = test_shipping_list_by_status();
+    if (ts5 == false) {
+        return 1;
+    }
+    print("ALL SHIPPING TESTS PASSED");
+    return 0;
+}

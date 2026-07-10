@@ -1,0 +1,119 @@
+import list;
+import map;
+import string;
+import convert;
+import helpers;
+import storage;
+import payment;
+import invoice;
+import payment_integration;
+
+fn test_pi_process_payment() {
+    let tpppItems = list.new();
+    let tpppItem = map.new();
+    map.set(tpppItem, "product_id", "PI-PROD-1");
+    map.set(tpppItem, "quantity", 1);
+    map.set(tpppItem, "unit_price", 500);
+    map.set(tpppItem, "line_total", 500);
+    list.append(tpppItems, tpppItem);
+    let tpppInv = invoice.invoice_create("ORDER-PI-1", "CUST-PI-1", tpppItems, 500);
+    let tpppInvId = helpers.helpers_get_map_value_safe(tpppInv, "id", "");
+    let tpppResult = payment_integration.pi_process_invoice_payment(tpppInvId, 500, "card", "Test User");
+    if (tpppResult != true) {
+        print("FAIL: pi_process_invoice_payment returned " + convert.to_string(tpppResult));
+        return false;
+    }
+    let tpppUpdated = invoice.invoice_get_by_id(tpppInvId);
+    let tpppStatus = helpers.helpers_get_map_value_safe(tpppUpdated, "status", "");
+    if (tpppStatus != "paid") {
+        print("FAIL: expected invoice status paid, got " + tpppStatus);
+        return false;
+    }
+    print("PASS: pi_process_payment");
+    return true;
+}
+
+fn test_pi_get_balance() {
+    let tpibItems = list.new();
+    let tpibItem = map.new();
+    map.set(tpibItem, "product_id", "PI-PROD-2");
+    map.set(tpibItem, "quantity", 2);
+    map.set(tpibItem, "unit_price", 300);
+    map.set(tpibItem, "line_total", 600);
+    list.append(tpibItems, tpibItem);
+    let tpibInv = invoice.invoice_create("ORDER-PI-2", "CUST-PI-2", tpibItems, 600);
+    let tpibInvId = helpers.helpers_get_map_value_safe(tpibInv, "id", "");
+    payment.payment_create(tpibInvId, 200, "cash", "Test User");
+    let tpibBalance = payment_integration.pi_get_invoice_balance(tpibInvId);
+    if (tpibBalance != 400) {
+        print("FAIL: expected balance 400, got " + convert.to_string(tpibBalance));
+        return false;
+    }
+    print("PASS: pi_get_balance (" + convert.to_string(tpibBalance) + ")");
+    return true;
+}
+
+fn test_pi_list_overdue() {
+    let tploItems = list.new();
+    let tploItem = map.new();
+    map.set(tploItem, "product_id", "PI-PROD-3");
+    map.set(tploItem, "quantity", 1);
+    map.set(tploItem, "unit_price", 100);
+    map.set(tploItem, "line_total", 100);
+    list.append(tploItems, tploItem);
+    let tploInv1 = invoice.invoice_create("ORDER-PI-3A", "CUST-PI-3", tploItems, 100);
+    let tploInv1Id = helpers.helpers_get_map_value_safe(tploInv1, "id", "");
+    invoice.invoice_update_status(tploInv1Id, "sent");
+    let tploInv2 = invoice.invoice_create("ORDER-PI-3B", "CUST-PI-3", tploItems, 100);
+    let tploInv3 = invoice.invoice_create("ORDER-PI-3C", "CUST-PI-3", tploItems, 100);
+    let tploInv3Id = helpers.helpers_get_map_value_safe(tploInv3, "id", "");
+    invoice.invoice_update_status(tploInv3Id, "paid");
+    let tploResults = payment_integration.pi_list_overdue_invoices();
+    if (tploResults == false) {
+        print("FAIL: pi_list_overdue_invoices returned false");
+        return false;
+    }
+    let tploLen = list.len(tploResults);
+    if (tploLen < 1) {
+        print("FAIL: expected at least 1 overdue invoice, got " + convert.to_string(tploLen));
+        return false;
+    }
+    print("PASS: pi_list_overdue (" + convert.to_string(tploLen) + " items)");
+    return true;
+}
+
+fn test_pi_invoice_not_found() {
+    let tpinResult = payment_integration.pi_process_invoice_payment("DOES-NOT-EXIST", 100, "card", "Test");
+    if (tpinResult != false) {
+        print("FAIL: expected false for nonexistent invoice");
+        return false;
+    }
+    let tpinBalance = payment_integration.pi_get_invoice_balance("DOES-NOT-EXIST");
+    if (tpinBalance != 0) {
+        print("FAIL: expected 0 balance for nonexistent invoice, got " + convert.to_string(tpinBalance));
+        return false;
+    }
+    print("PASS: pi_invoice_not_found");
+    return true;
+}
+
+fn main() {
+    let tp1 = test_pi_process_payment();
+    if (tp1 == false) {
+        return 1;
+    }
+    let tp2 = test_pi_get_balance();
+    if (tp2 == false) {
+        return 1;
+    }
+    let tp3 = test_pi_list_overdue();
+    if (tp3 == false) {
+        return 1;
+    }
+    let tp4 = test_pi_invoice_not_found();
+    if (tp4 == false) {
+        return 1;
+    }
+    print("ALL PAYMENT INTEGRATION TESTS PASSED");
+    return 0;
+}

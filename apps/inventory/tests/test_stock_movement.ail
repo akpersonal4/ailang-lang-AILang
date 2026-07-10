@@ -1,0 +1,154 @@
+import list;
+import map;
+import string;
+import convert;
+import helpers;
+import storage;
+import stock_movement;
+
+fn test_sm_create_and_list_by_product() {
+    let smCat = map.new();
+    map.set(smCat, "id", "SM-TEST-CAT");
+    map.set(smCat, "name", "Test Cat");
+    storage.storage_add("categories", smCat);
+    let smProd = map.new();
+    map.set(smProd, "id", "SM-TEST-PROD");
+    map.set(smProd, "name", "Test Prod");
+    storage.storage_add("products", smProd);
+    let smMov = stock_movement.movement_create("SM-TEST-PROD", "inbound", 100, "manual", "REF-001", "Test inbound");
+    if (smMov == false) {
+        print("FAIL: movement_create returned false");
+        return false;
+    }
+    let smList = stock_movement.movement_list_by_product("SM-TEST-PROD");
+    let smLen = list.len(smList);
+    if (smLen == 0) {
+        print("FAIL: expected at least 1 movement, got 0");
+        return false;
+    }
+    let smFirst = list.get(smList, 0);
+    let smProdId = helpers.helpers_get_map_value_safe(smFirst, "product_id", "");
+    if (smProdId != "SM-TEST-PROD") {
+        print("FAIL: expected product_id SM-TEST-PROD, got " + smProdId);
+        return false;
+    }
+    print("PASS: movement_create and list_by_product");
+    return true;
+}
+
+fn test_sm_get_quantity_on_hand() {
+    let smqProd = map.new();
+    map.set(smqProd, "id", "SM-PROD-QOH");
+    map.set(smqProd, "name", "QOH Test Prod");
+    storage.storage_add("products", smqProd);
+    stock_movement.movement_create("SM-PROD-QOH", "inbound", 100, "manual", "REF-Q1", "Inbound");
+    stock_movement.movement_create("SM-PROD-QOH", "outbound", -30, "manual", "REF-Q2", "Outbound");
+    let smqQoh = stock_movement.movement_get_quantity_on_hand("SM-PROD-QOH");
+    if (smqQoh != 70) {
+        print("FAIL: expected QOH 70, got " + convert.to_string(smqQoh));
+        return false;
+    }
+    print("PASS: movement_get_quantity_on_hand");
+    return true;
+}
+
+fn test_sm_list_by_type() {
+    let smtProd = map.new();
+    map.set(smtProd, "id", "SM-PROD-TYPE");
+    map.set(smtProd, "name", "Type Test Prod");
+    storage.storage_add("products", smtProd);
+    stock_movement.movement_create("SM-PROD-TYPE", "adjustment", 10, "manual", "REF-T1", "Adjustment 1");
+    stock_movement.movement_create("SM-PROD-TYPE", "adjustment", 20, "manual", "REF-T2", "Adjustment 2");
+    let smtList = stock_movement.movement_list_by_type("adjustment");
+    let smtLen = list.len(smtList);
+    if (smtLen < 2) {
+        print("FAIL: expected at least 2 adjustments, got " + convert.to_string(smtLen));
+        return false;
+    }
+    print("PASS: movement_list_by_type");
+    return true;
+}
+
+fn test_sm_check_alert_threshold_below() {
+    let mcatProd = map.new();
+    map.set(mcatProd, "id", "SM-PROD-ALERT");
+    map.set(mcatProd, "name", "Alert Test Prod");
+    storage.storage_add("products", mcatProd);
+    stock_movement.movement_create("SM-PROD-ALERT", "inbound", 10, "manual", "REF-A1", "Small inbound");
+    let mcatResult = stock_movement.movement_check_alert_threshold("SM-PROD-ALERT", 50);
+    if (mcatResult == false) {
+        print("FAIL: expected alert map, got false");
+        return false;
+    }
+    let mcatAlert = helpers.helpers_get_map_value_safe(mcatResult, "alert", false);
+    if (mcatAlert != true) {
+        print("FAIL: expected alert=true");
+        return false;
+    }
+    let mcatQoh = helpers.helpers_get_map_value_safe(mcatResult, "current_qoh", 0);
+    if (mcatQoh != 10) {
+        print("FAIL: expected current_qoh 10, got " + convert.to_string(mcatQoh));
+        return false;
+    }
+    print("PASS: movement_check_alert_threshold (below threshold)");
+    return true;
+}
+
+fn test_sm_check_alert_threshold_above() {
+    let mcatProd = map.new();
+    map.set(mcatProd, "id", "SM-PROD-SAFE");
+    map.set(mcatProd, "name", "Safe Test Prod");
+    storage.storage_add("products", mcatProd);
+    stock_movement.movement_create("SM-PROD-SAFE", "inbound", 100, "manual", "REF-A2", "Large inbound");
+    let mcatResult = stock_movement.movement_check_alert_threshold("SM-PROD-SAFE", 50);
+    if (mcatResult == false) {
+        print("FAIL: expected non-alert map, got false");
+        return false;
+    }
+    let mcatAlert = helpers.helpers_get_map_value_safe(mcatResult, "alert", true);
+    if (mcatAlert != false) {
+        print("FAIL: expected alert=false");
+        return false;
+    }
+    print("PASS: movement_check_alert_threshold (above threshold)");
+    return true;
+}
+
+fn test_sm_check_alert_threshold_unknown() {
+    let mcatResult = stock_movement.movement_check_alert_threshold("SM-PROD-UNKNOWN", 50);
+    if (mcatResult != false) {
+        print("FAIL: expected false for unknown product");
+        return false;
+    }
+    print("PASS: movement_check_alert_threshold (unknown product)");
+    return true;
+}
+
+fn main() {
+    let sm1 = test_sm_create_and_list_by_product();
+    if (sm1 == false) {
+        return 1;
+    }
+    let sm2 = test_sm_get_quantity_on_hand();
+    if (sm2 == false) {
+        return 1;
+    }
+    let sm3 = test_sm_list_by_type();
+    if (sm3 == false) {
+        return 1;
+    }
+    let sm4 = test_sm_check_alert_threshold_below();
+    if (sm4 == false) {
+        return 1;
+    }
+    let sm5 = test_sm_check_alert_threshold_above();
+    if (sm5 == false) {
+        return 1;
+    }
+    let sm6 = test_sm_check_alert_threshold_unknown();
+    if (sm6 == false) {
+        return 1;
+    }
+    print("ALL STOCK MOVEMENT TESTS PASSED");
+    return 0;
+}

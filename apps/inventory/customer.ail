@@ -1,0 +1,58 @@
+import storage;
+import helpers;
+import list;
+import map;
+import string;
+
+fn customer_search_rec(srItems, srQuery, srResults, srIdx) {
+    if (srIdx >= list.len(srItems)) {
+        return srResults;
+    }
+    let srItem = list.get(srItems, srIdx);
+    let srName = helpers.helpers_get_map_value_safe(srItem, "name", "");
+    let srNameLower = string.lowercase(srName);
+    let srQueryLower = string.lowercase(srQuery);
+    if (string.contains(srNameLower, srQueryLower)) {
+        list.append(srResults, srItem);
+    }
+    return customer_search_rec(srItems, srQuery, srResults, srIdx + 1);
+}
+
+fn customer_create(createName, createEmail, createPhone) {
+    let createCustomer = map.new();
+    let createId = helpers.helpers_generate_id("CUS-");
+    let createNow = helpers.helpers_current_timestamp();
+    map.set(createCustomer, "id", createId);
+    map.set(createCustomer, "name", createName);
+    map.set(createCustomer, "email", createEmail);
+    map.set(createCustomer, "phone", createPhone);
+    map.set(createCustomer, "active", true);
+    map.set(createCustomer, "created_at", createNow);
+    map.set(createCustomer, "updated_at", createNow);
+    storage.storage_add("customers", createCustomer);
+    return createCustomer;
+}
+
+fn customer_get(getId) {
+    return storage.storage_get_by_id("customers", getId);
+}
+
+fn customer_update(updId, updChanges) {
+    let updNow = helpers.helpers_current_timestamp();
+    map.set(updChanges, "updated_at", updNow);
+    return storage.storage_update("customers", updId, updChanges);
+}
+
+fn customer_delete(delId) {
+    return storage.storage_delete("customers", delId);
+}
+
+fn customer_list() {
+    return storage.storage_list("customers");
+}
+
+fn customer_search(srchQuery) {
+    let srchAll = storage.storage_list("customers");
+    let srchResults = list.new();
+    return customer_search_rec(srchAll, srchQuery, srchResults, 0);
+}

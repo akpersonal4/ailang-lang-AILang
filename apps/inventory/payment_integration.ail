@@ -1,0 +1,49 @@
+import list;
+import map;
+import string;
+import convert;
+import helpers;
+import storage;
+import payment;
+import invoice;
+
+fn pi_list_overdue_invoices_rec(pilorItems, pilorIdx, pilorAcc) {
+    if (pilorIdx >= list.len(pilorItems)) {
+        return pilorAcc;
+    }
+    let pilorItem = list.get(pilorItems, pilorIdx);
+    let pilorStatus = helpers.helpers_get_map_value_safe(pilorItem, "status", "");
+    if (pilorStatus == "sent") {
+        list.append(pilorAcc, pilorItem);
+    }
+    return pi_list_overdue_invoices_rec(pilorItems, pilorIdx + 1, pilorAcc);
+}
+
+fn pi_process_invoice_payment(pipInvoiceId, pipAmount, pipMethod, pipPaidBy) {
+    let pipInv = invoice.invoice_get_by_id(pipInvoiceId);
+    if (pipInv == false) {
+        return false;
+    }
+    let pipTotal = helpers.helpers_get_map_value_safe(pipInv, "total_amount", 0);
+    payment.payment_create(pipInvoiceId, pipAmount, pipMethod, pipPaidBy);
+    if (pipAmount >= pipTotal) {
+        invoice.invoice_update_status(pipInvoiceId, "paid");
+    }
+    return true;
+}
+
+fn pi_get_invoice_balance(pigInvoiceId) {
+    let pigInv = invoice.invoice_get_by_id(pigInvoiceId);
+    if (pigInv == false) {
+        return 0;
+    }
+    let pigTotal = helpers.helpers_get_map_value_safe(pigInv, "total_amount", 0);
+    let pigPaid = payment.payment_total_by_invoice(pigInvoiceId);
+    return pigTotal - pigPaid;
+}
+
+fn pi_list_overdue_invoices() {
+    let pioAll = invoice.invoice_list();
+    let pioResults = list.new();
+    return pi_list_overdue_invoices_rec(pioAll, 0, pioResults);
+}

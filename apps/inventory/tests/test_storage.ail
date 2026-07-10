@@ -1,0 +1,134 @@
+import list;
+import map;
+import string;
+import convert;
+import helpers;
+import storage;
+
+fn test_storage_add() {
+    let tsItem = map.new();
+    map.set(tsItem, "id", "TEST-001");
+    map.set(tsItem, "name", "test item");
+    map.set(tsItem, "value", 100);
+    let tsResult = storage.storage_add("test_collection", tsItem);
+    if (tsResult == false) {
+        print("FAIL: storage_add returned false");
+        return false;
+    }
+    let tsLoaded = storage.storage_list("test_collection");
+    if (list.len(tsLoaded) != 1) {
+        print("FAIL: expected 1 item, got " + convert.to_string(list.len(tsLoaded)));
+        return false;
+    }
+    let tsFirst = list.get(tsLoaded, 0);
+    let tsId = helpers.helpers_get_map_value_safe(tsFirst, "id", "");
+    if (tsId != "TEST-001") {
+        print("FAIL: expected TEST-001, got " + tsId);
+        return false;
+    }
+    print("PASS: storage_add");
+    return true;
+}
+
+fn test_storage_list_empty() {
+    let teLoaded = storage.storage_list("nonexistent");
+    if (list.len(teLoaded) != 0) {
+        print("FAIL: expected 0 items for nonexistent collection");
+        return false;
+    }
+    print("PASS: storage_list_empty");
+    return true;
+}
+
+fn test_storage_get_by_id_missing() {
+    let tgNotFound = storage.storage_get_by_id("test_collection", "NONEXISTENT");
+    if (tgNotFound != false) {
+        print("FAIL: expected false for missing ID");
+        return false;
+    }
+    print("PASS: storage_get_by_id_missing");
+    return true;
+}
+
+fn test_storage_get_by_id() {
+    let tgItem = map.new();
+    map.set(tgItem, "id", "TEST-002");
+    map.set(tgItem, "name", "get_by_id test");
+    storage.storage_add("test_collection", tgItem);
+    let tgFound = storage.storage_get_by_id("test_collection", "TEST-002");
+    if (tgFound == false) {
+        print("FAIL: storage_get_by_id returned false");
+        return false;
+    }
+    let tgName = helpers.helpers_get_map_value_safe(tgFound, "name", "");
+    if (tgName != "get_by_id test") {
+        print("FAIL: expected 'get_by_id test', got " + tgName);
+        return false;
+    }
+    print("PASS: storage_get_by_id");
+    return true;
+}
+
+fn test_storage_update() {
+    let tuChanges = map.new();
+    map.set(tuChanges, "value", 200);
+    let tuResult = storage.storage_update("test_collection", "TEST-001", tuChanges);
+    if (tuResult == false) {
+        print("FAIL: storage_update returned false");
+        return false;
+    }
+    let tuUpdated = storage.storage_get_by_id("test_collection", "TEST-001");
+    let tuVal = helpers.helpers_get_map_value_safe(tuUpdated, "value", 0);
+    if (tuVal != 200) {
+        print("FAIL: expected value 200, got " + convert.to_string(tuVal));
+        return false;
+    }
+    print("PASS: storage_update");
+    return true;
+}
+
+fn test_storage_delete_missing() {
+    let tdResult = storage.storage_delete("test_collection", "NONEXISTENT");
+    if (tdResult == false) {
+        print("FAIL: storage_delete on missing ID returned false");
+        return false;
+    }
+    print("PASS: storage_delete_missing");
+    return true;
+}
+
+fn test_storage_delete() {
+    let tdResult = storage.storage_delete("test_collection", "TEST-002");
+    if (tdResult == false) {
+        print("FAIL: storage_delete returned false");
+        return false;
+    }
+    let tdRemaining = storage.storage_list("test_collection");
+    let tdCount = list.len(tdRemaining);
+    let tdFound = storage.storage_get_by_id("test_collection", "TEST-002");
+    if (tdFound != false) {
+        print("FAIL: deleted item still exists");
+        return false;
+    }
+    print("PASS: storage_delete");
+    return true;
+}
+
+fn main() {
+    let tt1 = test_storage_list_empty();
+    if (tt1 == false) { return 1; }
+    let tt2 = test_storage_add();
+    if (tt2 == false) { return 1; }
+    let tt3 = test_storage_get_by_id_missing();
+    if (tt3 == false) { return 1; }
+    let tt4 = test_storage_get_by_id();
+    if (tt4 == false) { return 1; }
+    let tt5 = test_storage_update();
+    if (tt5 == false) { return 1; }
+    let tt6 = test_storage_delete_missing();
+    if (tt6 == false) { return 1; }
+    let tt7 = test_storage_delete();
+    if (tt7 == false) { return 1; }
+    print("ALL STORAGE TESTS PASSED");
+    return 0;
+}
