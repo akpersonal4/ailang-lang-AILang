@@ -56,6 +56,54 @@ def list_remove(args: tuple[RuntimeValue, ...]) -> list[RuntimeValue]:
     return values
 
 
+def list_sum(args: tuple[RuntimeValue, ...]) -> int:
+    total = 0
+    for item in args[0]:
+        total += int(item)
+    return total
+
+
+def list_find_by_key(args: tuple[RuntimeValue, ...]) -> RuntimeValue:
+    items = args[0]
+    key = args[1]
+    value = args[2]
+    for item in items:
+        if isinstance(item, dict) and item.get(key) == value:
+            return item
+    return False
+
+
+def list_sort(args: tuple[RuntimeValue, ...]) -> list[RuntimeValue]:
+    items = args[0]
+    if len(args) > 1:
+        key = str(args[1])
+        return sorted(items, key=lambda x: x.get(key, "") if isinstance(x, dict) else x)
+    return sorted(items)
+
+
+def list_copy(args: tuple[RuntimeValue, ...]) -> list[RuntimeValue]:
+    return list(args[0])
+
+
+def list_filter_by_key(args: tuple[RuntimeValue, ...]) -> list[RuntimeValue]:
+    items = args[0]
+    key = str(args[1])
+    value = args[2]
+    return [item for item in items if isinstance(item, dict) and item.get(key) == value]
+
+
+def map_get_or_default(args: tuple[RuntimeValue, ...]) -> RuntimeValue:
+    values = cast(dict[RuntimeValue, RuntimeValue], args[0])
+    key = args[1]
+    default = args[2] if len(args) > 2 else False
+    return values.get(key, default)
+
+
+def string_join(args: tuple[RuntimeValue, ...]) -> str:
+    separator = str(args[1]) if len(args) > 1 else ""
+    return separator.join(str(v) for v in args[0])
+
+
 def list_clear(args: tuple[RuntimeValue, ...]) -> list[RuntimeValue]:
     values = cast(list[RuntimeValue], args[0])
     values.clear()
@@ -168,6 +216,10 @@ def file_append(args: tuple[RuntimeValue, ...]) -> int:
 
 def file_remove(args: tuple[RuntimeValue, ...]) -> None:
     os.remove(str(args[0]))
+
+
+def file_listdir(args: tuple[RuntimeValue, ...]) -> list[str]:
+    return sorted(os.listdir(str(args[0])))
 
 
 def path_join(args: tuple[RuntimeValue, ...]) -> str:
@@ -301,7 +353,14 @@ BUILTINS: dict[str, Any] = {
     "list_get": list_get,
     "list_contains": list_contains,
     "list_remove": list_remove,
+    "list_sort": list_sort,
+    "list_copy": list_copy,
+    "list_filter_by_key": list_filter_by_key,
     "list_clear": list_clear,
+    "list_sum": list_sum,
+    "list_find_by_key": list_find_by_key,
+    "map_get_or_default": map_get_or_default,
+    "string_join": string_join,
     "dict_new": dict_new,
     "dict_set": dict_set,
     "dict_get": dict_get,
@@ -320,6 +379,7 @@ BUILTINS: dict[str, Any] = {
     "file_write": file_write,
     "file_append": file_append,
     "file_remove": file_remove,
+    "file_listdir": file_listdir,
     "path_join": path_join,
     "path_basename": path_basename,
     "path_dirname": path_dirname,

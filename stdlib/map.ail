@@ -25,3 +25,7 @@ fn keys(values) {
 fn clear(values) {
     return dict_clear(values)
 }
+
+fn get_or_default(values, key, default) {
+    return map_get_or_default(values, key, default)
+}

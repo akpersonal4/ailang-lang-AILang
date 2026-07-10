@@ -25,3 +25,27 @@ fn remove(values, value) {
 fn clear(values) {
     return list_clear(values)
 }
+
+fn sum(values) {
+    return list_sum(values)
+}
+
+fn find_by_key(values, key, value) {
+    return list_find_by_key(values, key, value)
+}
+
+fn sort(values) {
+    return list_sort(values)
+}
+
+fn sort_by_key(values, key) {
+    return list_sort(values, key)
+}
+
+fn copy(values) {
+    return list_copy(values)
+}
+
+fn filter_by_key(values, key, value) {
+    return list_filter_by_key(values, key, value)
+}

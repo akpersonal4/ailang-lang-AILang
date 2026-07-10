@@ -193,6 +193,19 @@ Removes all elements.
 list.clear(items);
 ```
 
+### `sum(values)`
+Returns the sum of all numeric values in the list.
+```ail
+list.sum([10, 20, 30])  // 60
+```
+
+### `find_by_key(values, key, value)`
+Finds the first map in the list where `map.get(item, key)` equals `value`.
+Returns the matching map or `false` if not found.
+```ail
+list.find_by_key(people, "name", "Bob")  // {name: "Bob", age: 25}
+```
+
 ### Known Missing Operations
 
 These are **not** available in the stdlib and must be implemented manually:
@@ -353,6 +366,13 @@ file.append("log.txt", "new entry\n");
 Deletes a file.
 ```ail
 file.remove("temp.txt");
+```
+
+### `listdir(path)`
+Returns a sorted list of entries in the given directory.
+```ail
+let entries = file.listdir(".");
+// ["dir1", "dir2", "file.txt"]
 ```
 
 ---
@@ -604,9 +624,10 @@ convert.to_bool("false")  // false
 ```
 
 ### `to_number(value)`
-Identity function — returns the value unchanged. Reserved for future numeric conversion.
+Converts a string or int to an integer. Equivalent to `to_int`.
 ```ail
-convert.to_number(42)  // 42
+convert.to_number("42")  // 42
+convert.to_number(42)     // 42
 ```
 
 ---

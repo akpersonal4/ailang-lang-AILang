@@ -14,5 +14,5 @@ fn to_bool(value) {
 }
 
 fn to_number(value) {
-    return value
+    return __native_to_int(value)
 }

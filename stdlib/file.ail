@@ -17,3 +17,7 @@ fn append(path, content) {
 fn remove(path) {
     return file_remove(path)
 }
+
+fn listdir(path) {
+    return file_listdir(path)
+}
