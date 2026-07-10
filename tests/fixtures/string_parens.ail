@@ -1,0 +1,7 @@
+fn main() {
+    let msg = "function(x) call";
+    print(msg);
+}
+fn helper() {
+    return 1;
+}

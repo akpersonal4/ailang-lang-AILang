@@ -1,0 +1,43 @@
+import file;
+import csv;
+import list;
+import io;
+import convert;
+
+fn is_above_threshold(row) {
+    let scoreStr = csv.get(row, "score");
+    let score = convert.to_int(scoreStr);
+    return score > 50;
+}
+
+fn filter_rows(rows, outputRows, index) {
+    let rowCount = list.len(rows);
+    if index >= rowCount {
+        return outputRows;
+    }
+    let row = list.get(rows, index);
+    if is_above_threshold(row) {
+        outputRows = list.append(outputRows, row);
+    }
+    return filter_rows(rows, outputRows, index + 1);
+}
+
+fn process_csv(filename) {
+    let content = file.read(filename);
+    let rows = csv.parse_header(content);
+    let filtered = filter_rows(rows, list.new(), 0);
+    let output = csv.stringify(filtered);
+    file.write("filtered.csv", output);
+    let filteredCount = list.len(filtered);
+    io.println(filteredCount);
+}
+
+fn main() {
+    let entries = file.listdir(".");
+    let entryCount = list.len(entries);
+    let entryIndex = 0;
+    let readLines = list.new();
+    let lineIndex = 0;
+    let fileContent = file.read(list.get(entries, entryCount - 1));
+    return 0;
+}

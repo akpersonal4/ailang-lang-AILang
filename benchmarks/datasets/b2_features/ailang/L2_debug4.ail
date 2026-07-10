@@ -1,0 +1,8 @@
+import io;
+
+fn main() {
+    io.println("apple" < "banana");
+    io.println("banana" < "apple");
+    io.println("cherry" < "date");
+    return 0;
+}

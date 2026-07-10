@@ -1,0 +1,18 @@
+{
+  "benchmark": "B4",
+  "baseline": "Python 3.11",
+  "tasks": [
+    {
+      "id": "rename_function",
+      "description": "Rename 'sum_even' to 'sum_even_numbers' across the codebase. Do not change behavior.",
+      "source_ailang": "../b2_features/ailang/L1_sum_even.ail",
+      "source_python": "../b2_features/python/L1_sum_even.py"
+    },
+    {
+      "id": "extract_function",
+      "description": "Extract an 'is_even' function from the sum_even_helper logic.",
+      "source_ailang": "../b2_features/ailang/L1_sum_even.ail",
+      "source_python": "../b2_features/python/L1_sum_even.py"
+    }
+  ]
+}

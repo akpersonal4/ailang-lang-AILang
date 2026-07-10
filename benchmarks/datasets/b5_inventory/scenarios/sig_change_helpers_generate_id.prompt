@@ -1,0 +1,14 @@
+TASK: Update the entire inventory codebase to work with a new function signature.
+
+OLD: helpers_generate_id(prefix)
+NEW: helpers_generate_id(prefix, length)  — where "length" controls the zero-padded digit count
+
+In AILang (no default parameters): every call site must be updated to pass the length argument.
+Update the function definition and all call sites.
+
+RULES:
+1. Update the function definition in helpers.ail (AILang) / core/helpers.py (Python).
+2. For AILang: update helpers_generate_id to accept (idPrefix, idLength). The idLength controls padding digits in helpers_pad_number. Default behavior (length=4) for backward compatibility is NOT possible in AILang — all call sites must be updated.
+3. For Python: add the parameter with a default (length=4) so existing call sites still work.
+4. Do NOT change any behavior other than the signature.
+5. The full test suite must pass (38/38).

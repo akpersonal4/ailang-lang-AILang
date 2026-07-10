@@ -1,0 +1,18 @@
+{
+  "benchmark": "B6",
+  "baseline": "Python 3.11",
+  "cycles": [
+    {
+      "id": "maint_add_feature",
+      "description": "Read threshold from command line argument instead of hardcoded value"
+    },
+    {
+      "id": "maint_fix_regression",
+      "description": "The CLI parsing introduces a bug with empty/missing args — fix it"
+    },
+    {
+      "id": "maint_tidy",
+      "description": "Organize the functions (no behavior change)"
+    }
+  ]
+}

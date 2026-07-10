@@ -1,0 +1,58 @@
+{
+  "benchmark": "B2",
+  "baseline": "Python 3.12",
+  "subject": "Inventory Management System",
+  "description": "Feature implementation tasks against the running inventory system in apps/inventory/ (AILang) and apps/inventory_py/ (Python)",
+  "tasks": [
+    {
+      "id": "T1_alert_threshold",
+      "level": 1,
+      "max_loc_ailang": 25,
+      "max_loc_python": 15,
+      "target_file_ailang": "apps/inventory/stock_movement.ail",
+      "target_file_python": "apps/inventory_py/inventory/stock_movement.py",
+      "description": "Add a function movement_check_alert_threshold(product_id, threshold) that returns current QOH alert status.",
+      "acceptance": [
+        "Returns alert map when QOH < threshold",
+        "Returns non-alert map when QOH >= threshold",
+        "Returns false for unknown product"
+      ]
+    },
+    {
+      "id": "T2_deactivation_cascade",
+      "level": 2,
+      "max_loc_ailang": 100,
+      "max_loc_python": 60,
+      "target_file_ailang": "apps/inventory/product.ail",
+      "target_file_python": "apps/inventory_py/models/product.py",
+      "description": "When a product is deactivated via product_update_status(prodId, 'inactive'), cascade: cancel all pending purchase orders for that product, cancel all reservations, and flag all movements as 'cancelled'. Add a function product_deactivate_cascade(prodId) that orchestrates this.",
+      "acceptance": [
+        "Pending purchase orders updated to 'cancelled'",
+        "Reservations updated to 'cancelled'",
+        "Movements flagged with status 'cancelled'",
+        "Existing active products not affected"
+      ]
+    },
+    {
+      "id": "T3_approval_workflow",
+      "level": 3,
+      "max_loc_ailang": 300,
+      "max_loc_python": 200,
+      "target_file_ailang": "apps/inventory/transfer_integration.ail",
+      "target_file_python": "apps/inventory_py/inventory/transfer_integration.py",
+      "description": "Add an approval step to warehouse transfers: when ti_create_transfer is called with quantity > 100, set status to 'pending_approval' instead of 'pending'. Create ti_approve_transfer(transferId) to set it to 'pending'. Create ti_reject_transfer(transferId) to set it to 'rejected'. The existing transfer_complete should only work on 'pending' transfers.",
+
+      "acceptance": [
+        "Transfers > 100 units created with status 'pending_approval'",
+        "Transfers <= 100 units created with status 'pending' (unchanged)",
+        "ti_approve_transfer changes status from 'pending_approval' to 'pending'",
+        "ti_reject_transfer changes status from 'pending_approval' to 'rejected'",
+        "transfer_complete only works on 'pending' transfers (not pending_approval)"
+      ]
+    }
+  ],
+  "reference_implementations": {
+    "ailang": "benchmarks/datasets/b2_inventory/ailang/",
+    "python": "benchmarks/datasets/b2_inventory/python/"
+  }
+}

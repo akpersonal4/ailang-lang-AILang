@@ -1,0 +1,94 @@
+import storage;
+import helpers;
+import list;
+import map;
+import string;
+import convert;
+import stock_movement;
+
+fn purchase_calc_line_total(pcQty, pcPrice) {
+    return pcQty * pcPrice;
+}
+
+fn purchase_recalc_total_rec(prItems, prOrderId, prIdx, prSum) {
+    if (prIdx >= list.len(prItems)) {
+        return prSum;
+    }
+    let prItem = list.get(prItems, prIdx);
+    if (helpers.helpers_get_map_value_safe(prItem, "order_id", "") == prOrderId) {
+        return purchase_recalc_total_rec(prItems, prOrderId, prIdx + 1, prSum + helpers.helpers_get_map_value_safe(prItem, "line_total", 0));
+    }
+    return purchase_recalc_total_rec(prItems, prOrderId, prIdx + 1, prSum);
+}
+
+fn purchase_get_items_rec(pgiItems, pgiOrderId, pgiResults, pgiIdx) {
+    if (pgiIdx >= list.len(pgiItems)) {
+        return pgiResults;
+    }
+    let pgiItem = list.get(pgiItems, pgiIdx);
+    let pgiItemOrderId = helpers.helpers_get_map_value_safe(pgiItem, "order_id", "");
+    if (pgiItemOrderId == pgiOrderId) {
+        list.append(pgiResults, pgiItem);
+    }
+    return purchase_get_items_rec(pgiItems, pgiOrderId, pgiResults, pgiIdx + 1);
+}
+
+fn purchase_list_by_vendor_rec(lvItems, lvVendorId, lvResults, lvIdx) {
+    if (lvIdx >= list.len(lvItems)) {
+        return lvResults;
+    }
+    let lvItem = list.get(lvItems, lvIdx);
+    let lvItemVendorId = helpers.helpers_get_map_value_safe(lvItem, "vendorId", "");
+    if (lvItemVendorId == lvVendorId) {
+        list.append(lvResults, lvItem);
+    }
+    return purchase_list_by_vendor_rec(lvItems, lvVendorId, lvResults, lvIdx + 1);
+}
+
+fn purchase_receive_items_rec(priItems, priOrderId, priIdx) {
+    if (priIdx >= list.len(priItems)) {
+        return true;
+    }
+    let priItem = list.get(priItems, priIdx);
+    let priProdId = helpers.helpers_get_map_value_safe(priItem, "product_id", "");
+    let priQty = convert.to_int(helpers.helpers_get_map_value_safe(priItem, "quantity", 0));
+    stock_movement.movement_create(priProdId, "inbound", priQty, "purchase_order", priOrderId, "Purchase order received");
+    return purchase_receive_items_rec(priItems, priOrderId, priIdx + 1);
+}
+
+fn purchase_recalc_total(prtOrderId) {
+    let prtItems = storage.storage_list("purchase_items");
+    let prtSum = purchase_recalc_total_rec(prtItems, prtOrderId, 0, 0);
+    let prtChanges = map.new();
+    let prtNow = helpers.helpers_current_timestamp();
+    map.set(prtChanges, "total", prtSum);
+    map.set(prtChanges, "updated_at", prtNow);
+    return storage.storage_update("purchase_orders", prtOrderId, prtChanges);
+}
+
+fn purchase_get_items(piOrderId) {
+    let piItems = storage.storage_list("purchase_items");
+    let piResults = list.new();
+    return purchase_get_items_rec(piItems, piOrderId, piResults, 0);
+}
+
+fn purchase_list_by_vendor(plvVendorId) {
+    let plvItems = storage.storage_list("purchase_orders");
+    let plvResults = list.new();
+    return purchase_list_by_vendor_rec(plvItems, plvVendorId, plvResults, 0);
+}
+
+fn purchase_create(pcrVendorId, pcrNotes) {
+    let pcrOrder = map.new();
+    let pcrId = helpers.helpers_generate_id("PO-");
+    let pcrNow = helpers.helpers_current_timestamp();
+    map.set(pcrOrder, "id", pcrId);
+    map.set(pcrOrder, "vendorId", pcrVendorId);
+    map.set(pcrOrder, "notes", pcrNotes);
+    map.set(pcrOrder, "status", "draft");
+    map.set(pcrOrder, "total", 0);
+    map.set(pcrOrder, "created_at", pcrNow);
+    map.set(pcrOrder, "updated_at", pcrNow);
+    storage.storage_add("purchase_orders", pcrOrder);
+    return pcrOrder;
+}

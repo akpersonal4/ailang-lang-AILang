@@ -1,0 +1,63 @@
+{
+  "benchmark": "B3",
+  "baseline": "Python 3.12",
+  "subject": "Inventory Management System",
+  "description": "Debugging tasks: 5 known bugs introduced into inventory modules. AI must fix based on error output.",
+  "bugs": [
+    {
+      "id": "bug1_off_by_one",
+      "type": "off_by_one",
+      "language": "both",
+      "module": "stock_movement",
+      "buggy_file_ailang": "benchmarks/datasets/b3_inventory/ailang/bug1_stock_movement.ail",
+      "correct_file_ailang": "apps/inventory/stock_movement.ail",
+      "buggy_file_python": "benchmarks/datasets/b3_inventory/python/bug1_stock_movement.py",
+      "correct_file_python": "apps/inventory_py/inventory/stock_movement.py",
+      "description": "Off-by-one in movement_list_by_product_rec: uses > instead of >= in base case, skipping last item"
+    },
+    {
+      "id": "bug2_wrong_key",
+      "type": "wrong_map_key",
+      "language": "both",
+      "module": "purchase_order",
+      "buggy_file_ailang": "benchmarks/datasets/b3_inventory/ailang/bug2_purchase_order.ail",
+      "correct_file_ailang": "apps/inventory/order_purchase_order.ail",
+      "buggy_file_python": "benchmarks/datasets/b3_inventory/python/bug2_purchase_order.py",
+      "correct_file_python": "apps/inventory_py/orders/purchase_order.py",
+      "description": "purchase_create sets vendor_id as 'vendorId' but purchase_get_items looks for 'vendor_id' — wrong map key"
+    },
+    {
+      "id": "bug3_missing_guard",
+      "type": "missing_guard",
+      "language": "ailang_only",
+      "module": "stock_valuation",
+      "buggy_file_ailang": "benchmarks/datasets/b3_inventory/ailang/bug3_stock_valuation.ail",
+      "correct_file_ailang": "apps/inventory/stock_valuation.ail",
+      "buggy_file_python": null,
+      "correct_file_python": null,
+      "description": "valuation_get calls map.get without map.has guard — crashes when key is missing (AILang-only: Python dict.get handles this)"
+    },
+    {
+      "id": "bug4_wrong_comparison",
+      "type": "wrong_comparison",
+      "language": "both",
+      "module": "reorder",
+      "buggy_file_ailang": "benchmarks/datasets/b3_inventory/ailang/bug4_reorder.ail",
+      "correct_file_ailang": "apps/inventory/reorder.ail",
+      "buggy_file_python": "benchmarks/datasets/b3_inventory/python/bug4_reorder.py",
+      "correct_file_python": "apps/inventory_py/business/reorder.py",
+      "description": "reorder_check uses > instead of >= — triggers reorder when QOH exactly equals threshold"
+    },
+    {
+      "id": "bug5_infinite_recursion",
+      "type": "infinite_recursion",
+      "language": "both",
+      "module": "helpers",
+      "buggy_file_ailang": "benchmarks/datasets/b3_inventory/ailang/bug5_helpers.ail",
+      "correct_file_ailang": "apps/inventory/helpers.ail",
+      "buggy_file_python": "benchmarks/datasets/b3_inventory/python/bug5_helpers.py",
+      "correct_file_python": "apps/inventory_py/core/helpers.py",
+      "description": "Base case condition removed from helpers_find_in_list_rec — infinite recursion / stack overflow"
+    }
+  ]
+}

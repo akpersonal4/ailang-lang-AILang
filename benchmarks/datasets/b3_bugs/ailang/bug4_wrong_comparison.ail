@@ -1,0 +1,30 @@
+import list;
+import io;
+
+fn count_passing_helper(scores, index, count) {
+    let len = list.len(scores);
+    if index >= len {
+        return count;
+    }
+    let score = list.get(scores, index);
+    if score >= 50 {
+        count = count + 1;
+    }
+    return count_passing_helper(scores, index + 1, count);
+}
+
+fn count_passing(scores) {
+    return count_passing_helper(scores, 0, 0);
+}
+
+fn main() {
+    let scores = list.new();
+    scores = list.append(scores, 70);
+    scores = list.append(scores, 50);
+    scores = list.append(scores, 30);
+    scores = list.append(scores, 85);
+    scores = list.append(scores, 49);
+    let result = count_passing(scores);
+    io.println(result);
+    return 0;
+}

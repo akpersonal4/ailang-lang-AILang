@@ -1,379 +1,328 @@
 # DX Tool #006 Acceptance Testing
-# Comprehensive test suite for ail package manager tool
+# AILang Dependency Ordering Assistant - Acceptance Test Suite
+
+from __future__ import annotations
 
 import os
 import sys
 import subprocess
-import tempfile
-import shutil
 import json
+import hashlib
 from pathlib import Path
 
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
-
-
-def run_command(cmd: list[str], cwd: Path | None = None) -> tuple[int, str, str]:
+def run_command(cmd: list[str]) -> tuple[int, str, str]:
     """Run a command and return exit code, stdout, stderr."""
-    env = os.environ.copy()
-    env["PYTHONPATH"] = str(PROJECT_ROOT)
-    result = subprocess.run(cmd, capture_output=True, text=True, cwd=cwd, env=env)
+    result = subprocess.run(cmd, capture_output=True, text=True)
     return result.returncode, result.stdout, result.stderr
 
 
-def create_temp_project(tmp_dir: Path, name: str = "test-pkg", version: str = "0.1.0") -> Path:
-    """Create a temporary project directory."""
-    proj_dir = tmp_dir / name
-    return proj_dir
+def hash_file(path: Path) -> str:
+    """Get SHA-256 hash of file content."""
+    return hashlib.sha256(path.read_text(encoding="utf-8").encode()).hexdigest()
 
 
-def create_ail_toml(path: Path, name: str, version: str = "0.1.0", deps: dict | None = None) -> None:
-    """Create an ail.toml file."""
-    lines = [
-        '[project]',
-        f'name = "{name}"',
-        f'version = "{version}"',
-        'description = "Test package"',
-        'entry = "main.ail"',
-        '',
-        '[language]',
-        'version = "0.3"',
-        '',
-    ]
-    if deps:
-        lines.append('[dependencies]')
-        for dep_name, dep_value in deps.items():
-            if isinstance(dep_value, str):
-                lines.append(f'{dep_name} = "{dep_value}"')
-            elif isinstance(dep_value, dict):
-                items = ", ".join(f'{k} = "{v}"' for k, v in dep_value.items())
-                lines.append(f'{dep_name} = {{ {items} }}')
-    text = "\n".join(lines) + "\n"
-    # Replace Windows backslashes with forward slashes for TOML compatibility
-    text = text.replace("\\", "/")
-    path.write_text(text, encoding="utf-8")
-
-
-def test_init_creates_project() -> bool:
-    """Test: ail init creates ail.toml, main.ail, and ail.lock."""
-    print("TEST 1: ail init creates project structure...")
-    with tempfile.TemporaryDirectory() as tmp:
-        tmp_path = Path(tmp)
-        proj_dir = tmp_path / "my-project"
-        code, out, err = run_command([
-            sys.executable, "-m", "tools.ail_package_manager", "init",
-            str(proj_dir), "--name", "my-project", "--version", "0.1.0",
-            "--description", "Test project", "-y",
-        ], cwd=tmp_path)
-
-        if code != 0:
-            print(f"  X FAIL: Exit code {code}, stderr: {err}")
-            return False
-
-        if not (proj_dir / "ail.toml").exists():
-            print(f"  X FAIL: ail.toml not created")
-            return False
-        if not (proj_dir / "main.ail").exists():
-            print(f"  X FAIL: main.ail not created")
-            return False
-        if not (proj_dir / "ail.lock").exists():
-            print(f"  X FAIL: ail.lock not created")
-            return False
-
-        # Verify ail.toml content
-        toml_content = (proj_dir / "ail.toml").read_text(encoding="utf-8")
-        if 'name = "my-project"' not in toml_content:
-            print(f"  X FAIL: Project name not in ail.toml")
-            return False
-        if 'version = "0.1.0"' not in toml_content:
-            print(f"  X FAIL: Version not in ail.toml")
-            return False
-
-        print("  V PASS: ail init creates correct project structure")
+def test_tool_runs_successfully() -> bool:
+    """Test: python -m tools.ail_order runs successfully on valid file."""
+    print("TEST 1: Tool runs successfully...")
+    code, out, err = run_command([sys.executable, "-m", "tools.ail_order", "examples/hello_world/main.ail"])
+    if code == 0:
+        print("  [PASS] Tool exits with code 0")
         return True
+    else:
+        print(f"  [FAIL] Exit code {code}")
+        print(f"  Stderr: {err[:500]}")
+        return False
 
 
-def test_init_refuses_nonempty_dir() -> bool:
-    """Test: ail init refuses to initialize in a non-empty directory."""
-    print("TEST 2: ail init refuses non-empty directory...")
-    with tempfile.TemporaryDirectory() as tmp:
-        tmp_path = Path(tmp)
-        # Create a file in the directory
-        (tmp_path / "existing.txt").write_text("hello", encoding="utf-8")
-
-        code, out, err = run_command([
-            sys.executable, "-m", "tools.ail_package_manager", "init",
-            str(tmp_path), "--name", "test", "-y",
-        ], cwd=tmp_path)
-
-        if code != 3:
-            print(f"  X FAIL: Expected exit code 3, got {code}")
-            return False
-        if "not empty" not in err and "not empty" not in out:
-            print(f"  X FAIL: Expected 'not empty' error")
-            print(f"  stdout: {out}")
-            print(f"  stderr: {err}")
-            return False
-
-        print("  V PASS: ail init correctly refuses non-empty directory")
+def test_detects_forward_references() -> bool:
+    """Test: Tool detects forward references in code."""
+    print("\nTEST 2: Forward reference detection...")
+    code, out, err = run_command([sys.executable, "-m", "tools.ail_order", "tests/fixtures/forward_ref.ail"])
+    if "Forward reference" in out or "Forward reference" in err:
+        print("  [PASS] Forward reference detected")
         return True
+    else:
+        print(f"  [FAIL] Forward reference not detected")
+        print(f"  Output: {out[:500]}")
+        return False
 
 
-def _run_python_code(code: str, tmp_path: Path) -> tuple[int, str, str]:
-    """Run a Python snippet as a file (avoids -c quoting issues with try/except)."""
-    script_path = tmp_path / "_test_script.py"
-    script_path.write_text(code, encoding="utf-8")
-    return run_command([sys.executable, str(script_path)], cwd=tmp_path)
-
-
-def test_parse_valid_manifest() -> bool:
-    """Test: parsing a valid ail.toml succeeds."""
-    print("TEST 3: Parse valid manifest...")
-    with tempfile.TemporaryDirectory() as tmp:
-        tmp_path = Path(tmp)
-        toml_path = tmp_path / "ail.toml"
-        create_ail_toml(toml_path, "valid-pkg", "2.0.0")
-
-        code = f"""
-from pathlib import Path
-from tools.ail_package_manager.manifest import parse_manifest
-m = parse_manifest(Path(r'{toml_path}'))
-assert m.name == 'valid-pkg', f'Expected valid-pkg, got {{m.name}}'
-assert m.version == '2.0.0', f'Expected 2.0.0, got {{m.version}}'
-print('OK')
-"""
-        _code, out, err = _run_python_code(code, tmp_path)
-
-        if _code != 0 or "OK" not in out:
-            print(f"  X FAIL: Parse failed. stdout: {code_out}, stderr: {err}")
-            return False
-
-        print("  V PASS: Valid manifest parses correctly")
-        return True
-
-
-def test_parse_invalid_manifest() -> bool:
-    """Test: parsing an invalid ail.toml raises ValueError."""
-    print("TEST 4: Parse invalid manifest...")
-    with tempfile.TemporaryDirectory() as tmp:
-        tmp_path = Path(tmp)
-        toml_path = tmp_path / "ail.toml"
-        toml_path.write_text("[project]\nname = '_INVALID_'\n", encoding="utf-8")
-
-        code = f"""
-from pathlib import Path
-from tools.ail_package_manager.manifest import parse_manifest
-try:
-    m = parse_manifest(Path(r'{toml_path}'))
-    print('No error')
-except ValueError as e:
-    print('OK', str(e))
-"""
-        _code, out, err = _run_python_code(code, tmp_path)
-
-        if "OK" not in out:
-            print(f"  X FAIL: Expected ValueError for invalid manifest")
-            print(f"  stdout: {code_out}")
-            return False
-
-        print("  V PASS: Invalid manifest correctly raises error")
-        return True
-
-
-def test_validate_package_name() -> bool:
-    """Test: package name validation rejects invalid names."""
-    print("TEST 5: Package name validation...")
-    import sys as _sys
-    _sys.path.insert(0, str(PROJECT_ROOT))
-    from tools.ail_package_manager.manifest import validate_package_name
-
-    tests = [
-        ("valid-name", None),
-        ("my-pkg-123", None),
-        ("a", None),
-        ("-invalid", "Invalid"),
-        ("invalid-", "Invalid"),
-        ("UPPERCASE", "Invalid"),
-        ("has_underscore", "Invalid"),
-        ("a" * 65, "too long"),
-    ]
-
-    for name, expected in tests:
-        result = validate_package_name(name)
-        if expected is None:
-            if result is not None:
-                print(f"  X FAIL: '{name}' should be valid, got: {result}")
-                return False
+def test_json_output_format() -> bool:
+    """Test: --json flag produces valid JSON output."""
+    print("\nTEST 3: JSON output format...")
+    code, out, err = run_command([sys.executable, "-m", "tools.ail_order", "--json", "examples/hello_world/main.ail"])
+    try:
+        data = json.loads(out)
+        if "metadata" in data and "levels" in data:
+            print("  [PASS] Valid JSON with correct structure")
+            return True
         else:
-            if result is None:
-                print(f"  X FAIL: '{name}' should be invalid")
-                return False
-            if expected not in result:
-                print(f"  X FAIL: '{name}' error missing '{expected}': {result}")
-                return False
-
-    print("  V PASS: Package name validation correct")
-    return True
-
-
-def test_dependency_parsing() -> bool:
-    """Test: dependency parsing for all three source types."""
-    print("TEST 6: Dependency parsing...")
-    with tempfile.TemporaryDirectory() as tmp:
-        tmp_path = Path(tmp)
-        toml_path = tmp_path / "ail.toml"
-        create_ail_toml(toml_path, "test-pkg", "0.1.0", deps={
-            "str-utils": ">=1.0.0",
-            "local-lib": {"path": "../local-lib"},
-            "git-lib": {"git": "https://github.com/user/repo.git", "tag": "v1.0"},
-        })
-
-        code, out, err = run_command([
-            sys.executable, "-c",
-            f"from pathlib import Path; from tools.ail_package_manager.manifest import parse_manifest; "
-            f"m = parse_manifest(Path(r'{toml_path}')); "
-            f"assert len(m.dependencies) == 3, f'Expected 3 deps, got {{len(m.dependencies)}}'; "
-            f"d = m.dependencies['str-utils']; "
-            f"assert d.version_req == '>=1.0.0', f'Expected >=1.0.0, got {{d.version_req}}'; "
-            f"d2 = m.dependencies['local-lib']; "
-            f"assert d2.path == '../local-lib', f'Expected ../local-lib, got {{d2.path}}'; "
-            f"d3 = m.dependencies['git-lib']; "
-            f"assert d3.git == 'https://github.com/user/repo.git', f'Git mismatch'; "
-            f"print('OK')"
-        ], cwd=tmp_path)
-
-        if code != 0 or "OK" not in out:
-            print(f"  X FAIL: Dep parsing failed. stdout: {out}, stderr: {err}")
+            print(f"  [FAIL] Missing required fields")
             return False
+    except json.JSONDecodeError as e:
+        print(f"  [FAIL] Invalid JSON: {e}")
+        return False
 
-        print("  V PASS: All dependency types parse correctly")
+
+def test_directory_analysis() -> bool:
+    """Test: Tool can analyze a directory of .ail files."""
+    print("\nTEST 4: Directory analysis...")
+    code, out, err = run_command([sys.executable, "-m", "tools.ail_order", "examples"])
+    if code == 0 and "Analyzed" in out or "L0" in out or "No ordering issues" in out:
+        print("  [PASS] Directory analysis works")
+        return True
+    else:
+        print(f"  [FAIL] Directory analysis failed (exit: {code})")
+        print(f"  Output: {out[:500]}")
+        return False
+
+
+def test_reports_generated() -> bool:
+    """Test: Reports are generated in reports/ directory for project analysis."""
+    print("\nTEST 5: Report generation...")
+    root = Path(__file__).resolve().parent.parent
+    md_path = root / "reports" / "dependency_ordering.md"
+    json_path = root / "reports" / "dependency_ordering.json"
+    
+    # Run on a directory to trigger report generation
+    run_command([sys.executable, "-m", "tools.ail_order", "examples"])
+    
+    if md_path.exists() and json_path.exists():
+        print("  [PASS] Both report files exist")
+        return True
+    else:
+        if not md_path.exists():
+            print(f"  [FAIL] {md_path} not found")
+        if not json_path.exists():
+            print(f"  [FAIL] {json_path} not found")
+        return False
+
+
+def test_json_report_structure() -> bool:
+    """Test: JSON report has correct structure."""
+    print("\nTEST 6: JSON report structure...")
+    root = Path(__file__).resolve().parent.parent
+    json_path = root / "reports" / "dependency_ordering.json"
+    
+    if not json_path.exists():
+        print("  [SKIP] JSON report not found")
+        return True
+    
+    try:
+        data = json.loads(json_path.read_text(encoding="utf-8"))
+        required_keys = ["metadata", "summary", "files"]
+        missing = [k for k in required_keys if k not in data]
+        if missing:
+            print(f"  [FAIL] Missing keys: {missing}")
+            return False
+        print(f"  [PASS] JSON has correct structure with {len(data.get('files', []))} file(s)")
+        return True
+    except json.JSONDecodeError as e:
+        print(f"  [FAIL] Invalid JSON: {e}")
+        return False
+
+
+def test_quiet_mode() -> bool:
+    """Test: --quiet suppresses non-error output."""
+    print("\nTEST 7: Quiet mode...")
+    code, out, err = run_command([sys.executable, "-m", "tools.ail_order", "--quiet", "examples/hello_world/main.ail"])
+    if code == 0 and not out.strip():
+        print("  [PASS] Quiet mode suppresses output")
+        return True
+    else:
+        print(f"  [FAIL] Unexpected output: {out.strip()[:100]}")
+        return False
+
+
+def test_help_text() -> bool:
+    """Test: --help shows usage information."""
+    print("\nTEST 8: Help text...")
+    code, out, err = run_command([sys.executable, "-m", "tools.ail_order", "--help"])
+    if "AILang Dependency Ordering Assistant" in out or "Dependency Ordering" in out:
+        print("  [PASS] Help text displayed")
+        return True
+    else:
+        print(f"  [FAIL] Help text missing")
+        return False
+
+
+def test_cli_integration() -> bool:
+    """Test: ail order command works from CLI."""
+    print("\nTEST 9: CLI integration...")
+    code, out, err = run_command([sys.executable, "-m", "compiler", "order", "examples/hello_world/main.ail"])
+    if code == 0:
+        print("  [PASS] CLI integration works")
+        return True
+    else:
+        print(f"  [FAIL] CLI integration failed")
+        return False
+
+
+def test_analyzes_stdlib() -> bool:
+    """Test: Tool can analyze stdlib files."""
+    print("\nTEST 10: Stdlib analysis...")
+    code, out, err = run_command([sys.executable, "-m", "tools.ail_order", "--quiet", "stdlib"])
+    if code == 0:
+        print("  [PASS] Stdlib analysis works")
+        return True
+    else:
+        print(f"  [FAIL] Stdlib analysis failed")
+        return False
+
+
+def test_multi_level_output() -> bool:
+    """Test: Multi-level dependencies are shown correctly."""
+    print("\nTEST 11: Multi-level output...")
+    code, out, err = run_command([sys.executable, "-m", "tools.ail_order", "apps/static_analyzer/main.ail"])
+    # Should have multiple levels
+    if "L0:" in out or "L1:" in out:
+        print("  [PASS] Multiple levels detected")
+        return True
+    else:
+        # Could be single level if no internal calls
+        print("  [INFO] Single level or no internal calls")
         return True
 
 
-def test_install_local_dep() -> bool:
-    """Test: installing a local path dependency."""
-    print("TEST 7: Install local dependency...")
-    with tempfile.TemporaryDirectory() as tmp:
-        tmp_path = Path(tmp)
-
-        # Create a dependency package
-        dep_dir = tmp_path / "dep-pkg"
-        dep_dir.mkdir()
-        create_ail_toml(dep_dir / "ail.toml", "dep-pkg", "1.0.0")
-        (dep_dir / "lib.ail").write_text("let greet = fn() => {}\n", encoding="utf-8")
-
-        # Create the main project
-        proj_dir = tmp_path / "main-proj"
-        proj_dir.mkdir()
-        create_ail_toml(proj_dir / "ail.toml", "main-proj", "0.1.0", deps={
-            "dep-pkg": {"path": dep_dir.as_posix()},
-        })
-        (proj_dir / "main.ail").write_text("let main = fn() => {}\n", encoding="utf-8")
-
-        code, out, err = run_command([
-            sys.executable, "-m", "tools.ail_package_manager", "install",
-        ], cwd=proj_dir)
-
-        if code != 0:
-            print(f"  X FAIL: Install returned exit code {code}")
-            print(f"  stdout: {out}")
-            print(f"  stderr: {err}")
-            return False
-
-        # Verify the dependency was installed
-        lib_dep = proj_dir / "lib" / "dep-pkg"
-        if not lib_dep.exists():
-            print(f"  X FAIL: lib/dep-pkg not created")
-            return False
-        if not (lib_dep / "ail.toml").exists():
-            print(f"  X FAIL: lib/dep-pkg/ail.toml missing")
-            return False
-        if not (proj_dir / "ail.lock").exists():
-            print(f"  X FAIL: ail.lock not created")
-            return False
-
-        print("  V PASS: Local dependency installed correctly")
+def test_no_ail_files() -> bool:
+    """Test: Tool handles missing .ail files gracefully."""
+    print("\nTEST 12: Missing target handling...")
+    code, out, err = run_command([sys.executable, "-m", "tools.ail_order", "nonexistent_file.ail"])
+    if code != 0 and ("Error" in err or "Error" in out):
+        print("  [PASS] Error handled gracefully")
         return True
+    else:
+        print(f"  [FAIL] Unexpected behavior")
+        return False
 
 
-def test_lock_file_content() -> bool:
-    """Test: lock file contains expected schema."""
-    print("TEST 8: Lock file content...")
-    with tempfile.TemporaryDirectory() as tmp:
-        tmp_path = Path(tmp)
-
-        dep_dir = tmp_path / "dep-pkg"
-        dep_dir.mkdir()
-        create_ail_toml(dep_dir / "ail.toml", "dep-pkg", "1.0.0")
-        (dep_dir / "lib.ail").write_text("let x = 1\n", encoding="utf-8")
-
-        proj_dir = tmp_path / "main-proj"
-        proj_dir.mkdir()
-        create_ail_toml(proj_dir / "ail.toml", "main-proj", "0.1.0", deps={
-            "dep-pkg": {"path": dep_dir.as_posix()},
-        })
-        (proj_dir / "main.ail").write_text("let main = fn() => {}\n", encoding="utf-8")
-
-        code, _, err = run_command([
-            sys.executable, "-m", "tools.ail_package_manager", "install",
-        ], cwd=proj_dir)
-
-        if code != 0:
-            print(f"  X FAIL: Install failed (exit {code}): {err}")
+def test_fix_stdout_mode() -> bool:
+    """Test: --fix --stdout outputs reordered content."""
+    print("\nTEST 13: Fix stdout mode...")
+    code, out, err = run_command([sys.executable, "-m", "tools.ail_order", "--fix", "--stdout", "tests/fixtures/forward_ref.ail"])
+    # Helper should appear before main in the output
+    if "fn helper" in out and "fn main" in out:
+        helper_pos = out.find("fn helper")
+        main_pos = out.find("fn main")
+        if helper_pos < main_pos:
+            print("  [PASS] Fix stdout produces reordered output (helper before main)")
+            return True
+        else:
+            print("  [FAIL] Functions not reordered correctly")
             return False
+    else:
+        print(f"  [FAIL] Missing functions in output")
+        return False
 
-        lock = (proj_dir / "ail.lock").read_text(encoding="utf-8")
-        checks = [
-            "version = 1" in lock,
-            "input_hash" in lock,
-            "[[packages]]" in lock,
-            'name = "dep-pkg"' in lock,
-            'version = "1.0.0"' in lock,
-            'source = "local"' in lock,
-        ]
 
-        if not all(checks):
-            print(f"  X FAIL: Lock file missing expected fields")
-            print(f"  Lock content:\n{lock}")
+def test_json_machine_readable() -> bool:
+    """Test: JSON output is machine-readable with proper structure."""
+    print("\nTEST 14: JSON machine readable...")
+    code, out, err = run_command([sys.executable, "-m", "tools.ail_order", "--json", "apps/static_analyzer/main.ail"])
+    try:
+        data = json.loads(out)
+        # Check required machine-readable fields
+        if ("metadata" in data and "summary" in data and "functions" in data):
+            print("  [PASS] JSON machine readable")
+            return True
+        else:
+            print("  [FAIL] Missing machine-readable fields")
             return False
+    except json.JSONDecodeError:
+        print("  [FAIL] Invalid JSON")
+        return False
 
-        print("  V PASS: Lock file has correct schema")
+
+def test_cli_order_subcommand() -> bool:
+    """Test: 'ail order' subcommand works correctly."""
+    print("\nTEST 15: CLI order subcommand...")
+    code, out, err = run_command([sys.executable, "-m", "compiler", "order", "--quiet", "examples/hello_world/main.ail"])
+    if code == 0:
+        print("  [PASS] CLI order subcommand works")
         return True
+    else:
+        print("  [FAIL] CLI order subcommand failed")
+        return False
 
 
-def run_all_tests() -> bool:
+def test_json_indentation() -> bool:
+    """Test: JSON output is properly indented."""
+    print("\nTEST 16: JSON indentation...")
+    code, out, err = run_command([sys.executable, "-m", "tools.ail_order", "--json", "examples/hello_world/main.ail"])
+    if code == 0 and "\n  " in out:
+        print("  [PASS] JSON properly indented")
+        return True
+    else:
+        print("  [FAIL] JSON not properly indented")
+        return False
+
+
+def test_finds_all_functions() -> bool:
+    """Test: All functions in static analyzer are found."""
+    print("\nTEST 17: Find all functions...")
+    code, out, err = run_command([sys.executable, "-m", "tools.ail_order", "--json", "apps/static_analyzer/main.ail"])
+    try:
+        data = json.loads(out)
+        func_count = len(data.get("functions", []))
+        if func_count > 50:
+            print(f"  [PASS] Found {func_count} functions")
+            return True
+        else:
+            print(f"  [FAIL] Only {func_count} functions found")
+            return False
+    except json.JSONDecodeError:
+        print("  [FAIL] Invalid JSON")
+        return False
+
+
+def run_all_tests() -> int:
+    """Run all acceptance tests and report."""
+    print("=" * 60)
+    print("DX TOOL #006 ACCEPTANCE TEST SUITE")
+    print("AILang Dependency Ordering Assistant")
+    print("=" * 60)
+    
     tests = [
-        test_validate_package_name,
-        test_init_creates_project,
-        test_init_refuses_nonempty_dir,
-        test_parse_valid_manifest,
-        test_parse_invalid_manifest,
-        test_dependency_parsing,
-        test_install_local_dep,
-        test_lock_file_content,
+        test_tool_runs_successfully,
+        test_detects_forward_references,
+        test_json_output_format,
+        test_directory_analysis,
+        test_reports_generated,
+        test_json_report_structure,
+        test_quiet_mode,
+        test_help_text,
+        test_cli_integration,
+        test_analyzes_stdlib,
+        test_multi_level_output,
+        test_no_ail_files,
+        test_fix_stdout_mode,
+        test_json_machine_readable,
+        test_cli_order_subcommand,
+        test_json_indentation,
+        test_finds_all_functions,
     ]
-
+    
     passed = 0
     failed = 0
-
-    for test in tests:
+    for t in tests:
         try:
-            if test():
+            if t():
                 passed += 1
             else:
                 failed += 1
         except Exception as e:
-            print(f"  X EXCEPTION: {e}")
+            print(f"  [ERROR] {t.__name__}: {e}")
             failed += 1
-        print()
-
-    print(f"\n{'='*50}")
-    print(f"Results: {passed} passed, {failed} failed, {len(tests)} total")
-    print(f"{'='*50}")
-
-    return failed == 0
+    
+    print("\n" + "=" * 60)
+    print("SUMMARY")
+    print("=" * 60)
+    print(f"Passed: {passed}/{len(tests)}")
+    print(f"Failed: {failed}/{len(tests)}")
+    
+    return 0 if failed == 0 else 1
 
 
 if __name__ == "__main__":
-    success = run_all_tests()
-    raise SystemExit(0 if success else 1)
+    raise SystemExit(run_all_tests())

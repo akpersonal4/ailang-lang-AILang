@@ -1,0 +1,14 @@
+{
+  "name": "current_repo",
+  "description": "Project at C:\\Users\\aleckhan\\Projects\\AiLang_New",
+  "language": "ailang",
+  "loc": 291332,
+  "file_count": 1297,
+  "module_count": 100,
+  "symbol_count": 2823,
+  "function_count": 1713,
+  "variable_count": 2917,
+  "doc_size_bytes": 11464827,
+  "dependency_count": 20,
+  "path": "C:\\Users\\aleckhan\\Projects\\AiLang_New"
+}

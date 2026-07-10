@@ -1,0 +1,31 @@
+fn ti_approve_transfer(taTransferId) {
+    let taAll = storage.storage_list("transfers");
+    let taFound = helpers.helpers_find_in_list(taAll, "id", taTransferId);
+    if (taFound == false) {
+        return false;
+    }
+    let taStatus = helpers.helpers_get_map_value_safe(taFound, "status", "");
+    if (taStatus != "pending_approval") {
+        return false;
+    }
+    let taChanges = map.new();
+    map.set(taChanges, "status", "pending");
+    map.set(taChanges, "approved_at", helpers.helpers_current_timestamp());
+    return storage.storage_update("transfers", taTransferId, taChanges);
+}
+
+fn ti_reject_transfer(trTransferId) {
+    let trAll = storage.storage_list("transfers");
+    let trFound = helpers.helpers_find_in_list(trAll, "id", trTransferId);
+    if (trFound == false) {
+        return false;
+    }
+    let trStatus = helpers.helpers_get_map_value_safe(trFound, "status", "");
+    if (trStatus != "pending_approval") {
+        return false;
+    }
+    let trChanges = map.new();
+    map.set(trChanges, "status", "rejected");
+    map.set(trChanges, "rejected_at", helpers.helpers_current_timestamp());
+    return storage.storage_update("transfers", trTransferId, trChanges);
+}

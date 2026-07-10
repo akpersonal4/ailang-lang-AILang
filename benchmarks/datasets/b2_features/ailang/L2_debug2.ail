@@ -1,0 +1,23 @@
+import json;
+import io;
+import list;
+import file;
+import string;
+import convert;
+
+fn main() {
+    let text = file.read("benchmarks/datasets/b2_features/ailang/test_data.json");
+    let lines = string.split(text, "\n");
+    let first_line = list.get(lines, 0);
+    let trimmed = string.trim(first_line);
+    io.println(trimmed);
+    let record = json.parse(trimmed);
+    let len = list.len(record);
+    io.println(len);
+    let score = list.get(record, 1);
+    io.println(score);
+    let score_int = convert.to_int(score);
+    io.println(score_int);
+    io.println(score_int >= 50);
+    return 0;
+}

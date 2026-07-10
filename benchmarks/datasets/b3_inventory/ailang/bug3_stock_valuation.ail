@@ -1,0 +1,57 @@
+import storage;
+import helpers;
+import list;
+import map;
+import string;
+import stock_movement;
+
+fn valuation_get_rec(vgrItems, vgrProductId, vgrIdx) {
+    if (vgrIdx >= list.len(vgrItems)) {
+        return false;
+    }
+    let vgrItem = list.get(vgrItems, vgrIdx);
+    let vgrProdId = map.get(vgrItem, "product_id");
+    if (vgrProdId == vgrProductId) {
+        return vgrItem;
+    }
+    return valuation_get_rec(vgrItems, vgrProductId, vgrIdx + 1);
+}
+
+fn valuation_get(vgProductId) {
+    let vgAll = storage.storage_list("valuations");
+    return valuation_get_rec(vgAll, vgProductId, 0);
+}
+
+fn valuation_set(vsProductId, vsMethod, vsCost, vsQty) {
+    let vsAll = storage.storage_list("valuations");
+    let vsExisting = valuation_get_rec(vsAll, vsProductId, 0);
+    let vsNow = helpers.helpers_current_timestamp();
+    if (vsExisting == false) {
+        let vsNew = map.new();
+        let vsNewId = helpers.helpers_generate_id("VAL-");
+        map.set(vsNew, "id", vsNewId);
+        map.set(vsNew, "product_id", vsProductId);
+        map.set(vsNew, "method", vsMethod);
+        map.set(vsNew, "current_cost", vsCost);
+        map.set(vsNew, "quantity_on_hand", vsQty);
+        map.set(vsNew, "last_updated", vsNow);
+        list.append(vsAll, vsNew);
+        return storage.storage_save("valuations", vsAll);
+    }
+    let vsChangeMap = map.new();
+    map.set(vsChangeMap, "method", vsMethod);
+    map.set(vsChangeMap, "current_cost", vsCost);
+    map.set(vsChangeMap, "quantity_on_hand", vsQty);
+    map.set(vsChangeMap, "last_updated", vsNow);
+    let vsChangeKeys = map.keys(vsChangeMap);
+    storage.storage_apply_changes(vsExisting, vsChangeMap, vsChangeKeys, 0);
+    return storage.storage_save("valuations", vsAll);
+}
+
+fn valuation_calculate_average(vaProductId) {
+    return 0;
+}
+
+fn valuation_list() {
+    return storage.storage_list("valuations");
+}

@@ -1,0 +1,18 @@
+import map;
+import io;
+
+fn get_user_age(users, username) {
+    if map.has(users, username) {
+        return map.get(users, username);
+    }
+    return -1;
+}
+
+fn main() {
+    let users = map.new();
+    users = map.set(users, "Alice", 30);
+    users = map.set(users, "Bob", 25);
+    let age = get_user_age(users, "Charlie");
+    io.println(age);
+    return 0;
+}

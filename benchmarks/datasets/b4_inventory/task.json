@@ -1,0 +1,37 @@
+{
+  "benchmark": "B4",
+  "baseline": "Python 3.12",
+  "subject": "Inventory Management System",
+  "description": "Refactoring: rename entity 'supplier' to 'vendor_partner' across the entire codebase.",
+  "tasks": [
+    {
+      "id": "rename_supplier_to_vendor_partner",
+      "description": "Rename the 'supplier' entity to 'vendor_partner' across the entire codebase. Rename the file, update all imports, function calls, internal variable names, and map keys. Do not change behavior.",
+      "source_root_ailang": "apps/inventory/",
+      "source_root_python": "apps/inventory_py/",
+      "files_affected_ailang": [
+        "supplier.ail",
+        "tests/test_supplier.ail",
+        "tests/runner.ail",
+        "main.ail",
+        "data_seed.ail"
+      ],
+      "files_affected_python": [
+        "models/supplier.py",
+        "models/__init__.py",
+        "tests/test_supplier.py",
+        "tests/runner.py",
+        "main.py",
+        "business/data_seed.py"
+      ],
+      "acceptance": [
+        "File supplier.ail renamed to vendor_partner.ail (AILang) / models/supplier.py → models/vendor_partner.py (Python)",
+        "All imports updated to reference vendor_partner",
+        "All function calls updated (supplier_create → vendor_partner_create, etc.)",
+        "All internal variable names updated",
+        "Full test suite passes (38/38)",
+        "No references to 'supplier' remain as an entity/function name"
+      ]
+    }
+  ]
+}

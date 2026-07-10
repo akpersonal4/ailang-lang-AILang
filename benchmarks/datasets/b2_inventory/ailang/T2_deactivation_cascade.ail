@@ -1,0 +1,57 @@
+fn product_cancel_purchase_orders_rec(dcoItems, dcoProductId, dcoIdx) {
+    if (dcoIdx >= list.len(dcoItems)) {
+        return true;
+    }
+    let dcoItem = list.get(dcoItems, dcoIdx);
+    let dcoStatus = helpers.helpers_get_map_value_safe(dcoItem, "status", "");
+    if (dcoStatus == "draft" || dcoStatus == "pending") {
+        let dcoItemId = helpers.helpers_get_map_value_safe(dcoItem, "id", "");
+        let dcoChanges = map.new();
+        map.set(dcoChanges, "status", "cancelled");
+        storage.storage_update("purchase_orders", dcoItemId, dcoChanges);
+    }
+    return product_cancel_purchase_orders_rec(dcoItems, dcoProductId, dcoIdx + 1);
+}
+
+fn product_cancel_reservations_rec(dcrItems, dcrProductId, dcrIdx) {
+    if (dcrIdx >= list.len(dcrItems)) {
+        return true;
+    }
+    let dcrItem = list.get(dcrItems, dcrIdx);
+    let dcrProdId = helpers.helpers_get_map_value_safe(dcrItem, "product_id", "");
+    if (dcrProdId == dcrProductId) {
+        let dcrStatusField = helpers.helpers_get_map_value_safe(dcrItem, "status", "");
+        if (dcrStatusField == "active" || dcrStatusField == "pending") {
+            let dcrItemId = helpers.helpers_get_map_value_safe(dcrItem, "id", "");
+            let dcrChanges = map.new();
+            map.set(dcrChanges, "status", "cancelled");
+            storage.storage_update("reservations", dcrItemId, dcrChanges);
+        }
+    }
+    return product_cancel_reservations_rec(dcrItems, dcrProductId, dcrIdx + 1);
+}
+
+fn product_flag_movements_rec(dfmItems, dfmProductId, dfmIdx) {
+    if (dfmIdx >= list.len(dfmItems)) {
+        return true;
+    }
+    let dfmItem = list.get(dfmItems, dfmIdx);
+    let dfmProdId = helpers.helpers_get_map_value_safe(dfmItem, "product_id", "");
+    if (dfmProdId == dfmProductId) {
+        let dfmItemId = helpers.helpers_get_map_value_safe(dfmItem, "id", "");
+        let dfmChanges = map.new();
+        map.set(dfmChanges, "status", "cancelled");
+        storage.storage_update("movements", dfmItemId, dfmChanges);
+    }
+    return product_flag_movements_rec(dfmItems, dfmProductId, dfmIdx + 1);
+}
+
+fn product_deactivate_cascade(dcProductId) {
+    let dcAllPO = storage.storage_list("purchase_orders");
+    product_cancel_purchase_orders_rec(dcAllPO, dcProductId, 0);
+    let dcAllRes = storage.storage_list("reservations");
+    product_cancel_reservations_rec(dcAllRes, dcProductId, 0);
+    let dcAllMov = storage.storage_list("movements");
+    product_flag_movements_rec(dcAllMov, dcProductId, 0);
+    return true;
+}

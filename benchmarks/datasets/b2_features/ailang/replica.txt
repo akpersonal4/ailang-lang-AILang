@@ -1,0 +1,6 @@
+apple
+cherry
+date
+elderberry
+fig
+honeydew
