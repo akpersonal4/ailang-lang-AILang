@@ -1,0 +1,132 @@
+import list;
+import map;
+import string;
+import convert;
+import storage;
+import helpers;
+import validation;
+
+fn test_validate_required_ok() {
+    let vrResult = validation.validate_required("name", "test product");
+    if (vrResult != "") {
+        print("FAIL: validate_required should accept 'test product'");
+        return false;
+    }
+    print("PASS: validate_required_ok");
+    return true;
+}
+
+fn test_validate_required_empty() {
+    let veResult = validation.validate_required("name", "");
+    if (veResult == "") {
+        print("FAIL: validate_required should reject empty string");
+        return false;
+    }
+    print("PASS: validate_required_empty");
+    return true;
+}
+
+fn test_validate_required_false() {
+    let vfResult = validation.validate_required("name", false);
+    if (vfResult == "") {
+        print("FAIL: validate_required should reject false");
+        return false;
+    }
+    print("PASS: validate_required_false");
+    return true;
+}
+
+fn test_validate_positive_number_ok() {
+    let vpResult = validation.validate_positive_number("quantity", 10);
+    if (vpResult != "") {
+        print("FAIL: validate_positive_number should accept 10");
+        return false;
+    }
+    print("PASS: validate_positive_number_ok");
+    return true;
+}
+
+fn test_validate_positive_number_zero() {
+    let vzResult = validation.validate_positive_number("quantity", 0);
+    if (vzResult == "") {
+        print("FAIL: validate_positive_number should reject 0");
+        return false;
+    }
+    print("PASS: validate_positive_number_zero");
+    return true;
+}
+
+fn test_validate_positive_number_negative() {
+    let vnResult = validation.validate_positive_number("quantity", -5);
+    if (vnResult == "") {
+        print("FAIL: validate_positive_number should reject -5");
+        return false;
+    }
+    print("PASS: validate_positive_number_negative");
+    return true;
+}
+
+fn test_validate_email_ok() {
+    let veResult = validation.validate_email("email", "test@example.com");
+    if (veResult != "") {
+        print("FAIL: validate_email should accept test@example.com");
+        return false;
+    }
+    print("PASS: validate_email_ok");
+    return true;
+}
+
+fn test_validate_email_no_at() {
+    let vnResult = validation.validate_email("email", "bademail");
+    if (vnResult == "") {
+        print("FAIL: validate_email should reject 'bademail'");
+        return false;
+    }
+    print("PASS: validate_email_no_at");
+    return true;
+}
+
+fn test_validate_email_no_dot() {
+    let vdResult = validation.validate_email("email", "test@");
+    if (vdResult == "") {
+        print("FAIL: validate_email should reject 'test@'");
+        return false;
+    }
+    print("PASS: validate_email_no_dot");
+    return true;
+}
+
+fn test_validate_unique_ok() {
+    let vuResult = validation.validate_unique("id", "NONEXISTENT_ID_99999", "products", "id");
+    if (vuResult != "") {
+        print("FAIL: validate_unique should accept nonexistent value");
+        return false;
+    }
+    print("PASS: validate_unique_ok");
+    return true;
+}
+
+fn main() {
+    let t1 = test_validate_required_ok();
+    if (t1 == false) { return 1; }
+    let t2 = test_validate_required_empty();
+    if (t2 == false) { return 1; }
+    let t3 = test_validate_required_false();
+    if (t3 == false) { return 1; }
+    let t4 = test_validate_positive_number_ok();
+    if (t4 == false) { return 1; }
+    let t5 = test_validate_positive_number_zero();
+    if (t5 == false) { return 1; }
+    let t6 = test_validate_positive_number_negative();
+    if (t6 == false) { return 1; }
+    let t7 = test_validate_email_ok();
+    if (t7 == false) { return 1; }
+    let t8 = test_validate_email_no_at();
+    if (t8 == false) { return 1; }
+    let t9 = test_validate_email_no_dot();
+    if (t9 == false) { return 1; }
+    let t10 = test_validate_unique_ok();
+    if (t10 == false) { return 1; }
+    print("ALL VALIDATION TESTS PASSED");
+    return 0;
+}

@@ -1,0 +1,9 @@
+import main;
+
+fn benchmark_main() {
+    // Seed demo data
+    main.main_seed();
+    // Generate report (prints to stdout)
+    main.main_report();
+    return true;
+}

@@ -1,0 +1,87 @@
+import list;
+import map;
+import string;
+import convert;
+import path;
+import file;
+import json;
+import storage;
+import helpers;
+import backup;
+
+fn test_backup_collections_list() {
+    let bclResult = backup.backup_collections_list();
+    let bclCount = list.len(bclResult);
+    if (bclCount == 0) {
+        print("FAIL: backup_collections_list returned empty");
+        return false;
+    }
+    print("PASS: backup_collections_list found " + convert.to_string(bclCount) + " collections");
+    return true;
+}
+
+fn test_backup_create() {
+    let bcResult = backup.backup_create();
+    if (bcResult == false) {
+        print("FAIL: backup_create returned false");
+        return false;
+    }
+    print("PASS: backup_create succeeded");
+    return true;
+}
+
+fn test_backup_list() {
+    let blResult = backup.backup_list();
+    if (blResult == false) {
+        print("FAIL: backup_list returned false");
+        return false;
+    }
+    print("PASS: backup_list succeeded");
+    return true;
+}
+
+fn test_backup_restore_missing() {
+    let brResult = backup.backup_restore("nonexistent_timestamp");
+    if (brResult != false) {
+        print("FAIL: backup_restore should fail for missing backup");
+        return false;
+    }
+    print("PASS: backup_restore_missing");
+    return true;
+}
+
+fn test_backup_filter_excludes_auto() {
+    let bfColls = backup.backup_collections_list();
+    let bfLen = list.len(bfColls);
+    let bfHasAuto = false;
+    let bfIdx = 0;
+    if (bfLen > 0) {
+        if (bfIdx < bfLen) {
+            let bfItem = list.get(bfColls, bfIdx);
+            if (string.contains(bfItem, "auto_")) {
+                bfHasAuto = true;
+            }
+        }
+    }
+    if (bfHasAuto == true) {
+        print("FAIL: backup_collections_list should exclude auto_ files");
+        return false;
+    }
+    print("PASS: backup_filter_excludes_auto");
+    return true;
+}
+
+fn main() {
+    let t1 = test_backup_collections_list();
+    if (t1 == false) { return 1; }
+    let t2 = test_backup_create();
+    if (t2 == false) { return 1; }
+    let t3 = test_backup_list();
+    if (t3 == false) { return 1; }
+    let t4 = test_backup_restore_missing();
+    if (t4 == false) { return 1; }
+    let t5 = test_backup_filter_excludes_auto();
+    if (t5 == false) { return 1; }
+    print("ALL BACKUP TESTS PASSED");
+    return 0;
+}

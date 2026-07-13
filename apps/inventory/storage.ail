@@ -4,6 +4,8 @@ import path;
 import list;
 import map;
 import string;
+import convert;
+import helpers;
 
 
 let STORAGE_DATA_DIR = "data";
@@ -43,17 +45,63 @@ fn storage_load(collName) {
     let collContent = file.read(collPath);
     let collParsed = json.parse(collContent);
     if (collParsed == false) {
+        let abPath = path.join("backups", "auto_" + collName + ".json");
+        if (file.exists(abPath)) {
+            print("Warning: " + collPath + " corrupted. Attempting auto-backup recovery...");
+            let abContent = file.read(abPath);
+            let abParsed = json.parse(abContent);
+            if (abParsed != false) {
+                return abParsed;
+            }
+        }
+        print("Warning: Cannot recover " + collPath + ". Starting empty.");
         let emptyResult = list.new();
         return emptyResult;
     }
     return collParsed;
 }
 
+fn storage_auto_backup(collName) {
+    let abSource = storage_collection_path(collName);
+    if (file.exists(abSource)) {
+        let abContent = file.read(abSource);
+        let abBackupPath = path.join("backups", "auto_" + collName + ".json");
+        file.write(abBackupPath, abContent);
+    }
+    return true;
+}
+
 fn storage_save(collName, collItems) {
     let collPath = storage_collection_path(collName);
+    storage_auto_backup(collName);
     let collJson = json.stringify(collItems);
     file.write(collPath, collJson);
     return collItems;
+}
+
+fn storage_acquire_lock() {
+    let lockPath = path.join(STORAGE_DATA_DIR, ".lock");
+    if (file.exists(lockPath)) {
+        let lockContent = file.read(lockPath);
+        let lockTime = convert.to_int(lockContent);
+        let now = helpers.helpers_unix_timestamp();
+        if (now - lockTime < 30) {
+            print("Error: Another session is running. Wait or remove data/.lock");
+            return false;
+        }
+        print("Warning: Removing stale lock file");
+        file.remove(lockPath);
+    }
+    file.write(lockPath, convert.to_string(helpers.helpers_unix_timestamp()));
+    return true;
+}
+
+fn storage_release_lock() {
+    let lockPath = path.join(STORAGE_DATA_DIR, ".lock");
+    if (file.exists(lockPath)) {
+        file.remove(lockPath);
+    }
+    return true;
 }
 
 fn storage_add(collName, addItem) {

@@ -1,54 +1,29 @@
-import system;
 import environment;
 import list;
-import map;
-import string;
 import convert;
 import storage;
 import helpers;
-import auth;
-import audit;
 import product;
 import category;
 import customer;
 import vendor;
 import stock_movement;
-import stock_transfer;
-import stock_valuation;
 import order_sales_order;
 import order_purchase_order;
-import report_stock_report;
-import report_sales_report;
-import report_profit_report;
 import export_csv_export;
 import export_json_export;
-import notification;
-import search;
 import warehouse;
-import stock_aging;
-import reorder;
 import dashboard;
-import currency;
-import returns;
-import shipping;
-import invoice;
 import permission;
-import audit_trail;
-import price_history;
-import supplier;
-import batch;
-import serial_number;
-import tax;
-import payment;
-import stock_reservation;
 import stock_adjustment;
-import notification_reorder;
-import report_trends;
 import workflow;
-import transfer_integration;
-import payment_integration;
+import backup;
+import import_csv;
+import integrity;
 import data_seed;
+import batch;
 import audit_integration;
+import login;
 
 fn main_demo_create_products() {
     let cat1 = category.category_create("Electronics", "Electronic devices and accessories", "");
@@ -155,22 +130,29 @@ fn main_help() {
     print("Usage: ail run main.ail <command>");
     print("");
     print("Commands:");
-    print("  init       - Initialize demo data (products, customers, vendors)");
-    print("  stock      - Create demo stock movements and orders");
-    print("  report     - Show inventory summary report");
-    print("  csv        - Export products as CSV");
-    print("  json       - Export products as JSON");
-    print("  search <q> - Search across all entities");
-    print("  seed       - Seed demo data for all modules");
-    print("  reserve    - Create demo stock reservation");
-    print("  adjust     - Create demo stock adjustment");
-    print("  warehouse  - List warehouses");
-    print("  dashboard  - Show dashboard summary");
-    print("  permission - Demo permission operations");
-    print("  batch      - Demo batch operations");
-    print("  workflow   - Demo workflow operations");
-    print("  audit_full - Show full audit report");
-    print("  help       - Show this help");
+    print("  init          - Initialize demo data (products, customers, vendors)");
+    print("  stock         - Create demo stock movements and orders");
+    print("  report        - Show inventory summary report");
+    print("  csv           - Export products as CSV");
+    print("  json          - Export products as JSON");
+    print("  search <q>    - Search across all entities");
+    print("  seed          - Seed demo data for all modules");
+    print("  reserve       - Create demo stock reservation");
+    print("  adjust        - Create demo stock adjustment");
+    print("  warehouse     - List warehouses");
+    print("  dashboard     - Show dashboard summary");
+    print("  permission    - Demo permission operations");
+    print("  batch         - Demo batch operations");
+    print("  workflow      - Demo workflow operations");
+    print("  audit_full    - Show full audit report");
+    print("  login <u> <p> - Login with username and password");
+    print("  logout        - Logout current session");
+    print("  backup        - Create data backup");
+    print("  restore <ts>  - Restore data from backup");
+    print("  backups       - List available backups");
+    print("  import-<type> - Import data from CSV (products, customers, vendors, movements)");
+    print("  check         - Run integrity check");
+    print("  help          - Show this help");
     return true;
 }
 
@@ -276,76 +258,164 @@ fn main_audit_full() {
     return true;
 }
 
-fn main() {
-    let mainArgs = environment.args();
-    let mainArgCount = list.len(mainArgs);
-    if (mainArgCount < 2) {
-        return main_help();
+fn main_require_auth(mraRequiredRole) {
+    return login.login_require_auth(mraRequiredRole);
+}
+
+fn main_dispatch() {
+    let mddArgs = environment.args();
+    let mddArgCount = list.len(mddArgs);
+    if (mddArgCount < 1) {
+        main_help();
+        return 0;
     }
-    let mainCommand = list.get(mainArgs, 1);
-    if (mainCommand == "init") {
+    let mddCommand = list.get(mddArgs, 0);
+    if (mddCommand == "init") {
+        let initGuard = main_require_auth("staff");
+        if (initGuard == false) { return 1; }
         main_demo_create_products();
         main_demo_create_customers();
         main_demo_create_vendors();
         return 0;
     }
-    if (mainCommand == "stock") {
+    if (mddCommand == "stock") {
+        let stockGuard = main_require_auth("staff");
+        if (stockGuard == false) { return 1; }
         main_demo_stock_and_orders();
         return 0;
     }
-    if (mainCommand == "report") {
+    if (mddCommand == "report") {
         main_report();
         return 0;
     }
-    if (mainCommand == "csv") {
+    if (mddCommand == "csv") {
         main_export_csv();
         return 0;
     }
-    if (mainCommand == "json") {
+    if (mddCommand == "json") {
         main_export_json();
         return 0;
     }
-    if (mainCommand == "seed") {
+    if (mddCommand == "seed") {
+        let seedGuard = main_require_auth("staff");
+        if (seedGuard == false) { return 1; }
         main_seed();
         return 0;
     }
-    if (mainCommand == "reserve") {
+    if (mddCommand == "reserve") {
+        let reserveGuard = main_require_auth("staff");
+        if (reserveGuard == false) { return 1; }
         main_reserve();
         return 0;
     }
-    if (mainCommand == "adjust") {
+    if (mddCommand == "adjust") {
+        let adjustGuard = main_require_auth("staff");
+        if (adjustGuard == false) { return 1; }
         main_adjust();
         return 0;
     }
-    if (mainCommand == "warehouse") {
+    if (mddCommand == "warehouse") {
         main_warehouse();
         return 0;
     }
-    if (mainCommand == "dashboard") {
+    if (mddCommand == "dashboard") {
         main_dashboard();
         return 0;
     }
-    if (mainCommand == "permission") {
+    if (mddCommand == "permission") {
         main_permission();
         return 0;
     }
-    if (mainCommand == "batch") {
+    if (mddCommand == "batch") {
         main_batch();
         return 0;
     }
-    if (mainCommand == "workflow") {
+    if (mddCommand == "workflow") {
         main_workflow();
         return 0;
     }
-    if (mainCommand == "audit_full") {
+    if (mddCommand == "audit_full") {
         main_audit_full();
         return 0;
     }
-    if (mainCommand == "help") {
+    if (mddCommand == "help") {
         main_help();
         return 0;
     }
-    print("Unknown command: " + mainCommand);
+    if (mddCommand == "login") {
+        if (mddArgCount < 3) {
+            print("Usage: ail run main.ail login <username> <password>");
+            return 1;
+        }
+        let mLoginUser = list.get(mddArgs, 1);
+        let mLoginPass = list.get(mddArgs, 2);
+        login.login_login(mLoginUser, mLoginPass);
+        return 0;
+    }
+    if (mddCommand == "logout") {
+        login.login_logout();
+        return 0;
+    }
+    if (mddCommand == "backup") {
+        let backupGuard = main_require_auth("staff");
+        if (backupGuard == false) { return 1; }
+        backup.backup_create();
+        return 0;
+    }
+    if (mddCommand == "restore") {
+        let restoreGuard = main_require_auth("admin");
+        if (restoreGuard == false) { return 1; }
+        if (mddArgCount < 2) {
+            print("Usage: ail run main.ail restore <timestamp>");
+            return 1;
+        }
+        let mRestoreTs = list.get(mddArgs, 1);
+        backup.backup_restore(mRestoreTs);
+        return 0;
+    }
+    if (mddCommand == "backups") {
+        backup.backup_list();
+        return 0;
+    }
+    if (mddCommand == "import-products") {
+        let importGuard = main_require_auth("staff");
+        if (importGuard == false) { return 1; }
+        import_csv.import_products();
+        return 0;
+    }
+    if (mddCommand == "import-customers") {
+        let importGuard = main_require_auth("staff");
+        if (importGuard == false) { return 1; }
+        import_csv.import_customers();
+        return 0;
+    }
+    if (mddCommand == "import-vendors") {
+        let importGuard = main_require_auth("staff");
+        if (importGuard == false) { return 1; }
+        import_csv.import_vendors();
+        return 0;
+    }
+    if (mddCommand == "import-movements") {
+        let importGuard = main_require_auth("staff");
+        if (importGuard == false) { return 1; }
+        import_csv.import_movements();
+        return 0;
+    }
+    if (mddCommand == "check") {
+        integrity.integrity_check();
+        return 0;
+    }
+    print("Unknown command: " + mddCommand);
     main_help();
     return 1;
+}
+
+fn main() {
+    let mainLocked = storage.storage_acquire_lock();
+    if (mainLocked == false) {
+        return 1;
+    }
+    let mainResult = main_dispatch();
+    storage.storage_release_lock();
+    return mainResult;
 }

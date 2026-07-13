@@ -77,9 +77,17 @@ def run_file(file_path: str, cli_args: list[str] | None = None) -> tuple[bool, s
     return True, captured
 
 
+# Login as admin
+print("=== Setup: login ===")
+passed, output = run_file(str(inv_dir / 'main.ail'), ['login', 'admin', 'admin123'])
+if not passed:
+    print(f"LOGIN FAILED: {output}")
+    sys.exit(1)
+print(output)
+
 # Initialize demo data
 print("=== Setup: init ===")
-passed, output = run_file(str(inv_dir / 'main.ail'), ['main.ail', 'init'])
+passed, output = run_file(str(inv_dir / 'main.ail'), ['init'])
 if not passed:
     print(f"INIT FAILED: {output}")
     sys.exit(1)
@@ -87,7 +95,7 @@ print(output)
 
 # Also seed extended data
 print("=== Setup: seed ===")
-passed, output = run_file(str(inv_dir / 'main.ail'), ['main.ail', 'seed'])
+passed, output = run_file(str(inv_dir / 'main.ail'), ['seed'])
 if not passed:
     print(f"SEED FAILED: {output}")
     sys.exit(1)

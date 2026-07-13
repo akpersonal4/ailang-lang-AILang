@@ -63,7 +63,7 @@ fn test_stock_aging_remove_batch() {
     let tsarBatchId = helpers.helpers_get_map_value_safe(tsarRecord, "id", "");
     let tsarBefore = stock_aging.stock_aging_get_batches("SAG-PROD-003", "SAG-WH-001");
     let tsarBeforeLen = list.len(tsarBefore);
-    let tsarRemove = stock_aging.stock_aging_remove_batch("SAG-PROD-003", "SAG-WH-001", tsarBatchId);
+    let tsarRemove = stock_aging.stock_aging_remove_batch(tsarBatchId);
     if (tsarRemove == false) {
         print("FAIL: stock_aging_remove_batch returned false");
         return false;

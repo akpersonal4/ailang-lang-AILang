@@ -1,0 +1,86 @@
+import file;
+import json;
+import path;
+import list;
+import map;
+import string;
+import storage;
+import helpers;
+import auth;
+
+fn login_load_users() {
+    let lluPath = path.join("config", "users.json");
+    if (file.exists(lluPath) == false) {
+        print("Error: No config/users.json found. Create it first.");
+        return false;
+    }
+    let lluContent = file.read(lluPath);
+    let lluParsed = json.parse(lluContent);
+    if (lluParsed == false) {
+        print("Error: Cannot parse config/users.json");
+        return false;
+    }
+    return lluParsed;
+}
+
+fn login_login(llUsername, llPassword) {
+    let llUsers = login_load_users();
+    if (llUsers == false) {
+        return false;
+    }
+    let llUser = helpers.helpers_find_in_list(llUsers, "username", llUsername);
+    if (llUser == false) {
+        print("Error: User not found");
+        return false;
+    }
+    let llStoredPassword = helpers.helpers_get_map_value_safe(llUser, "password", "");
+    if (llStoredPassword != llPassword) {
+        print("Error: Invalid password");
+        return false;
+    }
+    let llRole = helpers.helpers_get_map_value_safe(llUser, "role", "staff");
+    print("Login successful. Role: " + llRole);
+    let llSessionMap = map.new();
+    map.set(llSessionMap, "username", llUsername);
+    map.set(llSessionMap, "role", llRole);
+    map.set(llSessionMap, "logged_in_at", helpers.helpers_current_timestamp());
+    let llSessionList = list.new();
+    list.append(llSessionList, llSessionMap);
+    storage.storage_save("session", llSessionList);
+    print("Session saved. You can now run other commands.");
+    return true;
+}
+
+fn login_logout() {
+    let llEmptyList = list.new();
+    storage.storage_save("session", llEmptyList);
+    print("Logged out.");
+    return true;
+}
+
+fn login_require_auth(lraRequiredRole) {
+    let lraSessionList = storage.storage_load("session");
+    if (list.len(lraSessionList) == 0) {
+        print("Error: Not logged in. Run 'login' first.");
+        return false;
+    }
+    let lraSession = list.get(lraSessionList, 0);
+    let lraRole = helpers.helpers_get_map_value_safe(lraSession, "role", "");
+    if (lraRole == "") {
+        print("Error: Invalid session. Run 'login' again.");
+        return false;
+    }
+    if (auth.auth_check_role(lraRole, lraRequiredRole) == false) {
+        print("Error: Insufficient permissions. Required role: " + lraRequiredRole);
+        return false;
+    }
+    return true;
+}
+
+fn login_get_current_user() {
+    let lguSessionList = storage.storage_load("session");
+    if (list.len(lguSessionList) == 0) {
+        return false;
+    }
+    return list.get(lguSessionList, 0);
+}

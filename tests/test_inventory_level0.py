@@ -55,7 +55,7 @@ fn helpers_repeat_char(inChar, inCount, inAcc) {
 }
 
 fn helpers_pad_number(padNum, padDigits) {
-    let padStr = string.to_string(padNum);
+    let padStr = convert.to_string(padNum);
     let padLen = string.length(padStr);
     if (padLen >= padDigits) {
         return padStr;
@@ -76,7 +76,7 @@ fn helpers_safe_string(strValue) {
     if (strValue == false) {
         return "";
     }
-    return string.to_string(strValue);
+    return convert.to_string(strValue);
 }
 
 fn helpers_copy_map_iter(hmKeys, hmSource, hmTarget, hmIdx) {
@@ -119,7 +119,7 @@ fn helpers_list_contains_rec(lcItems, lcValue, lcIdx) {
 }
 
 fn helpers_format_currency(amount) {
-    return "$" + string.to_string(amount);
+    return "$" + convert.to_string(amount);
 }
 
 fn helpers_string_to_number(stValue) {
@@ -221,6 +221,28 @@ fn storage_collection_path(collName) {
     return path.join(STORAGE_DATA_DIR, collName + ".json");
 }
 
+fn storage_find_first_rec(ffItems, ffKey, ffValue, ffIdx) {
+    if (ffIdx >= list.len(ffItems)) {
+        return false;
+    }
+    let ffItem = list.get(ffItems, ffIdx);
+    if (map.has(ffItem, ffKey)) {
+        if (map.get(ffItem, ffKey) == ffValue) {
+            return ffItem;
+        }
+    }
+    return storage_find_first_rec(ffItems, ffKey, ffValue, ffIdx + 1);
+}
+
+fn storage_apply_changes(acTarget, acSource, acKeys, acIdx) {
+    if (acIdx >= list.len(acKeys)) {
+        return acTarget;
+    }
+    let acKey = list.get(acKeys, acIdx);
+    map.set(acTarget, acKey, map.get(acSource, acKey));
+    return storage_apply_changes(acTarget, acSource, acKeys, acIdx + 1);
+}
+
 fn storage_load(collName) {
     let collPath = storage_collection_path(collName);
     if (file.exists(collPath) == false) {
@@ -258,19 +280,6 @@ fn storage_get_by_id(collName, getId) {
     return storage_find_first_rec(getItems, "id", getId, 0);
 }
 
-fn storage_find_first_rec(ffItems, ffKey, ffValue, ffIdx) {
-    if (ffIdx >= list.len(ffItems)) {
-        return false;
-    }
-    let ffItem = list.get(ffItems, ffIdx);
-    if (map.has(ffItem, ffKey)) {
-        if (map.get(ffItem, ffKey) == ffValue) {
-            return ffItem;
-        }
-    }
-    return storage_find_first_rec(ffItems, ffKey, ffValue, ffIdx + 1);
-}
-
 fn storage_update_rec(urItems, urId, urChanges, urIdx) {
     if (urIdx >= list.len(urItems)) {
         return false;
@@ -282,15 +291,6 @@ fn storage_update_rec(urItems, urId, urChanges, urIdx) {
         return urItems;
     }
     return storage_update_rec(urItems, urId, urChanges, urIdx + 1);
-}
-
-fn storage_apply_changes(acTarget, acSource, acKeys, acIdx) {
-    if (acIdx >= list.len(acKeys)) {
-        return acTarget;
-    }
-    let acKey = list.get(acKeys, acIdx);
-    map.set(acTarget, acKey, map.get(acSource, acKey));
-    return storage_apply_changes(acTarget, acSource, acKeys, acIdx + 1);
 }
 
 fn storage_update(collName, updId, updChanges) {

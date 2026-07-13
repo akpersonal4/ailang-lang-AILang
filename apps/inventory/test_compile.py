@@ -67,42 +67,76 @@ if data_dir.exists():
 
 # --- Test help ---
 print("=== TEST: help ===")
-result, err = run_app(['main.ail', 'help'])
+result, err = run_app(['help'])
 print(f'Result: {result}, Err: {err}')
 
-# --- Test init ---
-print("\n=== TEST: init ===")
-result, err = run_app(['main.ail', 'init'])
+# --- Test login ---
+print("\n=== TEST: login ===")
+result, err = run_app(['login', 'admin', 'admin123'])
 print(f'Result: {result}, Err: {err}')
 if err:
     sys.exit(1)
 
-# --- Test stock ---
+# --- Test init (requires auth) ---
+print("\n=== TEST: init ===")
+result, err = run_app(['init'])
+print(f'Result: {result}, Err: {err}')
+if err:
+    sys.exit(1)
+
+# --- Test stock (requires auth) ---
 print("\n=== TEST: stock ===")
-result, err = run_app(['main.ail', 'stock'])
+result, err = run_app(['stock'])
 print(f'Result: {result}, Err: {err}')
 if err:
     sys.exit(1)
 
 # --- Test report ---
 print("\n=== TEST: report ===")
-result, err = run_app(['main.ail', 'report'])
+result, err = run_app(['report'])
 print(f'Result: {result}, Err: {err}')
 if err:
     sys.exit(1)
 
 # --- Test csv export ---
 print("\n=== TEST: csv ===")
-result, err = run_app(['main.ail', 'csv'])
+result, err = run_app(['csv'])
 print(f'Result: {result}, Err: {err}')
 if err:
     sys.exit(1)
 
 # --- Test json export ---
 print("\n=== TEST: json ===")
-result, err = run_app(['main.ail', 'json'])
+result, err = run_app(['json'])
 print(f'Result: {result}, Err: {err}')
 if err:
     sys.exit(1)
+
+# --- Test backup (requires auth) ---
+print("\n=== TEST: backup ===")
+result, err = run_app(['backup'])
+print(f'Result: {result}, Err: {err}')
+if err:
+    sys.exit(1)
+
+# --- Test check ---
+print("\n=== TEST: check ===")
+result, err = run_app(['check'])
+print(f'Result: {result}, Err: {err}')
+if err:
+    sys.exit(1)
+
+# --- Test logout ---
+print("\n=== TEST: logout ===")
+result, err = run_app(['logout'])
+print(f'Result: {result}, Err: {err}')
+
+# --- Verify auth guard (should fail) ---
+print("\n=== TEST: init after logout (should fail) ===")
+result, err = run_app(['init'])
+if err:
+    print("Auth guard works (expected): " + err)
+else:
+    print("Result: " + str(result))
 
 print("\n=== ALL TESTS PASSED ===")

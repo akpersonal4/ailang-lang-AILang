@@ -1,0 +1,45 @@
+import list;
+import map;
+import string;
+import convert;
+import storage;
+import helpers;
+
+fn validate_required(vrFieldName, vrValue) {
+    if (vrValue == false) {
+        return "Error: " + vrFieldName + " is required";
+    }
+    let vrStr = convert.to_string(vrValue);
+    if (string.trim(vrStr) == "") {
+        return "Error: " + vrFieldName + " cannot be empty";
+    }
+    return "";
+}
+
+fn validate_positive_number(vpFieldName, vpValue) {
+    let vpNum = convert.to_int(vpValue);
+    if (vpNum <= 0) {
+        return "Error: " + vpFieldName + " must be a positive number";
+    }
+    return "";
+}
+
+fn validate_email(veFieldName, veValue) {
+    let veStr = convert.to_string(veValue);
+    if (string.contains(veStr, "@") == false) {
+        return "Error: " + veFieldName + " must be a valid email";
+    }
+    if (string.contains(veStr, ".") == false) {
+        return "Error: " + veFieldName + " must be a valid email";
+    }
+    return "";
+}
+
+fn validate_unique(vuFieldName, vuValue, vuCollectionName, vuSearchKey) {
+    let vuAll = storage.storage_list(vuCollectionName);
+    let vuFound = helpers.helpers_find_in_list(vuAll, vuSearchKey, vuValue);
+    if (vuFound != false) {
+        return "Error: " + vuFieldName + " must be unique - " + convert.to_string(vuValue) + " already exists";
+    }
+    return "";
+}

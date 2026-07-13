@@ -80,6 +80,6 @@ fn stock_aging_summary(sasProductId) {
     return stock_aging_summary_rec(sasAll, sasProductId, sasNow, 0, 0, 0, 0, 0);
 }
 
-fn stock_aging_remove_batch(sarbProductId, sarbWarehouseId, sarbBatchId) {
+fn stock_aging_remove_batch(sarbBatchId) {
     return storage.storage_delete("stock_aging", sarbBatchId);
 }

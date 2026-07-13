@@ -1,0 +1,175 @@
+import file;
+import json;
+import list;
+import map;
+import string;
+import convert;
+import path;
+import storage;
+import helpers;
+
+let INTEGRITY_WARNINGS = 0;
+
+fn integrity_append_result(irList, irMessage) {
+    list.append(irList, irMessage);
+    print("  [WARN] " + irMessage);
+    INTEGRITY_WARNINGS = INTEGRITY_WARNINGS + 1;
+    return irList;
+}
+
+fn integrity_check_calc_balance_rec(iccbrMovs, iccbrProdId, iccbrBalance, iccbrIdx) {
+    if (iccbrIdx >= list.len(iccbrMovs)) {
+        return iccbrBalance;
+    }
+    let iccbrItem = list.get(iccbrMovs, iccbrIdx);
+    let iccbrPid = helpers.helpers_get_map_value_safe(iccbrItem, "product_id", "");
+    if (iccbrPid == iccbrProdId) {
+        let iccbrQty = convert.to_int(helpers.helpers_get_map_value_safe(iccbrItem, "quantity", 0));
+        let iccbrType = helpers.helpers_get_map_value_safe(iccbrItem, "type", "");
+        if (iccbrType == "inbound") {
+            iccbrBalance = iccbrBalance + iccbrQty;
+        } else {
+            iccbrBalance = iccbrBalance - iccbrQty;
+        }
+    }
+    return integrity_check_calc_balance_rec(iccbrMovs, iccbrProdId, iccbrBalance, iccbrIdx + 1);
+}
+
+fn integrity_check_product_cats_rec(icpcProds, icpcCats, icpcResult, icpcIdx) {
+    if (icpcIdx >= list.len(icpcProds)) {
+        return icpcResult;
+    }
+    let icpcItem = list.get(icpcProds, icpcIdx);
+    let icpcName = helpers.helpers_get_map_value_safe(icpcItem, "name", "unknown");
+    let icpcCatId = helpers.helpers_get_map_value_safe(icpcItem, "category_id", "");
+    if (icpcCatId != "") {
+        let icpcFound = helpers.helpers_find_in_list(icpcCats, "id", icpcCatId);
+        if (icpcFound == false) {
+            icpcResult = integrity_append_result(icpcResult, "Product " + icpcName + " references non-existent category " + icpcCatId);
+        }
+    }
+    return integrity_check_product_cats_rec(icpcProds, icpcCats, icpcResult, icpcIdx + 1);
+}
+
+fn integrity_check_movement_prods_rec(icmpMovs, icmpProds, icmpResult, icmpIdx) {
+    if (icmpIdx >= list.len(icmpMovs)) {
+        return icmpResult;
+    }
+    let icmpItem = list.get(icmpMovs, icmpIdx);
+    let icmpProdId = helpers.helpers_get_map_value_safe(icmpItem, "product_id", "");
+    if (icmpProdId != "") {
+        let icmpFound = helpers.helpers_find_in_list(icmpProds, "id", icmpProdId);
+        if (icmpFound == false) {
+            icmpResult = integrity_append_result(icmpResult, "Movement references non-existent product " + icmpProdId);
+        }
+    }
+    return integrity_check_movement_prods_rec(icmpMovs, icmpProds, icmpResult, icmpIdx + 1);
+}
+
+fn integrity_check_neg_stock_rec(icnsProds, icnsMovs, icnsResult, icnsIdx) {
+    if (icnsIdx >= list.len(icnsProds)) {
+        return icnsResult;
+    }
+    let icnsItem = list.get(icnsProds, icnsIdx);
+    let icnsId = helpers.helpers_get_map_value_safe(icnsItem, "id", "");
+    let icnsName = helpers.helpers_get_map_value_safe(icnsItem, "name", "unknown");
+    let icnsBalance = 0;
+    let icnsMLen = list.len(icnsMovs);
+    if (icnsMLen > 0) {
+        icnsBalance = integrity_check_calc_balance_rec(icnsMovs, icnsId, 0, 0);
+    }
+    if (icnsBalance < 0) {
+        icnsResult = integrity_append_result(icnsResult, "Product " + icnsName + " has negative stock balance: " + convert.to_string(icnsBalance));
+    }
+    return integrity_check_neg_stock_rec(icnsProds, icnsMovs, icnsResult, icnsIdx + 1);
+}
+
+fn integrity_check_json_file(icjfCollection, icjfPath, icjfResults) {
+    if (file.exists(icjfPath) == false) {
+        return icjfResults;
+    }
+    let icjfContent = file.read(icjfPath);
+    if (string.length(icjfContent) == 0) {
+        return integrity_append_result(icjfResults, icjfCollection + ".json is empty");
+    }
+    let icjfParsed = json.parse(icjfContent);
+    if (icjfParsed == false) {
+        return integrity_append_result(icjfResults, icjfCollection + ".json failed to parse");
+    }
+    return icjfResults;
+}
+
+fn integrity_check_json_files_rec(icjfrCollections, icjfrIdx, icjfrResults) {
+    if (icjfrIdx >= list.len(icjfrCollections)) {
+        return icjfrResults;
+    }
+    let icjfrColl = list.get(icjfrCollections, icjfrIdx);
+    let icjfrPath = path.join("data", icjfrColl + ".json");
+    icjfrResults = integrity_check_json_file(icjfrColl, icjfrPath, icjfrResults);
+    return integrity_check_json_files_rec(icjfrCollections, icjfrIdx + 1, icjfrResults);
+}
+
+fn integrity_check_product_category_refs(icpcrResults) {
+    let icpcrProducts = storage.storage_list("products");
+    let icpcrCategories = storage.storage_list("categories");
+    let icpcrPLen = list.len(icpcrProducts);
+    if (icpcrPLen == 0) {
+        return icpcrResults;
+    }
+    return integrity_check_product_cats_rec(icpcrProducts, icpcrCategories, icpcrResults, 0);
+}
+
+fn integrity_check_movement_product_refs(icmprResults) {
+    let icmprMovements = storage.storage_list("movements");
+    let icmprProducts = storage.storage_list("products");
+    let icmprMLen = list.len(icmprMovements);
+    if (icmprMLen == 0) {
+        return icmprResults;
+    }
+    return integrity_check_movement_prods_rec(icmprMovements, icmprProducts, icmprResults, 0);
+}
+
+fn integrity_check_negative_stock() {
+    let icnsMovements = storage.storage_list("movements");
+    let icnsProducts = storage.storage_list("products");
+    let icnsResults = list.new();
+    let icnsPLen = list.len(icnsProducts);
+    if (icnsPLen == 0) {
+        return icnsResults;
+    }
+    return integrity_check_neg_stock_rec(icnsProducts, icnsMovements, icnsResults, 0);
+}
+
+fn integrity_check_json_files() {
+    let icjfCollections = list.new();
+    list.append(icjfCollections, "products");
+    list.append(icjfCollections, "customers");
+    list.append(icjfCollections, "vendors");
+    list.append(icjfCollections, "categories");
+    list.append(icjfCollections, "movements");
+    list.append(icjfCollections, "sales_orders");
+    list.append(icjfCollections, "purchase_orders");
+    list.append(icjfCollections, "invoices");
+    list.append(icjfCollections, "payments");
+    list.append(icjfCollections, "suppliers");
+    list.append(icjfCollections, "warehouses");
+    let icjfResults = list.new();
+    return integrity_check_json_files_rec(icjfCollections, 0, icjfResults);
+}
+
+fn integrity_check() {
+    INTEGRITY_WARNINGS = 0;
+    print("=== INTEGRITY CHECK ===");
+    let icJsonResults = integrity_check_json_files();
+    let icCatRefs = integrity_check_product_category_refs(icJsonResults);
+    let icMovRefs = integrity_check_movement_product_refs(icCatRefs);
+    let icNegStock = integrity_check_negative_stock();
+    let icTotalWarnings = INTEGRITY_WARNINGS;
+    if (icTotalWarnings == 0) {
+        print("No issues found.");
+    } else {
+        print("Total warnings: " + convert.to_string(icTotalWarnings));
+    }
+    print("=== END ===");
+    return true;
+}
