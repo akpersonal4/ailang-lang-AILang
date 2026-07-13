@@ -1,10 +1,11 @@
 {
   "name": "vscode-ailang",
   "displayName": "AILang",
-  "description": "AILang language support — syntax highlighting, snippets, bracket matching, auto-indentation",
-  "version": "0.1.2",
+  "description": "AILang language support — syntax highlighting, LSP diagnostics, go-to-definition, hover, rename, snippets",
+  "version": "0.2.0",
   "publisher": "ailang",
   "license": "MIT",
+  "icon": "icons/icon.png",
   "repository": {
     "type": "git",
     "url": "https://github.com/anomalyco/ailang.git"
@@ -37,8 +38,7 @@
         "path": "./snippets/snippets.code-snippets"
       }
     ]
-  }
-,
+  },
   "main": "extension.js",
   "activationEvents": ["onLanguage:ailang"],
   "scripts": {

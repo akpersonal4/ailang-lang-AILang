@@ -15,6 +15,7 @@ _KEYWORDS: list[CompletionItem] = [
     CompletionItem("else", kind=1, detail="Keyword", insert_text="else {\n    \n}"),
     CompletionItem("return", kind=1, detail="Keyword", insert_text="return "),
     CompletionItem("import", kind=1, detail="Keyword", insert_text="import "),
+    CompletionItem("for", kind=1, detail="Keyword (experimental)", insert_text="for item in collection {\n    \n}"),
     CompletionItem("true", kind=21, detail="Boolean literal", insert_text="true"),
     CompletionItem("false", kind=21, detail="Boolean literal", insert_text="false"),
 ]

@@ -2,6 +2,22 @@
 
 All notable changes to the AILang VS Code extension will be documented in this file.
 
+## [0.2.0] - 2026-07-13
+
+### Added
+- Code actions with actual TextEdit edits (import stdlib module, remove unused variable)
+- `for` keyword syntax highlighting and completion (experimental)
+- Icon field in package.json for marketplace display
+- Updated description to reflect LSP capabilities
+
+### Fixed
+- Version synchronization: package.json, LSP serverInfo, .vsix all aligned at 0.2.0
+- Trailing comma in package.json that caused strict JSON parse errors
+- Code actions now generate WorkspaceEdit operations instead of title-only suggestions
+
+### Changed
+- Description updated: "syntax highlighting, LSP diagnostics, go-to-definition, hover, rename, snippets"
+
 ## [0.1.1] - 2026-07-05
 
 ### Added

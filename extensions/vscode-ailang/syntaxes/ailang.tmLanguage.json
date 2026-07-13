@@ -50,7 +50,8 @@
         { "match": "\\belse\\b", "name": "keyword.control.conditional.ailang" },
         { "match": "\\breturn\\b", "name": "keyword.control.return.ailang" },
         { "match": "\\bimport\\b", "name": "keyword.control.import.ailang" },
-        { "match": "\\bas\\b", "name": "keyword.other.alias.ailang" }
+        { "match": "\\bas\\b", "name": "keyword.other.alias.ailang" },
+        { "match": "\\bfor\\b", "name": "keyword.control.loop.ailang" }
       ]
     },
     "booleans": {
