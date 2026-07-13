@@ -79,29 +79,33 @@ import as     true   false
 
 #### 2.6.1 Numeric Literals
 
-Numeric literals are sequences of decimal digits (`0–9`). Only integer literals are supported.
+Numeric literals are sequences of decimal digits (`0–9`) with an optional fractional part.
 
 ```ail
 42       // integer
 0        // integer zero
+3.14     // float
+0.5      // float
 ```
 
 Number representation:
 - No hexadecimal, octal, or binary literals
 - No scientific notation
 - No underscore separators
-- No float literals — use integer division (`22 / 7`) to produce float values
+- Float literals use a single `.` to separate integer and fractional parts
 
 **Examples:**
 
 ```text
 Valid:
 
-22 / 7
+42
+3.14
+0.5
 
 Invalid:
 
-3.14
+3.  (trailing dot — use 3.0)
 ```
 
 #### 2.6.2 String Literals
@@ -152,7 +156,7 @@ Separators:    ,   ;
 | LEX001 | Unexpected character |
 | LEX002 | Unterminated string literal |
 | LEX003 | Invalid escape sequence |
-| LEX004 | Float literal not supported — use integer division |
+
 
 ---
 
@@ -226,6 +230,10 @@ fn name(parameter1, parameter2) {
 ```
 
 - Parameters are positional, comma-separated identifiers.
+- Parameters may have default values: `fn add(a, b = 10) { ... }`.
+- Parameters without defaults are required; defaults are used when the argument is omitted at the call site.
+- Default value expressions are evaluated fresh on each call when the parameter is omitted.
+- Required parameters must precede parameters with defaults.
 - Empty parameter lists are valid: `fn zero() { ... }`.
 - Functions must be defined before they are called (no forward references).
 - Empty function bodies are valid: `fn noop() {}`.
@@ -479,13 +487,13 @@ math.add(1, 2)        // calls add exported by math.ail
 
 | Module | Description |
 |--------|-------------|
-| `string` | String manipulation: `concat`, `equals`, `uppercase`, `lowercase`, `length`, `contains`, `starts_with`, `ends_with`, `trim`, `substring` |
+| `string` | String manipulation: `concat`, `equals`, `uppercase`, `lowercase`, `length`, `contains`, `starts_with`, `ends_with`, `trim`, `substring`, `find`, `find_from`, `split`, `join` |
 | `math` | Arithmetic helpers: `add`, `sub`, `mul`, `div`, `abs`, `min`, `max` |
-| `list` | Dynamic array: `new`, `append`, `get`, `len`, `contains`, `remove`, `clear` |
+| `list` | Dynamic array: `new`, `append`, `get`, `len`, `contains`, `remove`, `clear`, `sum`, `find_by_key`, `sort`, `sort_by_key`, `copy`, `filter_by_key` |
 | `array` | Alias for list: `new`, `push`, `get`, `len`, `contains`, `remove`, `clear` |
-| `map` | Key-value dictionary: `new`, `set`, `get`, `has`, `delete`, `keys`, `clear` |
+| `map` | Key-value dictionary: `new`, `set`, `get`, `has`, `delete`, `keys`, `get_or_default`, `clear` |
 | `set` | Unordered set: `new`, `add`, `contains`, `len`, `remove`, `clear` |
-| `file` | File I/O: `exists`, `read`, `write`, `append`, `remove` |
+| `file` | File I/O: `exists`, `read`, `write`, `append`, `remove`, `listdir` |
 | `path` | Path manipulation: `join`, `basename`, `dirname`, `extension`, `normalize` |
 | `json` | JSON: `parse`, `stringify` |
 | `csv` | CSV: `parse`, `parse_header`, `stringify` |
@@ -633,7 +641,8 @@ variable_declaration = "let", identifier, "=", expression, ";" ;
 
 function_declaration = "fn", identifier, "(", [ parameter_list ], ")", block ;
 
-parameter_list = identifier, { ",", identifier } ;
+parameter_list = parameter, { ",", parameter } ;
+parameter = identifier, [ "=", expression ] ;
 
 (* --- Statements --- *)
 statement = variable_declaration
@@ -684,7 +693,7 @@ argument_list = expression, { ",", expression } ;
 
 (* --- Lexical Elements --- *)
 identifier = ( letter | "_" ), { letter | digit | "_" } ;
-number_literal = digit, { digit } ;
+number_literal = digit, { digit }, [ ".", digit, { digit } ] ;
 string_literal = '"', { string_char }, '"' ;
 string_char = ? any character except '"' or '\\' ?
             | escape_sequence ;
@@ -722,7 +731,8 @@ Every phase is deterministic: the same input always produces the same output.
 - No string indexing (`s[i]`) — use `string` module functions.
 - No character type — use single-character strings.
 - No array/list/set literal syntax — use module functions.
-- No float literals — use integer division (`22 / 7`) to produce float values.
+
+
 - No type annotations on function parameters or return values.
 - No `null`, `nil`, `undefined`, or `None` literal — `None` appears only from JSON parsing.
 - No struct, class, or user-defined types.
@@ -904,6 +914,7 @@ ail lsp
 | 0.1.0 | — | Initial release. Lexer, parser, AST, semantic analysis, type checking, IR, runtime, 16 stdlib modules, 27 apps, 360+ tests. |
 | 0.1.1 | — | Documentation consolidation. Canonical LANGUAGE_SPEC.md, archived legacy specs, fixed LANGUAGE_TOUR.md inconsistencies, 374 tests. |
 | 0.1.2 | — | Bug fix sprint. Fixed AST builder crashes (empty return, missing initializer), module bare-name resolution, float literal diagnostic, block scope shadowing, recursion limit. Added LEX004. 522 tests. |
+| 0.2.0 | — | Float literal support. Default parameter values. Compile-time arity validation (range check for defaults). Removed LEX004. 38 inventory tests. |
 
 ---
 
@@ -992,7 +1003,8 @@ All other standard library functionality is accessed through module imports (`im
 | LEX001 | Unexpected character | Lexer |
 | LEX002 | Unterminated string literal | Lexer |
 | LEX003 | Invalid escape sequence | Lexer |
-| LEX004 | Float literal not supported — use integer division | Lexer |
+
+
 | PAR001 | Expected token | Parser |
 | PAR002 | Invalid import path | Parser |
 | SEM001 | Duplicate declaration | Semantic analysis |

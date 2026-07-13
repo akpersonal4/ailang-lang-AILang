@@ -184,7 +184,8 @@ not oversights. No need to argue, campaign, or "prove the need."
 | **Implicit type conversions** | All conversions must be explicit via `convert.to_int()`, `convert.to_string()`, etc. Implicit coercion is a leading source of bugs in other languages. |
 | **Multiple inheritance** | AILang has no class or inheritance system. Multiple inheritance would add significant complexity without alignment to the language's design goals. |
 | **List / map / set literals syntax** | No `[1, 2, 3]`, `{"key": "val"}`, or `{1, 2, 3}` literals. Collections are built with `new()` / `append()` / `set()`. Literal syntax was rejected after Phase 8 documentation audit. |
-| **Float literal syntax** | No `3.14` decimal literals. All numbers are integers. Phase 8 docs corrected to reflect this limitation. |
+
+
 | **`while` / `for` loops** | AILang deliberately has no iterative constructs. Recursion is the iteration mechanism. Grammar stays minimal. |
 | **Short-circuit `&&` / `||`** | Both operands are always evaluated before the operator is applied. Changing this is a semantic break. Workaround: nested `if` blocks. |
 

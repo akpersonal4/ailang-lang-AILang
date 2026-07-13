@@ -143,7 +143,7 @@ AILang is dynamically typed. The runtime recognizes these types:
 | Type | Examples | Notes |
 |------|----------|-------|
 | `int` | `42`, `-1`, `0` | Integer literals |
-| `float` | `22 / 7`, `10 / 3` | Result of division |
+| `float` | `3.14`, `0.5`, `22 / 7` | Float literals and result of division |
 | `string` | `"hello"` | Double-quoted only |
 | `bool` | `true`, `false` | First-class literals |
 | `list` | `list.new()` | Via stdlib `list` module |
@@ -449,7 +449,8 @@ argument_list = expression, { ",", expression } ;
 | No loops (while/for) | Use recursion |
 | No string indexing (`s[i]`) | Use `string.substring()`, `string.contains()`, `string.length()` |
 | No forward references | Define functions in dependency order |
-| No float literals | Use integer division: `22 / 7` |
+
+
 | No None/null literal | Use `json.parse("null")` for Python None |
 | No integer division | Use `convert.to_int(n / d)` |
 | No character type | Use single-character strings |

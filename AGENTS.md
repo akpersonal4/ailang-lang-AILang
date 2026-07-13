@@ -127,3 +127,70 @@ After each benchmark or new app: new lesson? → appeared in ≥2 independent ap
 - Working `.ail` file(s) that build and run
 - All Validation Checklist items pass
 - If new lesson discovered: documented in Playbook before considering work complete
+
+---
+
+## 8. Feature Governance
+
+Every new feature proposal **must** answer these six questions:
+
+1. **Which mission objective does it support?**
+2. **Which measured pain point does it solve?**
+3. **Can existing tooling solve it instead?**
+4. **Does it increase language expressiveness?**
+5. **Does it reduce determinism?**
+6. **Would this feature still make sense if AI code generation did not exist?**
+
+**Q6 lens**: If the answer is *No* (AI-specific optimization) it likely belongs in AILang. If the answer is *Yes* (every language eventually needs this) it faces much stronger scrutiny — it may push AILang toward becoming a generic language rather than an AI-first business language.
+
+### Decision Matrix
+
+| Result Pattern | Outcome |
+|---|---|
+| Q1–Q3 positive, Q4–Q6 negative | ✅ Approve for v1.x |
+| Q4 or Q5 positive with strong evidence | ⚠ ADR + CTO review |
+| Q4 or Q5 positive without evidence | ❌ Reject |
+| Q6 positive but feature is ecosystem/tooling | ✅ Allow with review |
+| Universal feature with weak mission alignment | 🔬 Move to v2.0 research |
+
+### Governance Tracks
+
+Proposals fall into one of two tracks, each with its own review process.
+
+#### Language Features
+
+Changes to syntax, semantics, types, or execution model.
+
+**Examples:** loops, generics, async, pattern matching, reflection, operator overloading, algebraic types.
+
+**Review:** Q1–Q6, strict, ADR required.
+
+#### Tooling Features
+
+Non-language additions to the developer experience.
+
+**Examples:** `ail test`, `ail rename`, `ail fmt`, `ail watch`, `ail new`, VS Code extension, LSP features.
+
+**Review:** Q1–Q3 only, lightweight maintainer approval.
+
+### Review Ownership
+
+| Domain | Reviewer | Gate |
+|---|---|---|
+| Language feature | CTO + Architecture | ADR required |
+| Tooling feature | Maintainer | Issue comment |
+| Runtime/compiler internal | Architecture | ADR required |
+
+### Approval Stage
+
+> Feature proposals must be reviewed and approved **before implementation begins**.
+
+This is not a post-hoc justification exercise. A rejected proposal costs a document. An implemented feature that should have been rejected costs months of debt.
+
+### Alignment
+
+The project remains tightly aligned with:
+
+> **AI-assisted, deterministic, low-maintenance business software development.**
+
+Features that damage determinism, add unmeasured complexity, or solve no observed pain point are out of scope for v1.x.

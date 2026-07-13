@@ -1,6 +1,6 @@
 # AILang Development Playbook
 
-**Informed by:** 10 benchmarks, 66 applications, 522 tests, ~6,610 LOC of AILang  
+**Informed by:** 10 benchmarks, 66+ applications, 893+ tests, ~6,610 LOC of AILang + 8,515 LOC inventory system  
 **Goal:** Eliminate predictable iterations through upfront planning  
 
 ---
@@ -44,14 +44,18 @@ Root cause: 100% of first compiles fail due to forward references. 90% of first 
 | `string.length(s)` | ✅ Yes | — |
 | `string.substring(s, start, end)` | ✅ Yes | — |
 | `string.contains(s, pattern)` | ✅ Yes | — |
-| `string.split(s, delim)` | ❌ **No** | Write recursive `split_string` |
-| `string.find(s, pattern)` | ❌ **No** | Write recursive `find_in_string` |
-| `string.join(list, sep)` | ❌ **No** | Write recursive join |
+| `string.find(s, pattern)` | ✅ Yes | — |
+| `string.find_from(s, pattern, start)` | ✅ Yes | — |
+| `string.split(s, delim)` | ✅ Yes | — |
+| `string.join(list, sep)` | ✅ Yes | — |
 | `string.replace(s, from, to)` | ❌ **No** | Write character-by-character |
-| `list.copy(list)` | ❌ **No** | Write recursive `list_copy(src, result, pos)` |
-| `list.sort(list, comparator)` | ❌ **No** | Write recursive selection sort |
+| `list.copy(list)` | ✅ Yes | — |
+| `list.sort(list)` | ✅ Yes | — |
+| `list.find_by_key(list, key, value)` | ✅ Yes | — |
+| `list.sum(list)` | ✅ Yes | — |
 | `list.set(list, index, value)` | ❌ **No** | Use map-based wrappers |
 | `map.get(map, key)` | ✅ Yes (raises on missing) | Guard with `map.has(map, key)` |
+| `map.get_or_default(map, key, default)` | ✅ Yes | — |
 | `map.has(map, key)` | ✅ Yes | — |
 
 ### Evidence
@@ -136,10 +140,8 @@ if (map.has(data, "key")) {
 
 ### Must be written manually
 
-- **split:** `string.split(text, delim)` does not exist. See `examples/patterns/string_split.ail`
-- **find:** `string.find(text, pattern)` does not exist. See `examples/patterns/string_find.ail`
-- **join:** `string.join(list, sep)` does not exist. Write recursive join.
 - **replace:** `string.replace(s, from, to)` does not exist. Write character-by-character.
+- **list.set:** `list.set(list, index, value)` does not exist. Use map-based wrappers.
 
 ### concat constraint
 
@@ -247,7 +249,7 @@ fn save_data(filepath, data) {
 | `map.get` without `map.has` check | Crashes at runtime on missing key | Always guard with `map.has` |
 | Writing loop constructs | `while`/`for` don't exist | Use recursive helper + wrapper |
 | `string.concat(a, b, c)` with 3+ args | Takes exactly 2 args | Use `+` for 3+ strings |
-| Blindly calling missing stdlib functions | `split`, `find`, `join`, `sort`, `list.copy` don't exist | Check stdlib table first |
+| Blindly calling missing stdlib functions | `string.replace`, `list.set` don't exist | Check stdlib table first |
 | 100+ functions in a single file | Forward reference ordering becomes error-prone and exhausting beyond ~100 functions | Plan multi-file split when possible; physically sort by dependency level |
 | `let` without initializer | Syntax error | `let x = value` always |
 | `return` without value | Syntax error | `return expr` always |
@@ -259,17 +261,17 @@ fn save_data(filepath, data) {
 Derived from 10 benchmarks. Each lesson confirmed in ≥2 independent apps before inclusion.
 
 1. **Forward references are the #1 compile failure** (100% of benchmarks). Fix: dependency map before writing.
-2. **Missing stdlib functions** (`split`, `find`, `join`, `sort`) cause 60% of first-run failures. Fix: stdlib audit table.
-3. **Eager `&&`** causes silent logic errors when right operand depends on left (40% of benchmarks). Fix: nested `if`.
-4. **Map key strings** are opaque at compile time — mismatches only surface at runtime (40% of benchmarks). Fix: key name audit.
-5. **Variable scoping is global** — `let i` in one function overwrites `i` in another (20% of benchmarks). Fix: unique names.
-6. **`string.concat` 2-arg limit** catches 30% of benchmarks. Fix: use `+` for 3+ strings.
-7. **100% build+run** is achievable with upfront planning — 10/10 benchmark apps passed after applying this playbook.
-8. **Compiler is deterministic** — identical SHA-256 across rebuilds. No flaky failures.
-9. **Compile time scales linearly** — 5,000 LOC in ~1.88s, 10,000 LOC stress-tested.
-10. **Production readiness (6.0/10)** — suitable for CRUD/data-processing ≤2,000 LOC; not suitable for compute-heavy workloads.
-11. **`list.copy` does not exist** — confirmed by Kanban (1012 LOC, 102 functions). Always write a custom recursive `list_copy`.
-12. **~100 functions per file is the practical max** — beyond this, forward reference ordering becomes unmanageable without multi-file support. Plan to split early.
+2. **Eager `&&`** causes silent logic errors when right operand depends on left (40% of benchmarks). Fix: nested `if`.
+3. **Map key strings** are opaque at compile time — mismatches only surface at runtime (40% of benchmarks). Fix: key name audit.
+4. **Variable scoping is global** — `let i` in one function overwrites `i` in another (20% of benchmarks). Fix: unique names.
+5. **`string.concat` 2-arg limit** catches 30% of benchmarks. Fix: use `+` for 3+ strings.
+6. **100% build+run** is achievable with upfront planning — 10/10 benchmark apps passed after applying this playbook.
+7. **Compiler is deterministic** — identical SHA-256 across rebuilds. No flaky failures.
+8. **Compile time scales linearly** — 5,000 LOC in ~1.88s, 10,000 LOC stress-tested.
+9. **Production readiness (6.0/10)** — suitable for CRUD/data-processing ≤2,000 LOC; not suitable for compute-heavy workloads.
+10. **~100 functions per file is the practical max** — beyond this, forward reference ordering becomes unmanageable without multi-file support. Plan to split early.
+11. **`ail run` strips the script path from `environment.args()`** — `args[0]` is the first user argument, not the script filename. Test runners that previously expected the script path as `args[0]` must be updated to `args[0] = first user argument`.
+12. **`json.parse` does not return `false` on invalid input** — the runtime raises a Python `JSONDecodeError` instead. Always validate the string is non-empty before calling `json.parse`. Known bug BUG-008.
 
 ---
 

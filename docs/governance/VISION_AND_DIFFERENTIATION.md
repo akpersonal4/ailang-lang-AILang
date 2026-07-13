@@ -59,7 +59,7 @@ reliably, then humans with AI assistance can build real software with it.
 
 | Problem | Why AILang Defers | Better Choice |
 |---------|-------------------|---------------|
-| **High-performance number crunching** | No float literals, no SIMD, no JIT (yet) | Rust, C++, Fortran |
+| **High-performance number crunching** | No SIMD, no JIT (yet) | Rust, C++, Fortran |
 | **Concurrent / parallel workloads** | No threads, no async, no actors | Go, Erlang, Rust |
 | **Large-scale enterprise applications** | No package manager, no LSP (yet), no IDE support | Java, C#, TypeScript |
 | **Rapid prototyping** | No REPL, no dynamic typing, no inferred types | Python, JavaScript |
