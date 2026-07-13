@@ -16,6 +16,22 @@ from tools.ail_package_manager.models import (
     ProjectManifest,
     ResolvedDependency,
 )
+from tools.ail_package_manager.registry import (
+    fetch_package_metadata,
+    load_registry_url,
+    RegistryError,
+)
+
+
+def _fetch_local_package_meta(
+    name: str, registry_dir: Path
+) -> dict:
+    """Fetch package metadata from a local directory registry."""
+    import json
+    meta_path = registry_dir / "packages" / name / "metadata.json"
+    if not meta_path.exists():
+        raise RegistryError(f"Package '{name}' not found in local registry")
+    return json.loads(meta_path.read_text(encoding="utf-8"))
 
 
 def resolve(
@@ -129,13 +145,76 @@ def _resolve_deps(
                 dep_spec, cache_dir, resolved, visited, chain
             )
         else:
-            # Registry dependency (future) — skip for v1
+            # Registry dependency
+            registry_url = load_registry_url(project_root)
+            is_local = registry_url.startswith(("file://", "/", ".", "\\"))
+            local_registry_dir: Path | None = None
+            if is_local:
+                raw = registry_url
+                if raw.startswith("file:///"):
+                    raw = raw[8:]
+                elif raw.startswith("file://"):
+                    raw = raw[7:]
+                local_registry_dir = Path(raw).resolve()
+
+            try:
+                if local_registry_dir is not None:
+                    from tools.ail_package_manager.registry import (
+                        download_from_local_registry as _dl_local,
+                    )
+                    # Use a temp dir to extract and read metadata
+                    import tempfile
+                    meta = _fetch_local_package_meta(dep_name, local_registry_dir)
+                else:
+                    meta = fetch_package_metadata(dep_name, registry_url)
+            except RegistryError as e:
+                raise ValueError(
+                    f"Could not resolve registry dependency '{dep_name}': {e}"
+                )
+
+            versions = meta.get("versions", {})
+            if not versions:
+                raise ValueError(
+                    f"Package '{dep_name}' has no published versions in registry"
+                )
+
+            # Use the requested version or the latest
+            requested = dep_spec.version_req
+            if requested == "*":
+                requested = sorted(versions.keys(), key=_semver_key)[-1]
+            elif requested not in versions:
+                raise ValueError(
+                    f"Package '{dep_name}' v{requested} not found. "
+                    f"Available: {', '.join(sorted(versions.keys(), key=_semver_key))}"
+                )
+
+            version_meta = versions[requested]
             resolved[dep_name] = ResolvedDependency(
                 name=dep_name,
-                version=dep_spec.version_req if dep_spec.version_req != "*" else "0.0.0",
+                version=requested,
                 source="registry",
-                dependencies=[],
+                checksum=version_meta.get("checksum", ""),
+                dependencies=list(version_meta.get("dependencies", {}).keys()),
             )
+
+            # Resolve transitive dependencies from the registry metadata
+            transitive_deps = {}
+            for tdep_name, tdep_ver in version_meta.get("dependencies", {}).items():
+                transitive_deps[tdep_name] = DependencySpec(
+                    name=tdep_name,
+                    version_req=tdep_ver if isinstance(tdep_ver, str) else "*",
+                )
+
+            if transitive_deps:
+                _resolve_deps(
+                    deps=transitive_deps,
+                    project_root=project_root,
+                    manifest_path=manifest_path,
+                    cache_dir=cache_dir,
+                    resolved=resolved,
+                    visited=visited,
+                    chain=chain,
+                )
 
         chain.pop()
 
@@ -203,6 +282,12 @@ def _resolve_git_dep(
         visited=visited,
         chain=chain,
     )
+
+
+def _semver_key(version: str) -> tuple[int, int, int]:
+    """Convert a semver string to a sortable tuple."""
+    parts = version.split(".")
+    return tuple(int(p) if p.isdigit() else 0 for p in parts[:3]) + (0,) * (3 - len(parts))
 
 
 def _topological_sort(

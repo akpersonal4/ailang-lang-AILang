@@ -13,6 +13,12 @@ from tools.ail_package_manager.cache import (
 )
 from tools.ail_package_manager.lock import generate_lock, write_lock
 from tools.ail_package_manager.manifest import find_manifest, parse_manifest
+from tools.ail_package_manager.registry import (
+    download_from_local_registry,
+    download_package_archive,
+    load_registry_url,
+    RegistryError,
+)
 from tools.ail_package_manager.resolver import resolve
 
 
@@ -93,7 +99,26 @@ def install(
             if offline:
                 print(f"  Error: {dep.name} requires network (--offline)", file=__import__("sys").stderr)
                 return ExitCode.FAILURE
-            print(f"  Warning: Registry support not yet implemented. Skipping {dep.name}")
+            registry_url = load_registry_url(project_root)
+            dest = lib_dir / dep.name
+            try:
+                if registry_url.startswith(("file://", "/", ".", "\\")):
+                    raw = registry_url
+                    if raw.startswith("file:///"):
+                        raw = raw[8:]  # file:///C:/... -> C:/...
+                    elif raw.startswith("file://"):
+                        raw = raw[7:]  # file://host/path
+                    registry_dir = Path(raw).resolve()
+                    download_from_local_registry(
+                        dep.name, dep.version, registry_dir, dest
+                    )
+                else:
+                    download_package_archive(
+                        dep.name, dep.version, registry_url, dest
+                    )
+            except RegistryError as e:
+                print(f"  Error installing {dep.name}: {e}", file=__import__("sys").stderr)
+                return ExitCode.FAILURE
 
         installed_names.add(dep.name)
 
