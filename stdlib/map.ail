@@ -29,3 +29,7 @@ fn clear(values) {
 fn get_or_default(values, key, default) {
     return map_get_or_default(values, key, default)
 }
+
+fn safe_get(values, key, default) {
+    return map_get_or_default(values, key, default)
+}

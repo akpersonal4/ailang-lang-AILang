@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from pathlib import Path
-from typing import cast
+from typing import cast as _cast
 
 from compiler.ast.builder import ASTBuilder
 from compiler.ast.nodes import ProgramNode
@@ -18,7 +18,7 @@ from compiler.semantic.symbol_table import SymbolTable
 from compiler.source import Source
 
 from .graph import DependencyGraph
-from .resolution import ModuleResolver
+from .resolution import ModuleResolver, _read_package_entry
 
 
 class ModuleIRBundle:
@@ -44,7 +44,11 @@ class CompilationSession:
     - A list of paths for manual source management
     """
 
-    def __init__(self, paths: Sequence[str | Path] | None = None) -> None:
+    def __init__(
+        self,
+        paths: Sequence[str | Path] | None = None,
+        experimental_loops: bool = False,
+    ) -> None:
         self._sources: dict[str, Source] = {}  # module_name -> Source
         self._asts: dict[str, ProgramNode] = {}  # module_name -> AST
         self._file_set: set[Path] = set()
@@ -53,6 +57,8 @@ class CompilationSession:
         self._resolver = ModuleResolver(self._root)
         self._registration_order: list[str] = []  # Track explicit order
         self._cycle_detected: bool = False
+        self._experimental_loops = experimental_loops
+        self._pkg_stdlib_dirs: list[Path] = []
 
         if paths is not None:
             for p in paths:
@@ -99,9 +105,13 @@ class CompilationSession:
                 source = self._sources[module_name]
                 file_path = str(source.path)
                 lexer = Lexer(source_path=file_path)
-                parser = Parser(lexer.tokenize(source.text), source_path=file_path)
+                parser = Parser(
+                    lexer.tokenize(source.text),
+                    source_path=file_path,
+                    experimental_loops=self._experimental_loops,
+                )
                 cst = parser.parse_program()
-                ast = cast(ProgramNode, ASTBuilder().build(cst))
+                ast = _cast(ProgramNode, ASTBuilder().build(cst))
                 self._asts[module_name] = ast
 
     def discover(self, entry_path: str | Path,
@@ -118,23 +128,56 @@ class CompilationSession:
 
     def _discover_stdlib_modules(self) -> None:
         """Register standard library modules from the project tree."""
+        found = False
         current = self._root.resolve()
         while True:
             stdlib_dir = current / "stdlib"
             if stdlib_dir.exists():
-                for path in sorted(stdlib_dir.rglob("*.ail")):
-                    if not path.is_file():
-                        continue
-                    module_name = self._path_to_module_name(path)
-                    if module_name in self._sources:
-                        continue
-                    source = Source.from_file(str(path))
-                    self._sources[module_name] = source
-                    self._graph.add_module(module_name, str(path))
-                    self._registration_order.append(module_name)
+                found = True
+                self._register_stdlib_dir(stdlib_dir)
             if current == current.parent:
                 break
             current = current.parent
+
+        # Fallback: use the same logic as CLI's _find_stdlib()
+        if not found:
+            self._try_discover_stdlib_via_package()
+
+    def _register_stdlib_dir(self, stdlib_dir: Path) -> None:
+        """Register all .ail files in a stdlib directory."""
+        for path in sorted(stdlib_dir.rglob("*.ail")):
+            if not path.is_file():
+                continue
+            module_name = self._path_to_module_name(path)
+            if module_name in self._sources:
+                existing = self._sources[module_name].path
+                if existing and "stdlib" in str(existing):
+                    continue
+            source = Source.from_file(str(path))
+            self._sources[module_name] = source
+            self._graph.add_module(module_name, str(path))
+            self._registration_order.append(module_name)
+
+    def _try_discover_stdlib_via_package(self) -> None:
+        """Try to locate stdlib via the compiler package installation path."""
+        from pathlib import Path as _Path
+        this_file = _Path(__file__).resolve()
+        # compiler/compilation/session.py -> compiler/ -> site-packages/
+        pkg_dir = this_file.parent.parent
+        candidates = [
+            pkg_dir / "stdlib",                 # site-packages/stdlib/
+            pkg_dir.parent / "stdlib",           # repo root in dev tree
+        ]
+        import site as _site
+        for site_dir in _site.getsitepackages():
+            candidates.append(_Path(site_dir) / "ailang" / "stdlib")
+            candidates.append(_Path(site_dir) / "stdlib")
+        seen: set[str] = set()
+        for cand in candidates:
+            if cand.is_dir() and cand not in seen:
+                seen.add(str(cand))
+                self._pkg_stdlib_dirs.append(cand)
+                self._register_stdlib_dir(cand)
 
     def _path_to_module_name(self, file_path: Path) -> str:
         """Convert a file path to a module name relative to root or stdlib.
@@ -142,25 +185,64 @@ class CompilationSession:
         Walks up from self._root looking for the stdlib/ directory that
         contains the file, to handle cases where stdlib is discovered
         via upward traversal (e.g. root is a subdirectory of the project).
+        Also handles packages installed under lib/ by using the package
+        name as the module name (e.g. lib/mylib/main.ail -> "mylib").
         """
-        current = self._root.resolve()
+        resolved_file = file_path.resolve()
+        resolved_root = self._root.resolve()
+
+        current = resolved_root
         while True:
             stdlib_dir = current / "stdlib"
-            if stdlib_dir in file_path.parents or file_path == stdlib_dir:
+            if stdlib_dir in resolved_file.parents or resolved_file == stdlib_dir:
                 try:
-                    relative = file_path.relative_to(stdlib_dir)
+                    relative = resolved_file.relative_to(stdlib_dir)
                 except ValueError:
-                    relative = file_path
+                    relative = resolved_file
                 stem = relative.with_suffix("")
                 return ".".join(stem.parts)
             if current == current.parent:
                 break
             current = current.parent
 
+        # Check against stdlib dirs discovered via package fallback.
+        for pkg_stdlib_dir in self._pkg_stdlib_dirs:
+            try:
+                relative = resolved_file.relative_to(pkg_stdlib_dir)
+                stem = relative.with_suffix("")
+                return ".".join(stem.parts)
+            except ValueError:
+                continue
+
+        # Check if the file is inside a lib/<pkg>/ directory with an ail.toml.
+        # The entry file (from ail.toml) gets the package name as its module name.
+        # Other files in the package get their stem as module name.
+        lib_dir = resolved_root / "lib"
+        if lib_dir in resolved_file.parents:
+            try:
+                relative = resolved_file.relative_to(lib_dir)
+            except ValueError:
+                relative = resolved_file
+            parts = relative.with_suffix("").parts
+            if len(parts) >= 2:
+                pkg_name = parts[0]
+                file_stem = ".".join(parts[1:])
+                # If it's the entry file for the package, use the package name
+                pkg_toml = lib_dir / pkg_name / "ail.toml"
+                if pkg_toml.exists():
+                    pkg_entry = _read_package_entry(pkg_toml)
+                    pkg_entry_stem = Path(pkg_entry).with_suffix("").as_posix().replace("/", ".")
+                    if file_stem == pkg_entry_stem:
+                        return pkg_name
+                # Otherwise use the file stem as module name
+                return file_stem
+            if parts:
+                return parts[0]
+
         try:
-            relative = file_path.relative_to(self._root)
+            relative = resolved_file.relative_to(resolved_root)
         except ValueError:
-            relative = file_path
+            relative = resolved_file
 
         stem = relative.with_suffix("")
         return ".".join(stem.parts)
@@ -186,7 +268,10 @@ class CompilationSession:
         try:
             lexer = Lexer(reporter, source_path=str(source.path))
             tokens = lexer.tokenize(source.text)
-            parser = Parser(tokens, reporter, source_path=str(source.path))
+            parser = Parser(
+                tokens, reporter, source_path=str(source.path),
+                experimental_loops=self._experimental_loops,
+            )
             cst = parser.parse_program()
         except LexicalError:
             # Lexer error during discovery — skip import extraction
@@ -222,9 +307,12 @@ class CompilationSession:
                 try:
                     lexer = Lexer(reporter, source_path=file_path)
                     tokens = lexer.tokenize(source.text)
-                    parser = Parser(tokens, reporter, source_path=file_path)
+                    parser = Parser(
+                        tokens, reporter, source_path=file_path,
+                        experimental_loops=self._experimental_loops,
+                    )
                     cst = parser.parse_program()
-                    ast = cast(ProgramNode, ASTBuilder().build(cst))
+                    ast = _cast(ProgramNode, ASTBuilder().build(cst))
                     self._asts[module_name] = ast
                 except LexicalError as e:
                     if reporter is not None:
@@ -283,26 +371,27 @@ class CompilationSession:
         for builtin_name in BUILTINS:
             symbol_table.declare(builtin_name)
 
-        # First, register exported symbols from all modules.
+        # Collect all top-level function names for forward-reference detection.
         from compiler.ast.nodes import (
             FunctionDeclarationNode,
             VariableDeclarationNode,
         )
 
+        all_function_names: set[str] = set()
         for module_name, ast in self._asts.items():
-            has_same_name_declaration = any(
-                (
-                    isinstance(child, FunctionDeclarationNode)
-                    and child.name.name == module_name.split(".")[-1]
-                )
-                or (
-                    isinstance(child, VariableDeclarationNode)
-                    and child.name.name == module_name.split(".")[-1]
-                )
-                for child in ast.children
-            )
-            if not has_same_name_declaration:
-                symbol_table.declare_module_namespace(module_name)
+            for child in ast.children:
+                if isinstance(child, FunctionDeclarationNode):
+                    all_function_names.add(child.name.name)
+
+        # Pre-populate the symbol table's forward-reference set.
+        symbol_table._all_function_names = all_function_names
+
+        # First, register exported symbols from all modules.
+        # Always declare the module namespace first so that ``import module``
+        # can resolve the module name, regardless of whether a top-level
+        # declaration shares the module name.
+        for module_name, ast in self._asts.items():
+            symbol_table.declare_module_namespace(module_name)
             for child in ast.children:
                 self._register_export(symbol_table, child, module_name)
 
@@ -325,7 +414,11 @@ class CompilationSession:
 
         if isinstance(node, FunctionDeclarationNode):
             qualified_name = f"{module_name}.{node.name.name}"
-            symbol_table.declare(qualified_name, node.start_span, node.end_span)
+            sym = symbol_table.declare(qualified_name, node.start_span, node.end_span)
+            sym.param_count = len(node.parameters)
+            sym.required_param_count = sum(
+                1 for p in node.parameters if p.default_value is None
+            )
         elif isinstance(node, VariableDeclarationNode):
             qualified_name = f"{module_name}.{node.name.name}"
             symbol_table.declare(qualified_name, node.start_span, node.end_span)
@@ -373,3 +466,173 @@ class CompilationSession:
                     SymbolTable(), local_reporter, source_text=source_text_tc
                 )
                 type_checker.check(self._asts[module_name])
+
+        # ------------------------------------------------------------------
+        # Incremental compilation support
+        # ------------------------------------------------------------------
+
+    def compile_module_to_ast(
+        self, module_name: str, reporter: DiagnosticReporter | None = None
+    ) -> bool:
+        """Compile a single module to AST (lex + parse + build).
+
+        Returns ``True`` on success (even if the AST is empty due to errors).
+        """
+        if module_name not in self._sources:
+            return False
+        source = self._sources[module_name]
+        file_path = str(source.path)
+        try:
+            lexer = Lexer(reporter, source_path=file_path)
+            tokens = lexer.tokenize(source.text)
+            parser = Parser(
+                tokens, reporter, source_path=file_path,
+                experimental_loops=self._experimental_loops,
+            )
+            cst = parser.parse_program()
+            ast = _cast(ProgramNode, ASTBuilder().build(cst))
+            self._asts[module_name] = ast
+            return True
+        except LexicalError as e:
+            if reporter is not None:
+                diag = Diagnostic(
+                    e.diagnostic.severity,
+                    e.diagnostic.error_code,
+                    e.diagnostic.message,
+                    e.diagnostic.line,
+                    e.diagnostic.column,
+                    file_path=file_path,
+                )
+                reporter.report(diag)
+            self._asts[module_name] = ProgramNode(())
+            return False
+        except ValueError as e:
+            msg = str(e) or "Compilation error"
+            if reporter is not None:
+                reporter.report(Diagnostic(
+                    Severity.ERROR, ErrorCode("CMP001", msg), msg,
+                    file_path=file_path,
+                ))
+            self._asts[module_name] = ProgramNode(())
+            return False
+
+    def get_dependents(self, module_name: str) -> list[str]:
+        """Return list of modules that directly depend on *module_name*."""
+        return [
+            m for m in self._graph._edges
+            if module_name in self._graph._edges[m]
+        ]
+
+    def get_transitive_dependents(self, module_name: str) -> list[str]:
+        """Return all modules that transitively depend on *module_name*."""
+        result: list[str] = []
+        visited: set[str] = set()
+        queue = [module_name]
+        while queue:
+            current = queue.pop(0)
+            for dep_mod in self.get_dependents(current):
+                if dep_mod not in visited:
+                    visited.add(dep_mod)
+                    result.append(dep_mod)
+                    queue.append(dep_mod)
+        return result
+
+    def update_source_text(self, module_name: str, text: str) -> None:
+        """Replace the source text for a module (for incremental recompiles)."""
+        if module_name not in self._sources:
+            return
+        file_path = self._sources[module_name].path
+        self._sources[module_name] = Source(path=file_path, text=text)
+
+    def incremental_recompile(
+        self, file_path: str, reporter: DiagnosticReporter
+    ) -> tuple[bool, list[str]]:
+        """Recompile a changed file and all its transitive dependents.
+
+        Returns ``(success, list_of_affected_module_names)``.
+        """
+        fp = Path(file_path).resolve()
+
+        module_name: str | None = None
+        for name, src in self._sources.items():
+            if Path(src.path).resolve() == fp:
+                module_name = name
+                break
+
+        if module_name is None:
+            reporter.report(Diagnostic(
+                Severity.ERROR, ErrorCode("CMP001", f"File not in session: {file_path}"),
+                f"File not in session: {file_path}", file_path=file_path,
+            ))
+            return False, []
+
+        source_text = fp.read_text(encoding="utf-8")
+        self.update_source_text(module_name, source_text)
+
+        ok = self.compile_module_to_ast(module_name, reporter)
+        if not ok:
+            return False, [module_name]
+
+        dependents = self.get_transitive_dependents(module_name)
+
+        for dep_name in dependents:
+            dep_path = self._sources[dep_name].path
+            dep_text = dep_path.read_text(encoding="utf-8")
+            self.update_source_text(dep_name, dep_text)
+            self.compile_module_to_ast(dep_name, reporter)
+
+        affected = [module_name] + dependents
+
+        self._incremental_analyze(set(affected), reporter)
+
+        return reporter.error_count == 0, affected
+
+    def _incremental_analyze(
+        self, affected: set[str], reporter: DiagnosticReporter | None = None
+    ) -> None:
+        """Re-run semantic analysis for a subset of modules.
+
+        Cross-module exports are re-registered for *all* modules (fast),
+        but deep analysis only runs for the affected modules.
+        """
+        from compiler.runtime.builtins import BUILTINS
+
+        symbol_table = SymbolTable(reporter)
+
+        for builtin_name in BUILTINS:
+            symbol_table.declare(builtin_name)
+
+        for module_name, ast in self._asts.items():
+            symbol_table.declare_module_namespace(module_name)
+            for child in ast.children:
+                self._register_export(symbol_table, child, module_name)
+
+        for module_name in self._graph.topological_sort():
+            if module_name not in affected:
+                continue
+            if module_name not in self._asts:
+                continue
+            if module_name in self._sources:
+                source = self._sources[module_name]
+                symbol_table.set_source_text(source.text)
+                symbol_table.set_file_path(str(source.path))
+            self._analyze_module(module_name, symbol_table)
+
+    def incremental_build_ir(self, module_name: str) -> ModuleIRBundle:
+        """Build IR for the changed module and its transitive dependents.
+
+        Returns a ``ModuleIRBundle`` containing only the affected modules.
+        """
+        dependents = self.get_transitive_dependents(module_name)
+        affected = [module_name] + dependents
+
+        bundle = ModuleIRBundle()
+        ir_builder = IRBuilder()
+
+        for mod_name in affected:
+            if mod_name in self._asts:
+                ast = self._asts[mod_name]
+                ir = ir_builder.build(ast)
+                bundle.module_irs[mod_name] = ir
+
+        return bundle

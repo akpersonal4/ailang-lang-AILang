@@ -297,7 +297,15 @@ class _Formatter:
 
     def _format_function_declaration(self, node: FunctionDeclarationNode) -> None:
         name = node.name.name
-        params = ", ".join(p.name for p in node.parameters)
+        parts: list[str] = []
+        for p in node.parameters:
+            if p.default_value is not None:
+                parts.append(
+                    f"{p.name} = {self._format_expression(p.default_value)}"
+                )
+            else:
+                parts.append(p.name)
+        params = ", ".join(parts)
         header = f"fn {name}({params})"
         self._emit_with_comments(header, node.start_span)
         self._append_brace()

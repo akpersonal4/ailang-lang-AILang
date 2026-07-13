@@ -14,6 +14,7 @@ from compiler.ast.nodes import (
     BooleanLiteralNode,
     CallExpressionNode,
     ExpressionStatementNode,
+    ForStatementNode,
     FunctionDeclarationNode,
     IdentifierNode,
     IfStatementNode,
@@ -173,6 +174,12 @@ class TypeChecker:
         self.check(node.then_block)
         if node.else_block is not None:
             self.check(node.else_block)
+
+    def _check_ForStatementNode(self, node: ForStatementNode) -> None:
+        self.symbol_table.enter_scope(node)
+        self._infer_expression(node.iterable)
+        self.check(node.body)
+        self.symbol_table.exit_scope()
 
     # ------------------------------------------------------------------
     # Expressions

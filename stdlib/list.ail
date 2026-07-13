@@ -46,6 +46,14 @@ fn copy(values) {
     return list_copy(values)
 }
 
+fn find(values, key, value) {
+    return list_find_by_key(values, key, value)
+}
+
+fn filter(values, key, value) {
+    return list_filter_by_key(values, key, value)
+}
+
 fn filter_by_key(values, key, value) {
     return list_filter_by_key(values, key, value)
 }

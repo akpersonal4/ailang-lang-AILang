@@ -10,7 +10,7 @@ from compiler.parser.expressions import parse_expression as _parse_expression
 from compiler.parser.nodes import CSTNode
 from compiler.parser.recovery import synchronize
 from compiler.parser.statements import parse_block as _parse_block
-from compiler.parser.statements import parse_if_statement
+from compiler.parser.statements import parse_for_statement, parse_if_statement
 from compiler.parser.token_stream import TokenStream
 
 
@@ -22,8 +22,10 @@ class Parser:
         tokens: list[Token],
         reporter: DiagnosticReporter | None = None,
         source_path: str | None = None,
+        experimental_loops: bool = False,
     ) -> None:
-        self.stream = TokenStream(tokens, reporter, source_path)
+        self.stream = TokenStream(tokens, reporter, source_path, experimental_loops)
+        self._experimental_loops = experimental_loops
 
     @property
     def tokens(self) -> list[Token]:
@@ -98,6 +100,14 @@ class Parser:
                 program.children.append(parse_function_declaration(self.stream))
             elif cur.kind is TokenKind.IF:
                 program.children.append(parse_if_statement(self.stream))
+            elif cur.kind is TokenKind.FOR:
+                if self._experimental_loops:
+                    program.children.append(parse_for_statement(self.stream))
+                else:
+                    self.stream.report(
+                        "Use of 'for' requires --experimental-loops flag", "PAR012"
+                    )
+                    synchronize(self.stream)
             elif cur.kind is TokenKind.IMPORT:
                 program.children.append(self._parse_import_declaration())
             elif cur.kind in {

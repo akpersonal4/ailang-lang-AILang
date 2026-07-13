@@ -32,11 +32,13 @@ MOD003_MODULE_NOT_FOUND = ErrorCode("MOD003", "Module not found")
 MOD004_SYMBOL_NOT_FOUND = ErrorCode("MOD004", "Symbol not found in module")
 MOD005_INVALID_MODULE_PATH = ErrorCode("MOD005", "Import path traversal attempt")
 
+# Semantic error codes
+SEM003_WRONG_ARG_COUNT = ErrorCode("SEM003", "Wrong number of arguments")
+
 # Lex error codes
 LEX001_UNEXPECTED_CHARACTER = ErrorCode("LEX001", "Unexpected character")
 LEX002_UNTERMINATED_STRING = ErrorCode("LEX002", "Unterminated string literal")
 LEX003_INVALID_ESCAPE_SEQUENCE = ErrorCode("LEX003", "Invalid escape sequence")
-LEX004_FLOAT_LITERAL = ErrorCode("LEX004", "Float literals are not supported")
 
 
 @dataclass(frozen=True)

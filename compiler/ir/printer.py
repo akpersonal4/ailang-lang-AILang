@@ -68,6 +68,9 @@ class IRPrinter:
     def _visit_FunctionIR(self, node: FunctionIR) -> None:
         self._write(f"Function {node.name}")
         self._inc()
+        if node.default_parameters:
+            for name, expr in node.default_parameters:
+                self._write(f"default {name} = ?")
         self._visit(node.body)
         self._dec()
 

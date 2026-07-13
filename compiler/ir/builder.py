@@ -16,6 +16,7 @@ from compiler.ast.nodes import (
     BooleanLiteralNode,
     CallExpressionNode,
     ExpressionStatementNode,
+    ForStatementNode,
     FunctionDeclarationNode,
     IdentifierNode,
     IfStatementNode,
@@ -54,11 +55,22 @@ class IRBuilder:
 
     The public entry point is :meth:`build` which accepts a ``ProgramNode`` and
     returns a ``ProgramIR``.
+
+    Experimental: for-in loops are lowered into recursive helper functions at
+    the module level during IR construction. The for statement is replaced with
+    a call to the generated helper.
     """
 
+    def __init__(self) -> None:
+        self._generated_functions: list[FunctionIR] = []
+        self._for_counter = 0
+
     def build(self, node: ProgramNode) -> ProgramIR:
-        body = tuple(self._build_statement(child) for child in node.children)
-        return ProgramIR(body=body, start_span=node.start_span, end_span=node.end_span)
+        body: list[IRNode] = []
+        for child in node.children:
+            body.append(self._build_statement(child))
+        all_body = tuple(self._generated_functions + body)
+        return ProgramIR(body=all_body, start_span=node.start_span, end_span=node.end_span)
 
     # ---------------------------------------------------------------------
     # Statement helpers
@@ -85,10 +97,17 @@ class IRBuilder:
         self, node: FunctionDeclarationNode
     ) -> FunctionIR:
         params = tuple(p.name for p in node.parameters)
+        defaults: list[tuple[str, IRExpression]] = []
+        for p in node.parameters:
+            if p.default_value is not None:
+                defaults.append(
+                    (p.name, self._build_expression(p.default_value))
+                )
         body = self._build_BlockNode(node.body)
         return FunctionIR(
             name=node.name.name,
             parameters=params,
+            default_parameters=tuple(defaults),
             body=body,
             start_span=node.start_span,
             end_span=node.end_span,
@@ -125,6 +144,250 @@ class IRBuilder:
             start_span=node.start_span,
             end_span=node.end_span,
         )
+
+    def _build_ForStatementNode(
+        self, node: ForStatementNode
+    ) -> CallIR | AssignmentIR:
+        """Lower a for-in loop into a recursive helper function + initial call.
+
+        For ``for item in collection { body }`` generates:
+
+        .. code-block:: text
+
+            fn __for_fn_N(collection, index, ...captured) {
+                if (index < list.len(collection)) {
+                    let item = list.get(collection, index);
+                    <body>
+                    __for_fn_N(collection, index + 1, ...captured)
+                } else {
+                    <captured_var>   or nil if no writes
+                }
+            }
+
+            <captured_var => __for_fn_N(collection, 0, ...captured)
+
+        Variables from enclosing scopes that are referenced in the body are
+        automatically threaded as parameters. If exactly one variable is
+        assigned inside the body, the base case returns its final value and
+        the call site captures it.
+        """
+        fn_name = f"__for_fn_{self._for_counter}"
+        var_name = node.variable.name
+        self._for_counter += 1
+
+        list_param = f"__lst_{fn_name}"
+        idx_param = f"__idx_{fn_name}"
+
+        # --- Free variable detection ---
+        local_names: set[str] = {var_name}
+        self._collect_locals(node.body, local_names)
+        reads: set[str] = set()
+        writes: set[str] = set()
+        self._collect_free_refs(node.body, local_names, reads, writes)
+        reads_only = reads - writes
+        captured_params = tuple(sorted(reads_only | writes))
+
+        if len(writes) > 1:
+            raise ValueError(
+                f"For-loop body writes to {len(writes)} enclosing variables "
+                f"({', '.join(sorted(writes))}). "
+                "Only one accumulator variable is supported. "
+                "Use a list or manual recursion for multiple accumulators."
+            )
+
+        all_params = (list_param, idx_param) + captured_params
+        iterable_ir = self._build_expression(node.iterable)
+
+        # let item = list.get(collection, index)
+        get_call = CallIR(
+            callee="list.get",
+            arguments=(
+                VariableReferenceIR(name=list_param),
+                VariableReferenceIR(name=idx_param),
+            ),
+        )
+        var_decl = VariableDeclarationIR(name=var_name, initializer=get_call)
+
+        # Body statements: variable decl + user body
+        body_stmts: list[IRNode] = [var_decl]
+        for stmt in node.body.statements:
+            body_stmts.append(self._build_statement(stmt))
+
+        # Recursive call: __for_fn_N(collection, index + 1, captured...)
+        next_idx = BinaryOperationIR(
+            left=VariableReferenceIR(name=idx_param),
+            operator="+",
+            right=LiteralIR(value=1),
+        )
+        recursive_args: list[IRExpression] = [
+            VariableReferenceIR(name=list_param),
+            next_idx,
+        ]
+        for cap_name in captured_params:
+            recursive_args.append(VariableReferenceIR(name=cap_name))
+        recursive_call = CallIR(
+            callee=fn_name,
+            arguments=tuple(recursive_args),
+        )
+        body_stmts.append(recursive_call)
+
+        # Condition: index < list.len(collection)
+        len_call = CallIR(
+            callee="list.len",
+            arguments=(VariableReferenceIR(name=list_param),),
+        )
+        condition = BinaryOperationIR(
+            left=VariableReferenceIR(name=idx_param),
+            operator="<",
+            right=len_call,
+        )
+
+        then_block = BlockIR(statements=tuple(body_stmts))
+
+        # Else branch: return written variable value (or nil if no writes)
+        if writes:
+            written_name = next(iter(writes))
+            else_stmts: tuple[IRNode, ...] = (
+                ExpressionStatementIR(
+                    expression=VariableReferenceIR(name=written_name)
+                ),
+            )
+        else:
+            else_stmts = (
+                ExpressionStatementIR(expression=LiteralIR(value=None)),
+            )
+        else_block = BlockIR(statements=else_stmts)
+
+        if_ir = IfIR(
+            condition=condition,
+            then_block=then_block,
+            else_block=else_block,
+        )
+
+        func_body = BlockIR(statements=(if_ir,))
+        func = FunctionIR(
+            name=fn_name,
+            parameters=all_params,
+            body=func_body,
+        )
+        self._generated_functions.append(func)
+
+        # Initial call args: iterable, 0, captured variable names
+        call_args: list[IRExpression] = [iterable_ir, LiteralIR(value=0)]
+        for cap_name in captured_params:
+            call_args.append(VariableReferenceIR(name=cap_name))
+
+        call_ir = CallIR(callee=fn_name, arguments=tuple(call_args))
+
+        # If there is a written variable, wrap in AssignmentIR
+        if writes:
+            written_name = next(iter(writes))
+            return AssignmentIR(target=written_name, value=call_ir)
+        return call_ir
+
+    # ------------------------------------------------------------------
+    # Free variable detection helpers (for experimental loop capture)
+    # ------------------------------------------------------------------
+    @staticmethod
+    def _collect_locals(node: ASTNode, locals_set: set[str]) -> None:
+        """Recursively collect ``VariableDeclarationNode`` names within body."""
+        if isinstance(node, VariableDeclarationNode):
+            locals_set.add(node.name.name)
+        elif isinstance(node, BlockNode):
+            for stmt in node.statements:
+                IRBuilder._collect_locals(stmt, locals_set)
+        elif isinstance(node, IfStatementNode):
+            IRBuilder._collect_locals(node.then_block, locals_set)
+            if node.else_block:
+                IRBuilder._collect_locals(node.else_block, locals_set)
+        elif isinstance(node, ForStatementNode):
+            locals_set.add(node.variable.name)
+            IRBuilder._collect_locals(node.body, locals_set)
+
+    @staticmethod
+    def _collect_free_refs(
+        node: ASTNode, local_names: set[str], reads: set[str], writes: set[str]
+    ) -> None:
+        """Walk the AST and collect references to non-local variables.
+
+        * ``reads`` — identifiers referenced (read) that are not in *local_names*.
+        * ``writes`` — identifiers that appear on the LHS of ``=`` and are not
+          in *local_names*.
+        """
+        if isinstance(node, IdentifierNode):
+            if node.name not in local_names:
+                reads.add(node.name)
+        elif isinstance(node, BinaryExpressionNode):
+            if node.operator == "=":
+                if isinstance(node.left, IdentifierNode):
+                    if node.left.name not in local_names:
+                        writes.add(node.left.name)
+                    IRBuilder._collect_free_refs(
+                        node.right, local_names, reads, writes
+                    )
+                else:
+                    IRBuilder._collect_free_refs(
+                        node.left, local_names, reads, writes
+                    )
+                    IRBuilder._collect_free_refs(
+                        node.right, local_names, reads, writes
+                    )
+            else:
+                IRBuilder._collect_free_refs(
+                    node.left, local_names, reads, writes
+                )
+                IRBuilder._collect_free_refs(
+                    node.right, local_names, reads, writes
+                )
+        elif isinstance(node, BlockNode):
+            for stmt in node.statements:
+                IRBuilder._collect_free_refs(stmt, local_names, reads, writes)
+        elif isinstance(node, ExpressionStatementNode):
+            IRBuilder._collect_free_refs(
+                node.expression, local_names, reads, writes
+            )
+        elif isinstance(node, ReturnStatementNode):
+            IRBuilder._collect_free_refs(
+                node.value, local_names, reads, writes
+            )
+        elif isinstance(node, IfStatementNode):
+            IRBuilder._collect_free_refs(
+                node.condition, local_names, reads, writes
+            )
+            IRBuilder._collect_free_refs(
+                node.then_block, local_names, reads, writes
+            )
+            if node.else_block:
+                IRBuilder._collect_free_refs(
+                    node.else_block, local_names, reads, writes
+                )
+        elif isinstance(node, ForStatementNode):
+            IRBuilder._collect_free_refs(
+                node.iterable, local_names, reads, writes
+            )
+            IRBuilder._collect_free_refs(
+                node.body, local_names, reads, writes
+            )
+        elif isinstance(node, CallExpressionNode):
+            IRBuilder._collect_free_refs(
+                node.callee, local_names, reads, writes
+            )
+            for arg in node.arguments:
+                IRBuilder._collect_free_refs(
+                    arg, local_names, reads, writes
+                )
+        elif isinstance(node, MemberAccessNode):
+            IRBuilder._collect_free_refs(
+                node.receiver, local_names, reads, writes
+            )
+        elif isinstance(node, UnaryExpressionNode):
+            IRBuilder._collect_free_refs(
+                node.operand, local_names, reads, writes
+            )
+        elif isinstance(node, VariableDeclarationNode):
+            IRBuilder._collect_free_refs(
+                node.initializer, local_names, reads, writes
+            )
 
     # ---------------------------------------------------------------------
     # Expression helpers

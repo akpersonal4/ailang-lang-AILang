@@ -36,9 +36,21 @@ def parse_function_declaration(stream: TokenStream) -> CSTNode:
 def parse_parameter_list(stream: TokenStream) -> CSTNode:
     parameters = CSTNode("ParameterList")
     parameters.start_span = stream.current().start_offset
+
+    def parse_one_parameter() -> CSTNode:
+        ident = parse_identifier(stream)
+        if stream.match(TokenKind.ASSIGN):
+            param = CSTNode("DefaultParameter")
+            param.start_span = ident.start_span
+            param.children.append(ident)
+            param.children.append(parse_expression(stream))
+            param.end_span = stream.previous().end_offset
+            return param
+        return ident
+
     if stream.current().kind is TokenKind.IDENTIFIER:
-        parameters.children.append(parse_identifier(stream))
+        parameters.children.append(parse_one_parameter())
         while stream.match(TokenKind.COMMA):
-            parameters.children.append(parse_identifier(stream))
+            parameters.children.append(parse_one_parameter())
     parameters.end_span = stream.previous().end_offset
     return parameters

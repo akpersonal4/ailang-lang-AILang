@@ -41,6 +41,7 @@ class TokenKind(Enum):
     BANG = "bang"
     STRING = "string"
     DOT = "dot"
+    FOR = "for"
     EOF = "eof"
 
 
@@ -167,6 +168,7 @@ class Lexer:
                     "as": TokenKind.AS,
                     "true": TokenKind.TRUE,
                     "false": TokenKind.FALSE,
+                    "for": TokenKind.FOR,
                 }.get(text_value)
                 if keyword_kind is None:
                     tokens.append(
@@ -198,6 +200,17 @@ class Lexer:
                 while index < length and self._is_digit(text[index]):
                     index += 1
                     column += 1
+                if (
+                    index < length
+                    and text[index] == "."
+                    and index + 1 < length
+                    and self._is_digit(text[index + 1])
+                ):
+                    index += 1
+                    column += 1
+                    while index < length and self._is_digit(text[index]):
+                        index += 1
+                        column += 1
                 tokens.append(
                     make_token(
                         TokenKind.NUMBER,
@@ -208,18 +221,6 @@ class Lexer:
                         start_column,
                     )
                 )
-                if (
-                    index < length
-                    and text[index] == "."
-                    and index + 1 < length
-                    and self._is_digit(text[index + 1])
-                ):
-                    report_error(
-                        "Float literals not supported. Use integer division (22 / 7)",
-                        "LEX004",
-                        start_line,
-                        start_column,
-                    )
                 continue
             if char == "=":
                 if index + 1 < length and text[index + 1] == "=":

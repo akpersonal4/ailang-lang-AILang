@@ -12,10 +12,12 @@ class TokenStream:
         tokens: list[Token],
         reporter: DiagnosticReporter | None = None,
         source_path: str | None = None,
+        experimental_loops: bool = False,
     ) -> None:
         self.tokens = tokens
         self.reporter = reporter
         self.source_path = source_path
+        self.experimental_loops = experimental_loops
         self.index = 0
 
     def current(self) -> Token:

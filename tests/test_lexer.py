@@ -167,29 +167,40 @@ def test_tokens_expose_source_location_information() -> None:
     assert tokens[1].end_offset == 2
 
 
-def test_lexer_rejects_float_literal() -> None:
-    """Float literals are not supported and must produce a clear diagnostic."""
+def test_lexer_accepts_float_literal() -> None:
+    """Float literals produce a single NUMBER token with the full value."""
     lexer = Lexer()
 
-    try:
-        lexer.tokenize("3.14")
-    except ValueError as error:
-        assert "Float literals not supported" in str(error)
-    else:
-        raise AssertionError("expected ValueError")
+    tokens = [t for t in lexer.tokenize("3.14") if t.kind != TokenKind.EOF]
+    assert len(tokens) == 1
+    assert tokens[0].kind == TokenKind.NUMBER
+    assert tokens[0].value == "3.14"
 
-    try:
-        lexer.tokenize("0.5")
-    except ValueError as error:
-        assert "Float literals not supported" in str(error)
-    else:
-        raise AssertionError("expected ValueError")
+    tokens = [t for t in lexer.tokenize("0.5") if t.kind != TokenKind.EOF]
+    assert len(tokens) == 1
+    assert tokens[0].kind == TokenKind.NUMBER
+    assert tokens[0].value == "0.5"
 
     # Ensure member access on identifiers still works
-    lexer2 = Lexer()
-    tokens = lexer2.tokenize("a.b")
+    tokens = [t for t in lexer.tokenize("a.b") if t.kind != TokenKind.EOF]
     assert tokens[0].kind == TokenKind.IDENTIFIER
     assert tokens[0].value == "a"
     assert tokens[1].kind == TokenKind.DOT
     assert tokens[2].kind == TokenKind.IDENTIFIER
     assert tokens[2].value == "b"
+
+    # Ensure integer literal after number + dot is separate token
+    tokens = [t for t in lexer.tokenize("3.14.16") if t.kind != TokenKind.EOF]
+    assert len(tokens) == 3
+    assert tokens[0].kind == TokenKind.NUMBER
+    assert tokens[0].value == "3.14"
+    assert tokens[1].kind == TokenKind.DOT
+    assert tokens[2].kind == TokenKind.NUMBER
+    assert tokens[2].value == "16"
+
+    # Trailing dot after number stays as DOT (not part of float)
+    tokens = [t for t in lexer.tokenize("3.") if t.kind != TokenKind.EOF]
+    assert len(tokens) == 2
+    assert tokens[0].kind == TokenKind.NUMBER
+    assert tokens[0].value == "3"
+    assert tokens[1].kind == TokenKind.DOT

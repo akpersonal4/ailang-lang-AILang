@@ -44,6 +44,7 @@ class FunctionDeclarationNode:
 @dataclass(frozen=True)
 class ParameterNode:
     name: str
+    default_value: ASTNode | None = None
     start_span: int | None = None
     end_span: int | None = None
 
@@ -67,6 +68,15 @@ class IfStatementNode:
     condition: ASTNode
     then_block: BlockNode
     else_block: BlockNode | None = None
+    start_span: int | None = None
+    end_span: int | None = None
+
+
+@dataclass(frozen=True)
+class ForStatementNode:
+    variable: IdentifierNode
+    iterable: ASTNode
+    body: BlockNode
     start_span: int | None = None
     end_span: int | None = None
 
@@ -153,6 +163,7 @@ ASTNode = (
     | ExpressionStatementNode
     | ReturnStatementNode
     | IfStatementNode
+    | ForStatementNode
     | BinaryExpressionNode
     | UnaryExpressionNode
     | CallExpressionNode

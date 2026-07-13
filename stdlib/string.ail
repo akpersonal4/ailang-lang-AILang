@@ -50,6 +50,14 @@ fn split(value, delim) {
     return string_split(value, delim)
 }
 
+fn from_int(value) {
+    return __native_to_string(value)
+}
+
+fn from_bool(value) {
+    return __native_to_string(value)
+}
+
 fn join(values, separator) {
     return string_join(values, separator)
 }

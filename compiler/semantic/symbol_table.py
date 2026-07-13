@@ -13,6 +13,8 @@ class Symbol:
     start_span: int | None = None
     end_span: int | None = None
     type: object | None = None
+    param_count: int | None = None
+    required_param_count: int | None = None
 
 
 class Scope:
@@ -51,6 +53,7 @@ class SymbolTable:
         self._file_path: str | None = None
         self.scopes: list[Scope] = [Scope()]
         self.node_scopes: dict[int, Scope] = {}
+        self._all_function_names: set[str] = set()
 
     def set_source_text(self, source_text: str | None) -> None:
         """Set source text for offset-to-line/col conversion.
@@ -123,8 +126,16 @@ class SymbolTable:
             scope = scope.parent
 
         suggestion = DiagnosticFormatter.find_suggestion(name, known_names)
+
+        # Detect forward reference: name is a known function from another module or
+        # a function defined later in this file.
+        if name in self._all_function_names:
+            msg = f"Undefined identifier: {name} — this looks like a forward reference. Functions must be defined before their callers."
+        else:
+            msg = f"Undefined identifier: {name}"
+
         self._report_error(
-            f"Undefined identifier: {name}", "SEM002", start_span, end_span,
+            msg, "SEM002", start_span, end_span,
             suggestion=suggestion,
         )
         return None

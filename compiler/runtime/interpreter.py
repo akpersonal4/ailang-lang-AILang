@@ -113,17 +113,26 @@ class Runtime:
             self._frame_stack.pop()
 
     def _call_function(self, function: FunctionIR, args: tuple[Any, ...]) -> Any:
-        if len(args) != len(function.parameters):
+        total = len(function.parameters)
+        defaults = {
+            name: self._evaluate_expression(expr)
+            for name, expr in function.default_parameters
+        }
+        required = total - len(defaults)
+        if len(args) < required or len(args) > total:
             raise TypeError(
-                f"Function {function.name} expected {len(function.parameters)} "
+                f"Function {function.name} expected {required}-{total} "
                 f"arguments, got {len(args)}"
             )
         frame = StackFrame(
             function_name=function.name,
             parent_frame=self._frame_stack[-1] if self._frame_stack else None,
         )
-        for name, value in zip(function.parameters, args, strict=True):
+        for name, value in zip(function.parameters, args):
             frame.define(name, value)
+        for name in function.parameters[len(args):]:
+            if name in defaults:
+                frame.define(name, defaults[name])
         self._frame_stack.append(frame)
         try:
             result = self._execute_block(function.body)

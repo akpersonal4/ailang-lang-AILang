@@ -16,6 +16,7 @@ from compiler.ast.nodes import (
     BooleanLiteralNode,
     CallExpressionNode,
     ExpressionStatementNode,
+    ForStatementNode,
     FunctionDeclarationNode,
     IdentifierNode,
     IfStatementNode,
@@ -97,15 +98,29 @@ class ASTBuilder:
         params_cst = node.children[1]
         parameters: tuple[ParameterNode, ...] = ()
         for child in params_cst.children:
-            param = ASTBuilder._try_build(child)
-            if isinstance(param, IdentifierNode):
+            if child.kind == "DefaultParameter":
+                ident = ASTBuilder._try_build(child.children[0])
+                assert isinstance(ident, IdentifierNode)
+                default_val = ASTBuilder._try_build(child.children[1])
+                assert default_val is not None
                 parameters = parameters + (
                     ParameterNode(
-                        name=param.name,
-                        start_span=param.start_span,
-                        end_span=param.end_span,
+                        name=ident.name,
+                        default_value=default_val,
+                        start_span=ident.start_span,
+                        end_span=child.end_span,
                     ),
                 )
+            else:
+                param = ASTBuilder._try_build(child)
+                if isinstance(param, IdentifierNode):
+                    parameters = parameters + (
+                        ParameterNode(
+                            name=param.name,
+                            start_span=param.start_span,
+                            end_span=param.end_span,
+                        ),
+                    )
 
         body = ASTBuilder._try_build(node.children[2])
         assert isinstance(body, BlockNode)
@@ -173,6 +188,24 @@ class ASTBuilder:
             condition=condition,
             then_block=then_block,
             else_block=else_block,
+            start_span=node.start_span,
+            end_span=node.end_span,
+        )
+
+    @staticmethod
+    def _build_ForStatement(node: CSTNode) -> ForStatementNode:
+        var_cst = node.children[0]
+        var_ident = ASTBuilder._try_build(var_cst)
+        assert isinstance(var_ident, IdentifierNode)
+        iterable = ASTBuilder._try_build(node.children[1])
+        assert iterable is not None
+        body_cst = node.children[2]
+        body = ASTBuilder._try_build(body_cst)
+        assert isinstance(body, BlockNode)
+        return ForStatementNode(
+            variable=var_ident,
+            iterable=iterable,
+            body=body,
             start_span=node.start_span,
             end_span=node.end_span,
         )

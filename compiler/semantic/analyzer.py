@@ -13,6 +13,7 @@ from compiler.ast.nodes import (
     BooleanLiteralNode,
     CallExpressionNode,
     ExpressionStatementNode,
+    ForStatementNode,
     FunctionDeclarationNode,
     IdentifierNode,
     IfStatementNode,
@@ -25,7 +26,11 @@ from compiler.ast.nodes import (
     UnaryExpressionNode,
     VariableDeclarationNode,
 )
-from compiler.diagnostics import Diagnostic, Severity
+from compiler.diagnostics import (
+    Diagnostic,
+    Severity,
+    SEM003_WRONG_ARG_COUNT,
+)
 from compiler.semantic.symbol_table import SymbolTable
 
 
@@ -77,9 +82,17 @@ class SemanticAnalyzer:
         self.analyze(node.initializer)
 
     def _analyze_FunctionDeclarationNode(self, node: FunctionDeclarationNode) -> None:
-        self.symbol_table.declare(
+        sym = self.symbol_table.declare(
             node.name.name, node.name.start_span, node.name.end_span
         )
+        sym.param_count = len(node.parameters)
+        sym.required_param_count = sum(
+            1 for p in node.parameters if p.default_value is None
+        )
+        # Analyze default value expressions in the enclosing scope
+        for parameter in node.parameters:
+            if parameter.default_value is not None:
+                self.analyze(parameter.default_value)
         self.symbol_table.enter_scope(node)
         for parameter in node.parameters:
             self.symbol_table.declare(
@@ -103,6 +116,15 @@ class SemanticAnalyzer:
         self.analyze(node.then_block)
         if node.else_block is not None:
             self.analyze(node.else_block)
+
+    def _analyze_ForStatementNode(self, node: ForStatementNode) -> None:
+        self.symbol_table.enter_scope(node)
+        self.symbol_table.declare(
+            node.variable.name, node.variable.start_span, node.variable.end_span
+        )
+        self.analyze(node.iterable)
+        self.analyze(node.body)
+        self.symbol_table.exit_scope()
 
     # ------------------------------------------------------------------
     # Expressions
@@ -222,8 +244,40 @@ class SemanticAnalyzer:
 
     def _analyze_CallExpressionNode(self, node: CallExpressionNode) -> None:
         self.analyze(node.callee)
+        self._check_call_arity(node)
         for argument in node.arguments:
             self.analyze(argument)
+
+    def _check_call_arity(self, node: CallExpressionNode) -> None:
+        callee = node.callee
+        symbol = None
+
+        if isinstance(callee, IdentifierNode):
+            func_name = callee.name
+            symbol = self.symbol_table.resolve(func_name, callee.start_span, callee.end_span)
+        elif isinstance(callee, MemberAccessNode) and isinstance(callee.receiver, IdentifierNode):
+            func_name = callee.receiver.name + "." + callee.member.name
+            active = self.symbol_table.scopes[-1]
+            symbol = active.resolve(func_name) if active else None
+        else:
+            return
+
+        if symbol is None or symbol.param_count is None:
+            return
+
+        arg_count = len(node.arguments)
+        min_required = symbol.required_param_count if symbol.required_param_count is not None else symbol.param_count
+        if arg_count < min_required or arg_count > symbol.param_count:
+            if self.symbol_table.reporter is not None:
+                diagnostic = Diagnostic(
+                    Severity.ERROR,
+                    SEM003_WRONG_ARG_COUNT,
+                    f"Function '{func_name}' expects {min_required}-{symbol.param_count} argument(s), got {arg_count}",
+                    None,
+                    None,
+                    file_path=self.symbol_table._file_path,
+                )
+                self.symbol_table.reporter.report(diagnostic)
 
     # ------------------------------------------------------------------
     # Literals and identifiers

@@ -70,6 +70,16 @@ class IRValidator:
             raise IRValidationError(
                 "FunctionIR parameters must be a tuple (may be empty)"
             )
+        if not isinstance(node.default_parameters, tuple):
+            raise IRValidationError(
+                "FunctionIR default_parameters must be a tuple"
+            )
+        for name, expr in node.default_parameters:
+            if not isinstance(name, str):
+                raise IRValidationError(
+                    "FunctionIR default_parameters name must be a string"
+                )
+            self._validate_node(expr)
         self._validate_node(node.body)
 
     def _validate_BlockIR(self, node: BlockIR) -> None:

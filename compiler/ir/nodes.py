@@ -24,6 +24,7 @@ class FunctionIR:
     name: str
     parameters: tuple[str, ...]
     body: BlockIR
+    default_parameters: tuple[tuple[str, IRExpression], ...] = ()
     start_span: int | None = None
     end_span: int | None = None
 
