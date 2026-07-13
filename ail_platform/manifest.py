@@ -10,7 +10,7 @@ except ImportError:
     import tomli as tomllib  # type: ignore[no-redef]
 
 
-_KEBAB_CASE_RE = re.compile(r"^[a-z][a-z0-9-]*[a-z0-9]$")
+_SNAKE_CASE_RE = re.compile(r"^[a-z][a-z0-9_]*$")
 _SEMVER_RE = re.compile(r"^\d+\.\d+\.\d+$")
 
 

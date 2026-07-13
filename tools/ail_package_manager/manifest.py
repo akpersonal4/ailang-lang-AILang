@@ -19,20 +19,34 @@ from ail_platform.manifest import find_manifest
 from tools.ail_package_manager.models import DependencySpec, ProjectManifest
 
 
-_NAME_RE = re.compile(r"^[a-z0-9]([a-z0-9-]*[a-z0-9])?$")
+_NAME_RE = re.compile(r"^[a-z][a-z0-9_]*$")
+_NAME_RE_KEBAB = re.compile(r"^[a-z][a-z0-9-]*[a-z0-9]$")
 _MAX_NAME_LENGTH = 64
 _SEMVER_RE = re.compile(r"^\d+\.\d+\.\d+$")
 
 
 def validate_package_name(name: str) -> Optional[str]:
-    """Validate a package name. Return error message or None."""
+    """Validate a package name. Return error message or None.
+
+    Accepts snake_case identifiers (must start with lowercase letter,
+    contain only lowercase alphanumeric and underscores). Kebab-case
+    names are accepted with a deprecation warning.
+    """
     if len(name) > _MAX_NAME_LENGTH:
         return f"Package name too long ({len(name)} > {_MAX_NAME_LENGTH} chars)"
     if not _NAME_RE.match(name):
+        if _NAME_RE_KEBAB.match(name):
+            print(
+                f"Warning: package name '{name}' uses kebab-case which is deprecated. "
+                "Use snake_case instead (e.g. '{0}'.).".format(
+                    name.replace("-", "_")
+                )
+            )
+            return None
         return (
             f"Invalid package name: '{name}'. "
-            "Must be kebab-case: lowercase alphanumeric + hyphens, "
-            "max 64 characters."
+            "Must be snake_case: start with a lowercase letter, "
+            "lowercase alphanumeric + underscores, max 64 characters."
         )
     return None
 

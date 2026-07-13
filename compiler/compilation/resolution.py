@@ -7,11 +7,31 @@ from __future__ import annotations
 
 from pathlib import Path
 
+try:
+    import tomllib
+except ModuleNotFoundError:
+    tomllib = None  # type: ignore[assignment]
+
 
 class ModuleResolutionError(Exception):
     """Raised when module resolution fails."""
 
     pass
+
+
+def _read_package_entry(pkg_toml: Path) -> str:
+    """Read the entry file from a package's ail.toml.
+
+    Returns the entry file path relative to the package directory,
+    defaulting to "main.ail" if parsing fails or entry is missing.
+    """
+    if tomllib is None:
+        return "main.ail"
+    try:
+        cfg = tomllib.loads(pkg_toml.read_text(encoding="utf-8"))
+        return cfg.get("project", {}).get("entry", "main.ail")
+    except Exception:
+        return "main.ail"
 
 
 class ModuleResolver:
@@ -71,6 +91,25 @@ class ModuleResolver:
                 self._module_cache[module_key] = file_path
                 return file_path
 
+            # Fallback: treat <first> as a package directory in this root.
+            # Look for <root>/<first>/ail.toml and resolve to its entry file.
+            # Try both the exact name and a kebab-to-underscore normalization
+            # for backward compatibility with legacy kebab-case packages.
+            candidates = [module_path[0]]
+            if "-" in module_path[0]:
+                candidates.append(module_path[0].replace("-", "_"))
+            elif "_" in module_path[0]:
+                candidates.append(module_path[0].replace("_", "-"))
+            for pkg_name in candidates:
+                pkg_dir = root / pkg_name
+                pkg_toml = pkg_dir / "ail.toml"
+                if pkg_toml.exists():
+                    pkg_entry = _read_package_entry(pkg_toml)
+                    pkg_file = pkg_dir / pkg_entry
+                    if pkg_file.exists():
+                        self._module_cache[module_key] = pkg_file
+                        return pkg_file
+
         raise ModuleResolutionError(f"Module not found: {module_key}")
 
     def _candidate_roots(self) -> list[Path]:
@@ -80,11 +119,23 @@ class ModuleResolver:
         current = self.root.resolve()
 
         while True:
-            for candidate in (current, current / "stdlib"):
+            for candidate in (current, current / "stdlib", current / "lib"):
                 resolved = candidate.resolve()
                 if resolved not in seen:
                     roots.append(resolved)
                     seen.add(resolved)
+
+            # Also add each installed package directory under lib/ as a root,
+            # so internal imports (e.g. lib/mylib/greet.ail from main.ail) resolve.
+            lib_dir = current / "lib"
+            if lib_dir.is_dir():
+                for sub in sorted(lib_dir.iterdir()):
+                    if sub.is_dir() and (sub / "ail.toml").exists():
+                        sub_resolved = sub.resolve()
+                        if sub_resolved not in seen:
+                            roots.append(sub_resolved)
+                            seen.add(sub_resolved)
+
             if current == current.parent:
                 break
             current = current.parent

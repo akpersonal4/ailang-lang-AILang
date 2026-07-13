@@ -11,6 +11,12 @@ from ail_platform.report_schema import ExitCode
 from tools.ail_package_manager.init import init_project
 from tools.ail_package_manager.installer import install
 from tools.ail_package_manager.manifest import find_manifest, parse_manifest
+from tools.ail_package_manager.registry import (
+    load_registry_url,
+    publish_local,
+    publish_remote,
+    RegistryError,
+)
 
 
 def cmd_init(args: argparse.Namespace) -> int:
@@ -25,22 +31,45 @@ def cmd_init(args: argparse.Namespace) -> int:
     )
 
 
+def cmd_publish(args: argparse.Namespace) -> int:
+    """Pack and publish the current project to a registry."""
+    project_root = Path.cwd()
+    registry_arg = args.registry
+
+    if registry_arg:
+        registry_url = registry_arg
+    else:
+        registry_url = load_registry_url(project_root)
+
+    try:
+        if registry_url.startswith(("file://", "/", ".")):
+            local_path = registry_url
+            if local_path.startswith("file://"):
+                local_path = local_path[7:]
+            publish_local(project_root, Path(local_path).resolve())
+        else:
+            publish_remote(project_root, registry_url)
+        return ExitCode.SUCCESS
+    except (RegistryError, ValueError) as e:
+        print(f"Publish error: {e}", file=sys.stderr)
+        return ExitCode.FAILURE
+
+
 def cmd_add(args: argparse.Namespace) -> int:
-    manifest_path = find_manifest(Path.cwd())
-    if manifest_path is None:
-        print("Error: No ail.toml found in current or parent directories", file=sys.stderr)
-        return ExitCode.INTERNAL_ERROR
-    print(f"ail add: {args.package} (not yet implemented)")
-    return ExitCode.FAILURE
+    from tools.ail_package_manager.commands import cmd_add as do_add
+    return do_add(
+        package=args.package,
+        version=args.version or "*",
+        path=args.path,
+        git=args.git,
+        tag=args.tag,
+        branch=args.branch,
+    )
 
 
 def cmd_remove(args: argparse.Namespace) -> int:
-    manifest_path = find_manifest(Path.cwd())
-    if manifest_path is None:
-        print("Error: No ail.toml found in current or parent directories", file=sys.stderr)
-        return ExitCode.INTERNAL_ERROR
-    print(f"ail remove: {args.package} (not yet implemented)")
-    return ExitCode.FAILURE
+    from tools.ail_package_manager.commands import cmd_remove as do_remove
+    return do_remove(package=args.package)
 
 
 def cmd_install(args: argparse.Namespace) -> int:
@@ -53,22 +82,13 @@ def cmd_install(args: argparse.Namespace) -> int:
 
 
 def cmd_update(args: argparse.Namespace) -> int:
-    manifest_path = find_manifest(Path.cwd())
-    if manifest_path is None:
-        print("Error: No ail.toml found in current or parent directories", file=sys.stderr)
-        return ExitCode.INTERNAL_ERROR
-    pkg = args.package
-    print(f"ail update {pkg or '(all)'} (not yet implemented)")
-    return ExitCode.FAILURE
+    from tools.ail_package_manager.commands import cmd_update as do_update
+    return do_update(package=args.package)
 
 
 def cmd_list(args: argparse.Namespace) -> int:
-    manifest_path = find_manifest(Path.cwd())
-    if manifest_path is None:
-        print("Error: No ail.toml found in current or parent directories", file=sys.stderr)
-        return ExitCode.INTERNAL_ERROR
-    print("ail list (not yet implemented)")
-    return ExitCode.FAILURE
+    from tools.ail_package_manager.commands import cmd_list as do_list
+    return do_list(tree=args.tree, outdated=args.outdated)
 
 
 def main() -> int:
@@ -78,6 +98,13 @@ def main() -> int:
     )
 
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
+
+    # ail publish
+    publish_parser = subparsers.add_parser("publish", help="Publish package to registry")
+    publish_parser.add_argument(
+        "--registry", default=None,
+        help="Registry URL (default: from ail.toml [tool.registry] or AIL_REGISTRY env var)",
+    )
 
     # ail init
     init_parser = subparsers.add_parser("init", help="Initialize a new AILang project")
@@ -90,12 +117,13 @@ def main() -> int:
 
     # ail add
     add_parser = subparsers.add_parser("add", help="Add a dependency")
-    add_parser.add_argument("package", help="Package name, path=..., or git=...")
+    add_parser.add_argument("package", help="Package name (e.g. my_package, my_package@1.0.0)")
+    add_parser.add_argument("--version", "-V", default=None, help="Version requirement (default: *)")
+    add_parser.add_argument("--path", default=None, help="Local path to package")
+    add_parser.add_argument("--git", default=None, help="Git repository URL")
     add_parser.add_argument("--tag", default=None, help="Git tag")
     add_parser.add_argument("--branch", default=None, help="Git branch")
-    add_parser.add_argument("--rev", default=None, help="Git commit hash")
     add_parser.add_argument("--dev", action="store_true", help="Add as dev dependency (future)")
-    add_parser.add_argument("--save-exact", action="store_true", help="Save exact version")
 
     # ail remove
     remove_parser = subparsers.add_parser("remove", help="Remove a dependency")
@@ -123,6 +151,7 @@ def main() -> int:
         return ExitCode.SUCCESS
 
     command_map = {
+        "publish": cmd_publish,
         "init": cmd_init,
         "add": cmd_add,
         "remove": cmd_remove,
