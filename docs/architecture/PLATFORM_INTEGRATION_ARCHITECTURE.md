@@ -307,7 +307,7 @@ from platform.manifest import (
 
 # Package-manager-specific validation on top:
 def validate_package_name(name: str) -> bool:
-    """Package manager extends with kebab-case check."""
+    """Package manager extends with snake_case check."""
     ...
 ```
 

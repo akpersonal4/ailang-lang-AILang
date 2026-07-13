@@ -1,5 +1,69 @@
 # Changelog
 
+## v1.0.0-M57
+
+### M57 — VS Code Extension Hardening
+
+- **Extension version sync**: Bumped `package.json` to v0.2.0; fixed trailing comma; added icon reference
+- **Code action edits**: Rewrote `compiler/lsp/features/code_actions.py` — quick fixes now generate actual `TextEdit` operations for "import stdlib module" and "remove unused variable" actions
+- **`for` keyword support**: Added to TextMate grammar (`keyword.control.loop.ailang`) and LSP completions (`completion.py`)
+- **Documentation**: `docs/vscode/INSTALLATION.md` (installation guide), `docs/vscode/FEATURES.md` (feature reference), `docs/releases/M57_VSCODE_EXTENSION_REPORT.md`
+- **Extension CHANGELOG**: Updated `extensions/vscode-ailang/CHANGELOG.md` with v0.2.0 entry
+- **Test results**: 103/103 LSP tests passing, zero regressions
+
+## v1.0.0-M56
+
+### M56 — External Adoption Closure (Package Naming + Package Manager Commands)
+
+- **Snake-case package naming**: Resolved naming deadlock — `manifest.py` now accepts `^[a-z][a-z0-9_]*$` (snake_case). Kebab-case accepted with deprecation warning for backward compatibility
+- **Resolver normalization**: `compiler/compilation/resolution.py` tries both kebab-to-underscore and underscore-to-kebab variants when resolving package directories in `lib/`
+- **`ail new` generates `ail.toml`**: Previously only created `main.ail` + README; now creates `ail.toml` and `ail.lock` with snake_case-normalized package name
+- **`ail add`**: Implemented in `tools/ail_package_manager/commands.py` — parses `name@version`, `--path`, `--git`/`--tag`/`--branch`; edits `ail.toml` [dependencies] section
+- **`ail remove`**: Removes dependency lines from `ail.toml` by matching `"<name>"` prefix
+- **`ail update`**: Delegates to `tools.ail_package_manager.installer.install()` for re-resolution
+- **`ail list`**: Reads `ail.toml` dependencies and `lib/` directory to show install status
+- **CLI wiring**: All four commands added to `compiler/cli/main.py` dispatch table, help text, and `tools/ail_package_manager/__main__.py` argparse
+- **Documentation**: `docs/PACKAGE_NAMING_POLICY.md`, `docs/QUICKSTART.md`, `docs/PACKAGES.md`, `docs/research/M56_EXTERNAL_ADOPTION_CLOSURE.md`
+- **Test results**: 32 new tests (19 naming + 13 commands), all passing. Total: 176/176 tests across LSP + naming + commands + CLI
+
+## 0.10.0
+
+### DX-015 — Repository Rename Tool (`ail rename`)
+
+- **`ail rename old_name new_name`**: Repository-wide identifier rename with semantic awareness
+- **Symbol graph scanning**: Parses all `.ail` files via the compiler pipeline to find function declarations, function calls, variable declarations, variable references, parameters, and import path segments matching the old name
+- **`--dry-run`**: Preview changes without modifying files
+- **`--diff`**: Show unified diff of all changes
+- **`--strings`**: Also rename matching string literal values (e.g., map keys)
+- **`--no-verify`**: Skip compiler verification after rename
+- **Atomic file rewriting**: Changes applied from end to start to preserve offsets; temporary `.rename.tmp` file used per file
+- **Rollback bundle**: Every rename creates `.ail/rename/<timestamp>/` with a `manifest.json` and `.orig` backups of every modified file; on failure, all files are automatically restored
+- **Compiler verification**: After successful rename, `ail build` runs on the entry point to detect any compilation errors
+- **Safe identifier validation**: `new_name` must pass `str.isidentifier()` to prevent invalid identifiers
+- **Implementation**: `compiler/rename.py` — ~260 LOC, no modifications to compiler pipeline, parser, or runtime
+
+### DX-016 — Watch Mode (`ail watch`)
+
+- **`ail watch [<entry>]`**: Automatic incremental recompilation on file changes
+- **Filesystem watcher**: Uses `watchdog` library for cross-platform file monitoring (Windows `ReadDirectoryChangesW`, macOS `FSEvents`, Linux `inotify`)
+- **`--poll`**: Polling-mode fallback for network filesystems, Docker, WSL
+- **`--json`**: Machine-readable JSON output for AI tooling integration
+- **`--no-initial`**: Skip the initial full build on startup
+- **Incremental compilation**: `CompilationSession.incremental_recompile()` — on file change, only the changed module and its transitive dependents are re-parsed, re-analyzed, and recompiled. Unchanged modules use their existing ASTs
+- **Dependency invalidation**: `get_transitive_dependents()` computes the full affected set via BFS on the import graph
+- **Cross-module semantic reanalysis**: Only affected modules are deep-analyzed; cross-module export registration for all modules is fast (top-level names only)
+- **SHA-256 change detection**: `FileCache` stores per-file hashes; events that don't change content (editor atomic-save artifacts) are filtered out
+- **Debounce (200ms)**: Threading.Timer-based debounce prevents redundant compiles during AI burst edits
+- **Polling fallback**: Configurable `--poll-interval` (default 500ms), runs in background thread
+- **Implementation**: `compiler/watch.py` — ~370 LOC; `CompilationSession` extended with 6 incremental methods
+
+### Test Results
+
+- **251 total tests** (220 existing + 31 new), all passing
+- DX-015 (ail rename): 19 tests — scan, change computation, apply, rollback, dry-run, diff, string scanning, import scanning, verification
+- DX-016 (ail watch): 12 tests — file hash, cache, incremental compiler initial build, incremental recompile after change, cache update
+- Zero regressions: all existing CLI, session, lexer, parser, AST, IR, semantic, runtime, type-checker tests pass
+
 ## 0.8.0
 
 ### DX-006 — AILang Dependency Ordering Assistant (`ail order`)

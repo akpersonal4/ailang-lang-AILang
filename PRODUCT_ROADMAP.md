@@ -82,12 +82,18 @@
 - **M18** — Engineering Benchmark Plan (design-only methodology)
 - **M19** — Documentation Canonicalization (this consolidation)
 
+### v1.0.0-M56 — External Adoption Closure ✓
+- **M56** — Snake-case package naming deadlock resolved, `ail add/remove/update/list` implemented, `ail new` generates `ail.toml` + `ail.lock`, kebab-to-underscore normalization in resolver
+
+### v1.0.0-M57 — VS Code Extension Hardening ✓
+- **M57** — Extension v0.2.0, code action TextEdits, `for` keyword in grammar and LSP, installation/feature documentation
+
 ---
 
 ## Current: Active Work
 
-**v0.5.0 (complete)** — DX-008 Formatter hardened and finalized.
-**Next:** v0.6.x — Ecosystem Maturity.
+**v1.0.0-M56/M57 (complete)** — External Adoption Closure and VS Code Extension Hardening.
+**Next:** P2 — 90-Day Production Validation, P3 — Official Examples Repository.
 
 ---
 
@@ -95,15 +101,19 @@
 
 | Milestone | Focus | Target |
 |-----------|-------|:------:|
-| **v0.6.x** | Ecosystem maturity — documentation site, PyPI package, community | Next |
+| **P2** | 90-Day Production Validation — continuous inventory run | Next |
+| **P3** | Official Examples — 5 polished repos | Planned |
 | **v1.0** | Language freeze with full backward-compatibility guarantees | Planned |
 | **Post-1.0** | Self-hosting, JIT, advanced features (evidence-driven) | Future |
 
-### v0.6.x — Ecosystem Maturity
-- Documentation website (hosted)
-- PyPI package (`pip install ailang`)
-- Community feedback collection
-- Potential: LSP improvements, formatter CI integration
+### P2 — 90-Day Production Validation
+- Continuous inventory system run
+- Collect bugs, fixes, incidents
+- Evidence for v1.0 readiness
+
+### P3 — Official Examples Repository
+- 5 polished example repos (Inventory, CRM, Ticket Management, HRMS, Legal Case Tracker)
+- Installation guides, best practices
 
 ### v1.0 — Language Guarantee
 - Full backward-compatibility guarantees

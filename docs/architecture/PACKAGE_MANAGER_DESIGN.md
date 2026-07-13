@@ -102,7 +102,7 @@ version = "0.3"
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `name` | string | ✅ | Package name (kebab-case, alphanumeric + hyphens) |
+| `name` | string | ✅ | Package name (snake_case: `^[a-z][a-z0-9_]*$`; kebab-case accepted with deprecation warning) |
 | `version` | string | ✅ | Semantic version (semver: `MAJOR.MINOR.PATCH`) |
 | `description` | string | ❌ | Short description (≤80 chars) |
 | `authors` | string array | ❌ | Author list in `"Name <email>"` format |
@@ -119,7 +119,7 @@ version = "0.3"
 
 - Keys: package names
 - Values: version requirement strings (semver range syntax)
-- Example: `string-utils = ">=1.0.0,<2.0.0"`
+- Example: `string_utils = ">=1.0.0,<2.0.0"`
 - Empty `[dependencies]` section means no dependencies
 
 ### 2.4 Manifest Discovery
@@ -408,13 +408,13 @@ Exit codes:
 ### 6.1 Project Layout
 
 ```
-my-package/
+my_package/
 ├── ail.toml              # Project manifest
 ├── ail.lock              # Lock file (auto-generated, committed to VCS)
 ├── src/
 │   └── main.ail           # Entry point (or as declared in ail.toml)
 ├── lib/                   # Local dependencies (written by ail install)
-│   └── <package-name>/
+│   └── <package_name>/
 │       ├── ail.toml
 │       └── ...            # Package files
 ├── tests/
@@ -428,7 +428,7 @@ my-package/
 ```
 <project>/.ail/cache/
 └── packages/
-    ├── <package-name>/
+    ├── <package_name>/
     │   ├── <version>/
     │   │   ├── package.ail.tar.gz    # Original archive (from registry/Git)
     │   │   ├── checksum.sha256       # Integrity hash
@@ -442,7 +442,7 @@ my-package/
 ```
 ~/.ail/cache/
 └── packages/
-    └── <package-name>/
+    └── <package_name>/
         └── <version>/
             ├── package.ail.tar.gz
             └── checksum.sha256
@@ -672,15 +672,16 @@ For registry distribution: `.tar.gz` or `.zip` archive of the package directory.
 ### 12.3 Package Naming Convention
 
 ```
-<kebab-case-name>
+<snake_case_name>
 ```
 
 Rules:
 - Lowercase only
-- Alphanumeric characters and hyphens
-- Starts and ends with alphanumeric
+- Alphanumeric characters and underscores
+- Starts with a letter
 - Max 64 characters
-- Examples: `string-utils`, `json-helpers`, `csv-tools`
+- Examples: `string_utils`, `json_helpers`, `csv_tools`
+- Note: Kebab-case (`string-utils`) is accepted with deprecation warning for backward compatibility
 
 ---
 

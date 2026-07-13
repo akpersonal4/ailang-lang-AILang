@@ -10,9 +10,9 @@ until this document has been reviewed. Update AGENTS.md reading order after revi
 
 | Attribute | Value |
 |:----------|:------|
-| **Current Version** | v0.8.0 |
-| **Current Milestone** | Compiler Diagnostics Improvement Program |
-| **Project Phase** | Engineering Optimization |
+| **Current Version** | v1.0.0 |
+| **Current Milestone** | External Adoption Closure (M56 + M57 complete) |
+| **Project Phase** | Active Development |
 
 ### Maturity Assessment
 
@@ -24,6 +24,7 @@ until this document has been reviewed. Update AGENTS.md reading order after revi
 | Formatter | 99% |
 | Platform Services | 100% |
 | Platform Integration | 100% |
+| VS Code Extension | v0.2.0 — syntax highlighting, diagnostics, LSP, code actions, `for` keyword |
 | Documentation | 100% |
 | Governance | 100% |
 | Validation Framework | 100% |
@@ -109,7 +110,7 @@ until this document has been reviewed. Update AGENTS.md reading order after revi
 - [x] Total: 66+ applications across CRUD, file processing, text manipulation
 
 ### Developer Tools
-- [x] VS Code Extension (syntax highlighting, snippets, language config)
+- [x] VS Code Extension (syntax highlighting, diagnostics, go-to-definition, rename, hover, code actions, `for` keyword)
 - [x] Deterministic formatter (`ail fmt` — --check, --diff, --quiet, dir-wide)
 - [x] Lexer stability (no infinite loops on unrecognized characters)
 - [x] 82 formatter + CLI tests (50 formatter + 32 CLI)
@@ -122,6 +123,18 @@ until this document has been reviewed. Update AGENTS.md reading order after revi
 
 ### Shared Tooling Infrastructure
 - [x] `tools/common/` — CLI conventions, filesystem utilities, process execution, reporting helpers
+
+### Inventory Production Modules (M38)
+- [x] **login.ail** — User authentication (plaintext passwords, session management, role-based guards)
+- [x] **backup.ail** — Backup/restore (combined JSON backup, auto-backup before every write, backup listing)
+- [x] **validation.ail** — Input validation (required fields, positive numbers, email format, uniqueness)
+- [x] **import_csv.ail** — CSV import (products, customers, vendors, movements via `csv.parse_header`)
+- [x] **integrity.ail** — Data integrity checking (JSON parse check, foreign key refs, negative stock detection)
+- [x] **storage.ail** — Modified (auto-backup on save, corrupted JSON recovery, concurrent access lock)
+- [x] **main.ail** — Modified (login/logout/backup/restore/backs/import/check commands + auth guards)
+- [x] **config/users.json** — Default admin and staff accounts
+- [x] **Test updates** — test_compile.py + tests/runner.py updated for new arg convention + auth flow
+- [x] Build: ✅ | Test: 38/38 passing | E2E: All CLI commands verified
 
 ### Documentation
 - [x] LANGUAGE_SPEC.md (canonical)
@@ -163,42 +176,14 @@ in the ecosystem that makes AILang productive for both human and AI developers.
 
 ## Current Work
 
-**DX-009 — Compiler Diagnostics Improvement** ✅
+**M56/M57 — External Adoption Closure** ✅ Complete
 
 ### Status
-- **Phase:** Diagnostics Improvement — Complete
-- **Runtime:** Frozen
-- **v0.8.0 Goal:** Compiler errors show `file:line:col` instead of line number ranges; spell-check suggestions for undefined identifiers; multi-error reporting (collect all errors before stopping); JSON diagnostics include `severity`, `file`, and `suggestion` fields
-- **Architecture Design:** ✅ Integrated directly into `Diagnostic`/`DiagnosticFormatter` (no separate doc needed)
-- **Implementation:** ✅ Complete
-
-### Key Design Decisions (DX-009)
-
-| Decision | Choice | Rationale |
-|----------|--------|-----------|
-| Source location format | `file:line:col  SEVERITY CODE: message` | Full path + severity + code in standard tool-friendly format |
-| Suggestion engine | `difflib.get_close_matches` (cutoff 0.6) | Zero dependencies, works on any identifier collision |
-| Multi-error collection | `DiagnosticReporter` threaded through `discover()` path | Lex/parse errors collected before analysis begins |
-| Semicolons | Optional (`match` instead of `expect`) | Parser continues after missing semicolon instead of stopping |
-| LSP | No changes needed | `from_compiler_diagnostic` already handles new fields via `getattr`; LSP uses URI path, not per-diagnostic file |
-
-### DX-009 Deliverables
-
-| Component | Status | Details |
-|-----------|:------:|---------|
-| `file_path` in `Diagnostic` | ✅ | Optional field, threaded through all error-reporting paths |
-| `suggestion` in `Diagnostic` | ✅ | Populated for SEM002 (undefined identifier) via `difflib` |
-| `DiagnosticFormatter.format()` | ✅ | Now outputs `file:line:col  SEVERITY CODE: message` |
-| `DiagnosticFormatter.find_suggestion()` | ✅ | Static method, uses `difflib.get_close_matches` |
-| SymbolTable suggestion integration | ✅ | `resolve()` collects known names from all scopes; passes suggestion to `_report_error` |
-| TypeChecker `file_path` | ✅ | Passed through constructor |
-| Lexer `source_path` | ✅ | Passed through constructor |
-| TokenStream `source_path` | ✅ | Passed through constructor |
-| Parser `source_path` | ✅ | Passed through to TokenStream |
-| Reporter threading | ✅ | `discover()` → `_discover_recursive()` → `_compile_all()` → Lexer/Parser |
-| CLI error output | ✅ | Uses new `format()` for text; JSON includes `file`, `severity`, `suggestion` |
-| Semicolons optional | ✅ | `stream.expect(SEMICOLON)` → `stream.match(SEMICOLON)` at 4 call sites |
-| Test suite | ✅ | 308+ tests passing (core + LSP + stdlib) |
+- **Phase:** Package naming deadlock resolved + VS Code extension hardened
+- **M56:** Snake-case package naming, `ail add/remove/update/list`, `ail new` generates `ail.toml`
+- **M57:** VS Code extension v0.2.0, code action TextEdits, `for` keyword support
+- **Test Results:** 176/176 tests passing (103 LSP + 19 naming + 13 commands + 41 CLI)
+- **Commits:** `7cba4ef` (M56), `b38cd7e` (M57) — both on `develop` branch
 
 **DX-008 — AILang Formatter** ✅
 
@@ -258,17 +243,28 @@ in the ecosystem that makes AILang productive for both human and AI developers.
 
 ---
 
+## Next Priority
+
+| Priority | Area | Key Deliverables |
+|:--------:|------|------------------|
+| **P0** | **M56 — Package Naming + Commands** | ✅ Snake-case naming, `ail add/remove/update/list`, `ail new` generates `ail.toml` — see "Recently Completed" |
+| **P1** | **M57 — VS Code Extension** | ✅ Extension v0.2.0, code actions, `for` keyword support — see "Recently Completed" |
+| **P2** | 90‑Day Production Validation (M40) | Continuous inventory run, collect bugs/fixes/incidents |
+| **P3** | Official Examples Repository | 5 polished examples (Inventory, CRM, Ticket Management, HRMS, Legal Case Tracker) |
+
+> Rationale: Package naming deadlock and VS Code extension hardening are complete. Next focus is production validation and example repositories.
+
 ## Forward-Looking Roadmap
 
 > See `PRODUCT_ROADMAP.md` (canonical roadmap) for the complete milestone history and future plans.
 
 | Milestone | Focus | Target |
 |-----------|-------|:------:|
-| **v0.6.0** | ✅ B1 Engineering Benchmark Framework | Previous |
-| **v0.6.1** | ✅ B1.1 AI Provider Integration & Calibration | Current |
-| **v0.6.x** | B2–B7 benchmark execution, evidence collection | Next |
-| **v1.0** | Language freeze with full backward-compatibility guarantees | Planned |
-| **Post-1.0** | Self-hosting, JIT, advanced features (evidence-driven) | Future |
+| **v1.0.0** | ✅ Release — benchmarks, daemon, language freeze, documentation | Current |
+| **M54** | Package Registry MVP — `ail publish`, remote `ail install` | Next |
+| **P1** | VS Code Extension — highlighting, diagnostics, LSP features | Future |
+| **P2** | 90-Day Production Validation — continuous inventory run | Future |
+| **P3** | Official Examples — 5 polished repos | Future |
 
 --------------------------------------
 
@@ -277,7 +273,6 @@ in the ecosystem that makes AILang productive for both human and AI developers.
 ### Future Ideas
 - Language improvements (pending freeze review)
 - IR optimizer (constant folding, DCE)
-- Package manager (`ail init`, `ail install`)
 - Reduced compile time for >1000 LOC
 
 ### Not Approved
@@ -318,6 +313,13 @@ in the ecosystem that makes AILang productive for both human and AI developers.
 
 | Item | Version | Date |
 |------|---------|------|
+| **M57 — VS Code Extension Hardening** — Extension version synced to v0.2.0. Code action edits implemented (TextEdit operations for import stdlib, remove unused variable). `for` keyword added to grammar and LSP completions. Documentation: INSTALLATION.md, FEATURES.md, M57 report. 103/103 LSP tests passing. | v1.0.0 | 2026-07-13 |
+| **M56 — External Adoption Closure** — Resolved snake-case package naming deadlock (kebab accepted with deprecation warning). Implemented `ail add/remove/update/list` commands. `ail new` now generates `ail.toml` + `ail.lock`. Added kebab-to-underscore normalization in resolver. 32 new tests (naming + commands), all passing. Documentation: QUICKSTART, PACKAGES, NAMING_POLICY. | v1.0.0 | 2026-07-13 |
+| **M27 — Loop Capture Semantics** — Free variable detection + parameter threading + return-value capture for experimental `for-in` loops. 7 new tests, zero runtime changes. All canonical benchmarks pass. | v0.9.0 | 2026-07-10 |
+| **M38 — Inventory Production Modules** — Built 5 missing production modules (login.ail, backup.ail, validation.ail, import_csv.ail, integrity.ail) totaling ~350 LOC of AILang. Modified storage.ail (auto-backup, recovery, lock) and main.ail (auth guards, command routing, new CLI commands). Created config/users.json. All 38/38 existing tests pass, all CLI commands verified end-to-end. The inventory system is now fully USABLE per M35 Production Plan. | v1.0.0-RC1 | 2026-07-10 |
+| **M54 — Package Registry MVP** — `ail publish`, local `file://` registry, `ail install` (via `ail_package_manager`), transitive dependency resolution. Added `lib/` directory search path, package-directory module naming, multi-file package support. Full `pip install` → `ail new` → `ail publish` → `ail install` → `ail run` pipeline verified end-to-end. | v1.0.0 | 2026-07-13 |
+| **Test Fix — inventory_level0** — Fixed 2 pre-existing test failures: replaced `string.to_string` → `convert.to_string` in helpers test; reordered functions in storage test to eliminate forward reference errors (`storage_find_first_rec`/`storage_apply_changes` before their callers). Both now pass. 724/724 tests clean. | v1.0.0 | 2026-07-13 |
+| **M25/M26 — Experimental Loop Primitive** — `for item in collection { body }` lowered to recursive `__for_fn_N`; 12 files changed, 9 tests, `--experimental-loops` flag, full evaluation report. | v0.9.0 | 2026-07-09 |
 | **v0.7.0** — Engineering Optimization — `file.listdir`, `convert.to_number` fix, `list.sum`, `list.find_by_key`. B2 L2: 3→1 iterations (67%). HYPOTHESIS_STATUS.md created. | v0.7.0 | 2026-07-07 |
 | **v0.8.0** — Compiler Diagnostics Improvement — `file:line:col` source locations, SEM002 suggestions, multi-error reporting, JSON diagnostics enhanced. Semicolons optional. 308+ tests passing. | v0.8.0 | 2026-07-08 |
 | **B2–B7** — Engineering Benchmark Evidence — 6 benchmarks (Feature Implementation, Bug Fix, Refactoring, Upgrade, Maintenance, AI Context) executed AILang vs Python — see ENGINEERING_EVIDENCE_REPORT.md | v0.6.2 | 2026-07-07 |
@@ -352,7 +354,7 @@ in the ecosystem that makes AILang productive for both human and AI developers.
 ## Known Issues
 
 ### Non-blocking
-- Float literals rejected with LEX004 (intentional design decision)
+- (resolved) Float literals now supported
 - (resolved) DX-003 directory analysis timeout — now configurable via `--timeout` (default: 300s)
 
 ### Blocking
@@ -387,7 +389,10 @@ in the ecosystem that makes AILang productive for both human and AI developers.
 | **v0.6.2** | ✅ **Complete** | B2–B7 Engineering Benchmark Execution — see ENGINEERING_EVIDENCE_REPORT.md |
 | **v0.7.0** | ✅ **Complete** | Engineering Optimization Program — `file.listdir`, `convert.to_number` fix, `list.sum`, `list.find_by_key`. B2 L2: 3→1 iterations (67% reduction) |
 | **v0.8.0** | ✅ **Complete** | Compiler Diagnostics Improvement Program — `file:line:col` source locations, spell-check suggestions (SEM002), multi-error collection, JSON diagnostics enhanced |
-| **v1.0** | 📋 Planned | Full backward compatibility |
+| **v0.9.0** | ✅ **Complete** | Experimental Loop Primitive — `for-in` syntax, recursive lowering, variable capture semantics, evaluation report |
+| **v1.0.0** | 📋 Planned | Full backward compatibility |
+| **v1.0.0-M56** | ✅ Complete | External Adoption Closure — package naming, `ail add/remove/update/list` |
+| **v1.0.0-M57** | ✅ Complete | VS Code Extension Hardening — v0.2.0, code actions, `for` keyword |
 
 --------------------------------------
 
@@ -465,6 +470,6 @@ Every document type has exactly one owner. If you need to add information, first
 
 | Field | Value |
 |:------|:------|
-| **Date** | 2026-07-08 |
-| **Version** | v0.8.0 |
-| **Milestone** | Compiler Diagnostics Improvement Program |
+| **Date** | 2026-07-13 |
+| **Version** | v1.0.0 |
+| **Milestone** | External Adoption Closure (M56 + M57) |

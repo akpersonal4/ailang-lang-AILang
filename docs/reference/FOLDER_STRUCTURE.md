@@ -18,6 +18,8 @@ project_root/
 ├── docs/                 # Documentation (canonical source of truth)
 │   ├── FOLDER_STRUCTURE.md   # This file — mandatory reading
 │   ├── LANGUAGE_SPEC.md      # Language specification (symbolic link or reference)
+│   ├── vscode/               # VS Code extension documentation (installation, features)
+│   ├── releases/             # Release notes, known limitations, versioning policy
 │   └── ...                   # Other documentation files
 ├── examples/             # Example programs demonstrating language features
 │   ├── hello_world/
@@ -52,7 +54,15 @@ project_root/
 - **All benchmark reports must be placed in `docs/`**
 - `LANGUAGE_SPEC.md` at project root is the canonical specification
 - Documentation files use `.md` extension
-- Reference `docs/INDEX.md` for complete documentation map
+- Reference `docs/archive/misc/INDEX.md` for complete documentation map
+
+### VS Code Extension Docs (`docs/vscode/`)
+- Installation guides, feature references, and troubleshooting for the VS Code extension
+- One document per major topic (INSTALLATION.md, FEATURES.md)
+
+### Release Notes (`docs/releases/`)
+- Release notes, known limitations, versioning policy, and milestone completion reports
+- One document per release or milestone
 
 ### Examples (`examples/`)
 - Source files (`.ail`) go in `examples/<category>/` or directly in `examples/`

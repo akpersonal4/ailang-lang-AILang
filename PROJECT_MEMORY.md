@@ -7,10 +7,10 @@ Project history, key decisions, and evolution timeline for AI coding assistants.
 ## Project Identity
 
 - **Language:** AILang — AI-first, deterministic, specification-driven
-- **Version:** v0.7.0
-- **Compiler:** 40 Python source files, ~4,000 LOC
+- **Version:** v1.0.0
+- **Compiler:** 41 Python source files, ~4,300 LOC
 - **Standard Library:** 16 `.ail` modules (extended: `file.listdir`, `list.sum`, `list.find_by_key`; fixed: `convert.to_number`)
-- **Test Suite:** 893+ passing tests across 103 test scripts (772 existing + 82 formatter + 44 B1 framework + 37 providers/calibration)
+- **Test Suite:** 756+ passing tests across 44+ test scripts
 - **Applications:** 66+ across `apps/`, `ai_benchmarks/`, `examples/patterns/`
 
 ---
@@ -342,6 +342,84 @@ A chronological record of every major engineering phase, with results, lessons, 
 | **Lessons** | AILang's compiler is a batch correctness gate — all import/name errors surface in one compile vs Python's sequential runtime discovery. Both systems exhibited identical data-bleed bugs (fixed identically via storage_clear_all + reseed). AILang eliminates null-pointer, code-injection, and implicit-coercion at the language level. The B2–B6 AI-iteration measurement remains unexecuted (requires provider queries). |
 | **Documents** | `docs/benchmarks/INVENTORY_PYTHON_COMPARISON.md`, `docs/benchmarks/INVENTORY_BENCHMARK_HARNESS.md`, `apps/inventory_py/` |
 
+### M27 — Loop Capture Semantics (v0.9.0)
+
+| Aspect | Detail |
+|--------|--------|
+| **What** | Solved the scope boundary problem for experimental `for-in` loops. Variables from enclosing function scopes referenced in the loop body are now automatically captured via **parameter threading**: free variable detection analyzes the body AST, detected variables become parameters of the generated recursive helper, written variables are returned from the base case and captured back at the call site via `AssignmentIR`. |
+| **Why** | The for-loop lowering generated module-level recursive helpers that had no access to the enclosing function's `StackFrame`. Variables like `total` in `for item in items { total = total + item }` were unresolvable — the most common accumulator pattern was broken. |
+| **Result** | All 16 loop tests pass (9 existing + 7 new), 226/226 critical tests pass, canonical benchmarks show zero regression. Zero runtime changes — the fix is entirely compile-time in `ir/builder.py` (~100 LOC). Multiple written variables (>1 accumulator) raise a clear `ValueError` suggesting manual recursion. |
+| **Lessons** | AILang's architecture constraint (module-level functions only, no closures) can be worked around without violating ADRs by using compile-time transformations. Parameter threading + return-value capture is a general pattern applicable to other scenarios needing closure-like behavior. The investigation report (`docs/architecture/M26_LOOP_CAPTURE_SEMANTICS.md`) analyzed 5 approaches before selecting this one. |
+| **Documents** | `docs/architecture/M26_LOOP_CAPTURE_SEMANTICS.md`, `compiler/ir/builder.py`, `tests/test_experimental_loops.py` |
+
+### M25/M26 — Experimental Loop Primitive (v0.9.0)
+
+| Aspect | Detail |
+|--------|--------|
+| **What** | Added experimental `for item in collection { body }` syntax to AILang, lowering to recursive function calls at IR-build time. Parser recognizes `for` keyword supported by `--experimental-loops` flag. Semantic analyzer rejects it without the flag (PAR012 error). Full evaluation: 12 files modified, 9 new tests, all benchmarks passing. |
+| **Why** | Benchmark evidence (B2 L2 sum-even: 67% iteration reduction from `list.sum`) suggested that a loop primitive could further reduce AI iterations and LOC. The v1.0 decision required empirical evaluation. |
+| **Result** | LOC reduction: 5-8% (FAIL vs 20% threshold). Determinism: PASS (0 regressions). Compile perf: PASS (<0.1% overhead). AI iteration reduction: pending AI provider validation. The limitation (no capture semantics) was identified as the critical blocker — resolved in M27. |
+| **Lessons** | A loop primitive without capture semantics is practically useless (all common patterns write to an accumulator). The evaluation report recommended conditional promotion after checking capture semantics viability. |
+| **Documents** | `docs/benchmarks/LOOP_PRIMITIVE_EVALUATION.md`, `docs/architecture/M26_LOOP_CAPTURE_SEMANTICS.md` |
+
+### M38 — Inventory Production Modules (v1.0.0-RC1)
+
+| Aspect | Detail |
+|--------|--------|
+| **What** | Built all 5 missing production modules from the M35 Production Plan: `login.ail` (auth + sessions), `backup.ail` (combined JSON backup/restore/list, auto-backup on write, corrupted JSON auto-recovery), `validation.ail` (required, positive-number, email, uniqueness), `import_csv.ail` (products/customers/vendors/movements via `csv.parse_header`), `integrity.ail` (JSON parse check, FK refs, negative stock). Modified `storage.ail` (auto-backup before save, recovery from auto-backup on corruption, concurrent access lock via `data/.lock`). Modified `main.ail` (auth guards on mutating commands, new CLI routing for 11 commands). Created `config/users.json` with default admin/staff accounts. Updated test runners for new arg convention. |
+| **Why** | The M35 plan identified the system as 80% production-ready with 6 gaps totaling ~375 LOC. These modules fill those gaps, making the system USABLE for a real user — with authentication, data protection, validation, CSV import, and integrity checking. |
+| **Result** | ~350 LOC of new AILang code across 5 new files + 2 modified files. 38/38 existing tests pass cleanly (zero warnings). All new CLI commands verified end-to-end via `ail run`. Auth guards correctly prevent mutations without login. Role-based access (admin/staff) works. Backups create verifiable combined JSON files. Integrity check validates all collections. |
+| **Files** | `apps/inventory/login.ail` (58 LOC), `apps/inventory/backup.ail` (120 LOC), `apps/inventory/validation.ail` (44 LOC), `apps/inventory/import_csv.ail` (53 LOC), `apps/inventory/integrity.ail` (173 LOC), `apps/inventory/storage.ail` (modified +48 LOC), `apps/inventory/main.ail` (modified +89 LOC), `apps/inventory/config/users.json` |
+| **Lessons** | AILang argument handling via `ail run` strips the script path from `environment.args()`, so args[0] = first user arg. This differs from the old test convention which included the script path. Forward reference errors appear when helper functions are defined after callers within the same file — `storage_auto_backup` must appear before `storage_save`. The `csv.parse_header` function directly returns a list of maps keyed by column names — ideal for CSV import without manual mapping. |
+| **Documents** | `docs/adoption/INVENTORY_PRODUCTION_PLAN.md`, `apps/inventory/*` |
+
+### M39 — Test Infrastructure & Audit Fixes (v1.0.0-RC2)
+
+| Aspect | Detail |
+|--------|--------|
+| **What** | Fixed dead-code gaps identified in audit: wired lock into main(), wired validation into import flow, removed unused imports. Added 5 new test files (31 test cases → 43 total). Updated OPERATIONS_RUNBOOK.md, V1_RC1_RELEASE_NOTES.md → RC2, cleaned PLAYBOOK. Verified all 52 inventory files build, all 43 tests pass. |
+| **Why** | Audit revealed unused function parameters, unused imports, misaligned documentation, and inactive lock mechanism. These gaps needed fixing before v1 release. |
+| **Result** | `import_save_all_rec` now validates CSV rows before saving. `main()` acquires/releases lock on entry/exit. Unused `import validation` removed from main.ail. 38→43 tests (5 new files). All docs updated for RC2. |
+| **Files** | `apps/inventory/import_csv.ail`, `apps/inventory/main.ail`, `apps/inventory/stock_aging.ail`, `apps/inventory/tests/test_*.ail`, `docs/deployment/OPERATIONS_RUNBOOK.md`, `docs/releases/V1_RC1_RELEASE_NOTES.md` |
+
+### M40 — Inventory Level 0 Test Fixes
+
+| Aspect | Detail |
+|--------|--------|
+| **What** | Fixed 2 pre-existing test failures in `tests/test_inventory_level0.py`: (1) `test_helpers_level_0` used `string.to_string()` which doesn't exist in stdlib — replaced with `convert.to_string()` to match the real `helpers.ail`; (2) `test_storage_level_0` had forward-reference errors (`storage_find_first_rec` called before definition, `storage_apply_changes` called before definition) — reordered functions to bottom-up dependency order matching the real `storage.ail`. |
+| **Why** | These tests had been inlined with stale code that didn't match the actual app files. The real `helpers.ail` and `storage.ail` apps/inventory/ were updated earlier but the tests were not. |
+| **Result** | Both tests pass. 724/724 tests clean across relevant test suites. |
+| **Files** | `tests/test_inventory_level0.py` |
+
+### M54 — Package Registry MVP
+
+| Aspect | Detail |
+|--------|--------|
+| **What** | Implemented `ail publish` + local `ail install` workflow. Created `compiler/package/registry.py` with `publish_local()`, `download_from_local_registry()`. Updated `compiler/cli/main.py` with `cmd_publish()`. Updated `tools/ail_package_manager/{installer,resolver}.py` for registry source support. Added `lib/` directory to compiler search path, package-directory module naming, multi-file package support, always-declare module namespace rule. |
+| **Why** | Without a registry every project is copy-paste driven. `ail new` had no `ail install` workflow. |
+| **Result** | Full pipeline verified on Windows: `pip install . → ail new mylib → ail publish file:///tmp/reg → ail new consumer → ail install mylib → ail run` — works. Multi-file packages with internal imports verified. 722 tests pass (2 pre-existing inventory_level0 tests now fixed). |
+| **Files** | `compiler/package/registry.py`, `compiler/package/__init__.py`, `compiler/cli/main.py`, `compiler/compilation/resolution.py`, `compiler/compilation/session.py`, `tools/ail_package_manager/{installer,resolver}.py`, `docs/releases/FIRST_HOUR_CLOSURE_REPORT.md` |
+
+### M56 — External Adoption Closure (v1.0.0)
+
+| Aspect | Detail |
+|--------|--------|
+| **What** | Resolved snake-case package naming deadlock (manifest.py regex changed from kebab to snake_case, kebab accepted with deprecation warning). Implemented `ail add`, `ail remove`, `ail update`, `ail list` commands in `tools/ail_package_manager/commands.py`. Updated `ail new` to generate `ail.toml` + `ail.lock` (previously only created `main.ail` + README). Added kebab-to-underscore normalization in `compiler/compilation/resolution.py`. |
+| **Why** | Naming deadlock was P0 — manifest.py enforced kebab-case, but AILang lexer tokenizes `-` as MINUS, making `import my-package` a parse error. No package name could satisfy both layers. Without `ail new` generating `ail.toml`, all subsequent package operations broke. |
+| **Result** | 12 files changed, 2,090 insertions. 32 new tests (19 naming + 13 commands). Full pipeline: `pip install . → ail new myapp → ail add mylib@1.0.0 → ail list → ail remove mylib` works end-to-end. |
+| **Files** | `tools/ail_package_manager/manifest.py`, `tools/ail_package_manager/commands.py`, `tools/ail_package_manager/__main__.py`, `ail_platform/manifest.py`, `compiler/compilation/resolution.py`, `compiler/cli/main.py`, `tests/test_package_naming.py`, `tests/test_package_commands.py`, `docs/PACKAGE_NAMING_POLICY.md`, `docs/QUICKSTART.md`, `docs/PACKAGES.md` |
+| **Lessons** | Package naming must be validated at both the manifest layer (Python regex) and the language layer (AILang lexer). Snake_case (`^[a-z][a-z0-9_]*$`) is the only format that satisfies both constraints. Kebab-case can be accepted with deprecation warnings for backward compatibility. |
+
+### M57 — VS Code Extension Hardening (v1.0.0)
+
+| Aspect | Detail |
+|--------|--------|
+| **What** | Hardened VS Code extension from MVP to production-ready. Synced extension version to v0.2.0. Rewrote code actions to generate actual TextEdit operations (import stdlib module, remove unused variable). Added `for` keyword to TextMate grammar and LSP completions. Created installation and feature documentation. |
+| **Why** | Extension existed since Phase 9 but had stub code actions, missing `for` keyword in grammar/completions, and no installation documentation. Needed hardening before external adoption. |
+| **Result** | 8 files changed, 597 insertions. 103/103 LSP tests passing, zero regressions. Extension v0.2.0 with full code action support. |
+| **Files** | `compiler/lsp/features/code_actions.py`, `compiler/lsp/features/completion.py`, `extensions/vscode-ailang/package.json`, `extensions/vscode-ailang/CHANGELOG.md`, `extensions/vscode-ailang/syntaxes/ailang.tmLanguage.json`, `docs/vscode/INSTALLATION.md`, `docs/vscode/FEATURES.md`, `docs/releases/M57_VSCODE_EXTENSION_REPORT.md` |
+| **Lessons** | Code actions must generate TextEdit operations, not just diagnostic messages, for VS Code to apply quick fixes. The `for` keyword was implemented in M25/M26 but not added to the VS Code grammar — extension updates must track language changes. |
+
 ### Governance
 
 - **Benchmark Feedback Loop:** Single-app findings stay in benchmark reports. Only ≥2 independent apps promote lessons to Playbook/AGENTS.md.
@@ -358,7 +436,7 @@ A chronological record of every major engineering phase, with results, lessons, 
 | Algorithmic / compute workloads | ❌ Not suitable | 30–60s Sudoku solver evidence |
 | JSON persistence | ✅ Ready | `json.parse` / `json.stringify` + `file` module |
 | CSV processing | ✅ Ready | `csv.parse` / `csv.stringify` |
-| String manipulation | ⚠️ Partial | Missing split/find/join — must write custom |
+| String manipulation | ✅ Ready | `string.split`, `string.find`, `string.join` (added v0.7.0) |
 
 **Overall score:** 6.0/10
 
@@ -397,7 +475,7 @@ Root
 ├── benchmarks/                       ← B1-B7 framework, providers, calibration, datasets, b1_understanding, tests
 ├── tests/                            ← Existing tests (82 formatter + 44 B1 framework)
 ├── apps/
-│   ├── inventory/                    ← Largest AILang app: 4,009 LOC + 4,506 test = 8,515 total, 38/38 pass
+│   ├── inventory/                    ← Largest AILang app: 4,046 app + 4,690 test = 8,736 total, 43/43 pass
 │   └── inventory_py/                 ← Python 3.12 mirror: 2,614 LOC + 3,644 test = 6,258 total, 38/38 pass
 ├── tools/
 │   ├── common/                       ← Shared DX tooling library
