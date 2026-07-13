@@ -1,0 +1,6 @@
+// P8 V3b: Type mixing in expression
+fn testTypeMix() {
+    let myNum = 42;
+    let myStr = " items";
+    let myBad = myNum + myStr;
+}

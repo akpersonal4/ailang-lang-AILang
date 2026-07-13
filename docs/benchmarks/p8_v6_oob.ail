@@ -1,0 +1,7 @@
+import list;
+fn testOob() {
+    let myList = list.append(list.new(), 42);
+    let myVal = list.get(myList, 5);
+    print("Val = " + myVal);
+}
+fn main() { testOob(); }

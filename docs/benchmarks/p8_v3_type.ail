@@ -1,0 +1,5 @@
+// P8 V3a: Type reassignment
+fn testTypeReassignment() {
+    let myVar = 42;
+    myVar = "hello";
+}

@@ -1,0 +1,30 @@
+// P8 AILang Compile-Time Violation Tests
+// These patterns should trigger compile errors.
+
+// Test V1: Uninitialized variable
+fn testV1() {
+    let uninitVal;
+    // ERROR: CMP001: Variable declaration requires an initializer expression
+}
+
+// Test V3a: Type reassignment (int to string)
+fn testV3a() {
+    let myVal = 42;
+    myVal = "hello";
+    // ERROR: Type mismatch on reassignment
+}
+
+// Test V3b: Type mixing in expression
+fn testV3b() {
+    let myNum = 42;
+    let myStr = " items";
+    let myBad = myNum + myStr;
+    // ERROR: Type mismatch in binary expression
+}
+
+// Test V10: Variable name shadowing
+fn testV10() {
+    let myVar = 1;
+    let myVar = 2;
+    // ERROR: Duplicate variable declaration
+}

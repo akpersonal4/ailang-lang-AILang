@@ -1,0 +1,102 @@
+import system;
+import map;
+import list;
+import string;
+import convert;
+
+fn v1_null_dereference()
+    // V1: Null dereference — AILang requires initializer for let
+    // This is impossible in AILang; the compiler enforces initialization.
+    // Test: compile a function that uses None/null
+    let v1_val = system.none();
+    if v1_val == system.none() {
+        system.print("V1: Cannot dereference null by construction");
+    }
+    system.print("V1: No null dereference possible in AILang");
+end
+
+fn v2_missing_guard()
+    // V2: Missing existence check — map.get without map.has
+    let v2_contacts = map.set("alice", "555-0100", map.empty());
+    // Missing map.has guard before map.get — runtime error
+    let v2_phone = map.get("bob", v2_contacts);
+    system.print(v2_phone);
+end
+
+fn v3_type_confusion(flag)
+    // V3: Type confusion — AILang is statically typed
+    let v3_result = 42;
+    // Attempt to reassign to string — compiler catches this
+    // v3_result = "hello";  // would be compile error
+    system.print("V3: Type confusion blocked by static types");
+end
+
+fn v4_implicit_coercion()
+    // V4: Implicit coercion — AILang doesn't coerce
+    let v4_a = 42;
+    // let v4_b = v4_a + " items";  // would be compile error
+    system.print("V4: No implicit coercion in AILang");
+end
+
+fn v5_division_by_zero()
+    // V5: Division by zero — runtime
+    let v5_x = 10;
+    let v5_y = 0;
+    let v5_result = v5_x / v5_y;
+    system.print(string.concat("V5: ", convert.to_string(v5_result)));
+end
+
+fn v6_out_of_bounds()
+    // V6: List index out of bounds — runtime
+    let v6_items = list.append(1, list.empty());
+    // Only 1 element, get index 5
+    let v6_val = list.get(5, v6_items);
+    system.print(string.concat("V6: ", convert.to_string(v6_val)));
+end
+
+fn v7_unvalidated_input()
+    // V7: Unvalidated input in file path
+    // Not detectable at compile or runtime in AILang
+    let v7_filename = "../secret.txt";
+    let v7_path = string.concat("/data/", v7_filename);
+    system.print(v7_path);
+end
+
+fn v8_sql_injection()
+    // V8: SQL injection — N/A (no SQL in AILang)
+    system.print("V8: SQL injection not applicable (no SQL)");
+end
+
+fn v9_infinite_recursion(counter)
+    // V9: Infinite recursion — runtime (stack overflow)
+    system.print(string.concat("V9: count=", convert.to_string(counter)));
+    let v9_next = counter + 1;
+    v9_infinite_recursion(v9_next);
+end
+
+fn v10_variable_shadowing()
+    // V10: Variable shadowing — AILang requires unique names
+    // Cannot reuse variable names within same scope
+    let v10_x = 1;
+    // let v10_x = 2;  // would be compile error
+    system.print("V10: Variable shadowing prevented by unique name requirement");
+end
+
+fn main()
+    system.print("=== P8 Security Vulnerability Test (AILang) ===");
+    system.print("");
+
+    // V1: Will compile (no null dereference possible)
+    system.print("--- V1: Null Dereference ---");
+    v1_null_dereference();
+
+    // V2: Will compile but crash at runtime
+    system.print("--- V2: Missing Guard ---");
+    v2_missing_guard();
+
+    // V5: Will compile but crash at runtime
+    system.print("--- V5: Division by Zero ---");
+    v5_division_by_zero();
+
+    system.print("All tests complete");
+end

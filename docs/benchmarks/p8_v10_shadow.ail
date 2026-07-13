@@ -1,0 +1,5 @@
+// P8 V10: Variable shadowing
+fn testShadow() {
+    let appleCount = 1;
+    let appleCount = 2;
+}
