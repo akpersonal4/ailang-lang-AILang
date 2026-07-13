@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ailang"
-version = "0.2.0"
+version = "0.10.0"
 description = "AI-first programming language compiler"
 requires-python = ">=3.11"
-dependencies = []
+dependencies = ["watchdog>=4.0"]
 
 [project.optional-dependencies]
 dev = [
@@ -31,8 +31,11 @@ all = [
 [project.scripts]
 ail = "compiler.cli.main:main"
 
+[tool.setuptools]
+include-package-data = true
+
 [tool.setuptools.packages.find]
-include = ["compiler*", "stdlib*"]
+include = ["compiler*", "stdlib*", "tools*", "ail_platform*"]
 
 [tool.setuptools.package-data]
 compiler = ["py.typed"]

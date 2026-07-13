@@ -2,12 +2,12 @@
   "metadata": {
     "tool": "ail_order",
     "version": "0.1.0",
-    "timestamp": "2026-07-08T17:24:18.136552+00:00"
+    "timestamp": "2026-07-10T16:02:35.157095+00:00"
   },
   "summary": {
-    "total": 9,
-    "functions": 68,
-    "errors": 4,
+    "total": 16,
+    "functions": 89,
+    "errors": 0,
     "warnings": 0,
     "cycles": 0
   },
@@ -16,129 +16,7 @@
       "metadata": {
         "tool": "ail_order",
         "version": "0.1.0",
-        "timestamp": "2026-07-08T17:24:18.136552+00:00"
-      },
-      "summary": {
-        "total": 3,
-        "errors": 0,
-        "warnings": 0,
-        "cycles": 0,
-        "unreachable": 0,
-        "duplicates": 0
-      },
-      "levels": {
-        "0": [
-          "audit_log",
-          "audit_list",
-          "audit_list_by_entity"
-        ]
-      },
-      "functions": [
-        {
-          "name": "audit_log",
-          "line": 4,
-          "level": 0,
-          "calls": []
-        },
-        {
-          "name": "audit_list",
-          "line": 17,
-          "level": 0,
-          "calls": []
-        },
-        {
-          "name": "audit_list_by_entity",
-          "line": 21,
-          "level": 0,
-          "calls": []
-        }
-      ],
-      "cycles": [],
-      "unreachable": [],
-      "duplicates": [],
-      "findings": []
-    },
-    {
-      "metadata": {
-        "tool": "ail_order",
-        "version": "0.1.0",
-        "timestamp": "2026-07-08T17:24:18.136552+00:00"
-      },
-      "summary": {
-        "total": 3,
-        "errors": 3,
-        "warnings": 0,
-        "cycles": 0,
-        "unreachable": 0,
-        "duplicates": 0
-      },
-      "levels": {
-        "0": [
-          "auth_check_role",
-          "auth_list_contains_rec"
-        ],
-        "1": [
-          "auth_has_permission"
-        ]
-      },
-      "functions": [
-        {
-          "name": "auth_check_role",
-          "line": 4,
-          "level": 0,
-          "calls": []
-        },
-        {
-          "name": "auth_has_permission",
-          "line": 29,
-          "level": 1,
-          "calls": [
-            "auth_list_contains_rec",
-            "auth_list_contains_rec",
-            "auth_list_contains_rec"
-          ]
-        },
-        {
-          "name": "auth_list_contains_rec",
-          "line": 96,
-          "level": 0,
-          "calls": [
-            "auth_list_contains_rec"
-          ]
-        }
-      ],
-      "cycles": [],
-      "unreachable": [],
-      "duplicates": [],
-      "findings": [
-        {
-          "severity": "error",
-          "message": "Forward reference: 'auth_list_contains_rec' called before definition",
-          "line": 29,
-          "function": "auth_has_permission",
-          "suggestion": "Move 'auth_list_contains_rec' before 'auth_has_permission' or call order"
-        },
-        {
-          "severity": "error",
-          "message": "Forward reference: 'auth_list_contains_rec' called before definition",
-          "line": 29,
-          "function": "auth_has_permission",
-          "suggestion": "Move 'auth_list_contains_rec' before 'auth_has_permission' or call order"
-        },
-        {
-          "severity": "error",
-          "message": "Forward reference: 'auth_list_contains_rec' called before definition",
-          "line": 29,
-          "function": "auth_has_permission",
-          "suggestion": "Move 'auth_list_contains_rec' before 'auth_has_permission' or call order"
-        }
-      ]
-    },
-    {
-      "metadata": {
-        "tool": "ail_order",
-        "version": "0.1.0",
-        "timestamp": "2026-07-08T17:24:18.136552+00:00"
+        "timestamp": "2026-07-10T16:02:35.157095+00:00"
       },
       "summary": {
         "total": 7,
@@ -150,318 +28,246 @@
       },
       "levels": {
         "0": [
-          "category_list_by_parent_rec",
-          "category_create",
-          "category_get",
-          "category_update",
-          "category_delete",
-          "category_list",
-          "category_list_by_parent"
+          "new",
+          "push",
+          "len",
+          "get",
+          "contains",
+          "remove",
+          "clear"
         ]
       },
       "functions": [
         {
-          "name": "category_list_by_parent_rec",
-          "line": 6,
+          "name": "new",
+          "line": 0,
           "level": 0,
           "calls": [
-            "category_list_by_parent_rec"
+            "list_new"
           ]
         },
         {
-          "name": "category_create",
-          "line": 18,
-          "level": 0,
-          "calls": []
-        },
-        {
-          "name": "category_get",
-          "line": 31,
-          "level": 0,
-          "calls": []
-        },
-        {
-          "name": "category_update",
-          "line": 35,
-          "level": 0,
-          "calls": []
-        },
-        {
-          "name": "category_delete",
-          "line": 39,
-          "level": 0,
-          "calls": []
-        },
-        {
-          "name": "category_list",
-          "line": 43,
-          "level": 0,
-          "calls": []
-        },
-        {
-          "name": "category_list_by_parent",
-          "line": 47,
+          "name": "push",
+          "line": 4,
           "level": 0,
           "calls": [
-            "category_list_by_parent_rec"
-          ]
-        }
-      ],
-      "cycles": [],
-      "unreachable": [],
-      "duplicates": [],
-      "findings": []
-    },
-    {
-      "metadata": {
-        "tool": "ail_order",
-        "version": "0.1.0",
-        "timestamp": "2026-07-08T17:24:18.136552+00:00"
-      },
-      "summary": {
-        "total": 7,
-        "errors": 0,
-        "warnings": 0,
-        "cycles": 0,
-        "unreachable": 0,
-        "duplicates": 0
-      },
-      "levels": {
-        "0": [
-          "customer_search_rec",
-          "customer_create",
-          "customer_get",
-          "customer_update",
-          "customer_delete",
-          "customer_list",
-          "customer_search"
-        ]
-      },
-      "functions": [
-        {
-          "name": "customer_search_rec",
-          "line": 6,
-          "level": 0,
-          "calls": [
-            "customer_search_rec"
+            "list_append"
           ]
         },
         {
-          "name": "customer_create",
-          "line": 20,
-          "level": 0,
-          "calls": []
-        },
-        {
-          "name": "customer_get",
-          "line": 35,
-          "level": 0,
-          "calls": []
-        },
-        {
-          "name": "customer_update",
-          "line": 39,
-          "level": 0,
-          "calls": []
-        },
-        {
-          "name": "customer_delete",
-          "line": 45,
-          "level": 0,
-          "calls": []
-        },
-        {
-          "name": "customer_list",
-          "line": 49,
-          "level": 0,
-          "calls": []
-        },
-        {
-          "name": "customer_search",
-          "line": 53,
-          "level": 0,
-          "calls": [
-            "customer_search_rec"
-          ]
-        }
-      ],
-      "cycles": [],
-      "unreachable": [],
-      "duplicates": [],
-      "findings": []
-    },
-    {
-      "metadata": {
-        "tool": "ail_order",
-        "version": "0.1.0",
-        "timestamp": "2026-07-08T17:24:18.136552+00:00"
-      },
-      "summary": {
-        "total": 16,
-        "errors": 1,
-        "warnings": 0,
-        "cycles": 0,
-        "unreachable": 0,
-        "duplicates": 0
-      },
-      "levels": {
-        "0": [
-          "helpers_repeat_char",
-          "helpers_pad_number",
-          "helpers_current_timestamp",
-          "helpers_unix_timestamp",
-          "helpers_generate_id",
-          "helpers_safe_string",
-          "helpers_is_empty_list",
-          "helpers_copy_map_iter",
-          "helpers_copy_map",
-          "helpers_list_contains_rec",
-          "helpers_list_contains",
-          "helpers_format_currency",
-          "helpers_string_to_number",
-          "helpers_get_map_value_safe"
-        ],
-        "1": [
-          "helpers_find_in_list_rec",
-          "helpers_find_in_list"
-        ]
-      },
-      "functions": [
-        {
-          "name": "helpers_repeat_char",
+          "name": "len",
           "line": 8,
           "level": 0,
           "calls": [
-            "helpers_repeat_char"
+            "list_len"
           ]
         },
         {
-          "name": "helpers_pad_number",
-          "line": 15,
+          "name": "get",
+          "line": 12,
           "level": 0,
           "calls": [
-            "helpers_repeat_char"
+            "list_get"
           ]
         },
         {
-          "name": "helpers_current_timestamp",
-          "line": 25,
-          "level": 0,
-          "calls": []
-        },
-        {
-          "name": "helpers_unix_timestamp",
-          "line": 29,
-          "level": 0,
-          "calls": []
-        },
-        {
-          "name": "helpers_generate_id",
-          "line": 33,
+          "name": "contains",
+          "line": 16,
           "level": 0,
           "calls": [
-            "helpers_unix_timestamp",
-            "helpers_pad_number"
+            "list_contains"
           ]
         },
         {
-          "name": "helpers_safe_string",
-          "line": 41,
-          "level": 0,
-          "calls": []
-        },
-        {
-          "name": "helpers_is_empty_list",
-          "line": 48,
-          "level": 0,
-          "calls": []
-        },
-        {
-          "name": "helpers_copy_map_iter",
-          "line": 55,
+          "name": "remove",
+          "line": 20,
           "level": 0,
           "calls": [
-            "helpers_copy_map_iter"
+            "list_remove"
           ]
         },
         {
-          "name": "helpers_copy_map",
-          "line": 65,
+          "name": "clear",
+          "line": 24,
           "level": 0,
           "calls": [
-            "helpers_copy_map_iter"
+            "list_clear"
           ]
-        },
-        {
-          "name": "helpers_find_in_list_rec",
-          "line": 71,
-          "level": 1,
-          "calls": [
-            "helpers_get_map_value_safe",
-            "helpers_find_in_list_rec"
-          ]
-        },
-        {
-          "name": "helpers_find_in_list",
-          "line": 83,
-          "level": 1,
-          "calls": [
-            "helpers_find_in_list_rec"
-          ]
-        },
-        {
-          "name": "helpers_list_contains_rec",
-          "line": 87,
-          "level": 0,
-          "calls": [
-            "helpers_list_contains_rec"
-          ]
-        },
-        {
-          "name": "helpers_list_contains",
-          "line": 97,
-          "level": 0,
-          "calls": [
-            "helpers_list_contains_rec"
-          ]
-        },
-        {
-          "name": "helpers_format_currency",
-          "line": 101,
-          "level": 0,
-          "calls": []
-        },
-        {
-          "name": "helpers_string_to_number",
-          "line": 105,
-          "level": 0,
-          "calls": []
-        },
-        {
-          "name": "helpers_get_map_value_safe",
-          "line": 113,
-          "level": 0,
-          "calls": []
         }
       ],
       "cycles": [],
       "unreachable": [],
       "duplicates": [],
-      "findings": [
-        {
-          "severity": "error",
-          "message": "Forward reference: 'helpers_get_map_value_safe' called before definition",
-          "line": 71,
-          "function": "helpers_find_in_list_rec",
-          "suggestion": "Move 'helpers_get_map_value_safe' before 'helpers_find_in_list_rec' or call order"
-        }
-      ]
+      "findings": []
     },
     {
       "metadata": {
         "tool": "ail_order",
         "version": "0.1.0",
-        "timestamp": "2026-07-08T17:24:18.137735+00:00"
+        "timestamp": "2026-07-10T16:02:35.157095+00:00"
+      },
+      "summary": {
+        "total": 4,
+        "errors": 0,
+        "warnings": 0,
+        "cycles": 0,
+        "unreachable": 0,
+        "duplicates": 0
+      },
+      "levels": {
+        "0": [
+          "to_string",
+          "to_int",
+          "to_bool",
+          "to_number"
+        ]
+      },
+      "functions": [
+        {
+          "name": "to_string",
+          "line": 0,
+          "level": 0,
+          "calls": [
+            "__native_to_string"
+          ]
+        },
+        {
+          "name": "to_int",
+          "line": 4,
+          "level": 0,
+          "calls": [
+            "__native_to_int"
+          ]
+        },
+        {
+          "name": "to_bool",
+          "line": 8,
+          "level": 0,
+          "calls": []
+        },
+        {
+          "name": "to_number",
+          "line": 15,
+          "level": 0,
+          "calls": [
+            "__native_to_int"
+          ]
+        }
+      ],
+      "cycles": [],
+      "unreachable": [],
+      "duplicates": [],
+      "findings": []
+    },
+    {
+      "metadata": {
+        "tool": "ail_order",
+        "version": "0.1.0",
+        "timestamp": "2026-07-10T16:02:35.157095+00:00"
+      },
+      "summary": {
+        "total": 3,
+        "errors": 0,
+        "warnings": 0,
+        "cycles": 0,
+        "unreachable": 0,
+        "duplicates": 0
+      },
+      "levels": {
+        "0": [
+          "parse",
+          "parse_header",
+          "stringify"
+        ]
+      },
+      "functions": [
+        {
+          "name": "parse",
+          "line": 0,
+          "level": 0,
+          "calls": [
+            "csv_parse"
+          ]
+        },
+        {
+          "name": "parse_header",
+          "line": 4,
+          "level": 0,
+          "calls": [
+            "csv_parse_header"
+          ]
+        },
+        {
+          "name": "stringify",
+          "line": 8,
+          "level": 0,
+          "calls": [
+            "csv_stringify"
+          ]
+        }
+      ],
+      "cycles": [],
+      "unreachable": [],
+      "duplicates": [],
+      "findings": []
+    },
+    {
+      "metadata": {
+        "tool": "ail_order",
+        "version": "0.1.0",
+        "timestamp": "2026-07-10T16:02:35.157095+00:00"
+      },
+      "summary": {
+        "total": 3,
+        "errors": 0,
+        "warnings": 0,
+        "cycles": 0,
+        "unreachable": 0,
+        "duplicates": 0
+      },
+      "levels": {
+        "0": [
+          "get",
+          "cwd",
+          "args"
+        ]
+      },
+      "functions": [
+        {
+          "name": "get",
+          "line": 0,
+          "level": 0,
+          "calls": [
+            "env_get"
+          ]
+        },
+        {
+          "name": "cwd",
+          "line": 4,
+          "level": 0,
+          "calls": [
+            "env_cwd"
+          ]
+        },
+        {
+          "name": "args",
+          "line": 8,
+          "level": 0,
+          "calls": [
+            "env_args"
+          ]
+        }
+      ],
+      "cycles": [],
+      "unreachable": [],
+      "duplicates": [],
+      "findings": []
+    },
+    {
+      "metadata": {
+        "tool": "ail_order",
+        "version": "0.1.0",
+        "timestamp": "2026-07-10T16:02:35.157095+00:00"
       },
       "summary": {
         "total": 6,
@@ -473,145 +279,61 @@
       },
       "levels": {
         "0": [
-          "add_item",
-          "total_value_helper",
-          "total_value",
-          "display_inventory_helper",
-          "display_inventory",
-          "main"
+          "exists",
+          "read",
+          "write",
+          "append",
+          "remove",
+          "listdir"
         ]
       },
       "functions": [
         {
-          "name": "add_item",
-          "line": 3,
+          "name": "exists",
+          "line": 0,
           "level": 0,
-          "calls": []
+          "calls": [
+            "file_exists"
+          ]
         },
         {
-          "name": "total_value_helper",
+          "name": "read",
+          "line": 4,
+          "level": 0,
+          "calls": [
+            "file_read"
+          ]
+        },
+        {
+          "name": "write",
+          "line": 8,
+          "level": 0,
+          "calls": [
+            "file_write"
+          ]
+        },
+        {
+          "name": "append",
           "line": 12,
           "level": 0,
           "calls": [
-            "total_value_helper"
+            "file_append"
           ]
         },
         {
-          "name": "total_value",
-          "line": 19,
+          "name": "remove",
+          "line": 16,
           "level": 0,
           "calls": [
-            "total_value_helper"
+            "file_remove"
           ]
         },
         {
-          "name": "display_inventory_helper",
-          "line": 23,
-          "level": 0,
-          "calls": [
-            "print",
-            "display_inventory_helper"
-          ]
-        },
-        {
-          "name": "display_inventory",
-          "line": 30,
-          "level": 0,
-          "calls": [
-            "display_inventory_helper"
-          ]
-        },
-        {
-          "name": "main",
-          "line": 34,
-          "level": 0,
-          "calls": [
-            "print",
-            "add_item",
-            "add_item",
-            "add_item",
-            "print",
-            "display_inventory",
-            "print",
-            "total_value"
-          ]
-        }
-      ],
-      "cycles": [],
-      "unreachable": [],
-      "duplicates": [],
-      "findings": []
-    },
-    {
-      "metadata": {
-        "tool": "ail_order",
-        "version": "0.1.0",
-        "timestamp": "2026-07-08T17:24:18.137735+00:00"
-      },
-      "summary": {
-        "total": 7,
-        "errors": 0,
-        "warnings": 0,
-        "cycles": 0,
-        "unreachable": 0,
-        "duplicates": 0
-      },
-      "levels": {
-        "0": [
-          "product_create_search_rec",
-          "product_create",
-          "product_get",
-          "product_update",
-          "product_delete",
-          "product_list",
-          "product_search"
-        ]
-      },
-      "functions": [
-        {
-          "name": "product_create_search_rec",
-          "line": 6,
-          "level": 0,
-          "calls": [
-            "product_create_search_rec"
-          ]
-        },
-        {
-          "name": "product_create",
+          "name": "listdir",
           "line": 20,
           "level": 0,
-          "calls": []
-        },
-        {
-          "name": "product_get",
-          "line": 39,
-          "level": 0,
-          "calls": []
-        },
-        {
-          "name": "product_update",
-          "line": 43,
-          "level": 0,
-          "calls": []
-        },
-        {
-          "name": "product_delete",
-          "line": 49,
-          "level": 0,
-          "calls": []
-        },
-        {
-          "name": "product_list",
-          "line": 53,
-          "level": 0,
-          "calls": []
-        },
-        {
-          "name": "product_search",
-          "line": 57,
-          "level": 0,
           "calls": [
-            "product_create_search_rec"
+            "file_listdir"
           ]
         }
       ],
@@ -624,10 +346,10 @@
       "metadata": {
         "tool": "ail_order",
         "version": "0.1.0",
-        "timestamp": "2026-07-08T17:24:18.137735+00:00"
+        "timestamp": "2026-07-10T16:02:35.157095+00:00"
       },
       "summary": {
-        "total": 12,
+        "total": 3,
         "errors": 0,
         "warnings": 0,
         "cycles": 0,
@@ -636,120 +358,34 @@
       },
       "levels": {
         "0": [
-          "storage_collection_path",
-          "storage_find_first_rec",
-          "storage_apply_changes",
-          "storage_load",
-          "storage_save",
-          "storage_add",
-          "storage_list",
-          "storage_get_by_id",
-          "storage_update_rec",
-          "storage_update",
-          "storage_delete_rec",
-          "storage_delete"
+          "write",
+          "writeln",
+          "println"
         ]
       },
       "functions": [
         {
-          "name": "storage_collection_path",
-          "line": 9,
-          "level": 0,
-          "calls": []
-        },
-        {
-          "name": "storage_find_first_rec",
-          "line": 13,
+          "name": "write",
+          "line": 0,
           "level": 0,
           "calls": [
-            "storage_find_first_rec"
+            "print"
           ]
         },
         {
-          "name": "storage_apply_changes",
-          "line": 26,
+          "name": "writeln",
+          "line": 5,
           "level": 0,
           "calls": [
-            "storage_apply_changes"
+            "print"
           ]
         },
         {
-          "name": "storage_load",
-          "line": 35,
+          "name": "println",
+          "line": 10,
           "level": 0,
           "calls": [
-            "storage_collection_path"
-          ]
-        },
-        {
-          "name": "storage_save",
-          "line": 50,
-          "level": 0,
-          "calls": [
-            "storage_collection_path"
-          ]
-        },
-        {
-          "name": "storage_add",
-          "line": 57,
-          "level": 0,
-          "calls": [
-            "storage_load",
-            "storage_save"
-          ]
-        },
-        {
-          "name": "storage_list",
-          "line": 63,
-          "level": 0,
-          "calls": [
-            "storage_load"
-          ]
-        },
-        {
-          "name": "storage_get_by_id",
-          "line": 67,
-          "level": 0,
-          "calls": [
-            "storage_load",
-            "storage_find_first_rec"
-          ]
-        },
-        {
-          "name": "storage_update_rec",
-          "line": 72,
-          "level": 0,
-          "calls": [
-            "storage_apply_changes",
-            "storage_update_rec"
-          ]
-        },
-        {
-          "name": "storage_update",
-          "line": 85,
-          "level": 0,
-          "calls": [
-            "storage_load",
-            "storage_update_rec",
-            "storage_save"
-          ]
-        },
-        {
-          "name": "storage_delete_rec",
-          "line": 94,
-          "level": 0,
-          "calls": [
-            "storage_delete_rec"
-          ]
-        },
-        {
-          "name": "storage_delete",
-          "line": 105,
-          "level": 0,
-          "calls": [
-            "storage_load",
-            "storage_save",
-            "storage_delete_rec"
+            "print"
           ]
         }
       ],
@@ -762,10 +398,10 @@
       "metadata": {
         "tool": "ail_order",
         "version": "0.1.0",
-        "timestamp": "2026-07-08T17:24:18.137735+00:00"
+        "timestamp": "2026-07-10T16:02:35.157095+00:00"
       },
       "summary": {
-        "total": 7,
+        "total": 2,
         "errors": 0,
         "warnings": 0,
         "cycles": 0,
@@ -774,60 +410,767 @@
       },
       "levels": {
         "0": [
-          "vendor_search_rec",
-          "vendor_create",
-          "vendor_get",
-          "vendor_update",
-          "vendor_delete",
-          "vendor_list",
-          "vendor_search"
+          "parse",
+          "stringify"
         ]
       },
       "functions": [
         {
-          "name": "vendor_search_rec",
-          "line": 6,
+          "name": "parse",
+          "line": 0,
           "level": 0,
           "calls": [
-            "vendor_search_rec"
+            "json_parse"
           ]
         },
         {
-          "name": "vendor_create",
+          "name": "stringify",
+          "line": 4,
+          "level": 0,
+          "calls": [
+            "json_stringify"
+          ]
+        }
+      ],
+      "cycles": [],
+      "unreachable": [],
+      "duplicates": [],
+      "findings": []
+    },
+    {
+      "metadata": {
+        "tool": "ail_order",
+        "version": "0.1.0",
+        "timestamp": "2026-07-10T16:02:35.157095+00:00"
+      },
+      "summary": {
+        "total": 13,
+        "errors": 0,
+        "warnings": 0,
+        "cycles": 0,
+        "unreachable": 0,
+        "duplicates": 0
+      },
+      "levels": {
+        "0": [
+          "new",
+          "append",
+          "len",
+          "get",
+          "contains",
+          "remove",
+          "clear",
+          "sum",
+          "find_by_key",
+          "sort",
+          "sort_by_key",
+          "copy",
+          "filter_by_key"
+        ]
+      },
+      "functions": [
+        {
+          "name": "new",
+          "line": 0,
+          "level": 0,
+          "calls": [
+            "list_new"
+          ]
+        },
+        {
+          "name": "append",
+          "line": 4,
+          "level": 0,
+          "calls": [
+            "list_append"
+          ]
+        },
+        {
+          "name": "len",
+          "line": 8,
+          "level": 0,
+          "calls": [
+            "list_len"
+          ]
+        },
+        {
+          "name": "get",
+          "line": 12,
+          "level": 0,
+          "calls": [
+            "list_get"
+          ]
+        },
+        {
+          "name": "contains",
+          "line": 16,
+          "level": 0,
+          "calls": [
+            "list_contains"
+          ]
+        },
+        {
+          "name": "remove",
           "line": 20,
           "level": 0,
-          "calls": []
+          "calls": [
+            "list_remove"
+          ]
         },
         {
-          "name": "vendor_get",
+          "name": "clear",
+          "line": 24,
+          "level": 0,
+          "calls": [
+            "list_clear"
+          ]
+        },
+        {
+          "name": "sum",
+          "line": 28,
+          "level": 0,
+          "calls": [
+            "list_sum"
+          ]
+        },
+        {
+          "name": "find_by_key",
+          "line": 32,
+          "level": 0,
+          "calls": [
+            "list_find_by_key"
+          ]
+        },
+        {
+          "name": "sort",
           "line": 36,
           "level": 0,
-          "calls": []
+          "calls": [
+            "list_sort"
+          ]
         },
         {
-          "name": "vendor_update",
+          "name": "sort_by_key",
           "line": 40,
           "level": 0,
-          "calls": []
+          "calls": [
+            "list_sort"
+          ]
         },
         {
-          "name": "vendor_delete",
-          "line": 46,
-          "level": 0,
-          "calls": []
-        },
-        {
-          "name": "vendor_list",
-          "line": 50,
-          "level": 0,
-          "calls": []
-        },
-        {
-          "name": "vendor_search",
-          "line": 54,
+          "name": "copy",
+          "line": 44,
           "level": 0,
           "calls": [
-            "vendor_search_rec"
+            "list_copy"
+          ]
+        },
+        {
+          "name": "filter_by_key",
+          "line": 48,
+          "level": 0,
+          "calls": [
+            "list_filter_by_key"
+          ]
+        }
+      ],
+      "cycles": [],
+      "unreachable": [],
+      "duplicates": [],
+      "findings": []
+    },
+    {
+      "metadata": {
+        "tool": "ail_order",
+        "version": "0.1.0",
+        "timestamp": "2026-07-10T16:02:35.157095+00:00"
+      },
+      "summary": {
+        "total": 8,
+        "errors": 0,
+        "warnings": 0,
+        "cycles": 0,
+        "unreachable": 0,
+        "duplicates": 0
+      },
+      "levels": {
+        "0": [
+          "new",
+          "set",
+          "get",
+          "has",
+          "delete",
+          "keys",
+          "clear",
+          "get_or_default"
+        ]
+      },
+      "functions": [
+        {
+          "name": "new",
+          "line": 0,
+          "level": 0,
+          "calls": [
+            "dict_new"
+          ]
+        },
+        {
+          "name": "set",
+          "line": 4,
+          "level": 0,
+          "calls": [
+            "dict_set"
+          ]
+        },
+        {
+          "name": "get",
+          "line": 8,
+          "level": 0,
+          "calls": [
+            "dict_get"
+          ]
+        },
+        {
+          "name": "has",
+          "line": 12,
+          "level": 0,
+          "calls": [
+            "dict_has"
+          ]
+        },
+        {
+          "name": "delete",
+          "line": 16,
+          "level": 0,
+          "calls": [
+            "dict_delete"
+          ]
+        },
+        {
+          "name": "keys",
+          "line": 20,
+          "level": 0,
+          "calls": [
+            "dict_keys"
+          ]
+        },
+        {
+          "name": "clear",
+          "line": 24,
+          "level": 0,
+          "calls": [
+            "dict_clear"
+          ]
+        },
+        {
+          "name": "get_or_default",
+          "line": 28,
+          "level": 0,
+          "calls": [
+            "map_get_or_default"
+          ]
+        }
+      ],
+      "cycles": [],
+      "unreachable": [],
+      "duplicates": [],
+      "findings": []
+    },
+    {
+      "metadata": {
+        "tool": "ail_order",
+        "version": "0.1.0",
+        "timestamp": "2026-07-10T16:02:35.157095+00:00"
+      },
+      "summary": {
+        "total": 7,
+        "errors": 0,
+        "warnings": 0,
+        "cycles": 0,
+        "unreachable": 0,
+        "duplicates": 0
+      },
+      "levels": {
+        "0": [
+          "add",
+          "sub",
+          "mul",
+          "div",
+          "abs",
+          "min",
+          "max"
+        ]
+      },
+      "functions": [
+        {
+          "name": "add",
+          "line": 0,
+          "level": 0,
+          "calls": []
+        },
+        {
+          "name": "sub",
+          "line": 4,
+          "level": 0,
+          "calls": []
+        },
+        {
+          "name": "mul",
+          "line": 8,
+          "level": 0,
+          "calls": []
+        },
+        {
+          "name": "div",
+          "line": 12,
+          "level": 0,
+          "calls": []
+        },
+        {
+          "name": "abs",
+          "line": 16,
+          "level": 0,
+          "calls": []
+        },
+        {
+          "name": "min",
+          "line": 23,
+          "level": 0,
+          "calls": []
+        },
+        {
+          "name": "max",
+          "line": 30,
+          "level": 0,
+          "calls": []
+        }
+      ],
+      "cycles": [],
+      "unreachable": [],
+      "duplicates": [],
+      "findings": []
+    },
+    {
+      "metadata": {
+        "tool": "ail_order",
+        "version": "0.1.0",
+        "timestamp": "2026-07-10T16:02:35.157095+00:00"
+      },
+      "summary": {
+        "total": 5,
+        "errors": 0,
+        "warnings": 0,
+        "cycles": 0,
+        "unreachable": 0,
+        "duplicates": 0
+      },
+      "levels": {
+        "0": [
+          "join",
+          "basename",
+          "dirname",
+          "extension",
+          "normalize"
+        ]
+      },
+      "functions": [
+        {
+          "name": "join",
+          "line": 0,
+          "level": 0,
+          "calls": [
+            "path_join"
+          ]
+        },
+        {
+          "name": "basename",
+          "line": 4,
+          "level": 0,
+          "calls": [
+            "path_basename"
+          ]
+        },
+        {
+          "name": "dirname",
+          "line": 8,
+          "level": 0,
+          "calls": [
+            "path_dirname"
+          ]
+        },
+        {
+          "name": "extension",
+          "line": 12,
+          "level": 0,
+          "calls": [
+            "path_extension"
+          ]
+        },
+        {
+          "name": "normalize",
+          "line": 16,
+          "level": 0,
+          "calls": [
+            "path_normalize"
+          ]
+        }
+      ],
+      "cycles": [],
+      "unreachable": [],
+      "duplicates": [],
+      "findings": []
+    },
+    {
+      "metadata": {
+        "tool": "ail_order",
+        "version": "0.1.0",
+        "timestamp": "2026-07-10T16:02:35.157095+00:00"
+      },
+      "summary": {
+        "total": 3,
+        "errors": 0,
+        "warnings": 0,
+        "cycles": 0,
+        "unreachable": 0,
+        "duplicates": 0
+      },
+      "levels": {
+        "0": [
+          "int",
+          "float",
+          "choice"
+        ]
+      },
+      "functions": [
+        {
+          "name": "int",
+          "line": 0,
+          "level": 0,
+          "calls": [
+            "random_int"
+          ]
+        },
+        {
+          "name": "float",
+          "line": 4,
+          "level": 0,
+          "calls": [
+            "random_float"
+          ]
+        },
+        {
+          "name": "choice",
+          "line": 8,
+          "level": 0,
+          "calls": [
+            "random_choice"
+          ]
+        }
+      ],
+      "cycles": [],
+      "unreachable": [],
+      "duplicates": [],
+      "findings": []
+    },
+    {
+      "metadata": {
+        "tool": "ail_order",
+        "version": "0.1.0",
+        "timestamp": "2026-07-10T16:02:35.157095+00:00"
+      },
+      "summary": {
+        "total": 6,
+        "errors": 0,
+        "warnings": 0,
+        "cycles": 0,
+        "unreachable": 0,
+        "duplicates": 0
+      },
+      "levels": {
+        "0": [
+          "new",
+          "add",
+          "contains",
+          "len",
+          "remove",
+          "clear"
+        ]
+      },
+      "functions": [
+        {
+          "name": "new",
+          "line": 0,
+          "level": 0,
+          "calls": [
+            "set_new"
+          ]
+        },
+        {
+          "name": "add",
+          "line": 4,
+          "level": 0,
+          "calls": [
+            "set_add"
+          ]
+        },
+        {
+          "name": "contains",
+          "line": 8,
+          "level": 0,
+          "calls": [
+            "set_contains"
+          ]
+        },
+        {
+          "name": "len",
+          "line": 12,
+          "level": 0,
+          "calls": [
+            "set_len"
+          ]
+        },
+        {
+          "name": "remove",
+          "line": 16,
+          "level": 0,
+          "calls": [
+            "set_remove"
+          ]
+        },
+        {
+          "name": "clear",
+          "line": 20,
+          "level": 0,
+          "calls": [
+            "set_clear"
+          ]
+        }
+      ],
+      "cycles": [],
+      "unreachable": [],
+      "duplicates": [],
+      "findings": []
+    },
+    {
+      "metadata": {
+        "tool": "ail_order",
+        "version": "0.1.0",
+        "timestamp": "2026-07-10T16:02:35.157095+00:00"
+      },
+      "summary": {
+        "total": 14,
+        "errors": 0,
+        "warnings": 0,
+        "cycles": 0,
+        "unreachable": 0,
+        "duplicates": 0
+      },
+      "levels": {
+        "0": [
+          "concat",
+          "equals",
+          "uppercase",
+          "lowercase",
+          "length",
+          "contains",
+          "starts_with",
+          "ends_with",
+          "trim",
+          "substring",
+          "find",
+          "find_from",
+          "split",
+          "join"
+        ]
+      },
+      "functions": [
+        {
+          "name": "concat",
+          "line": 0,
+          "level": 0,
+          "calls": []
+        },
+        {
+          "name": "equals",
+          "line": 4,
+          "level": 0,
+          "calls": []
+        },
+        {
+          "name": "uppercase",
+          "line": 8,
+          "level": 0,
+          "calls": []
+        },
+        {
+          "name": "lowercase",
+          "line": 12,
+          "level": 0,
+          "calls": []
+        },
+        {
+          "name": "length",
+          "line": 16,
+          "level": 0,
+          "calls": []
+        },
+        {
+          "name": "contains",
+          "line": 20,
+          "level": 0,
+          "calls": []
+        },
+        {
+          "name": "starts_with",
+          "line": 24,
+          "level": 0,
+          "calls": []
+        },
+        {
+          "name": "ends_with",
+          "line": 28,
+          "level": 0,
+          "calls": []
+        },
+        {
+          "name": "trim",
+          "line": 32,
+          "level": 0,
+          "calls": []
+        },
+        {
+          "name": "substring",
+          "line": 36,
+          "level": 0,
+          "calls": [
+            "string_substring"
+          ]
+        },
+        {
+          "name": "find",
+          "line": 40,
+          "level": 0,
+          "calls": [
+            "string_find"
+          ]
+        },
+        {
+          "name": "find_from",
+          "line": 44,
+          "level": 0,
+          "calls": [
+            "string_find"
+          ]
+        },
+        {
+          "name": "split",
+          "line": 48,
+          "level": 0,
+          "calls": [
+            "string_split"
+          ]
+        },
+        {
+          "name": "join",
+          "line": 52,
+          "level": 0,
+          "calls": [
+            "string_join"
+          ]
+        }
+      ],
+      "cycles": [],
+      "unreachable": [],
+      "duplicates": [],
+      "findings": []
+    },
+    {
+      "metadata": {
+        "tool": "ail_order",
+        "version": "0.1.0",
+        "timestamp": "2026-07-10T16:02:35.157095+00:00"
+      },
+      "summary": {
+        "total": 1,
+        "errors": 0,
+        "warnings": 0,
+        "cycles": 0,
+        "unreachable": 0,
+        "duplicates": 0
+      },
+      "levels": {
+        "0": [
+          "exit"
+        ]
+      },
+      "functions": [
+        {
+          "name": "exit",
+          "line": 0,
+          "level": 0,
+          "calls": [
+            "system_exit"
+          ]
+        }
+      ],
+      "cycles": [],
+      "unreachable": [],
+      "duplicates": [],
+      "findings": []
+    },
+    {
+      "metadata": {
+        "tool": "ail_order",
+        "version": "0.1.0",
+        "timestamp": "2026-07-10T16:02:35.157095+00:00"
+      },
+      "summary": {
+        "total": 4,
+        "errors": 0,
+        "warnings": 0,
+        "cycles": 0,
+        "unreachable": 0,
+        "duplicates": 0
+      },
+      "levels": {
+        "0": [
+          "now",
+          "timestamp",
+          "sleep",
+          "format"
+        ]
+      },
+      "functions": [
+        {
+          "name": "now",
+          "line": 0,
+          "level": 0,
+          "calls": [
+            "time_now"
+          ]
+        },
+        {
+          "name": "timestamp",
+          "line": 4,
+          "level": 0,
+          "calls": [
+            "time_timestamp"
+          ]
+        },
+        {
+          "name": "sleep",
+          "line": 8,
+          "level": 0,
+          "calls": [
+            "time_sleep"
+          ]
+        },
+        {
+          "name": "format",
+          "line": 12,
+          "level": 0,
+          "calls": [
+            "time_format"
           ]
         }
       ],

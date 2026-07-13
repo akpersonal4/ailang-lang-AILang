@@ -1,0 +1,26 @@
+import storage;
+import map;
+import helpers;
+
+fn product_create(pName, pPrice, pQty) {
+    let prod = map.new();
+    let pid = helpers.helpers_generate_id("PROD-");
+    map.set(prod, "id", pid);
+    map.set(prod, "name", pName);
+    map.set(prod, "price", pPrice);
+    map.set(prod, "qty", pQty);
+    storage.storage_add("products", prod);
+    return pid;
+}
+
+fn product_search(term, items, idx, acc) {
+    if (idx >= list.len(items)) {
+        return acc;
+    }
+    let item = list.get(items, idx);
+    let name = helpers.helpers_get_map_value_safe(item, "name", "");
+    if (string.find(name, term) != false) {
+        list.append(acc, item);
+    }
+    return product_search(term, items, idx + 1, acc);
+}
