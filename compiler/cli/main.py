@@ -4,7 +4,9 @@
 Usage:
     ail run <file>       Compile and run an AILang program
     ail build <file>     Compile and check for errors (no execution)
-    ail check <file>     Compile and check for errors (alias for build)
+    ail check <file>     Check for forward references and ordering violations
+    ail fmt <file>       Format AILang source files
+    ail test             Run test_*.ail files
     ail version          Print version information
     ail help             Print this help message
     ail <file>           Shorthand for `ail run <file>`
@@ -25,7 +27,7 @@ from compiler.runtime import builtins as runtime_builtins
 from compiler.runtime.interpreter import Runtime
 
 PROG = "ail"
-VERSION = "1.0.2"
+VERSION = "1.0.3"
 
 
 def _find_stdlib() -> Path:
@@ -122,13 +124,17 @@ def _compile(
     session.discover(source_path, reporter)
 
     session.analyze(reporter)
-
-    if reporter.error_count > 0:
-        if not json_mode:
-            formatter = DiagnosticFormatter()
-            for diagnostic in reporter.diagnostics:
-                print(formatter.format(diagnostic), file=sys.stderr)
-        return None, reporter
+    # -------------------------------------------------
+    # Run type checking – part of the required compilation pipeline
++    session.type_check(reporter)
++    # -------------------------------------------------
++
++    if reporter.error_count > 0:
++        if not json_mode:
++            formatter = DiagnosticFormatter()
++            for diagnostic in reporter.diagnostics:
++                print(formatter.format(diagnostic), file=sys.stderr)
++        return None, reporter
 
     return session, reporter
 
@@ -1447,70 +1453,117 @@ def cmd_watch(args: list[str]) -> int:
     )
 
 
+def _run_dx_tool(module_name: str, args: list[str]) -> int:
+    """Helper to run a DX tool by shelling out to its __main__ module."""
+    project_root = _find_stdlib().parent
+    env = os.environ.copy()
+    pythonpath = env.get("PYTHONPATH", "")
+    root_str = str(project_root)
+    if root_str not in pythonpath:
+        env["PYTHONPATH"] = root_str + (";" + pythonpath if pythonpath else "")
+    return subprocess.run(
+        [sys.executable, "-m", module_name] + list(args),
+        env=env,
+    ).returncode
+
+
+def cmd_doctor(args: list[str]) -> int:
+    """Run repository health checks.
+
+    Usage:
+        ail doctor
+    """
+    return _run_dx_tool("tools.ail_doctor", args)
+
+
+def cmd_context(args: list[str]) -> int:
+    """Generate AI-friendly project context.
+
+    Usage:
+        ail context
+    """
+    return _run_dx_tool("tools.ail_context", args)
+
+
+def cmd_static_analyzer(args: list[str]) -> int:
+    """Run static analysis on AILang source files.
+
+    Usage:
+        ail static-analyzer [<target>] [options]
+    """
+    return _run_dx_tool("tools.ail_static_analyzer", args)
+
+
+def cmd_benchmark(args: list[str]) -> int:
+    """Run the AILang benchmark suite.
+
+    Usage:
+        ail benchmark [options]
+    """
+    return _run_dx_tool("tools.ail_benchmark", args)
+
+
+def cmd_testgen(args: list[str]) -> int:
+    """Generate test cases for AILang applications.
+
+    Usage:
+        ail testgen [options]
+    """
+    return _run_dx_tool("tools.ail_testgen", args)
+
+
 def cmd_help(args: list[str]) -> int:
     """Print help information."""
     print(_get_version())
     print()
     print("Usage:")
-    print(f"  {PROG} run <file>         Compile and run an AILang program")
-    print(f"  {PROG} run --experimental-loops <file>")
-    print(f"  {PROG} build <file>       Compile and check for errors (no execution)")
-    print(f"  {PROG} build --json       Compile and output JSON diagnostics")
-    print(f"  {PROG} build --experimental-loops <file>")
-    print(f"  {PROG} check <file>       Compile and check for errors (alias for build)")
-    print(f"  {PROG} fmt <file_or_dir>  Format AILang source file(s)")
-    print(f"  {PROG} fmt --check       Check formatting (exit 0/1)")
-    print(f"  {PROG} fmt --diff        Show unified diff of formatting changes")
-    print(f"  {PROG} fmt --stdin       Read from stdin, write formatted to stdout")
-    print(f"  {PROG} fmt --quiet       Suppress status output")
-    print(f"  {PROG} order <target>    Analyze dependency ordering of .ail files")
-    print(f"  {PROG} order --json      Output machine-readable JSON")
-    print(f"  {PROG} order --fix       Apply automatic reordering")
-    print(f"  {PROG} rename <old> <new>  Rename identifier repository-wide")
-    print(f"  {PROG} rename --dry-run   Preview rename without modifying")
-    print(f"  {PROG} rename --diff      Show unified diff of rename changes")
-    print(f"  {PROG} rename --strings   Also rename string literal values")
-    print(f"  {PROG} rename --no-verify Skip compiler verification after rename")
-    print(f"  {PROG} watch [<file>]    Watch for changes, recompile incrementally")
-    print(f"  {PROG} watch --poll      Use polling instead of filesystem events")
-    print(f"  {PROG} watch --json      Machine-readable JSON output")
-    print(f"  {PROG} watch --no-initial Skip initial build")
-    print(f"  {PROG} new <project>     Create a new AILang project scaffold")
-    print(f"  {PROG} new --empty <project>  Minimal scaffold (no sample data)")
-    print(f"  {PROG} test              Run all test_*.ail files")
-    print(f"  {PROG} test --verbose    Show per-test pass/fail details")
-    print(f"  {PROG} install           Install dependencies from ail.toml")
-    print(f"  {PROG} install --offline Install from local cache only")
-    print(f"  {PROG} add <package>     Add a dependency to ail.toml")
-    print(f"  {PROG} add <pkg> --version X   Add with specific version")
-    print(f"  {PROG} add <pkg> --path /loc    Add local dependency")
-    print(f"  {PROG} remove <package>  Remove a dependency from ail.toml")
-    print(f"  {PROG} update            Re-resolve all dependencies")
-    print(f"  {PROG} update <package>  Re-resolve a specific dependency")
-    print(f"  {PROG} list              List installed dependencies")
-    print(f"  {PROG} publish           Publish project to package registry")
-    print(f"  {PROG} publish --registry <url>  Publish to custom registry")
-    print(f"  {PROG} lsp              Start the LSP server (stdin/stdout)")
-    print(f"  {PROG} version          Print version information")
-    print(f"  {PROG} help             Print this help message")
+    print(f"  {PROG} [options]")
+    print(f"  {PROG} <command> [args]")
+    print()
+    print("Options:")
+    print(f"  -h, --help          Show this help message")
+    print(f"  -v, --version       Show version information")
+    print()
+    print("Commands:")
+    print(f"  run <file>          Compile and run an AILang program")
+    print(f"  build <file>        Compile and check for errors (no execution)")
+    print(f"  check <file>        Check for forward references and ordering violations")
+    print(f"  fmt <file_or_dir>   Format AILang source file(s)")
+    print(f"  test [<file_or_dir>] Run test_*.ail files")
+    print(f"  new <project>       Create a new AILang project scaffold")
+    print(f"  rename <old> <new>  Rename identifier repository-wide")
+    print(f"  watch [<file>]      Watch for changes, recompile incrementally")
+    print(f"  order <target>      Analyze dependency ordering of .ail files")
+    print()
+    print("Package Management:")
+    print(f"  install             Install dependencies from ail.toml")
+    print(f"  add <package>       Add a dependency to ail.toml")
+    print(f"  remove <package>    Remove a dependency from ail.toml")
+    print(f"  update              Re-resolve all dependencies")
+    print(f"  list                List installed dependencies")
+    print(f"  publish             Publish project to package registry")
+    print()
+    print("Developer Tools:")
+    print(f"  doctor              Run repository health checks")
+    print(f"  context             Generate AI-friendly project context")
+    print(f"  static-analyzer     Run static analysis on AILang source")
+    print(f"  benchmark           Run the AILang benchmark suite")
+    print(f"  testgen             Generate test cases for AILang apps")
+    print()
+    print("Other:")
+    print(f"  lsp                 Start the LSP server (stdin/stdout)")
+    print(f"  version             Print version information")
+    print(f"  help                Print this help message")
     print()
     print("Examples:")
     print(f"  {PROG} run hello.ail")
     print(f"  {PROG} build hello.ail")
-    print(f"  {PROG} build --json hello.ail")
     print(f"  {PROG} fmt hello.ail")
-    print(f"  {PROG} fmt --check hello.ail")
-    print(f"  {PROG} fmt --diff hello.ail")
-    print(f"  {PROG} fmt apps/")
-    print(f"  {PROG} fmt --check apps/ stdlib/")
-    print(f"  {PROG} order hello.ail")
-    print(f"  {PROG} order --json apps/")
-    print(f"  {PROG} order --fix hello.ail")
-    print(f"  {PROG} rename old_name new_name")
-    print(f"  {PROG} rename --dry-run old_name new_name")
-    print(f"  {PROG} watch")
-    print(f"  {PROG} version")
-    print(f"  {PROG} hello.ail")
+    print(f"  {PROG} test tests/")
+    print(f"  {PROG} new myproject")
+    print(f"  {PROG} doctor")
+    print(f"  {PROG} --version")
+    print(f"  {PROG} --help")
     return 0
 
 
@@ -1540,6 +1593,12 @@ def main(argv: list[str] | None = None) -> int:
         "watch": cmd_watch,
         "version": cmd_version,
         "help": cmd_help,
+        "doctor": cmd_doctor,
+        "context": cmd_context,
+        "static-analyzer": cmd_static_analyzer,
+        "static_analyzer": cmd_static_analyzer,
+        "benchmark": cmd_benchmark,
+        "testgen": cmd_testgen,
     }
 
     if argv is None:
@@ -1547,20 +1606,23 @@ def main(argv: list[str] | None = None) -> int:
 
     if not argv:
         cmd_help([])
-        return 1
+        return 0
 
     command = argv[0]
     rest = argv[1:]
+
+    # Global flags
+    if command in ("-v", "--version"):
+        print(_get_version())
+        return 0
+    if command in ("-h", "--help"):
+        cmd_help([])
+        return 0
 
     # Check if the first argument is a known subcommand
     if command in commands:
         handler = commands[command]
         return handler(rest)
-
-    # If the argument looks like a flag (--xxx), show help
-    if command.startswith("-"):
-        cmd_help([])
-        return 1
 
     # Otherwise treat it as a file -> shorthand for `run`
     return cmd_run(argv)

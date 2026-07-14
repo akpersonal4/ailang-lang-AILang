@@ -34,6 +34,7 @@ from compiler.types.types import (
     FLOAT_TYPE,
     INT_TYPE,
     STRING_TYPE,
+    LIST_TYPE,
     FunctionType,
     Type,
     UnknownType,
@@ -230,10 +231,12 @@ class TypeChecker:
                 INT_TYPE,
                 FLOAT_TYPE,
                 STRING_TYPE,
+                LIST_TYPE,
             } and right_type in {
                 INT_TYPE,
                 FLOAT_TYPE,
                 STRING_TYPE,
+                LIST_TYPE,
             }:
                 if left_type is right_type:
                     return BOOL_TYPE

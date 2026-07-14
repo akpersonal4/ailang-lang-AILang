@@ -46,10 +46,12 @@ INT_TYPE: Type = PrimitiveType("int")
 STRING_TYPE: Type = PrimitiveType("string")
 BOOL_TYPE: Type = PrimitiveType("bool")
 FLOAT_TYPE: Type = PrimitiveType("float")
+LIST_TYPE: Type = PrimitiveType("list")
 
 PRIMITIVE_TYPES = {
     "int": INT_TYPE,
     "string": STRING_TYPE,
     "bool": BOOL_TYPE,
     "float": FLOAT_TYPE,
+    "list": LIST_TYPE,
 }
