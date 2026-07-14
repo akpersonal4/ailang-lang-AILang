@@ -1,0 +1,123 @@
+import json;
+import file;
+import path;
+import list;
+import map;
+
+fn storage_find_max_id(items, index, currentMax) {
+    let sfmLen = list.len(items);
+    if (index == sfmLen) {
+        return currentMax;
+    }
+    let sfmItem = list.get(items, index);
+    let sfmId = map.get(sfmItem, "id");
+    let sfmNewMax = math.max(currentMax, sfmId);
+    return storage_find_max_id(items, math.add(index, 1), sfmNewMax);
+}
+
+fn storage_find_by_id_rec(items, itemId, index) {
+    let sfirLen = list.len(items);
+    if (index == sfirLen) {
+        return false;
+    }
+    let sfirItem = list.get(items, index);
+    let sfirId = map.get(sfirItem, "id");
+    if (sfirId == itemId) {
+        return sfirItem;
+    }
+    return storage_find_by_id_rec(items, itemId, math.add(index, 1));
+}
+
+fn storage_update_field_rec(items, itemId, field, value, index) {
+    let sufrLen = list.len(items);
+    if (index == sufrLen) {
+        return false;
+    }
+    let sufrItem = list.get(items, index);
+    let sufrId = map.get(sufrItem, "id");
+    if (sufrId == itemId) {
+        map.set(sufrItem, field, value);
+        return items;
+    }
+    return storage_update_field_rec(items, itemId, field, value, math.add(index, 1));
+}
+
+fn storage_delete_by_id_rec(items, itemId, index, acc) {
+    let sdbrLen = list.len(items);
+    if (index == sdbrLen) {
+        return acc;
+    }
+    let sdbrItem = list.get(items, index);
+    let sdbrId = map.get(sdbrItem, "id");
+    if (sdbrId == itemId) {
+        return storage_delete_by_id_rec(items, itemId, math.add(index, 1), acc);
+    }
+    let sdbrNewAcc = list.append(acc, sdbrItem);
+    return storage_delete_by_id_rec(items, itemId, math.add(index, 1), sdbrNewAcc);
+}
+
+fn storage_load(name) {
+    let slPath = path.join("data", string.concat(name, ".json"));
+    let slExists = file.exists(slPath);
+    if (slExists == false) {
+        return list.new();
+    }
+    let slContent = file.read(slPath);
+    let slEmpty = string.equals(slContent, "");
+    if (slEmpty == true) {
+        return list.new();
+    }
+    let slParsed = json.parse(slContent);
+    return slParsed;
+}
+
+fn storage_save(name, items) {
+    let ssPath = path.join("data", string.concat(name, ".json"));
+    let ssContent = json.stringify(items);
+    file.write(ssPath, ssContent);
+    return items;
+}
+
+fn storage_next_id(name) {
+    let snItems = storage_load(name);
+    let snLen = list.len(snItems);
+    if (snLen == 0) {
+        return 1;
+    }
+    let snMax = storage_find_max_id(snItems, 0, 0);
+    return math.add(snMax, 1);
+}
+
+fn storage_append(name, item) {
+    let saItems = storage_load(name);
+    let saNewItems = list.append(saItems, item);
+    storage_save(name, saNewItems);
+    return item;
+}
+
+fn storage_find_by_id(name, itemId) {
+    let sfiItems = storage_load(name);
+    return storage_find_by_id_rec(sfiItems, itemId, 0);
+}
+
+fn storage_update_field(name, itemId, field, value) {
+    let sufItems = storage_load(name);
+    let sufResult = storage_update_field_rec(sufItems, itemId, field, value, 0);
+    if (sufResult == false) {
+        return false;
+    }
+    storage_save(name, sufResult);
+    return true;
+}
+
+fn storage_delete_by_id(name, itemId) {
+    let sdbItems = storage_load(name);
+    let sdbNew = storage_delete_by_id_rec(sdbItems, itemId, 0, list.new());
+    storage_save(name, sdbNew);
+    return true;
+}
+
+fn storage_clear(name) {
+    storage_save(name, list.new());
+    return true;
+}

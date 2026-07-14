@@ -89,6 +89,48 @@ Extracts a portion of a string from `start` to `end` (exclusive).
 string.substring("hello", 1, 4)  // "ell"
 ```
 
+### `find(value, needle)`
+Returns the index of the first occurrence of `needle` in `value`, or -1 if not found.
+```ail
+string.find("hello world", "world")  // 6
+string.find("hello", "xyz")  // -1
+```
+
+### `find_from(value, needle, start_pos)`
+Returns the index of the first occurrence of `needle` in `value` starting from `start_pos`, or -1 if not found.
+```ail
+string.find_from("hello world", "l", 3)  // 9
+```
+
+### `split(value, delim)`
+Splits `value` into a list of strings using `delim` as the delimiter.
+```ail
+let parts = string.split("a,b,c", ",");
+// parts contains: "a", "b", "c"
+```
+
+### `join(values, separator)`
+Joins a list of strings into a single string, separated by `separator`.
+```ail
+let words = list.new();
+list.append(words, "hello");
+list.append(words, "world");
+string.join(words, " ")  // "hello world"
+```
+
+### `from_int(value)`
+Converts an integer to its string representation.
+```ail
+string.from_int(42)  // "42"
+```
+
+### `from_bool(value)`
+Converts a boolean to its string representation.
+```ail
+string.from_bool(true)  // "True"
+string.from_bool(false)  // "False"
+```
+
 ---
 
 ## math
@@ -196,25 +238,119 @@ list.clear(items);
 ### `sum(values)`
 Returns the sum of all numeric values in the list.
 ```ail
-list.sum([10, 20, 30])  // 60
+let nums = list.new();
+list.append(nums, 10);
+list.append(nums, 20);
+list.append(nums, 30);
+list.sum(nums)  // 60
 ```
 
-### `find_by_key(values, key, value)`
-Finds the first map in the list where `map.get(item, key)` equals `value`.
-Returns the matching map or `false` if not found.
+### `sort(values)`
+Sorts a list of primitive values (numbers, strings) in ascending order. Returns the sorted list.
 ```ail
-list.find_by_key(people, "name", "Bob")  // {name: "Bob", age: 25}
+let nums = list.new();
+list.append(nums, 30);
+list.append(nums, 10);
+list.append(nums, 20);
+let sorted = list.sort(nums);
+// sorted contains: 10, 20, 30
 ```
 
-### Known Missing Operations
+### `sort_by_key(values, key)`
+Sorts a list of maps by the value of `key` in ascending order. Returns the sorted list.
+```ail
+let people = list.new();
+let p1 = map.new();
+map.set(p1, "name", "Bob");
+map.set(p1, "age", 25);
+let p2 = map.new();
+map.set(p2, "name", "Alice");
+map.set(p2, "age", 30);
+list.append(people, p1);
+list.append(people, p2);
+let sorted = list.sort_by_key(people, "age");
+// sorted ordered by age: Bob (25), Alice (30)
+```
 
-These are **not** available in the stdlib and must be implemented manually:
+### `copy(values)`
+Returns a shallow copy of the list.
+```ail
+let original = list.new();
+list.append(original, 10);
+list.append(original, 20);
+let cloned = list.copy(original);
+list.append(original, 30);
+// original has 3 items, cloned has 2 items
+```
 
-| Operation | Fallback |
-|-----------|----------|
-| `list.copy(list)` | Write recursive `list_copy(src, result, pos)` |
-| `list.sort(list, comp)` | Write recursive selection sort |
-| `list.set(list, idx, val)` | Use map-based wrappers |
+### `find(values, key, value)`
+Finds the first map in the list where `map.get(item, key)` equals `value`. Returns the matching map or `false` if not found.
+```ail
+list.find(people, "name", "Bob")  // {name: "Bob", age: 25}
+```
+
+### `filter(values, key, value)`
+Returns a new list containing all items where `map.get(item, key)` equals `value`. Alias for `filter_by_key`.
+```ail
+let adults = list.filter(people, "status", "active");
+```
+
+### `filter_by_key(values, key, value)`
+Returns a new list containing all items where `map.get(item, key)` equals `value`.
+```ail
+let adults = list.filter_by_key(people, "status", "active");
+```
+
+### `filter_by_contains(values, key, substring)`
+Returns a new list containing all items where `map.get(item, key)` contains `substring`.
+```ail
+let matches = list.filter_by_contains(people, "name", "li");
+// Returns items whose name field contains "li"
+```
+
+### `collect_key(values, key)`
+Extracts the values for `key` from each item into a new list.
+```ail
+let names = list.collect_key(people, "name");
+// Returns a list of all "name" values
+```
+
+### `group_by_key(values, key)`
+Groups items by the value of `key`. Returns a map where each key is a distinct value and each value is a list of matching items.
+```ail
+let grouped = list.group_by_key(people, "department");
+// map.get(grouped, "engineering") -> list of engineering people
+```
+
+### `sum_by_key(values, key)`
+Sums the numeric values of `key` across all items in the list.
+```ail
+let total = list.sum_by_key(invoices, "amount");
+```
+
+### `take(values, n)`
+Returns a new list containing the first `n` items.
+```ail
+let first_three = list.take(people, 3);
+```
+
+### `skip(values, n)`
+Returns a new list with the first `n` items removed.
+```ail
+let rest = list.skip(people, 3);
+```
+
+### `search_by_name(values, query)`
+Searches items by their `name` field (case-insensitive substring match). Returns a list of matching items.
+```ail
+let results = list.search_by_name(people, "alice");
+```
+
+### `exists_by_key(values, key, value)`
+Returns `true` if any item in the list has `map.get(item, key)` equal to `value`, `false` otherwise.
+```ail
+list.exists_by_key(people, "name", "Bob")  // true
+```
 
 ---
 
@@ -279,6 +415,25 @@ map.keys(data)  // ["name", "age"]
 Removes all entries.
 ```ail
 map.clear(data);
+```
+
+### `get_or_default(values, key, default)`
+Returns the value for `key` if it exists, otherwise returns `default`.
+```ail
+map.get_or_default(data, "age", 0)  // 0 if "age" not set
+map.get_or_default(data, "name", "unknown")  // "Alice" if set
+```
+
+### `safe_get(values, key, default)`
+Returns the value for `key` if it exists, otherwise returns `default`. Alias for `get_or_default`.
+```ail
+map.safe_get(data, "missing_key", "fallback")  // "fallback"
+```
+
+### `values(values)`
+Returns a list of all values in the map.
+```ail
+map.values(data)  // ["Alice", 30]
 ```
 
 ---

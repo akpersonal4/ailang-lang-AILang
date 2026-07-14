@@ -1,0 +1,145 @@
+import storage;
+import user;
+import ticket;
+import comment;
+import audit_log;
+import list;
+import map;
+import convert;
+
+fn test_full_ticket_lifecycle() {
+    storage.storage_clear("users");
+    storage.storage_clear("tickets");
+    storage.storage_clear("comments");
+    storage.storage_clear("audit_log");
+    let tfUser = user.user_create("testuser", "test@test.com", "pass");
+    let tfUserId = map.get(tfUser, "id");
+    let tfTicket = ticket.ticket_create("Lifecycle Test", "high", "bug", "Test description", tfUserId);
+    let tfTicketId = map.get(tfTicket, "id");
+    ticket.ticket_assign(tfTicketId, tfUserId);
+    let tfAssigned = ticket.ticket_find_by_id(tfTicketId);
+    if (map.get(tfAssigned, "assignee_id") != tfUserId) {
+        print("FAIL: full_lifecycle - assign failed");
+        return false;
+    }
+    ticket.ticket_set_status(tfTicketId, "in_progress");
+    comment.comment_create(tfTicketId, tfUserId, "Working on it");
+    ticket.ticket_set_status(tfTicketId, "resolved");
+    let tfFinal = ticket.ticket_find_by_id(tfTicketId);
+    if (map.get(tfFinal, "status") != "resolved") {
+        print("FAIL: full_lifecycle - resolve failed");
+        return false;
+    }
+    if (map.get(tfFinal, "resolved_at") == 0) {
+        print("FAIL: full_lifecycle - resolved_at not set");
+        return false;
+    }
+    let tfComments = comment.comment_list_by_ticket(tfTicketId);
+    if (list.len(tfComments) != 1) {
+        print("FAIL: full_lifecycle - expected 1 comment");
+        return false;
+    }
+    print("PASS: full_ticket_lifecycle");
+    return true;
+}
+
+fn test_ticket_status_transitions() {
+    storage.storage_clear("tickets");
+    let tstItem = ticket.ticket_create("Status Flow", "low", "task", "Desc", 1);
+    let tstId = map.get(tstItem, "id");
+    ticket.ticket_set_status(tstId, "in_progress");
+    let tstInProgress = ticket.ticket_find_by_id(tstId);
+    if (map.get(tstInProgress, "status") != "in_progress") {
+        print("FAIL: status_transitions - to in_progress");
+        return false;
+    }
+    ticket.ticket_set_status(tstId, "resolved");
+    let tstResolved = ticket.ticket_find_by_id(tstId);
+    if (map.get(tstResolved, "status") != "resolved") {
+        print("FAIL: status_transitions - to resolved");
+        return false;
+    }
+    ticket.ticket_set_status(tstId, "closed");
+    let tstClosed = ticket.ticket_find_by_id(tstId);
+    if (map.get(tstClosed, "status") != "closed") {
+        print("FAIL: status_transitions - to closed");
+        return false;
+    }
+    print("PASS: ticket_status_transitions");
+    return true;
+}
+
+fn test_multiple_tickets_search() {
+    storage.storage_clear("tickets");
+    ticket.ticket_create("Alpha Server", "high", "infra", "Alpha description", 1);
+    ticket.ticket_create("Beta Server", "medium", "infra", "Beta description", 1);
+    ticket.ticket_create("Gamma Client", "low", "app", "Gamma description", 1);
+    let tmsResult = ticket.ticket_search("Server");
+    if (list.len(tmsResult) != 2) {
+        print("FAIL: multiple_tickets_search - expected 2, got " + convert.to_string(list.len(tmsResult)));
+        return false;
+    }
+    let tmsClient = ticket.ticket_search("Client");
+    if (list.len(tmsClient) != 1) {
+        print("FAIL: multiple_tickets_search - expected 1 client");
+        return false;
+    }
+    print("PASS: multiple_tickets_search");
+    return true;
+}
+
+fn test_comment_on_ticket() {
+    storage.storage_clear("tickets");
+    storage.storage_clear("comments");
+    let tctItem = ticket.ticket_create("Comment Test", "low", "task", "Desc", 1);
+    let tctId = map.get(tctItem, "id");
+    comment.comment_create(tctId, 1, "First comment");
+    comment.comment_create(tctId, 1, "Second comment");
+    comment.comment_create(tctId, 2, "Third comment");
+    let tctCount = comment.comment_count_by_ticket(tctId);
+    if (tctCount != 3) {
+        print("FAIL: comment_on_ticket - expected 3 comments, got " + convert.to_string(tctCount));
+        return false;
+    }
+    let tctList = comment.comment_list_by_ticket(tctId);
+    if (list.len(tctList) != 3) {
+        print("FAIL: comment_on_ticket - list mismatch");
+        return false;
+    }
+    print("PASS: comment_on_ticket");
+    return true;
+}
+
+fn test_audit_trail() {
+    storage.storage_clear("tickets");
+    storage.storage_clear("audit_log");
+    let tatItem = ticket.ticket_create("Audit Test", "low", "task", "Desc", 1);
+    let tatId = map.get(tatItem, "id");
+    audit_log.audit_log_add(tatId, 1, "created", "", "Audit Test");
+    ticket.ticket_update(tatId, "title", "Updated Title");
+    audit_log.audit_log_add(tatId, 1, "updated", "Audit Test", "Updated Title");
+    ticket.ticket_set_status(tatId, "resolved");
+    audit_log.audit_log_add(tatId, 1, "status_changed", "open", "resolved");
+    let tatLogs = audit_log.audit_log_list_by_ticket(tatId);
+    if (list.len(tatLogs) != 3) {
+        print("FAIL: audit_trail - expected 3 entries, got " + convert.to_string(list.len(tatLogs)));
+        return false;
+    }
+    print("PASS: audit_trail");
+    return true;
+}
+
+fn main() {
+    let tr1 = test_full_ticket_lifecycle();
+    if (tr1 == false) { return 1; }
+    let tr2 = test_ticket_status_transitions();
+    if (tr2 == false) { return 1; }
+    let tr3 = test_multiple_tickets_search();
+    if (tr3 == false) { return 1; }
+    let tr4 = test_comment_on_ticket();
+    if (tr4 == false) { return 1; }
+    let tr5 = test_audit_trail();
+    if (tr5 == false) { return 1; }
+    print("ALL INTEGRATION TESTS PASSED");
+    return 0;
+}

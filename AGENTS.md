@@ -62,12 +62,50 @@ AI MUST read these files in order:
 
 ## 3. Engineering Workflow
 
+### Official Development Pipeline
+
+```
+Write Code
+    ↓
+ail fmt
+    ↓
+ail check
+    ↓
+ail build
+    ↓
+ail test
+    ↓
+ail run
+```
+
+**This pipeline is mandatory for all v1.x development.**
+
+### Why This Pipeline?
+
+- `ail check` detects forward references, missing imports, and ordering violations **before compilation**
+- If violations exist, execution stops with actionable fixes
+- Developers spend time fixing business logic, not syntax ordering mistakes
+
+### Workflow Steps
+
 1. **Canonical First** — Before creating a new document, search for an existing canonical document. Extend it if appropriate. Only create if genuinely new responsibility.
 2. **Plan** — dependency map, stdlib audit, guard audit
 3. **Write** — bottom-up (Level 0 utilities → Level N `main()`)
-4. **Build** — `ail build <file>`
-5. **Run** — `ail run <file>`
-6. **Verify** — pass Validation Checklist
+4. **Check** — `ail check <file>` (auto-run by `ail run` and `ail test`)
+5. **Build** — `ail build <file>`
+6. **Run** — `ail run <file>`
+7. **Verify** — pass Validation Checklist
+
+### Skip Auto-Check (Rare)
+
+If you need to bypass the pre-flight check:
+
+```bash
+ail run --no-check <file>
+ail test --no-check <file_or_dir>
+```
+
+**Only use when:** You're testing a specific compile error and need to bypass the check.
 
 ---
 

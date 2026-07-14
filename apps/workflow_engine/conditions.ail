@@ -1,0 +1,50 @@
+import list;
+import map;
+import string;
+
+fn conditions_evaluate(condition, instance) {
+    let ceParts = string.split(condition, ":");
+    let ceType = list.get(ceParts, 0);
+    if (string.equals(ceType, "data_has_key")) {
+        let ceKey = list.get(ceParts, 1);
+        let ceData = map.get(instance, "data");
+        return map.has(ceData, ceKey);
+    }
+    if (string.equals(ceType, "data_equals")) {
+        let ceKey2 = list.get(ceParts, 1);
+        let ceValue = list.get(ceParts, 2);
+        let ceData2 = map.get(instance, "data");
+        let ceActual = map.get_or_default(ceData2, ceKey2, "");
+        return string.equals(ceActual, ceValue);
+    }
+    if (string.equals(ceType, "data_not_empty")) {
+        let ceKey3 = list.get(ceParts, 1);
+        let ceData3 = map.get(instance, "data");
+        let ceVal3 = map.get_or_default(ceData3, ceKey3, "");
+        if (string.equals(ceVal3, "")) {
+            return false;
+        }
+        return true;
+    }
+    if (string.equals(ceType, "created_by")) {
+        return true;
+    }
+    return true;
+}
+
+fn conditions_check_rec(conditionList, total, index, instance) {
+    if (index == total) {
+        return true;
+    }
+    let ccCondition = list.get(conditionList, index);
+    let ccResult = conditions_evaluate(ccCondition, instance);
+    if (ccResult == false) {
+        return false;
+    }
+    return conditions_check_rec(conditionList, total, math.add(index, 1), instance);
+}
+
+fn conditions_check(conditionList, instance) {
+    let ccLen = list.len(conditionList);
+    return conditions_check_rec(conditionList, ccLen, 0, instance);
+}

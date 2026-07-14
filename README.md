@@ -4,7 +4,7 @@
 
 [![Tests](https://img.shields.io/badge/tests-772%20passing-brightgreen)](#)
 [![Python](https://img.shields.io/badge/python-3.11%2B-blue)](#)
-[![Version](https://img.shields.io/badge/version-0.3.0-blue)](#)
+[![Version](https://img.shields.io/badge/version-1.0.0-blue)](#)
 [![License](https://img.shields.io/badge/license-MIT-green)](#)
 
 AILang is an AI-first programming language designed to be deterministic, specification-first, and easy for both humans and AI systems to reason about. It features a complete compiler pipeline, a 16-module standard library, and has been validated through 772 tests, stress testing up to 10,000 LOC, and AI-generated program verification with 100% first-pass success.
@@ -29,14 +29,13 @@ ail hello.ail
 
 | Guide | Description |
 |-------|-------------|
-| [Installation](docs/INSTALLATION.md) | Setup for Windows, Linux, macOS |
-| [Getting Started](docs/GETTING_STARTED.md) | Step-by-step introduction |
-| [Language Tour](docs/LANGUAGE_TOUR.md) | Complete language feature tour |
-| [Standard Library Reference](docs/STDLIB_REFERENCE.md) | All 16 modules documented |
-| [Compiler Architecture](docs/COMPILER_ARCHITECTURE.md) | Pipeline and design |
-| [Contributor Guide](docs/CONTRIBUTING.md) | How to contribute |
-| [Testing Guide](docs/TESTING.md) | Test patterns and practices |
-| [Documentation Index](docs/INDEX.md) | All documentation |
+| [Getting Started](docs/reference/GETTING_STARTED.md) | Step-by-step introduction |
+| [Language Tour](docs/reference/LANGUAGE_TOUR.md) | Complete language feature tour |
+| [Standard Library Reference](docs/reference/STDLIB_REFERENCE.md) | All 16 modules documented |
+| [Compiler Architecture](docs/reference/COMPILER_ARCHITECTURE.md) | Pipeline and design |
+| [Contributor Guide](docs/governance/CONTRIBUTING.md) | How to contribute |
+| [Testing Guide](docs/reference/TESTING.md) | Test patterns and practices |
+| [Quick Start](docs/QUICKSTART.md) | 5-minute setup guide |
 | [VS Code Extension](extensions/vscode-ailang/README.md) | AILang VS Code extension |
 
 ## VS Code Extension
@@ -85,22 +84,22 @@ fn main() {
 
 | Module | Operations |
 |--------|-----------|
-| [string](docs/STDLIB_REFERENCE.md#string) | `concat`, `equals`, `uppercase`, `lowercase`, `length`, `contains`, `starts_with`, `ends_with`, `trim`, `substring` |
-| [math](docs/STDLIB_REFERENCE.md#math) | `add`, `sub`, `mul`, `div`, `abs`, `min`, `max` |
-| [list](docs/STDLIB_REFERENCE.md#list) | `new`, `append`, `len`, `get`, `contains`, `remove`, `clear` |
-| [array](docs/STDLIB_REFERENCE.md#array) | `new`, `push`, `len`, `get`, `contains`, `remove`, `clear` |
-| [map](docs/STDLIB_REFERENCE.md#map) | `new`, `set`, `get`, `has`, `delete`, `keys`, `clear` |
-| [set](docs/STDLIB_REFERENCE.md#set) | `new`, `add`, `contains`, `len`, `remove`, `clear` |
-| [file](docs/STDLIB_REFERENCE.md#file) | `exists`, `read`, `write`, `append`, `remove` |
-| [path](docs/STDLIB_REFERENCE.md#path) | `join`, `basename`, `dirname`, `extension`, `normalize` |
-| [json](docs/STDLIB_REFERENCE.md#json) | `parse`, `stringify` |
-| [csv](docs/STDLIB_REFERENCE.md#csv) | `parse`, `parse_header`, `stringify` |
-| [time](docs/STDLIB_REFERENCE.md#time) | `now`, `timestamp`, `sleep`, `format` |
-| [random](docs/STDLIB_REFERENCE.md#random) | `int`, `float`, `choice` |
-| [environment](docs/STDLIB_REFERENCE.md#environment) | `get`, `cwd`, `args` |
-| [convert](docs/STDLIB_REFERENCE.md#convert) | `to_string`, `to_int`, `to_bool`, `to_number` |
-| [io](docs/STDLIB_REFERENCE.md#io) | `write`, `writeln`, `println` |
-| [system](docs/STDLIB_REFERENCE.md#system) | `exit` |
+| [string](docs/reference/STDLIB_REFERENCE.md#string) | `concat`, `equals`, `uppercase`, `lowercase`, `length`, `contains`, `starts_with`, `ends_with`, `trim`, `substring`, `find`, `find_from`, `split`, `join`, `from_int`, `from_bool` |
+| [math](docs/reference/STDLIB_REFERENCE.md#math) | `add`, `sub`, `mul`, `div`, `abs`, `min`, `max` |
+| [list](docs/reference/STDLIB_REFERENCE.md#list) | `new`, `append`, `len`, `get`, `contains`, `remove`, `clear`, `sum`, `find_by_key`, `filter_by_key`, `filter_by_contains`, `collect_key`, `group_by_key`, `sum_by_key`, `take`, `skip`, `search_by_name`, `exists_by_key`, `sort`, `sort_by_key`, `copy` |
+| [array](docs/reference/STDLIB_REFERENCE.md#array) | `new`, `push`, `len`, `get`, `contains`, `remove`, `clear` |
+| [map](docs/reference/STDLIB_REFERENCE.md#map) | `new`, `set`, `get`, `has`, `delete`, `keys`, `clear`, `values`, `get_or_default`, `safe_get` |
+| [set](docs/reference/STDLIB_REFERENCE.md#set) | `new`, `add`, `contains`, `len`, `remove`, `clear` |
+| [file](docs/reference/STDLIB_REFERENCE.md#file) | `exists`, `read`, `write`, `append`, `remove`, `listdir` |
+| [path](docs/reference/STDLIB_REFERENCE.md#path) | `join`, `basename`, `dirname`, `extension`, `normalize` |
+| [json](docs/reference/STDLIB_REFERENCE.md#json) | `parse`, `stringify` |
+| [csv](docs/reference/STDLIB_REFERENCE.md#csv) | `parse`, `parse_header`, `stringify` |
+| [time](docs/reference/STDLIB_REFERENCE.md#time) | `now`, `timestamp`, `sleep`, `format` |
+| [random](docs/reference/STDLIB_REFERENCE.md#random) | `int`, `float`, `choice` |
+| [environment](docs/reference/STDLIB_REFERENCE.md#environment) | `get`, `cwd`, `args` |
+| [convert](docs/reference/STDLIB_REFERENCE.md#convert) | `to_string`, `to_int`, `to_bool`, `to_number` |
+| [io](docs/reference/STDLIB_REFERENCE.md#io) | `write`, `writeln`, `println` |
+| [system](docs/reference/STDLIB_REFERENCE.md#system) | `exit` |
 
 ## Project Status
 

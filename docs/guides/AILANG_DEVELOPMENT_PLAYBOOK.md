@@ -5,6 +5,59 @@
 
 ---
 
+## Official Development Pipeline
+
+### The AILang Workflow
+
+```
+Write Code
+    ↓
+ail fmt
+    ↓
+ail check
+    ↓
+ail build
+    ↓
+ail test
+    ↓
+ail run
+```
+
+**No manual intervention required.** The pipeline automatically detects and eliminates predictable mistakes before compilation.
+
+### Why This Pipeline?
+
+Traditional workflow:
+```
+Write Code → Compile → Fail → Fix → Recompile
+```
+
+AILang workflow:
+```
+Write Code → Predict Mistakes → Eliminate Mistakes → Compile Once → Run
+```
+
+### Command Integration
+
+| Command | What It Does | Auto-Runs |
+|---------|--------------|-----------|
+| `ail run` | Compile and execute | `ail check` before compile |
+| `ail test` | Discover and run tests | `ail check` before test discovery |
+| `ail check` | Detect forward references, missing imports, ordering violations | — |
+| `ail build` | Compile without execution | — |
+| `ail fmt` | Format source code | — |
+
+### Skip Auto-Check
+
+If you need to bypass the pre-flight check (rare):
+
+```bash
+ail run --no-check <file>
+ail test --no-check <file_or_dir>
+```
+
+---
+
 ## Dependency Planning
 
 ### The Iteration Problem
@@ -19,6 +72,16 @@ SECOND RUNTIME → PASS (or cascade to more runtime fixes)
 ```
 
 Root cause: 100% of first compiles fail due to forward references. 90% of first runtimes fail due to missing guards, wrong map keys, or argument count errors.
+
+### How `ail check` Solves This
+
+`ail check` detects forward references and missing imports **before compilation**. If violations exist:
+
+1. `ail run` stops execution
+2. Developer receives exact fixes
+3. Runtime never starts
+
+**Result:** Forward reference cycles: 0. Missing import cycles: 0.
 
 ### Dependency Map Method
 

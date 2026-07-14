@@ -27,16 +27,6 @@ fn auth_check_role(userRole, requiredRole) {
     return false;
 }
 
-fn auth_list_contains_rec(lcItems, lcValue, lcIdx) {
-    if (lcIdx >= list.len(lcItems)) {
-        return false;
-    }
-    if (list.get(lcItems, lcIdx) == lcValue) {
-        return true;
-    }
-    return auth_list_contains_rec(lcItems, lcValue, lcIdx + 1);
-}
-
 fn auth_has_permission(userRole, permission) {
     let adminPermissions = list.new();
     list.append(adminPermissions, "product.create");
@@ -90,13 +80,13 @@ fn auth_has_permission(userRole, permission) {
     list.append(staffPermissions, "customer.create");
     list.append(staffPermissions, "vendor.create");
     if (userRole == "admin") {
-        return auth_list_contains_rec(adminPermissions, permission, 0);
+        return list.contains(adminPermissions, permission);
     }
     if (userRole == "manager") {
-        return auth_list_contains_rec(managerPermissions, permission, 0);
+        return list.contains(managerPermissions, permission);
     }
     if (userRole == "staff") {
-        return auth_list_contains_rec(staffPermissions, permission, 0);
+        return list.contains(staffPermissions, permission);
     }
     return false;
 }

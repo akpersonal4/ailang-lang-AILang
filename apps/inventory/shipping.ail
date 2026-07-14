@@ -4,30 +4,6 @@ import list;
 import map;
 import string;
 
-fn shipping_list_by_order_rec(shlrItems, shlrOrderId, shlrIdx, shlrAcc) {
-    if (shlrIdx >= list.len(shlrItems)) {
-        return shlrAcc;
-    }
-    let shlrItem = list.get(shlrItems, shlrIdx);
-    let shlrItemOrderId = helpers.helpers_get_map_value_safe(shlrItem, "order_id", "");
-    if (shlrItemOrderId == shlrOrderId) {
-        list.append(shlrAcc, shlrItem);
-    }
-    return shipping_list_by_order_rec(shlrItems, shlrOrderId, shlrIdx + 1, shlrAcc);
-}
-
-fn shipping_list_by_status_rec(shlsItems, shlsStatus, shlsIdx, shlsAcc) {
-    if (shlsIdx >= list.len(shlsItems)) {
-        return shlsAcc;
-    }
-    let shlsItem = list.get(shlsItems, shlsIdx);
-    let shlsItemStatus = helpers.helpers_get_map_value_safe(shlsItem, "status", "");
-    if (shlsItemStatus == shlsStatus) {
-        list.append(shlsAcc, shlsItem);
-    }
-    return shipping_list_by_status_rec(shlsItems, shlsStatus, shlsIdx + 1, shlsAcc);
-}
-
 fn shipping_create(shcrOrderId, shcrCarrier, shcrTrackingNumber, shcrShipAddress, shcrShippedBy) {
     let shcrShipment = map.new();
     let shcrId = helpers.helpers_generate_id("SHP-");
@@ -55,8 +31,7 @@ fn shipping_list() {
 
 fn shipping_list_by_order(shloOrderId) {
     let shloAll = storage.storage_list("shipments");
-    let shloResults = list.new();
-    return shipping_list_by_order_rec(shloAll, shloOrderId, 0, shloResults);
+    return list.filter_by_key(shloAll, "order_id", shloOrderId);
 }
 
 fn shipping_update_status(shupShipId, shupNewStatus) {
@@ -69,6 +44,5 @@ fn shipping_update_status(shupShipId, shupNewStatus) {
 
 fn shipping_list_by_status(shlsFilterStatus) {
     let shlsAll = storage.storage_list("shipments");
-    let shlsResults = list.new();
-    return shipping_list_by_status_rec(shlsAll, shlsFilterStatus, 0, shlsResults);
+    return list.filter_by_key(shlsAll, "status", shlsFilterStatus);
 }

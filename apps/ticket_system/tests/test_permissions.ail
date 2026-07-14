@@ -1,0 +1,140 @@
+import storage;
+import user;
+import ticket;
+import list;
+import map;
+import convert;
+
+fn test_admin_has_all_permissions() {
+    storage.storage_clear("users");
+    let tpaAdmin = user.user_create("admin", "admin@test.com", "pass");
+    let tpaAdminId = map.get(tpaAdmin, "id");
+    if (user.user_has_permission(tpaAdminId, "create_ticket") == false) {
+        print("FAIL: admin_has_all_permissions - create_ticket");
+        return false;
+    }
+    if (user.user_has_permission(tpaAdminId, "delete_ticket") == false) {
+        print("FAIL: admin_has_all_permissions - delete_ticket");
+        return false;
+    }
+    if (user.user_has_permission(tpaAdminId, "manage_users") == false) {
+        print("FAIL: admin_has_all_permissions - manage_users");
+        return false;
+    }
+    if (user.user_has_permission(tpaAdminId, "view_reports") == false) {
+        print("FAIL: admin_has_all_permissions - view_reports");
+        return false;
+    }
+    print("PASS: admin_has_all_permissions");
+    return true;
+}
+
+fn test_agent_permissions() {
+    storage.storage_clear("users");
+    let tpaAgent = user.user_create("agent", "agent@test.com", "pass");
+    user.user_set_role(map.get(tpaAgent, "id"), "agent");
+    let tpaAgentId = map.get(tpaAgent, "id");
+    if (user.user_has_permission(tpaAgentId, "create_ticket") == false) {
+        print("FAIL: agent_permissions - create_ticket denied");
+        return false;
+    }
+    if (user.user_has_permission(tpaAgentId, "resolve_ticket") == false) {
+        print("FAIL: agent_permissions - resolve_ticket denied");
+        return false;
+    }
+    if (user.user_has_permission(tpaAgentId, "delete_ticket") != false) {
+        print("FAIL: agent_permissions - delete_ticket should be denied");
+        return false;
+    }
+    if (user.user_has_permission(tpaAgentId, "manage_users") != false) {
+        print("FAIL: agent_permissions - manage_users should be denied");
+        return false;
+    }
+    if (user.user_has_permission(tpaAgentId, "view_reports") != false) {
+        print("FAIL: agent_permissions - view_reports should be denied");
+        return false;
+    }
+    print("PASS: agent_permissions");
+    return true;
+}
+
+fn test_viewer_permissions() {
+    storage.storage_clear("users");
+    let tpvViewer = user.user_create("viewer", "viewer@test.com", "pass");
+    user.user_set_role(map.get(tpvViewer, "id"), "viewer");
+    let tpvViewerId = map.get(tpvViewer, "id");
+    if (user.user_has_permission(tpvViewerId, "view_ticket") == false) {
+        print("FAIL: viewer_permissions - view_ticket denied");
+        return false;
+    }
+    if (user.user_has_permission(tpvViewerId, "create_ticket") != false) {
+        print("FAIL: viewer_permissions - create_ticket should be denied");
+        return false;
+    }
+    if (user.user_has_permission(tpvViewerId, "add_comment") != false) {
+        print("FAIL: viewer_permissions - add_comment should be denied");
+        return false;
+    }
+    print("PASS: viewer_permissions");
+    return true;
+}
+
+fn test_ticket_ownership_permission() {
+    storage.storage_clear("users");
+    storage.storage_clear("tickets");
+    let tpOwner = user.user_create("owner", "owner@test.com", "pass");
+    user.user_set_role(map.get(tpOwner, "id"), "agent");
+    let tpOther = user.user_create("other", "other@test.com", "pass");
+    user.user_set_role(map.get(tpOther, "id"), "agent");
+    let tpTicket = ticket.ticket_create("My Ticket", "low", "task", "Desc", map.get(tpOwner, "id"));
+    if (user.user_has_permission_on_ticket(map.get(tpOwner, "id"), "update_own_ticket", tpTicket) == false) {
+        print("FAIL: ticket_ownership_permission - owner denied");
+        return false;
+    }
+    if (user.user_has_permission_on_ticket(map.get(tpOther, "id"), "update_own_ticket", tpTicket) != false) {
+        print("FAIL: ticket_ownership_permission - non-owner should be denied");
+        return false;
+    }
+    print("PASS: ticket_ownership_permission");
+    return true;
+}
+
+fn test_manager_permissions() {
+    storage.storage_clear("users");
+    let tpmManager = user.user_create("manager", "manager@test.com", "pass");
+    user.user_set_role(map.get(tpmManager, "id"), "manager");
+    let tpmManagerId = map.get(tpmManager, "id");
+    if (user.user_has_permission(tpmManagerId, "assign_ticket") == false) {
+        print("FAIL: manager_permissions - assign_ticket denied");
+        return false;
+    }
+    if (user.user_has_permission(tpmManagerId, "update_any_ticket") == false) {
+        print("FAIL: manager_permissions - update_any_ticket denied");
+        return false;
+    }
+    if (user.user_has_permission(tpmManagerId, "view_reports") == false) {
+        print("FAIL: manager_permissions - view_reports denied");
+        return false;
+    }
+    if (user.user_has_permission(tpmManagerId, "delete_ticket") != false) {
+        print("FAIL: manager_permissions - delete_ticket should be denied");
+        return false;
+    }
+    print("PASS: manager_permissions");
+    return true;
+}
+
+fn main() {
+    let tr1 = test_admin_has_all_permissions();
+    if (tr1 == false) { return 1; }
+    let tr2 = test_agent_permissions();
+    if (tr2 == false) { return 1; }
+    let tr3 = test_viewer_permissions();
+    if (tr3 == false) { return 1; }
+    let tr4 = test_ticket_ownership_permission();
+    if (tr4 == false) { return 1; }
+    let tr5 = test_manager_permissions();
+    if (tr5 == false) { return 1; }
+    print("ALL PERMISSION TESTS PASSED");
+    return 0;
+}

@@ -66,6 +66,8 @@ Follow the existing code style:
 ### 5. Run Quality Gates
 
 ```bash
+ail fmt --check .          # Check formatting
+ail check --recursive .    # Check for forward references and ordering violations
 python -m pytest           # All tests must pass
 black --check .            # No formatting issues
 ruff check .               # No lint issues
@@ -78,6 +80,8 @@ mypy                       # No type issues
 - Reference related issues
 - Ensure all CI checks pass
 - Keep changes focused on a single concern
+
+**Important:** All AILang code must pass `ail check` before submission. This detects forward references, missing imports, and ordering violations before compilation.
 
 ## Code Style
 

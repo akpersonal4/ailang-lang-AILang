@@ -38,22 +38,9 @@ fn movement_list() {
     return storage.storage_list("movements");
 }
 
-fn movement_list_by_product_rec(mlprItems, mlprProductId, mlprResults, mlprIdx) {
-    if (mlprIdx >= list.len(mlprItems)) {
-        return mlprResults;
-    }
-    let mlprItem = list.get(mlprItems, mlprIdx);
-    let mlprProdId = helpers.helpers_get_map_value_safe(mlprItem, "product_id", "");
-    if (mlprProdId == mlprProductId) {
-        list.append(mlprResults, mlprItem);
-    }
-    return movement_list_by_product_rec(mlprItems, mlprProductId, mlprResults, mlprIdx + 1);
-}
-
 fn movement_list_by_product(mlpProductId) {
     let mlpAll = storage.storage_list("movements");
-    let mlpResults = list.new();
-    return movement_list_by_product_rec(mlpAll, mlpProductId, mlpResults, 0);
+    return list.filter_by_key(mlpAll, "product_id", mlpProductId);
 }
 
 fn movement_get_quantity_on_hand(mqhProductId) {
@@ -81,22 +68,9 @@ fn movement_check_alert_threshold(mcatProductId, mcatThreshold) {
     return mcatResult;
 }
 
-fn movement_list_by_type_rec(mltrItems, mltrType, mltrResults, mltrIdx) {
-    if (mltrIdx >= list.len(mltrItems)) {
-        return mltrResults;
-    }
-    let mltrItem = list.get(mltrItems, mltrIdx);
-    let mltrItemType = helpers.helpers_get_map_value_safe(mltrItem, "type", "");
-    if (mltrItemType == mltrType) {
-        list.append(mltrResults, mltrItem);
-    }
-    return movement_list_by_type_rec(mltrItems, mltrType, mltrResults, mltrIdx + 1);
-}
-
 fn movement_list_by_type(mltType) {
     let mltAll = storage.storage_list("movements");
-    let mltResults = list.new();
-    return movement_list_by_type_rec(mltAll, mltType, mltResults, 0);
+    return list.filter_by_key(mltAll, "type", mltType);
 }
 
 fn movement_update_status(musMovementId, musNewStatus) {

@@ -18,18 +18,6 @@ fn batch_date_to_int(bdtDateStr) {
     return convert.to_int(bdtNumeric);
 }
 
-fn batch_list_by_product_rec(blprItems, blprProductId, blprIdx, blprAcc) {
-    if (blprIdx >= list.len(blprItems)) {
-        return blprAcc;
-    }
-    let blprItem = list.get(blprItems, blprIdx);
-    let blprItemProductId = helpers.helpers_get_map_value_safe(blprItem, "product_id", "");
-    if (blprItemProductId == blprProductId) {
-        list.append(blprAcc, blprItem);
-    }
-    return batch_list_by_product_rec(blprItems, blprProductId, blprIdx + 1, blprAcc);
-}
-
 fn batch_get_expiring_before_rec(gebrItems, gebrExpiryInt, gebrIdx, gebrAcc) {
     if (gebrIdx >= list.len(gebrItems)) {
         return gebrAcc;
@@ -83,8 +71,7 @@ fn batch_list() {
 
 fn batch_list_by_product(btProductId) {
     let btAll = storage.storage_list("batches");
-    let btResults = list.new();
-    return batch_list_by_product_rec(btAll, btProductId, 0, btResults);
+    return list.filter_by_key(btAll, "product_id", btProductId);
 }
 
 fn batch_update_quantity(btBatchId, btNewQty) {

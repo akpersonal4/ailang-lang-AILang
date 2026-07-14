@@ -14,18 +14,6 @@ fn invoice_calculate_total_rec(ivctrItems, ivctrIdx, ivctrSum) {
     return invoice_calculate_total_rec(ivctrItems, ivctrIdx + 1, ivctrSum + ivctrLineTotal);
 }
 
-fn invoice_list_by_customer_rec(ivlcrItems, ivlcrCustomerId, ivlcrIdx, ivlcrAcc) {
-    if (ivlcrIdx >= list.len(ivlcrItems)) {
-        return ivlcrAcc;
-    }
-    let ivlcrItem = list.get(ivlcrItems, ivlcrIdx);
-    let ivlcrItemCustId = helpers.helpers_get_map_value_safe(ivlcrItem, "customer_id", "");
-    if (ivlcrItemCustId == ivlcrCustomerId) {
-        list.append(ivlcrAcc, ivlcrItem);
-    }
-    return invoice_list_by_customer_rec(ivlcrItems, ivlcrCustomerId, ivlcrIdx + 1, ivlcrAcc);
-}
-
 fn invoice_create(ivcrOrderId, ivcrCustomerId, ivcrItems, ivcrTotalAmount) {
     let ivcrInvoice = map.new();
     let ivcrId = helpers.helpers_generate_id("INV-");
@@ -52,8 +40,7 @@ fn invoice_list() {
 
 fn invoice_list_by_customer(ivlcCustomerId) {
     let ivlcAll = storage.storage_list("invoices");
-    let ivlcResults = list.new();
-    return invoice_list_by_customer_rec(ivlcAll, ivlcCustomerId, 0, ivlcResults);
+    return list.filter_by_key(ivlcAll, "customer_id", ivlcCustomerId);
 }
 
 fn invoice_update_status(ivupInvId, ivupNewStatus) {

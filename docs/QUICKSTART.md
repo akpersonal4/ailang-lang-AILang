@@ -6,7 +6,7 @@ Get from zero to running AILang code in under 5 minutes.
 
 ## Prerequisites
 
-- **Python 3.9+** installed
+- **Python 3.11+** installed
 - **pip** available in your terminal
 
 ---

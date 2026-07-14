@@ -1,0 +1,193 @@
+import list;
+import map;
+import string;
+import convert;
+import helpers;
+import storage;
+import supplier;
+
+fn test_supplier_create() {
+    let tsResult = supplier.supplier_create("TestSupply Co", "John Contact", "john@test.com", "555-0100", "123 Supply St", "net30", 14, 4);
+    if (tsResult == false) {
+        print("FAIL: supplier_create returned false");
+        return false;
+    }
+    let tsId = helpers.helpers_get_map_value_safe(tsResult, "id", "");
+    if (tsId == "") {
+        print("FAIL: supplier_create - no id");
+        return false;
+    }
+    let tsName = helpers.helpers_get_map_value_safe(tsResult, "name", "");
+    if (tsName != "TestSupply Co") {
+        print("FAIL: supplier_create - name mismatch");
+        return false;
+    }
+    let tsContact = helpers.helpers_get_map_value_safe(tsResult, "contact_person", "");
+    if (tsContact != "John Contact") {
+        print("FAIL: supplier_create - contact_person mismatch");
+        return false;
+    }
+    let tsPayment = helpers.helpers_get_map_value_safe(tsResult, "payment_terms", "");
+    if (tsPayment != "net30") {
+        print("FAIL: supplier_create - payment_terms mismatch");
+        return false;
+    }
+    let tsRating = helpers.helpers_get_map_value_safe(tsResult, "rating", 0);
+    if (tsRating != 4) {
+        print("FAIL: supplier_create - rating mismatch");
+        return false;
+    }
+    print("PASS: supplier_create");
+    return true;
+}
+
+fn test_supplier_get_by_id_missing() {
+    let tsResult = supplier.supplier_get_by_id("NONEXISTENT-SUPPLIER");
+    if (tsResult != false) {
+        print("FAIL: supplier_get_by_id_missing - expected false");
+        return false;
+    }
+    print("PASS: supplier_get_by_id_missing");
+    return true;
+}
+
+fn test_supplier_get_by_id() {
+    let tsCreated = supplier.supplier_create("GetTest Supply", "Alice Get", "alice@get.com", "555-0200", "456 Get Ave", "net60", 30, 5);
+    let tsId = helpers.helpers_get_map_value_safe(tsCreated, "id", "");
+    let tsFound = supplier.supplier_get_by_id(tsId);
+    if (tsFound == false) {
+        print("FAIL: supplier_get_by_id returned false");
+        return false;
+    }
+    let tsName = helpers.helpers_get_map_value_safe(tsFound, "name", "");
+    if (tsName != "GetTest Supply") {
+        print("FAIL: supplier_get_by_id - name mismatch");
+        return false;
+    }
+    print("PASS: supplier_get_by_id");
+    return true;
+}
+
+fn test_supplier_update() {
+    let tsCreated = supplier.supplier_create("UpdateTest Supply", "Bob Update", "bob@update.com", "555-0300", "789 Update Blvd", "net30", 7, 3);
+    let tsId = helpers.helpers_get_map_value_safe(tsCreated, "id", "");
+    let tsChanges = map.new();
+    map.set(tsChanges, "rating", 5);
+    map.set(tsChanges, "payment_terms", "net15");
+    let tsUpdateResult = supplier.supplier_update(tsId, tsChanges);
+    if (tsUpdateResult == false) {
+        print("FAIL: supplier_update returned false");
+        return false;
+    }
+    let tsUpdated = supplier.supplier_get_by_id(tsId);
+    let tsRating = helpers.helpers_get_map_value_safe(tsUpdated, "rating", 0);
+    if (tsRating != 5) {
+        print("FAIL: supplier_update - expected rating 5, got " + convert.to_string(tsRating));
+        return false;
+    }
+    let tsPayment = helpers.helpers_get_map_value_safe(tsUpdated, "payment_terms", "");
+    if (tsPayment != "net15") {
+        print("FAIL: supplier_update - expected net15, got " + tsPayment);
+        return false;
+    }
+    print("PASS: supplier_update");
+    return true;
+}
+
+fn test_supplier_search() {
+    supplier.supplier_create("SearchTest Alpha", "Sam Search", "sam@search.com", "555-0400", "101 Search Ln", "net30", 14, 4);
+    let tsResults = supplier.supplier_search("SearchTest");
+    if (tsResults == false) {
+        print("FAIL: supplier_search returned false");
+        return false;
+    }
+    let tsLen = list.len(tsResults);
+    if (tsLen == 0) {
+        print("FAIL: supplier_search - no results");
+        return false;
+    }
+    let tsFirst = list.get(tsResults, 0);
+    let tsFirstName = helpers.helpers_get_map_value_safe(tsFirst, "name", "");
+    if (string.contains(tsFirstName, "SearchTest") == false) {
+        print("FAIL: supplier_search - name does not contain SearchTest");
+        return false;
+    }
+    print("PASS: supplier_search (" + convert.to_string(tsLen) + " items)");
+    return true;
+}
+
+fn test_supplier_top_rated() {
+    supplier.supplier_create("TopRated Low", "Low", "low@test.com", "555-0500", "1 Low Rd", "net30", 7, 2);
+    supplier.supplier_create("TopRated High", "High", "high@test.com", "555-0600", "2 High St", "net60", 14, 5);
+    let tsResults = supplier.supplier_top_rated(4);
+    if (tsResults == false) {
+        print("FAIL: supplier_top_rated returned false");
+        return false;
+    }
+    let tsLen = list.len(tsResults);
+    if (tsLen == 0) {
+        print("FAIL: supplier_top_rated - no results");
+        return false;
+    }
+    let tsFoundItem = helpers.helpers_find_in_list(tsResults, "name", "TopRated High");
+    let tsFound = false;
+    if (tsFoundItem != false) {
+        tsFound = true;
+    }
+    if (tsFound == false) {
+        print("FAIL: supplier_top_rated - expected TopRated High in results");
+        return false;
+    }
+    print("PASS: supplier_top_rated (" + convert.to_string(tsLen) + " items)");
+    return true;
+}
+
+fn test_supplier_get_by_payment_terms() {
+    supplier.supplier_create("PaymentTest Net60 A", "Pay A", "paya@test.com", "555-0700", "10 Pay Rd", "net60", 30, 3);
+    supplier.supplier_create("PaymentTest Net60 B", "Pay B", "payb@test.com", "555-0800", "20 Pay Ln", "net60", 45, 4);
+    let tsResults = supplier.supplier_get_by_payment_terms("net60");
+    if (tsResults == false) {
+        print("FAIL: supplier_get_by_payment_terms returned false");
+        return false;
+    }
+    let tsLen = list.len(tsResults);
+    if (tsLen < 2) {
+        print("FAIL: supplier_get_by_payment_terms - expected at least 2, got " + convert.to_string(tsLen));
+        return false;
+    }
+    print("PASS: supplier_get_by_payment_terms (" + convert.to_string(tsLen) + " items)");
+    return true;
+}
+
+fn main() {
+    let tsr1 = test_supplier_create();
+    if (tsr1 == false) {
+        return 1;
+    }
+    let tsr2 = test_supplier_get_by_id_missing();
+    if (tsr2 == false) {
+        return 1;
+    }
+    let tsr3 = test_supplier_get_by_id();
+    if (tsr3 == false) {
+        return 1;
+    }
+    let tsr4 = test_supplier_update();
+    if (tsr4 == false) {
+        return 1;
+    }
+    let tsr5 = test_supplier_search();
+    if (tsr5 == false) {
+        return 1;
+    }
+    let tsr6 = test_supplier_top_rated();
+    if (tsr6 == false) {
+        return 1;
+    }
+    let tsr7 = test_supplier_get_by_payment_terms();
+    if (tsr7 == false) {
+        return 1;
+    }
+    print("ALL SUPPLIER TESTS PASSED");
+    return 0;
+}

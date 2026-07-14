@@ -1,0 +1,123 @@
+import storage;
+import user;
+import list;
+import map;
+import convert;
+
+fn test_user_create() {
+    storage.storage_clear("users");
+    let tuResult = user.user_create("testuser", "test@example.com", "pass123");
+    if (map.has(tuResult, "id") == false) {
+        print("FAIL: user_create - no id");
+        return false;
+    }
+    if (map.get(tuResult, "username") != "testuser") {
+        print("FAIL: user_create - username mismatch");
+        return false;
+    }
+    if (map.get(tuResult, "role") != "admin") {
+        print("FAIL: user_create - first user should be admin");
+        return false;
+    }
+    print("PASS: user_create");
+    return true;
+}
+
+fn test_user_create_duplicate() {
+    storage.storage_clear("users");
+    user.user_create("testuser", "test@example.com", "pass123");
+    let tudResult = user.user_create("testuser", "other@example.com", "pass456");
+    if (map.has(tudResult, "id") != false) {
+        print("FAIL: user_create_duplicate - should return empty map");
+        return false;
+    }
+    print("PASS: user_create_duplicate");
+    return true;
+}
+
+fn test_user_find_by_username() {
+    storage.storage_clear("users");
+    user.user_create("findme", "find@example.com", "pass");
+    let tufResult = user.user_find_by_username("findme");
+    if (map.has(tufResult, "id") == false) {
+        print("FAIL: user_find_by_username - not found");
+        return false;
+    }
+    if (map.get(tufResult, "email") != "find@example.com") {
+        print("FAIL: user_find_by_username - email mismatch");
+        return false;
+    }
+    let tufMissing = user.user_find_by_username("nobody");
+    if (map.has(tufMissing, "id") != false) {
+        print("FAIL: user_find_by_username - should not find missing");
+        return false;
+    }
+    print("PASS: user_find_by_username");
+    return true;
+}
+
+fn test_user_authenticate() {
+    storage.storage_clear("users");
+    user.user_create("authuser", "auth@example.com", "secret");
+    let tuaResult = user.user_authenticate("authuser", "secret");
+    if (map.has(tuaResult, "id") == false) {
+        print("FAIL: user_authenticate - valid credentials failed");
+        return false;
+    }
+    let tuaBad = user.user_authenticate("authuser", "wrong");
+    if (map.has(tuaBad, "id") != false) {
+        print("FAIL: user_authenticate - invalid credentials accepted");
+        return false;
+    }
+    let tuaUnknown = user.user_authenticate("unknown", "secret");
+    if (map.has(tuaUnknown, "id") != false) {
+        print("FAIL: user_authenticate - unknown user accepted");
+        return false;
+    }
+    print("PASS: user_authenticate");
+    return true;
+}
+
+fn test_user_set_role() {
+    storage.storage_clear("users");
+    let turUser = user.user_create("roleuser", "role@example.com", "pass");
+    let turId = map.get(turUser, "id");
+    user.user_set_role(turId, "manager");
+    let turUpdated = user.user_find_by_id(turId);
+    if (map.get(turUpdated, "role") != "manager") {
+        print("FAIL: user_set_role - role not updated");
+        return false;
+    }
+    print("PASS: user_set_role");
+    return true;
+}
+
+fn test_user_list_all() {
+    storage.storage_clear("users");
+    user.user_create("user1", "u1@example.com", "pass");
+    user.user_create("user2", "u2@example.com", "pass");
+    let tulResult = user.user_list_all();
+    if (list.len(tulResult) != 2) {
+        print("FAIL: user_list_all - expected 2, got " + convert.to_string(list.len(tulResult)));
+        return false;
+    }
+    print("PASS: user_list_all");
+    return true;
+}
+
+fn main() {
+    let tr1 = test_user_create();
+    if (tr1 == false) { return 1; }
+    let tr2 = test_user_create_duplicate();
+    if (tr2 == false) { return 1; }
+    let tr3 = test_user_find_by_username();
+    if (tr3 == false) { return 1; }
+    let tr4 = test_user_authenticate();
+    if (tr4 == false) { return 1; }
+    let tr5 = test_user_set_role();
+    if (tr5 == false) { return 1; }
+    let tr6 = test_user_list_all();
+    if (tr6 == false) { return 1; }
+    print("ALL USER TESTS PASSED");
+    return 0;
+}

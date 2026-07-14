@@ -90,8 +90,15 @@ def _compile(
     source_path: Path,
     json_mode: bool = False,
     experimental_loops: bool = False,
+    root_override: str | None = None,
 ) -> tuple[CompilationSession | None, DiagnosticReporter]:
     """Compile a source file and return the session and reporter.
+
+    Args:
+        root_override: If set, use this directory as the project root for
+            module resolution instead of source_path.parent. This is needed
+            when test files live in a subdirectory (tests/) and import
+            modules from the parent app directory.
 
     Returns:
         tuple of (session, reporter) where session is None on error.
@@ -104,11 +111,12 @@ def _compile(
     root_dir = stdlib_dir.parent
 
     session = CompilationSession(experimental_loops=experimental_loops)
-    # Set root to the source file's directory so app modules are found.
-    # Stdlib discovery walks upward from _root, so stdlib/ at the project
-    # root is still located.
-    session._root = source_path.parent.resolve()
-    session._resolver = type(session._resolver)(source_path.parent.resolve())
+    if root_override:
+        resolve_root = Path(root_override).resolve()
+    else:
+        resolve_root = source_path.parent.resolve()
+    session._root = resolve_root
+    session._resolver = type(session._resolver)(resolve_root)
 
     reporter = DiagnosticReporter()
     session.discover(source_path, reporter)
@@ -126,8 +134,14 @@ def _compile(
 
 
 def cmd_run(args: list[str]) -> int:
-    """Compile and run an AILang program."""
+    """Compile and run an AILang program.
+
+    Automatically runs ail check before compilation to detect
+    forward references, missing imports, and ordering violations.
+    If check fails, execution stops with actionable fixes.
+    """
     experimental_loops = False
+    no_check = False
     positional: list[str] = []
 
     remaining = list(args)
@@ -135,18 +149,46 @@ def cmd_run(args: list[str]) -> int:
         arg = remaining.pop(0)
         if arg == "--experimental-loops":
             experimental_loops = True
+        elif arg == "--no-check":
+            no_check = True
         elif arg.startswith("-"):
-            print(f"Usage: {PROG} run [--experimental-loops] <file>", file=sys.stderr)
+            print(f"Usage: {PROG} run [--experimental-loops] [--no-check] <file>", file=sys.stderr)
             return 1
         else:
             positional.append(arg)
 
     if not positional:
         print("Error: missing file argument", file=sys.stderr)
-        print(f"Usage: {PROG} run [--experimental-loops] <file>", file=sys.stderr)
+        print(f"Usage: {PROG} run [--experimental-loops] [--no-check] <file>", file=sys.stderr)
         return 1
 
     source_path = Path(positional[0]).resolve()
+
+    # Auto-check: detect forward references and ordering violations before compilation
+    if not no_check:
+        check_violations = _check_file_forward_references(source_path)
+        if check_violations:
+            formatter = DiagnosticFormatter()
+            for v in check_violations:
+                print()
+                if v["type"] == "forward_reference":
+                    print("FORWARD_REF:")
+                elif v["type"] == "missing_import":
+                    print("MISSING_IMPORT:")
+                print(f"{v['file']}:{v['line']}")
+                print()
+                print(f"  {v['caller']}()")
+                print(f"  calls {v['callee']}()")
+                print()
+                print(f"  Suggestion:")
+                if v["type"] == "forward_reference":
+                    print(f"    Move {v['callee']}() definition above {v['caller']}()")
+                elif v["type"] == "missing_import":
+                    print(f"    Add: import {v['module']};")
+                print()
+            print(f"Check failed: {len(check_violations)} violation(s) found.")
+            print("Fix these issues before running. Use --no-check to skip.", file=sys.stderr)
+            return 1
 
     # Strip CLI plumbing so env_args() returns only the user's args.
     # args[0] is the source file; everything after is user-provided.
@@ -244,8 +286,334 @@ def cmd_build(args: list[str]) -> int:
 
 
 def cmd_check(args: list[str]) -> int:
-    """Alias for build — compile and check for errors."""
-    return cmd_build(args)
+    """Check AILang source for forward references, missing imports, and ordering violations.
+
+    Usage:
+        ail check <file>         Check a single file
+        ail check <dir>          Check all .ail files in directory
+        ail check --recursive .  Check all .ail files recursively
+
+    Reports all violations in a single run with exact fix suggestions.
+    """
+    json_mode = False
+    recursive = False
+    paths: list[str] = []
+
+    remaining = list(args)
+    while remaining:
+        arg = remaining.pop(0)
+        if arg == "--json":
+            json_mode = True
+        elif arg == "--recursive":
+            recursive = True
+        elif arg.startswith("-"):
+            print(f"Unknown option: {arg}", file=sys.stderr)
+            print(f"Usage: {PROG} check [--json] [--recursive] <file_or_dir>", file=sys.stderr)
+            return 1
+        else:
+            paths.append(arg)
+
+    if not paths:
+        print("Error: missing file argument", file=sys.stderr)
+        print(f"Usage: {PROG} check [--json] [--recursive] <file_or_dir>", file=sys.stderr)
+        return 1
+
+    # Collect files to check
+    files_to_check: list[Path] = []
+    for p in paths:
+        path = Path(p).resolve()
+        if not path.exists():
+            print(f"Error: Path not found: {path}", file=sys.stderr)
+            return 1
+        if path.is_dir():
+            if recursive:
+                for found in sorted(path.rglob("*.ail")):
+                    parts = found.parts
+                    if any(skip in parts for skip in _FMT_SKIP_DIRS):
+                        continue
+                    files_to_check.append(found)
+            else:
+                for found in sorted(path.glob("*.ail")):
+                    files_to_check.append(found)
+        else:
+            files_to_check.append(path)
+
+    if not files_to_check:
+        print("No .ail files found to check.", file=sys.stderr)
+        return 1
+
+    # Check each file
+    total_violations = 0
+    all_violations: list[dict] = []
+
+    for file_path in files_to_check:
+        violations = _check_file_forward_references(file_path)
+        all_violations.extend(violations)
+        total_violations += len(violations)
+
+    # Output results
+    if json_mode:
+        import json
+        result = {
+            "passed": total_violations == 0,
+            "violations": all_violations,
+            "total_violations": total_violations,
+        }
+        print(json.dumps(result, indent=2))
+    else:
+        if total_violations == 0:
+            print(f"Check passed: {len(files_to_check)} file(s) checked, no violations found.")
+        else:
+            formatter = DiagnosticFormatter()
+            for v in all_violations:
+                print()
+                print(f"FORWARD_REF:" if v["type"] == "forward_reference" else "MISSING_IMPORT:")
+                print(f"{v['file']}:{v['line']}")
+                print()
+                print(f"  {v['caller']}()")
+                print(f"  calls {v['callee']}()")
+                print()
+                print(f"  Suggestion:")
+                if v["type"] == "forward_reference":
+                    print(f"    Move {v['callee']}() definition above {v['caller']}()")
+                elif v["type"] == "missing_import":
+                    print(f"    Add: import {v['module']};")
+                print()
+            print(f"Total: {total_violations} violation(s) in {len(files_to_check)} file(s)")
+
+    return 1 if total_violations > 0 else 0
+
+
+def _check_file_forward_references(file_path: Path) -> list[dict]:
+    """Check a single file for forward references and missing imports.
+
+    Returns a list of violation dictionaries with type, file, line, caller, callee, module.
+    """
+    violations: list[dict] = []
+
+    if not file_path.exists():
+        return violations
+
+    try:
+        source_text = file_path.read_text(encoding="utf-8")
+    except Exception:
+        return violations
+
+    # Parse the file to get function definitions and calls
+    try:
+        from compiler.lexer import Lexer
+        from compiler.parser import Parser
+        from compiler.ast.builder import ASTBuilder
+        from compiler.ast.nodes import (
+            FunctionDeclarationNode,
+            CallExpressionNode,
+            MemberAccessNode,
+            IdentifierNode,
+            ImportDeclarationNode,
+            ProgramNode,
+            BlockNode,
+            ExpressionStatementNode,
+            VariableDeclarationNode,
+            ReturnStatementNode,
+            IfStatementNode,
+            ForStatementNode,
+            BinaryExpressionNode,
+            UnaryExpressionNode,
+        )
+
+        lexer = Lexer(source_path=str(file_path))
+        tokens = lexer.tokenize(source_text)
+        parser = Parser(tokens, source_path=str(file_path))
+        cst = parser.parse_program()
+        ast = ASTBuilder().build(cst)
+
+        if not isinstance(ast, ProgramNode):
+            return violations
+
+        # Helper to convert span to line number
+        source_lines = source_text.split("\n")
+        def span_to_line(span: int | None) -> int:
+            if span is None:
+                return 0
+            offset = span
+            for lineno, src_line in enumerate(source_lines, 1):
+                if offset <= len(src_line):
+                    return lineno
+                offset -= len(src_line) + 1  # +1 for newline char
+            return len(source_lines)
+
+        # Collect function definitions with their line numbers
+        function_defs: dict[str, int] = {}  # name -> line number
+        function_def_order: list[str] = []  # Order of definitions
+
+        # Collect imports
+        imports: set[str] = set()  # imported module names
+
+        # Collect calls with their line numbers
+        calls: list[tuple[str, str, int]] = []  # (caller_context, callee, line)
+
+        def _collect_declarations(node, context: str = "global"):
+            """Collect function declarations and track their order."""
+            if isinstance(node, FunctionDeclarationNode):
+                func_name = node.name.name
+                function_defs[func_name] = span_to_line(node.start_span)
+                function_def_order.append(func_name)
+                # Recurse into function body with this function as context
+                _collect_declarations(node.body, func_name)
+            elif isinstance(node, ProgramNode):
+                for child in node.children:
+                    _collect_declarations(child, context)
+            elif isinstance(node, ImportDeclarationNode):
+                module_path = ".".join(node.module_path)
+                imports.add(module_path)
+                # Also add the root module name
+                imports.add(node.module_path[0])
+            elif hasattr(node, 'body'):
+                # Recurse into other nodes with bodies (if, for, etc.)
+                _collect_declarations(node.body, context)
+
+        def _collect_calls(node, context: str = "global"):
+            """Collect function calls."""
+            if isinstance(node, CallExpressionNode):
+                callee = node.callee
+                if isinstance(callee, IdentifierNode):
+                    calls.append((context, callee.name, span_to_line(node.start_span)))
+                elif isinstance(callee, MemberAccessNode):
+                    if isinstance(callee.receiver, IdentifierNode):
+                        module_name = callee.receiver.name
+                        func_name = callee.member.name
+                        calls.append((context, f"{module_name}.{func_name}", span_to_line(node.start_span)))
+                # Recurse into arguments
+                for arg in node.arguments:
+                    _collect_calls(arg, context)
+            elif isinstance(node, ProgramNode):
+                for child in node.children:
+                    _collect_calls(child, context)
+            elif isinstance(node, FunctionDeclarationNode):
+                _collect_calls(node.body, node.name.name)
+            elif isinstance(node, ImportDeclarationNode):
+                pass  # Skip imports
+            elif isinstance(node, VariableDeclarationNode):
+                _collect_calls(node.initializer, context)
+            elif isinstance(node, ExpressionStatementNode):
+                _collect_calls(node.expression, context)
+            elif isinstance(node, ReturnStatementNode):
+                _collect_calls(node.value, context)
+            elif isinstance(node, IfStatementNode):
+                _collect_calls(node.condition, context)
+                _collect_calls(node.then_block, context)
+                if node.else_block:
+                    _collect_calls(node.else_block, context)
+            elif isinstance(node, ForStatementNode):
+                _collect_calls(node.iterable, context)
+                _collect_calls(node.body, context)
+            elif isinstance(node, BlockNode):
+                for child in node.statements:
+                    _collect_calls(child, context)
+            elif isinstance(node, BinaryExpressionNode):
+                _collect_calls(node.left, context)
+                _collect_calls(node.right, context)
+            elif isinstance(node, UnaryExpressionNode):
+                _collect_calls(node.operand, context)
+
+        _collect_declarations(ast)
+        _collect_calls(ast)
+
+        # Analyze for forward references
+        # A forward reference is when a function calls another function
+        # that is defined later in the file (higher line number)
+        for caller_context, callee, call_line in calls:
+            # Skip if callee is an imported module function
+            if "." in callee:
+                module_name = callee.split(".")[0]
+                if module_name in imports:
+                    continue
+
+            # Skip if callee is a stdlib function
+            if callee in _STDLIB_FUNCTIONS:
+                continue
+
+            # Check if callee is defined in this file
+            if callee in function_defs:
+                callee_def_line = function_defs[callee]
+                # Find the caller's definition line
+                caller_def_line = function_defs.get(caller_context, 0)
+
+                # Forward reference: callee is defined after the caller
+                if callee_def_line > caller_def_line and caller_context != "global":
+                    violations.append({
+                        "type": "forward_reference",
+                        "file": str(file_path),
+                        "line": call_line,
+                        "caller": caller_context,
+                        "callee": callee,
+                        "module": None,
+                    })
+
+        # Analyze for missing imports
+        # A missing import is when a function calls module.function()
+        # but the module is not imported
+        for caller_context, callee, call_line in calls:
+            if "." in callee:
+                parts = callee.split(".", 1)
+                module_name = parts[0]
+                func_name = parts[1]
+
+                # Check if this looks like a module function call
+                # (module name is lowercase, function name is lowercase)
+                if module_name.islower() and func_name.islower():
+                    if module_name not in imports:
+                        # Check if it's a stdlib module
+                        if module_name in _STDLIB_MODULES:
+                            continue
+                        # Check if the module exists as a file in the same directory
+                        module_file = file_path.parent / f"{module_name}.ail"
+                        if module_file.exists():
+                            violations.append({
+                                "type": "missing_import",
+                                "file": str(file_path),
+                                "line": call_line,
+                                "caller": caller_context,
+                                "callee": callee,
+                                "module": module_name,
+                            })
+
+    except Exception:
+        # If parsing fails, return empty violations
+        pass
+
+    return violations
+
+
+# Known stdlib functions and modules to skip during checking
+_STDLIB_FUNCTIONS = frozenset({
+    "math.add", "math.sub", "math.mul", "math.div", "math.abs", "math.min", "math.max",
+    "string.concat", "string.equals", "string.uppercase", "string.lowercase",
+    "string.length", "string.contains", "string.starts_with", "string.ends_with",
+    "string.trim", "string.substring", "string.find", "string.find_from", "string.split",
+    "list.new", "list.append", "list.len", "list.get", "list.contains", "list.remove",
+    "list.clear", "list.sum", "list.find_by_key", "list.filter_by_key",
+    "list.filter_by_contains", "list.collect_key",
+    "map.new", "map.set", "map.get", "map.has", "map.delete", "map.keys", "map.clear",
+    "set.new", "set.add", "set.contains", "set.len", "set.remove", "set.clear",
+    "file.exists", "file.read", "file.write", "file.append", "file.remove", "file.listdir",
+    "path.join", "path.basename", "path.dirname", "path.extension", "path.normalize",
+    "json.parse", "json.stringify",
+    "csv.parse", "csv.parse_header", "csv.stringify",
+    "time.now", "time.timestamp", "time.sleep", "time.format",
+    "random.int", "random.float", "random.choice",
+    "environment.get", "environment.cwd", "environment.args",
+    "convert.to_string", "convert.to_int", "convert.to_bool", "convert.to_number",
+    "io.write", "io.writeln", "io.println",
+    "system.exit",
+    "array.new", "array.push", "array.len", "array.get", "array.contains",
+    "array.remove", "array.clear",
+})
+
+_STDLIB_MODULES = frozenset({
+    "math", "string", "list", "map", "set", "file", "path", "json", "csv",
+    "time", "random", "environment", "convert", "io", "system", "array",
+})
 
 
 # Directories to skip when formatting a project directory
@@ -743,12 +1111,26 @@ def cmd_publish(args: list[str]) -> int:
 def cmd_test(args: list[str]) -> int:
     """Discover and run test files (test_*.ail).
 
+    Automatically runs ail check before test discovery to detect
+    forward references, missing imports, and ordering violations.
+    If check fails, tests do not run — developer receives exact fixes.
+
+    Each test file must define a main() function that calls test functions
+    and prints results. A test passes if it compiles and runs without output
+    containing "FAIL".
+
     Usage:
         ail test                         Run all tests in current directory
         ail test <file_or_dir>           Run tests in specific file/directory
-        ail test --verbose               Print per-test names
+        ail test --verbose               Print per-test names and output
+        ail test --root <dir>            Set project root for module resolution
+        ail test --no-check              Skip pre-flight ordering check
     """
+    import io
+
     verbose = False
+    no_check = False
+    root_override: str | None = None
     paths: list[str] = []
 
     remaining = list(args)
@@ -756,11 +1138,23 @@ def cmd_test(args: list[str]) -> int:
         arg = remaining.pop(0)
         if arg == "--verbose":
             verbose = True
+        elif arg == "--no-check":
+            no_check = True
+        elif arg == "--root":
+            if remaining:
+                root_override = remaining.pop(0)
+            else:
+                print("Error: --root requires a directory argument", file=sys.stderr)
+                return 1
         elif arg.startswith("-"):
-            print(f"Usage: {PROG} test [--verbose] [<file_or_dir>]", file=sys.stderr)
+            print(f"Usage: {PROG} test [--verbose] [--no-check] [--root <dir>] [<file_or_dir>]", file=sys.stderr)
             return 1
         else:
             paths.append(arg)
+
+    # Default root to CWD so 'ail test tests/' resolves modules from CWD
+    if root_override is None:
+        root_override = str(Path.cwd())
 
     # Collect test files
     test_files: list[Path] = []
@@ -790,26 +1184,106 @@ def cmd_test(args: list[str]) -> int:
         print("No test files found", file=sys.stderr)
         return 1
 
+    # Auto-check: detect forward references and ordering violations before test execution
+    if not no_check:
+        all_violations: list[dict] = []
+        for test_file in test_files:
+            violations = _check_file_forward_references(test_file)
+            all_violations.extend(violations)
+
+        if all_violations:
+            formatter = DiagnosticFormatter()
+            for v in all_violations:
+                print()
+                if v["type"] == "forward_reference":
+                    print("FORWARD_REF:")
+                elif v["type"] == "missing_import":
+                    print("MISSING_IMPORT:")
+                print(f"{v['file']}:{v['line']}")
+                print()
+                print(f"  {v['caller']}()")
+                print(f"  calls {v['callee']}()")
+                print()
+                print(f"  Suggestion:")
+                if v["type"] == "forward_reference":
+                    print(f"    Move {v['callee']}() definition above {v['caller']}()")
+                elif v["type"] == "missing_import":
+                    print(f"    Add: import {v['module']};")
+                print()
+            print(f"Check failed: {len(all_violations)} violation(s) found.")
+            print("Fix these issues before running tests. Use --no-check to skip.", file=sys.stderr)
+            return 1
+
     total = len(test_files)
     passed = 0
     failed = 0
+    errors: list[str] = []
 
     for test_file in test_files:
-        session, reporter = _compile(test_file)
+        session, reporter = _compile(test_file, root_override=root_override)
         if session is None:
             failed += 1
-            print(f"FAIL  {test_file.name}", file=sys.stderr)
+            errors.append(test_file.name)
+            print(f"FAIL  {test_file.name} (compile error)", file=sys.stderr)
             if verbose:
                 formatter = DiagnosticFormatter()
                 for diagnostic in reporter.diagnostics:
                     print("  " + formatter.format(diagnostic), file=sys.stderr)
-        else:
-            passed += 1
-            if verbose:
-                print(f"PASS  {test_file.name}")
+            continue
+
+        # Execute the test file
+        bundle = session.build_ir()
+        runtime = Runtime(bundle)
+
+        for module_name in session._graph.topological_sort():
+            runtime._initialize_module(module_name)
+
+        try:
+            main_module = None
+            for module_name in session._graph.topological_sort():
+                if module_name in bundle.module_irs:
+                    main_module = module_name
+                    break
+
+            if main_module is None:
+                raise KeyError("No module found")
+
+            program_ir = bundle.module_irs[main_module]
+
+            old_stdout = sys.stdout
+            sys.stdout = captured = io.StringIO()
+            try:
+                runtime.execute(program_ir)
+            finally:
+                sys.stdout = old_stdout
+
+            output = captured.getvalue()
+            has_fail = "FAIL" in output
+
+            if has_fail:
+                failed += 1
+                errors.append(test_file.name)
+                print(f"FAIL  {test_file.name}", file=sys.stderr)
+                if verbose:
+                    for line in output.strip().split("\n"):
+                        print("  " + line, file=sys.stderr)
+            else:
+                passed += 1
+                if verbose:
+                    print(f"PASS  {test_file.name}")
+                    if output.strip():
+                        for line in output.strip().split("\n"):
+                            print("  " + line)
+
+        except Exception as e:
+            failed += 1
+            errors.append(test_file.name)
+            print(f"FAIL  {test_file.name} (runtime error: {e})", file=sys.stderr)
 
     print(f"\nTest results: {passed}/{total} passed",
           file=sys.stderr if failed else sys.stdout)
+    if failed:
+        print(f"Failed: {', '.join(errors)}", file=sys.stderr)
     return 1 if failed else 0
 
 

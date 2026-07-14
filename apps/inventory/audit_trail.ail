@@ -31,16 +31,14 @@ fn at_user_rec(arItems, arUserName, arIdx, arAcc) {
     return arAcc;
 }
 
-fn at_summary_rec(arItems, arIdx, arAcc) {
-    let arLen = list.len(arItems);
-    if (arIdx < arLen) {
-        let arItem = list.get(arItems, arIdx);
-        let arAction = helpers.helpers_get_map_value_safe(arItem, "action", "");
-        let arCurrentCount = helpers.helpers_get_map_value_safe(arAcc, arAction, 0);
-        map.set(arAcc, arAction, arCurrentCount + 1);
-        return at_summary_rec(arItems, arIdx + 1, arAcc);
+fn at_group_to_counts(atgKeys, atgGroups, atgResult, atgIdx) {
+    if (atgIdx >= list.len(atgKeys)) {
+        return atgResult;
     }
-    return arAcc;
+    let atgKey = list.get(atgKeys, atgIdx);
+    let atgGroup = map.get(atgGroups, atgKey);
+    map.set(atgResult, atgKey, list.len(atgGroup));
+    return at_group_to_counts(atgKeys, atgGroups, atgResult, math.add(atgIdx, 1));
 }
 
 fn at_recent_rec(arItems, arIdx, arEnd, arAcc) {
@@ -65,8 +63,9 @@ fn audit_trail_list_by_user(arUserName) {
 
 fn audit_trail_summary_by_action() {
     let arAll = storage.storage_list("audit_log");
-    let arAcc = map.new();
-    return at_summary_rec(arAll, 0, arAcc);
+    let arGroups = list.group_by_key(arAll, "action");
+    let arKeys = map.keys(arGroups);
+    return at_group_to_counts(arKeys, arGroups, map.new(), 0);
 }
 
 fn audit_trail_recent(arCount) {

@@ -1,0 +1,137 @@
+import storage;
+import map;
+import string;
+import list;
+import time;
+
+fn user_find_duplicate(users, username, email, index) {
+    let ufdLen = list.len(users);
+    if (index == ufdLen) {
+        return false;
+    }
+    let ufdUser = list.get(users, index);
+    let ufdUsername = map.get(ufdUser, "username");
+    let ufdEmail = map.get(ufdUser, "email");
+    if (string.equals(ufdUsername, username)) {
+        return true;
+    }
+    if (string.equals(ufdEmail, email)) {
+        return true;
+    }
+    return user_find_duplicate(users, username, email, math.add(index, 1));
+}
+
+fn user_find_by_username_rec(users, username, index) {
+    let ufbrLen = list.len(users);
+    if (index == ufbrLen) {
+        return false;
+    }
+    let ufbrUser = list.get(users, index);
+    let ufbrName = map.get(ufbrUser, "username");
+    if (string.equals(ufbrName, username)) {
+        return ufbrUser;
+    }
+    return user_find_by_username_rec(users, username, math.add(index, 1));
+}
+
+fn user_check_permission(role, action) {
+    if (string.equals(role, "admin")) {
+        return true;
+    }
+    if (string.equals(role, "operator")) {
+        if (string.equals(action, "create_workflow")) {
+            return false;
+        }
+        if (string.equals(action, "delete_workflow")) {
+            return false;
+        }
+        if (string.equals(action, "export_import")) {
+            return false;
+        }
+        if (string.equals(action, "manage_users")) {
+            return false;
+        }
+        if (string.equals(action, "cancel_instance")) {
+            return false;
+        }
+        return true;
+    }
+    if (string.equals(role, "viewer")) {
+        if (string.equals(action, "view_instance")) {
+            return true;
+        }
+        if (string.equals(action, "view_workflow")) {
+            return true;
+        }
+        if (string.equals(action, "list_workflows")) {
+            return true;
+        }
+        if (string.equals(action, "view_history")) {
+            return true;
+        }
+        return false;
+    }
+    return false;
+}
+
+fn user_create(username, email, password) {
+    let ucUsers = storage.storage_load("users");
+    let ucDuplicate = user_find_duplicate(ucUsers, username, email, 0);
+    if (ucDuplicate == true) {
+        return false;
+    }
+    let ucId = storage.storage_next_id("users");
+    let ucUser = map.new();
+    map.set(ucUser, "id", ucId);
+    map.set(ucUser, "username", username);
+    map.set(ucUser, "email", email);
+    map.set(ucUser, "password_hash", password);
+    let ucIsFirst = list.len(ucUsers);
+    if (ucIsFirst == 0) {
+        map.set(ucUser, "role", "admin");
+    } else {
+        map.set(ucUser, "role", "operator");
+    }
+    map.set(ucUser, "created_at", time.timestamp());
+    storage.storage_append("users", ucUser);
+    return ucUser;
+}
+
+fn user_find_by_username(username) {
+    let ufbUsers = storage.storage_load("users");
+    return user_find_by_username_rec(ufbUsers, username, 0);
+}
+
+fn user_find_by_id(userId) {
+    let ufiUser = storage.storage_find_by_id("users", userId);
+    return ufiUser;
+}
+
+fn user_authenticate(username, password) {
+    let uaUser = user_find_by_username(username);
+    if (uaUser == false) {
+        return false;
+    }
+    let uaHash = map.get(uaUser, "password_hash");
+    if (string.equals(uaHash, password)) {
+        return uaUser;
+    }
+    return false;
+}
+
+fn user_set_role(userId, role) {
+    return storage.storage_update_field("users", userId, "role", role);
+}
+
+fn user_list_all() {
+    return storage.storage_load("users");
+}
+
+fn user_has_permission(userId, action) {
+    let uhpUser = user_find_by_id(userId);
+    if (uhpUser == false) {
+        return false;
+    }
+    let uhpRole = map.get(uhpUser, "role");
+    return user_check_permission(uhpRole, action);
+}

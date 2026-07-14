@@ -52,24 +52,18 @@ fn trend_take_first_rec(tffrItems, tffrLimit, tffrResult, tffrIdx) {
     return trend_take_first_rec(tffrItems, tffrLimit, tffrResult, tffrIdx + 1);
 }
 
-fn trend_group_sales_rec(tgsItems, tgsIdx, tgsAcc) {
-    if (tgsIdx >= list.len(tgsItems)) {
-        return tgsAcc;
+fn tgs_group_to_sums(tgsKeys, tgsGroups, tgsResult, tgsIdx) {
+    if (tgsIdx >= list.len(tgsKeys)) {
+        return tgsResult;
     }
-    let tgsItem = list.get(tgsItems, tgsIdx);
-    let tgsProdId = helpers.helpers_get_map_value_safe(tgsItem, "product_id", "");
-    let tgsQty = helpers.helpers_get_map_value_safe(tgsItem, "quantity", 0);
-    if (map.has(tgsAcc, tgsProdId)) {
-        let tgsExisting = map.get(tgsAcc, tgsProdId);
-        let tgsSum = helpers.helpers_get_map_value_safe(tgsExisting, "total_qty", 0);
-        map.set(tgsExisting, "total_qty", tgsSum + tgsQty);
-    } else {
-        let tgsNewEntry = map.new();
-        map.set(tgsNewEntry, "product_id", tgsProdId);
-        map.set(tgsNewEntry, "total_qty", tgsQty);
-        map.set(tgsAcc, tgsProdId, tgsNewEntry);
-    }
-    return trend_group_sales_rec(tgsItems, tgsIdx + 1, tgsAcc);
+    let tgsKey = list.get(tgsKeys, tgsIdx);
+    let tgsGroup = map.get(tgsGroups, tgsKey);
+    let tgsTotal = list.sum_by_key(tgsGroup, "quantity");
+    let tgsEntry = map.new();
+    map.set(tgsEntry, "product_id", tgsKey);
+    map.set(tgsEntry, "total_qty", tgsTotal);
+    map.set(tgsResult, tgsKey, tgsEntry);
+    return tgs_group_to_sums(tgsKeys, tgsGroups, tgsResult, math.add(tgsIdx, 1));
 }
 
 fn trend_monthly_group_rec(tmgrItems, tmgrIdx, tmgrAcc) {
@@ -94,7 +88,7 @@ fn trend_monthly_group_rec(tmgrItems, tmgrIdx, tmgrAcc) {
             map.set(tmgrAcc, tmgrMonth, tmgrNewEntry);
         }
     }
-    return trend_monthly_group_rec(tmgrItems, tmgrIdx + 1, tmgrAcc);
+    return trend_monthly_group_rec(tmgrItems, math.add(tmgrIdx, 1), tmgrAcc);
 }
 
 fn trend_map_to_list_rec(tmtlKeys, tmtlAcc, tmtlResult, tmtlIdx) {
@@ -124,19 +118,14 @@ fn trend_monthly_to_list_rec(tmtlrKeys, tmtlrAcc, tmtlrResult, tmtlrIdx) {
     return trend_monthly_to_list_rec(tmtlrKeys, tmtlrAcc, tmtlrResult, tmtlrIdx + 1);
 }
 
-fn trend_category_group_rec(tcgrItems, tcgrIdx, tcgrAcc) {
-    if (tcgrIdx >= list.len(tcgrItems)) {
-        return tcgrAcc;
+fn tcg_group_to_counts(tcgKeys, tcgGroups, tcgResult, tcgIdx) {
+    if (tcgIdx >= list.len(tcgKeys)) {
+        return tcgResult;
     }
-    let tcgrItem = list.get(tcgrItems, tcgrIdx);
-    let tcgrCatId = helpers.helpers_get_map_value_safe(tcgrItem, "category_id", "uncategorized");
-    if (map.has(tcgrAcc, tcgrCatId)) {
-        let tcgrCount = helpers.helpers_get_map_value_safe(tcgrAcc, tcgrCatId, 0);
-        map.set(tcgrAcc, tcgrCatId, tcgrCount + 1);
-    } else {
-        map.set(tcgrAcc, tcgrCatId, 1);
-    }
-    return trend_category_group_rec(tcgrItems, tcgrIdx + 1, tcgrAcc);
+    let tcgKey = list.get(tcgKeys, tcgIdx);
+    let tcgGroup = map.get(tcgGroups, tcgKey);
+    map.set(tcgResult, tcgKey, list.len(tcgGroup));
+    return tcg_group_to_counts(tcgKeys, tcgGroups, tcgResult, math.add(tcgIdx, 1));
 }
 
 fn trend_category_to_list_rec(tctlKeys, tctlAcc, tctlResult, tctlIdx) {
@@ -174,10 +163,13 @@ fn trend_monthly_purchases() {
 
 fn trend_top_products(tpLimit) {
     let tpItems = storage.storage_list("sales_items");
-    let tpGrouped = trend_group_sales_rec(tpItems, 0, map.new());
+    let tpGrouped = list.group_by_key(tpItems, "product_id");
     let tpKeys = map.keys(tpGrouped);
+    let tpAcc = map.new();
+    let tpSums = tgs_group_to_sums(tpKeys, tpGrouped, tpAcc, 0);
+    let tpAllKeys = map.keys(tpSums);
     let tpList = list.new();
-    let tpAll = trend_map_to_list_rec(tpKeys, tpGrouped, tpList, 0);
+    let tpAll = trend_map_to_list_rec(tpAllKeys, tpSums, tpList, 0);
     let tpSorted = trend_sort_descending(tpAll, "total_qty");
     let tpResult = list.new();
     return trend_take_first_rec(tpSorted, tpLimit, tpResult, 0);
@@ -185,9 +177,10 @@ fn trend_top_products(tpLimit) {
 
 fn trend_category_breakdown() {
     let cbProducts = storage.storage_list("products");
-    let cbAcc = map.new();
-    let cbGrouped = trend_category_group_rec(cbProducts, 0, cbAcc);
+    let cbGrouped = list.group_by_key(cbProducts, "category_id");
     let cbKeys = map.keys(cbGrouped);
+    let cbAcc = map.new();
+    let cbCounts = tcg_group_to_counts(cbKeys, cbGrouped, cbAcc, 0);
     let cbResult = list.new();
-    return trend_category_to_list_rec(cbKeys, cbGrouped, cbResult, 0);
+    return trend_category_to_list_rec(cbKeys, cbCounts, cbResult, 0);
 }

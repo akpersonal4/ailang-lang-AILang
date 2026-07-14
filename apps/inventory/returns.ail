@@ -4,18 +4,6 @@ import list;
 import map;
 import string;
 
-fn returns_list_by_order_rec(rtlrItems, rtlrOrderId, rtlrIdx, rtlrAcc) {
-    if (rtlrIdx >= list.len(rtlrItems)) {
-        return rtlrAcc;
-    }
-    let rtlrItem = list.get(rtlrItems, rtlrIdx);
-    let rtlrItemOrderId = helpers.helpers_get_map_value_safe(rtlrItem, "order_id", "");
-    if (rtlrItemOrderId == rtlrOrderId) {
-        list.append(rtlrAcc, rtlrItem);
-    }
-    return returns_list_by_order_rec(rtlrItems, rtlrOrderId, rtlrIdx + 1, rtlrAcc);
-}
-
 fn returns_create(rtrnSoOrderId, rtrnProductId, rtrnQuantity, rtrnReason, rtrnReturnBy) {
     let rtrnReturn = map.new();
     let rtrnId = helpers.helpers_generate_id("RET-");
@@ -43,8 +31,7 @@ fn returns_list() {
 
 fn returns_list_by_order(rtloOrderId) {
     let rtloAll = storage.storage_list("returns");
-    let rtloResults = list.new();
-    return returns_list_by_order_rec(rtloAll, rtloOrderId, 0, rtloResults);
+    return list.filter_by_key(rtloAll, "order_id", rtloOrderId);
 }
 
 fn returns_approve(rtapReturnId) {

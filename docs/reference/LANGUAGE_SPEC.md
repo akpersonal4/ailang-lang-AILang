@@ -1,6 +1,6 @@
 # AILang Language Specification
 
-**Version:** 0.1.2  
+**Version:** 1.0.1  
 **Status:** Complete — Implementation Reference  
 **Canonical Source:** This document is the single source of truth for the AILang language.
 
@@ -826,85 +826,52 @@ fn main() {
 
 ## 16. CLI Reference
 
-## Build
+### Core Commands
 
-Compile an AILang source file.
+| Command | Description | Example |
+|---------|-------------|---------|
+| `ail run <file>` | Compile and execute | `ail run main.ail` |
+| `ail build <file>` | Compile only | `ail build main.ail` |
+| `ail check <file>` | Syntax/semantic validation | `ail check main.ail` |
+| `ail test <file_or_dir>` | Run tests | `ail test tests/` |
+| `ail fmt <file>` | Format source | `ail fmt main.ail` |
+| `ail version` | Show version | `ail version` |
 
-Syntax:
+### Project Management
 
-```
-ail build <file>
-```
+| Command | Description | Example |
+|---------|-------------|---------|
+| `ail new <name>` | Create new project | `ail new my_app` |
 
-Example:
+### Package Management
 
-```bash
-ail build apps/calculator/main.ail
-```
+| Command | Description | Example |
+|---------|-------------|---------|
+| `ail add <dep>` | Add dependency | `ail add math_utils` |
+| `ail remove <dep>` | Remove dependency | `ail remove math_utils` |
+| `ail install` | Install dependencies | `ail install` |
+| `ail update` | Update dependencies | `ail update` |
+| `ail list` | List dependencies | `ail list` |
+| `ail publish` | Publish package | `ail publish` |
 
-Exit Codes:
+### Tooling
 
-- 0 = Success
-- Non-zero = Compilation failed
+| Command | Description | Example |
+|---------|-------------|---------|
+| `ail lsp` | Start LSP server | `ail lsp` |
+| `ail rename` | Rename symbol | `ail rename` |
+| `ail watch` | Watch files | `ail watch main.ail` |
 
----
+### Flags
 
-## Run
+| Flag | Description | Example |
+|------|-------------|---------|
+| `--no-check` | Skip pre-flight check | `ail run --no-check main.ail` |
 
-Compile and execute an AILang source file.
+### Exit Codes
 
-Syntax:
-
-```
-ail run <file>
-```
-
-Example:
-
-```bash
-ail run apps/calculator/main.ail
-```
-
-Exit Codes:
-
-- 0 = Success
-- Non-zero = Compilation or runtime error
-
----
-
-## Check
-
-Perform syntax and semantic validation without execution.
-
-Syntax:
-
-```
-ail check <file>
-```
-
----
-
-## Format
-
-Format an AILang source file.
-
-Syntax:
-
-```
-ail fmt <file>
-```
-
----
-
-## LSP
-
-Start the Language Server Protocol server.
-
-Syntax:
-
-```
-ail lsp
-```
+- **0** = Success
+- **Non-zero** = Error occurred
 
 
 ## 17. Version History
@@ -915,6 +882,10 @@ ail lsp
 | 0.1.1 | — | Documentation consolidation. Canonical LANGUAGE_SPEC.md, archived legacy specs, fixed LANGUAGE_TOUR.md inconsistencies, 374 tests. |
 | 0.1.2 | — | Bug fix sprint. Fixed AST builder crashes (empty return, missing initializer), module bare-name resolution, float literal diagnostic, block scope shadowing, recursion limit. Added LEX004. 522 tests. |
 | 0.2.0 | — | Float literal support. Default parameter values. Compile-time arity validation (range check for defaults). Removed LEX004. 38 inventory tests. |
+| 0.3.0 | M63 | Pre-flight check integration. `ail check` auto-runs before `ail run` and `ail test`. `--no-check` flag. |
+| 0.4.0 | M64 | CLI tooling. `ail fmt`, `ail lsp`, `ail rename`, `ail watch`, `ail new`. |
+| 0.5.0 | M65 | Stdlib expansion. `list.group_by_key`, `list.sum_by_key`, `list.take`, `list.skip`, `list.search_by_name`, `list.exists_by_key`, `map.values`, `map.get_or_default`, `map.safe_get`. |
+| 1.0.0 | M66 | Bounded deterministic iteration. `for-in` loops promoted to stable. ADR-00X. |
 
 ---
 

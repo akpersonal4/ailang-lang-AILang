@@ -205,3 +205,97 @@ fn main() {
 }
 """)
     assert result == 1, f"Expected 1, got {result}"
+
+
+def test_list_filter_by_contains() -> None:
+    """list.filter_by_contains should filter by substring match."""
+    result = _run_program("""
+import list;
+import map;
+
+fn main() {
+    let items = list.new();
+    let m1 = map.new();
+    map.set(m1, "name", "Alice Johnson");
+    let m2 = map.new();
+    map.set(m2, "name", "Bob Smith");
+    let m3 = map.new();
+    map.set(m3, "name", "Charlie Johnson");
+    list.append(items, m1);
+    list.append(items, m2);
+    list.append(items, m3);
+    let filtered = list.filter_by_contains(items, "name", "Johnson");
+    if (list.len(filtered) == 2) {
+        return 1;
+    }
+    return 0;
+}
+""")
+    assert result == 1, f"Expected 1, got {result}"
+
+
+def test_list_filter_by_contains_none() -> None:
+    """list.filter_by_contains should return empty list when no match."""
+    result = _run_program("""
+import list;
+import map;
+
+fn main() {
+    let items = list.new();
+    let m1 = map.new();
+    map.set(m1, "name", "Alice");
+    list.append(items, m1);
+    let filtered = list.filter_by_contains(items, "name", "ZZZ");
+    if (list.len(filtered) == 0) {
+        return 1;
+    }
+    return 0;
+}
+""")
+    assert result == 1, f"Expected 1, got {result}"
+
+
+def test_list_collect_key() -> None:
+    """list.collect_key should extract values for a given key."""
+    result = _run_program("""
+import list;
+import map;
+
+fn main() {
+    let items = list.new();
+    let m1 = map.new();
+    map.set(m1, "id", 10);
+    let m2 = map.new();
+    map.set(m2, "id", 20);
+    let m3 = map.new();
+    map.set(m3, "id", 30);
+    list.append(items, m1);
+    list.append(items, m2);
+    list.append(items, m3);
+    let ids = list.collect_key(items, "id");
+    if (list.len(ids) == 3) {
+        if (list.get(ids, 0) == 10 && list.get(ids, 1) == 20 && list.get(ids, 2) == 30) {
+            return 1;
+        }
+    }
+    return 0;
+}
+""")
+    assert result == 1, f"Expected 1, got {result}"
+
+
+def test_list_collect_key_empty() -> None:
+    """list.collect_key should return empty list when no items."""
+    result = _run_program("""
+import list;
+
+fn main() {
+    let items = list.new();
+    let ids = list.collect_key(items, "id");
+    if (list.len(ids) == 0) {
+        return 1;
+    }
+    return 0;
+}
+""")
+    assert result == 1, f"Expected 1, got {result}"

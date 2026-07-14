@@ -329,7 +329,7 @@ class TestAilCommand:
         assert "Build successful" in result.stdout
 
     def test_ail_check_example(self) -> None:
-        """`ail check <example>` succeeds (alias for build)."""
+        """`ail check <example>` succeeds (checks for forward references)."""
         example = Path(__file__).resolve().parents[1] / "examples" / "collections.ail"
         result = subprocess.run(
             [sys.executable, "-m", "compiler", "check", str(example)],
@@ -337,7 +337,7 @@ class TestAilCommand:
             text=True,
         )
         assert result.returncode == 0
-        assert "Build successful" in result.stdout
+        assert "Check passed" in result.stdout
 
     def test_ail_run_missing_file(self) -> None:
         """`ail run <missing>` returns error."""

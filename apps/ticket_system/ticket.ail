@@ -1,0 +1,216 @@
+import storage;
+import audit_log;
+import json;
+import time;
+import string;
+import convert;
+import list;
+import map;
+
+fn ticket_create(tcTitle, tcPriority, tcCategory, tcDescription, tcCreatorId) {
+    let tcTicket = map.new();
+    let tcNewId = storage.storage_next_id("tickets");
+    map.set(tcTicket, "id", tcNewId);
+    map.set(tcTicket, "title", tcTitle);
+    map.set(tcTicket, "description", tcDescription);
+    map.set(tcTicket, "status", "open");
+    map.set(tcTicket, "priority", tcPriority);
+    map.set(tcTicket, "creator_id", tcCreatorId);
+    map.set(tcTicket, "assignee_id", 0);
+    map.set(tcTicket, "category", tcCategory);
+    map.set(tcTicket, "created_at", time.timestamp());
+    map.set(tcTicket, "updated_at", time.timestamp());
+    map.set(tcTicket, "resolved_at", 0);
+    storage.storage_append("tickets", tcTicket);
+    return tcTicket;
+}
+
+fn ticket_find_by_id(tfTicketId) {
+    return storage.storage_find_by_id("tickets", tfTicketId);
+}
+
+fn ticket_update(tuTicketId, tuField, tuValue) {
+    return storage.storage_update_field("tickets", tuTicketId, tuField, tuValue);
+}
+
+fn ticket_assign(taTicketId, taAssigneeId) {
+    return storage.storage_update_field("tickets", taTicketId, "assignee_id", taAssigneeId);
+}
+
+fn ticket_set_status(tsTicketId, tsStatus) {
+    let tsUpdated = storage.storage_update_field("tickets", tsTicketId, "status", tsStatus);
+    if (tsUpdated == true) {
+        if (tsStatus == "resolved") {
+            storage.storage_update_field("tickets", tsTicketId, "resolved_at", time.timestamp());
+        }
+    }
+    return tsUpdated;
+}
+
+fn ticket_list_all() {
+    return storage.storage_load("tickets");
+}
+
+fn ticket_list_by_user(tlUserId) {
+    let tlTickets = storage.storage_load("tickets");
+    return list.filter_by_key(tlTickets, "assignee_id", tlUserId);
+}
+
+fn ticket_search_rec(tsItems, tsQuery, tsResult, tsIdx) {
+    if (tsIdx >= list.len(tsItems)) {
+        return tsResult;
+    }
+    let tsItem = list.get(tsItems, tsIdx);
+    let tsTitle = map.get(tsItem, "title");
+    let tsDesc = map.get(tsItem, "description");
+    if (string.contains(tsTitle, tsQuery) == true) {
+        list.append(tsResult, tsItem);
+    } else {
+        if (string.contains(tsDesc, tsQuery) == true) {
+            list.append(tsResult, tsItem);
+        }
+    }
+    return ticket_search_rec(tsItems, tsQuery, tsResult, tsIdx + 1);
+}
+
+fn ticket_search(tsQuery) {
+    let tsTickets = storage.storage_load("tickets");
+    let tsResult = list.new();
+    return ticket_search_rec(tsTickets, tsQuery, tsResult, 0);
+}
+
+fn ticket_filter(tfField, tfValue) {
+    let tfTickets = storage.storage_load("tickets");
+    return list.filter_by_key(tfTickets, tfField, tfValue);
+}
+
+fn ticket_delete(tdTicketId) {
+    return storage.storage_delete_by_id("tickets", tdTicketId);
+}
+
+fn ticket_count_by_status_rec(csItems, csCounts, csIdx) {
+    if (csIdx >= list.len(csItems)) {
+        return csCounts;
+    }
+    let csItem = list.get(csItems, csIdx);
+    let csStatus = map.get(csItem, "status");
+    let csCurrent = map.get(csCounts, csStatus);
+    map.set(csCounts, csStatus, csCurrent + 1);
+    return ticket_count_by_status_rec(csItems, csCounts, csIdx + 1);
+}
+
+fn ticket_count_by_status() {
+    let csTickets = storage.storage_load("tickets");
+    let csCounts = map.new();
+    map.set(csCounts, "open", 0);
+    map.set(csCounts, "in_progress", 0);
+    map.set(csCounts, "resolved", 0);
+    map.set(csCounts, "closed", 0);
+    return ticket_count_by_status_rec(csTickets, csCounts, 0);
+}
+
+fn ticket_count_by_priority_rec(cpItems, cpCounts, cpIdx) {
+    if (cpIdx >= list.len(cpItems)) {
+        return cpCounts;
+    }
+    let cpItem = list.get(cpItems, cpIdx);
+    let cpPriority = map.get(cpItem, "priority");
+    let cpCurrent = map.get(cpCounts, cpPriority);
+    map.set(cpCounts, cpPriority, cpCurrent + 1);
+    return ticket_count_by_priority_rec(cpItems, cpCounts, cpIdx + 1);
+}
+
+fn ticket_count_by_priority() {
+    let cpTickets = storage.storage_load("tickets");
+    let cpCounts = map.new();
+    map.set(cpCounts, "low", 0);
+    map.set(cpCounts, "medium", 0);
+    map.set(cpCounts, "high", 0);
+    map.set(cpCounts, "critical", 0);
+    return ticket_count_by_priority_rec(cpTickets, cpCounts, 0);
+}
+
+fn ticket_count_by_agent_rec(caItems, caCounts, caIdx) {
+    if (caIdx >= list.len(caItems)) {
+        return caCounts;
+    }
+    let caItem = list.get(caItems, caIdx);
+    let caAssigneeId = convert.to_string(map.get(caItem, "assignee_id"));
+    if (map.has(caCounts, caAssigneeId) == true) {
+        let caCurrent = map.get(caCounts, caAssigneeId);
+        map.set(caCounts, caAssigneeId, caCurrent + 1);
+    } else {
+        map.set(caCounts, caAssigneeId, 1);
+    }
+    return ticket_count_by_agent_rec(caItems, caCounts, caIdx + 1);
+}
+
+fn ticket_count_by_agent() {
+    let caTickets = storage.storage_load("tickets");
+    let caCounts = map.new();
+    return ticket_count_by_agent_rec(caTickets, caCounts, 0);
+}
+
+fn ticket_escalate_sla_rec(esItems, esNow, esIdx, esEscalated) {
+    if (esIdx >= list.len(esItems)) {
+        return esEscalated;
+    }
+    let esItem = list.get(esItems, esIdx);
+    let esStatus = map.get(esItem, "status");
+    let esPriority = map.get(esItem, "priority");
+    let esCreatedAt = map.get(esItem, "created_at");
+    let esAge = esNow - esCreatedAt;
+    if (esStatus != "resolved") {
+        if (esStatus != "closed") {
+            let esShouldEscalate = false;
+            if (esPriority == "critical") {
+                if (esAge > 14400) {
+                    esShouldEscalate = true;
+                }
+            }
+            if (esPriority == "high") {
+                if (esAge > 86400) {
+                    esShouldEscalate = true;
+                }
+            }
+            if (esShouldEscalate == true) {
+                storage.storage_update_field("tickets", map.get(esItem, "id"), "priority", "critical");
+                audit_log.audit_log_add(map.get(esItem, "id"), 0, "sla_escalated", esPriority, "critical");
+                return ticket_escalate_sla_rec(esItems, esNow, esIdx + 1, esEscalated + 1);
+            }
+        }
+    }
+    return ticket_escalate_sla_rec(esItems, esNow, esIdx + 1, esEscalated);
+}
+
+fn ticket_escalate_sla() {
+    let esTickets = storage.storage_load("tickets");
+    let esNow = time.timestamp();
+    return ticket_escalate_sla_rec(esTickets, esNow, 0, 0);
+}
+
+fn ticket_escalate_unassigned_rec(euItems, euNow, euIdx, euEscalated) {
+    if (euIdx >= list.len(euItems)) {
+        return euEscalated;
+    }
+    let euItem = list.get(euItems, euIdx);
+    let euPriority = map.get(euItem, "priority");
+    let euAssigneeId = map.get(euItem, "assignee_id");
+    let euCreatedAt = map.get(euItem, "created_at");
+    let euAge = euNow - euCreatedAt;
+    if (euPriority == "critical") {
+        if (euAssigneeId == 0) {
+            if (euAge > 1800) {
+                audit_log.audit_log_add(map.get(euItem, "id"), 0, "unassigned_critical", "", "needs_assignment");
+                return ticket_escalate_unassigned_rec(euItems, euNow, euIdx + 1, euEscalated + 1);
+            }
+        }
+    }
+    return ticket_escalate_unassigned_rec(euItems, euNow, euIdx + 1, euEscalated);
+}
+
+fn ticket_escalate_unassigned() {
+    let euTickets = storage.storage_load("tickets");
+    let euNow = time.timestamp();
+    return ticket_escalate_unassigned_rec(euTickets, euNow, 0, 0);
+}

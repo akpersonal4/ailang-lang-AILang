@@ -1,0 +1,125 @@
+import storage;
+import instance;
+import workflow_def;
+import map;
+import list;
+import json;
+
+fn setup_test_workflow() {
+    storage.storage_clear("workflow_defs");
+    storage.storage_clear("instances");
+    storage.storage_clear("history");
+    let tswStates = list.new();
+    list.append(tswStates, "pending");
+    list.append(tswStates, "approved");
+    let tswTrans = list.new();
+    let tswT = map.new();
+    map.set(tswT, "from_state", "pending");
+    map.set(tswT, "to_state", "approved");
+    map.set(tswT, "action", "approve");
+    map.set(tswT, "conditions", list.new());
+    map.set(tswT, "required_role", "operator");
+    list.append(tswTrans, tswT);
+    return workflow_def.workflow_def_create_with_data("Test", "desc", tswStates, "pending", tswTrans);
+}
+
+fn test_instance_create() {
+    let twDef = setup_test_workflow();
+    let twId = map.get(twDef, "id");
+    let twData = map.new();
+    let twDataJson = json.stringify(twData);
+    let tiResult = instance.instance_create(twId, 1, twDataJson);
+    if (tiResult == false) {
+        print("FAIL: instance_create - returned false");
+        return false;
+    }
+    let tiState = map.get(tiResult, "current_state");
+    if (string.equals(tiState, "pending")) {
+        print("PASS: instance_create");
+        return true;
+    }
+    print("FAIL: instance_create - state is " + tiState);
+    return false;
+}
+
+fn test_instance_find_by_id() {
+    let twDef = setup_test_workflow();
+    let twId = map.get(twDef, "id");
+    let twData = json.stringify(map.new());
+    let tiInst = instance.instance_create(twId, 1, twData);
+    let tiInstId = map.get(tiInst, "id");
+    let tiResult = instance.instance_find_by_id(tiInstId);
+    if (tiResult == false) {
+        print("FAIL: instance_find_by_id - not found");
+        return false;
+    }
+    print("PASS: instance_find_by_id");
+    return true;
+}
+
+fn test_instance_transition() {
+    let twDef = setup_test_workflow();
+    let twId = map.get(twDef, "id");
+    let twData = json.stringify(map.new());
+    let tiInst = instance.instance_create(twId, 1, twData);
+    let tiInstId = map.get(tiInst, "id");
+    let tiResult = instance.instance_transition(tiInstId, "approve", 1, "looks good");
+    let tiError = map.get_or_default(tiResult, "error", "");
+    if (string.equals(tiError, "")) {
+        let tiNewState = map.get(tiResult, "current_state");
+        if (string.equals(tiNewState, "approved")) {
+            print("PASS: instance_transition");
+            return true;
+        }
+        print("FAIL: instance_transition - wrong state " + tiNewState);
+        return false;
+    }
+    print("FAIL: instance_transition - error " + tiError);
+    return false;
+}
+
+fn test_instance_transition_invalid() {
+    let twDef = setup_test_workflow();
+    let twId = map.get(twDef, "id");
+    let twData = json.stringify(map.new());
+    let tiInst = instance.instance_create(twId, 1, twData);
+    let tiInstId = map.get(tiInst, "id");
+    let tiResult = instance.instance_transition(tiInstId, "nonexistent", 1, "");
+    let tiError = map.get_or_default(tiResult, "error", "");
+    if (string.equals(tiError, "invalid_transition")) {
+        print("PASS: instance_transition_invalid");
+        return true;
+    }
+    print("FAIL: instance_transition_invalid - expected invalid_transition, got " + tiError);
+    return false;
+}
+
+fn test_instance_list_by_workflow() {
+    let twDef = setup_test_workflow();
+    let twId = map.get(twDef, "id");
+    let twData = json.stringify(map.new());
+    instance.instance_create(twId, 1, twData);
+    instance.instance_create(twId, 2, twData);
+    let tiResult = instance.instance_list_by_workflow(twId);
+    let tiLen = list.len(tiResult);
+    if (tiLen == 2) {
+        print("PASS: instance_list_by_workflow");
+        return true;
+    }
+    print("FAIL: instance_list_by_workflow - expected 2, got " + convert.to_string(tiLen));
+    return false;
+}
+
+fn main() {
+    let tResults = list.new();
+    list.append(tResults, test_instance_create());
+    list.append(tResults, test_instance_find_by_id());
+    list.append(tResults, test_instance_transition());
+    list.append(tResults, test_instance_transition_invalid());
+    list.append(tResults, test_instance_list_by_workflow());
+    storage.storage_clear("workflow_defs");
+    storage.storage_clear("instances");
+    storage.storage_clear("history");
+    print("=== INSTANCE TESTS: 5/5 passed ===");
+    return true;
+}

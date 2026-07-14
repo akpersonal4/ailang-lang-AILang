@@ -93,18 +93,8 @@ fn helpers_find_in_list(frItems, frKey, frValue) {
     return helpers_find_in_list_rec(frItems, frKey, frValue, 0);
 }
 
-fn helpers_list_contains_rec(lcItems, lcValue, lcIdx) {
-    if (lcIdx >= list.len(lcItems)) {
-        return false;
-    }
-    if (list.get(lcItems, lcIdx) == lcValue) {
-        return true;
-    }
-    return helpers_list_contains_rec(lcItems, lcValue, lcIdx + 1);
-}
-
 fn helpers_list_contains(lcItems, lcValue) {
-    return helpers_list_contains_rec(lcItems, lcValue, 0);
+    return list.contains(lcItems, lcValue);
 }
 
 fn helpers_format_currency(amount) {

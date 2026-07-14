@@ -272,7 +272,7 @@ fn main() {
 
 
 def test_set_clear_empties_set() -> None:
-    """set.clear should remove all elements from a set."""
+    """set.clear should remove all entries from a set."""
     result = _run_program("""
 import set;
 
@@ -282,6 +282,148 @@ fn main() {
     set.add(values, 10);
     set.clear(values);
     if (set.len(values) == 0) {
+        return 1;
+    }
+    return 0;
+}
+""")
+    assert result == 1
+
+
+def test_list_group_by_key_groups_items() -> None:
+    """list.group_by_key should group items by a key field."""
+    result = _run_program("""
+import list;
+
+fn main() {
+    let items = list.new();
+    list.append(items, map.set(map.set(map.new(), "type", "a"), "val", "1"));
+    list.append(items, map.set(map.set(map.new(), "type", "b"), "val", "2"));
+    list.append(items, map.set(map.set(map.new(), "type", "a"), "val", "3"));
+    let grouped = list.group_by_key(items, "type");
+    if (map.has(grouped, "a") && map.has(grouped, "b")) {
+        return 1;
+    }
+    return 0;
+}
+""")
+    assert result == 1
+
+
+def test_list_sum_by_key_sums_values() -> None:
+    """list.sum_by_key should sum numeric values of a key field."""
+    result = _run_program("""
+import list;
+
+fn main() {
+    let items = list.new();
+    list.append(items, map.set(map.new(), "amount", "10"));
+    list.append(items, map.set(map.new(), "amount", "20"));
+    list.append(items, map.set(map.new(), "amount", "30"));
+    let total = list.sum_by_key(items, "amount");
+    if (total == 60) {
+        return 1;
+    }
+    return 0;
+}
+""")
+    assert result == 1
+
+
+def test_list_take_returns_first_n_items() -> None:
+    """list.take should return the first n items."""
+    result = _run_program("""
+import list;
+
+fn main() {
+    let items = list.new();
+    list.append(items, "a");
+    list.append(items, "b");
+    list.append(items, "c");
+    list.append(items, "d");
+    let first_two = list.take(items, 2);
+    if (list.len(first_two) == 2 && list.get(first_two, 0) == "a" && list.get(first_two, 1) == "b") {
+        return 1;
+    }
+    return 0;
+}
+""")
+    assert result == 1
+
+
+def test_list_skip_returns_items_after_n() -> None:
+    """list.skip should return items after the first n."""
+    result = _run_program("""
+import list;
+
+fn main() {
+    let items = list.new();
+    list.append(items, "a");
+    list.append(items, "b");
+    list.append(items, "c");
+    list.append(items, "d");
+    let rest = list.skip(items, 2);
+    if (list.len(rest) == 2 && list.get(rest, 0) == "c" && list.get(rest, 1) == "d") {
+        return 1;
+    }
+    return 0;
+}
+""")
+    assert result == 1
+
+
+def test_list_search_by_name_finds_matches() -> None:
+    """list.search_by_name should find items by case-insensitive name match."""
+    result = _run_program("""
+import list;
+
+fn main() {
+    let items = list.new();
+    list.append(items, map.set(map.new(), "name", "Apple"));
+    list.append(items, map.set(map.new(), "name", "Banana"));
+    list.append(items, map.set(map.new(), "name", "Apricot"));
+    let results = list.search_by_name(items, "ap");
+    if (list.len(results) == 2) {
+        return 1;
+    }
+    return 0;
+}
+""")
+    assert result == 1
+
+
+def test_list_exists_by_key_checks_membership() -> None:
+    """list.exists_by_key should check if any item has a matching key value."""
+    result = _run_program("""
+import list;
+
+fn main() {
+    let items = list.new();
+    list.append(items, map.set(map.new(), "status", "active"));
+    list.append(items, map.set(map.new(), "status", "inactive"));
+    let exists = list.exists_by_key(items, "status", "active");
+    let not_exists = list.exists_by_key(items, "status", "deleted");
+    if (exists == true && not_exists == false) {
+        return 1;
+    }
+    return 0;
+}
+""")
+    assert result == 1
+
+
+def test_map_values_returns_all_values() -> None:
+    """map.values should return a list of all values in the map."""
+    result = _run_program("""
+import map;
+import list;
+
+fn main() {
+    let m = map.new();
+    map.set(m, "x", "10");
+    map.set(m, "y", "20");
+    let vals = map.values(m);
+    if (list.len(vals) == 2) {
         return 1;
     }
     return 0;

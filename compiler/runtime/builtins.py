@@ -6,6 +6,7 @@ import csv as _csv
 import io as _io
 import json as _json
 import os
+from pathlib import Path
 import random as _random
 import sys
 import time as _time
@@ -92,11 +93,85 @@ def list_filter_by_key(args: tuple[RuntimeValue, ...]) -> list[RuntimeValue]:
     return [item for item in items if isinstance(item, dict) and item.get(key) == value]
 
 
+def list_filter_by_contains(args: tuple[RuntimeValue, ...]) -> list[RuntimeValue]:
+    items = args[0]
+    key = str(args[1])
+    substring = str(args[2])
+    return [item for item in items if isinstance(item, dict) and substring in str(item.get(key, ""))]
+
+
+def list_collect_key(args: tuple[RuntimeValue, ...]) -> list[RuntimeValue]:
+    items = args[0]
+    key = str(args[1])
+    return [item[key] for item in items if isinstance(item, dict) and key in item]
+
+
 def map_get_or_default(args: tuple[RuntimeValue, ...]) -> RuntimeValue:
     values = cast(dict[RuntimeValue, RuntimeValue], args[0])
     key = args[1]
     default = args[2] if len(args) > 2 else False
     return values.get(key, default)
+
+
+def dict_values(args: tuple[RuntimeValue, ...]) -> list[RuntimeValue]:
+    values = cast(dict[RuntimeValue, RuntimeValue], args[0])
+    return list(values.values())
+
+
+def list_group_by_key(args: tuple[RuntimeValue, ...]) -> dict[RuntimeValue, list[RuntimeValue]]:
+    items = args[0]
+    key = str(args[1])
+    groups: dict[RuntimeValue, list[RuntimeValue]] = {}
+    for item in items:
+        if isinstance(item, dict) and key in item:
+            group_key = item[key]
+            if group_key not in groups:
+                groups[group_key] = []
+            groups[group_key].append(item)
+    return groups
+
+
+def list_sum_by_key(args: tuple[RuntimeValue, ...]) -> int:
+    items = args[0]
+    key = str(args[1])
+    total = 0
+    for item in items:
+        if isinstance(item, dict) and key in item:
+            total += int(item[key])
+    return total
+
+
+def list_take(args: tuple[RuntimeValue, ...]) -> list[RuntimeValue]:
+    items = args[0]
+    n = int(args[1])
+    return items[:n]
+
+
+def list_skip(args: tuple[RuntimeValue, ...]) -> list[RuntimeValue]:
+    items = args[0]
+    n = int(args[1])
+    return items[n:]
+
+
+def list_search_by_name(args: tuple[RuntimeValue, ...]) -> list[RuntimeValue]:
+    items = args[0]
+    query = str(args[1]).lower()
+    return [
+        item for item in items
+        if isinstance(item, dict)
+        and "name" in item
+        and query in str(item["name"]).lower()
+    ]
+
+
+def list_exists_by_key(args: tuple[RuntimeValue, ...]) -> bool:
+    items = args[0]
+    key = str(args[1])
+    value = args[2]
+    for item in items:
+        if isinstance(item, dict) and item.get(key) == value:
+            return True
+    return False
 
 
 def string_join(args: tuple[RuntimeValue, ...]) -> str:
@@ -205,11 +280,13 @@ def file_read(args: tuple[RuntimeValue, ...]) -> str:
 
 
 def file_write(args: tuple[RuntimeValue, ...]) -> int:
+    Path(str(args[0])).parent.mkdir(parents=True, exist_ok=True)
     with open(str(args[0]), "w", encoding="utf-8") as f:
         return f.write(str(args[1]))
 
 
 def file_append(args: tuple[RuntimeValue, ...]) -> int:
+    Path(str(args[0])).parent.mkdir(parents=True, exist_ok=True)
     with open(str(args[0]), "a", encoding="utf-8") as f:
         return f.write(str(args[1]))
 
@@ -290,7 +367,10 @@ def random_choice(args: tuple[RuntimeValue, ...]) -> RuntimeValue:
 
 
 def json_parse(args: tuple[RuntimeValue, ...]) -> RuntimeValue:
-    return _json.loads(str(args[0]))
+    try:
+        return _json.loads(str(args[0]))
+    except (_json.JSONDecodeError, ValueError):
+        return False
 
 
 class _SetEncoder(_json.JSONEncoder):
@@ -356,9 +436,18 @@ BUILTINS: dict[str, Any] = {
     "list_sort": list_sort,
     "list_copy": list_copy,
     "list_filter_by_key": list_filter_by_key,
+    "list_filter_by_contains": list_filter_by_contains,
+    "list_collect_key": list_collect_key,
     "list_clear": list_clear,
     "list_sum": list_sum,
     "list_find_by_key": list_find_by_key,
+    "list_group_by_key": list_group_by_key,
+    "list_sum_by_key": list_sum_by_key,
+    "list_take": list_take,
+    "list_skip": list_skip,
+    "list_search_by_name": list_search_by_name,
+    "list_exists_by_key": list_exists_by_key,
+    "dict_values": dict_values,
     "map_get_or_default": map_get_or_default,
     "string_join": string_join,
     "dict_new": dict_new,

@@ -1,0 +1,208 @@
+import storage;
+import json;
+import time;
+import list;
+import map;
+import string;
+import convert;
+
+fn user_find_by_username_rec(ufUsers, ufUsername, ufIdx) {
+    if (ufIdx >= list.len(ufUsers)) {
+        return map.new();
+    }
+    let ufUser = list.get(ufUsers, ufIdx);
+    if (map.get(ufUser, "username") == ufUsername) {
+        return ufUser;
+    }
+    return user_find_by_username_rec(ufUsers, ufUsername, ufIdx + 1);
+}
+
+fn user_create(ucUsername, ucEmail, ucPassword) {
+    let ucUsers = storage.storage_load("users");
+    let ucDupUsername = list.exists_by_key(ucUsers, "username", ucUsername);
+    let ucDupEmail = list.exists_by_key(ucUsers, "email", ucEmail);
+    if (ucDupUsername == true) {
+        return map.new();
+    }
+    if (ucDupEmail == true) {
+        return map.new();
+    }
+    let ucUser = map.new();
+    let ucNewId = storage.storage_next_id("users");
+    map.set(ucUser, "id", ucNewId);
+    map.set(ucUser, "username", ucUsername);
+    map.set(ucUser, "email", ucEmail);
+    map.set(ucUser, "password_hash", ucPassword);
+    if (list.len(ucUsers) == 0) {
+        map.set(ucUser, "role", "admin");
+    } else {
+        map.set(ucUser, "role", "agent");
+    }
+    map.set(ucUser, "created_at", time.timestamp());
+    storage.storage_append("users", ucUser);
+    return ucUser;
+}
+
+fn user_find_by_username(ufUsername) {
+    let ufUsers = storage.storage_load("users");
+    return user_find_by_username_rec(ufUsers, ufUsername, 0);
+}
+
+fn user_find_by_id(ufUserId) {
+    return storage.storage_find_by_id("users", ufUserId);
+}
+
+fn user_authenticate(uaUsername, uaPassword) {
+    let uaUser = user_find_by_username(uaUsername);
+    if (map.has(uaUser, "id") == false) {
+        return map.new();
+    }
+    if (map.get(uaUser, "password_hash") != uaPassword) {
+        return map.new();
+    }
+    return uaUser;
+}
+
+fn user_set_role(usrUserId, usrRole) {
+    return storage.storage_update_field("users", usrUserId, "role", usrRole);
+}
+
+fn user_list_all() {
+    return storage.storage_load("users");
+}
+
+fn user_has_permission(uhUserId, uhAction) {
+    let uhUser = user_find_by_id(uhUserId);
+    if (map.has(uhUser, "id") == false) {
+        return false;
+    }
+    let uhRole = map.get(uhUser, "role");
+    if (uhRole == "admin") {
+        return true;
+    }
+    if (uhAction == "create_ticket") {
+        if (uhRole == "manager") {
+            return true;
+        }
+        if (uhRole == "agent") {
+            return true;
+        }
+        return false;
+    }
+    if (uhAction == "update_own_ticket") {
+        if (uhRole == "manager") {
+            return true;
+        }
+        if (uhRole == "agent") {
+            return true;
+        }
+        return false;
+    }
+    if (uhAction == "update_any_ticket") {
+        if (uhRole == "manager") {
+            return true;
+        }
+        return false;
+    }
+    if (uhAction == "assign_ticket") {
+        if (uhRole == "manager") {
+            return true;
+        }
+        return false;
+    }
+    if (uhAction == "resolve_ticket") {
+        if (uhRole == "manager") {
+            return true;
+        }
+        if (uhRole == "agent") {
+            return true;
+        }
+        return false;
+    }
+    if (uhAction == "close_ticket") {
+        if (uhRole == "manager") {
+            return true;
+        }
+        if (uhRole == "agent") {
+            return true;
+        }
+        return false;
+    }
+    if (uhAction == "reopen_ticket") {
+        if (uhRole == "manager") {
+            return true;
+        }
+        if (uhRole == "agent") {
+            return true;
+        }
+        return false;
+    }
+    if (uhAction == "add_comment") {
+        if (uhRole == "manager") {
+            return true;
+        }
+        if (uhRole == "agent") {
+            return true;
+        }
+        return false;
+    }
+    if (uhAction == "view_ticket") {
+        return true;
+    }
+    if (uhAction == "search_tickets") {
+        return true;
+    }
+    if (uhAction == "view_reports") {
+        if (uhRole == "manager") {
+            return true;
+        }
+        return false;
+    }
+    if (uhAction == "export_csv") {
+        if (uhRole == "manager") {
+            return true;
+        }
+        return false;
+    }
+    if (uhAction == "import_csv") {
+        if (uhRole == "manager") {
+            return true;
+        }
+        return false;
+    }
+    if (uhAction == "delete_ticket") {
+        if (uhRole == "admin") {
+            return true;
+        }
+        return false;
+    }
+    if (uhAction == "manage_users") {
+        if (uhRole == "admin") {
+            return true;
+        }
+        return false;
+    }
+    return false;
+}
+
+fn user_has_permission_on_ticket(uoUserId, uoAction, uoTicket) {
+    let uoUser = user_find_by_id(uoUserId);
+    if (map.has(uoUser, "id") == false) {
+        return false;
+    }
+    let uoRole = map.get(uoUser, "role");
+    if (uoRole == "admin") {
+        return true;
+    }
+    if (uoAction == "update_own_ticket") {
+        let uoCreatorId = map.get(uoTicket, "creator_id");
+        if (uoCreatorId == uoUserId) {
+            return true;
+        }
+        if (uoRole == "manager") {
+            return true;
+        }
+        return false;
+    }
+    return user_has_permission(uoUserId, uoAction);
+}

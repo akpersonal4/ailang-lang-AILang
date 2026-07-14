@@ -5,18 +5,6 @@ import convert;
 import helpers;
 import storage;
 
-fn tax_list_by_country_rec(tlcrItems, tlcrCountry, tlcrIdx, tlcrAcc) {
-    if (tlcrIdx >= list.len(tlcrItems)) {
-        return tlcrAcc;
-    }
-    let tlcrItem = list.get(tlcrItems, tlcrIdx);
-    let tlcrItemCountry = helpers.helpers_get_map_value_safe(tlcrItem, "country", "");
-    if (tlcrItemCountry == tlcrCountry) {
-        list.append(tlcrAcc, tlcrItem);
-    }
-    return tax_list_by_country_rec(tlcrItems, tlcrCountry, tlcrIdx + 1, tlcrAcc);
-}
-
 fn tax_create(txName, txRate, txCountry, txRegion) {
     let txRule = map.new();
     let txId = helpers.helpers_generate_id("TAX-");
@@ -50,8 +38,7 @@ fn tax_calculate(tcAmount, tcTaxId) {
 
 fn tax_list_by_country(txCountry) {
     let txAll = storage.storage_list("tax_rates");
-    let txResults = list.new();
-    return tax_list_by_country_rec(txAll, txCountry, 0, txResults);
+    return list.filter_by_key(txAll, "country", txCountry);
 }
 
 fn tax_update_rate(turTaxId, turNewRate) {

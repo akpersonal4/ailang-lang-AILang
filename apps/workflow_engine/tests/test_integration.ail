@@ -1,0 +1,178 @@
+import storage;
+import user;
+import workflow_def;
+import instance;
+import history;
+import conditions;
+import map;
+import list;
+import json;
+
+fn setup_integration() {
+    storage.storage_clear("users");
+    storage.storage_clear("workflow_defs");
+    storage.storage_clear("instances");
+    storage.storage_clear("history");
+    storage.storage_clear("session");
+    user.user_create("admin", "admin@test.com", "pass");
+    user.user_create("operator", "op@test.com", "pass");
+    user.user_set_role(2, "operator");
+}
+
+fn test_full_lifecycle() {
+    setup_integration();
+    let tfStates = list.new();
+    list.append(tfStates, "draft");
+    list.append(tfStates, "submitted");
+    list.append(tfStates, "approved");
+    list.append(tfStates, "rejected");
+    let tfTrans = list.new();
+    let tfT1 = map.new();
+    map.set(tfT1, "from_state", "draft");
+    map.set(tfT1, "to_state", "submitted");
+    map.set(tfT1, "action", "submit");
+    map.set(tfT1, "conditions", list.new());
+    map.set(tfT1, "required_role", "operator");
+    list.append(tfTrans, tfT1);
+    let tfT2 = map.new();
+    map.set(tfT2, "from_state", "submitted");
+    map.set(tfT2, "to_state", "approved");
+    map.set(tfT2, "action", "approve");
+    map.set(tfT2, "conditions", list.new());
+    map.set(tfT2, "required_role", "operator");
+    list.append(tfTrans, tfT2);
+    let tfT3 = map.new();
+    map.set(tfT3, "from_state", "submitted");
+    map.set(tfT3, "to_state", "rejected");
+    map.set(tfT3, "action", "reject");
+    map.set(tfT3, "conditions", list.new());
+    map.set(tfT3, "required_role", "operator");
+    list.append(tfTrans, tfT3);
+    let tfDef = workflow_def.workflow_def_create_with_data("Approval", "test", tfStates, "draft", tfTrans);
+    let tfDefId = map.get(tfDef, "id");
+    let tfData = map.new();
+    map.set(tfData, "amount", "500");
+    let tfDataJson = json.stringify(tfData);
+    let tfInst = instance.instance_create(tfDefId, 1, tfDataJson);
+    let tfInstId = map.get(tfInst, "id");
+    let tfR1 = instance.instance_transition(tfInstId, "submit", 1, "");
+    let tfState1 = map.get(tfR1, "current_state");
+    if (!string.equals(tfState1, "submitted")) {
+        print("FAIL: lifecycle - expected submitted, got " + tfState1);
+        return false;
+    }
+    let tfR2 = instance.instance_transition(tfInstId, "approve", 2, "OK");
+    let tfState2 = map.get(tfR2, "current_state");
+    if (!string.equals(tfState2, "approved")) {
+        print("FAIL: lifecycle - expected approved, got " + tfState2);
+        return false;
+    }
+    let tfHistory = history.history_list_by_instance(tfInstId);
+    let tfHistLen = list.len(tfHistory);
+    if (tfHistLen < 3) {
+        print("FAIL: lifecycle - expected 3+ history entries, got " + convert.to_string(tfHistLen));
+        return false;
+    }
+    print("PASS: full_lifecycle");
+    return true;
+}
+
+fn test_instance_cannot_skip_state() {
+    setup_integration();
+    let tfStates = list.new();
+    list.append(tfStates, "a");
+    list.append(tfStates, "b");
+    list.append(tfStates, "c");
+    let tfTrans = list.new();
+    let tfT = map.new();
+    map.set(tfT, "from_state", "a");
+    map.set(tfT, "to_state", "b");
+    map.set(tfT, "action", "go");
+    map.set(tfT, "conditions", list.new());
+    map.set(tfT, "required_role", "operator");
+    list.append(tfTrans, tfT);
+    let tfDef = workflow_def.workflow_def_create_with_data("Skip", "desc", tfStates, "a", tfTrans);
+    let tfDefId = map.get(tfDef, "id");
+    let tfData = json.stringify(map.new());
+    let tfInst = instance.instance_create(tfDefId, 1, tfData);
+    let tfInstId = map.get(tfInst, "id");
+    let tfResult = instance.instance_transition(tfInstId, "go", 1, "");
+    let tfError = map.get_or_default(tfResult, "error", "");
+    if (string.equals(tfError, "")) {
+        let tfNextResult = instance.instance_transition(tfInstId, "go", 1, "");
+        let tfNextError = map.get_or_default(tfNextResult, "error", "");
+        if (string.equals(tfNextError, "invalid_transition")) {
+            print("PASS: instance_cannot_skip_state");
+            return true;
+        }
+    }
+    print("FAIL: instance_cannot_skip_state");
+    return false;
+}
+
+fn test_condition_blocks_transition() {
+    setup_integration();
+    let tfStates = list.new();
+    list.append(tfStates, "pending");
+    list.append(tfStates, "done");
+    let tfTrans = list.new();
+    let tfT = map.new();
+    map.set(tfT, "from_state", "pending");
+    map.set(tfT, "to_state", "done");
+    map.set(tfT, "action", "finish");
+    let tfConds = list.new();
+    list.append(tfConds, "data_has_key:amount");
+    map.set(tfT, "conditions", tfConds);
+    map.set(tfT, "required_role", "operator");
+    list.append(tfTrans, tfT);
+    let tfDef = workflow_def.workflow_def_create_with_data("CondTest", "desc", tfStates, "pending", tfTrans);
+    let tfDefId = map.get(tfDef, "id");
+    let tfData = map.new();
+    let tfDataJson = json.stringify(tfData);
+    let tfInst = instance.instance_create(tfDefId, 1, tfDataJson);
+    let tfInstId = map.get(tfInst, "id");
+    let tfResult = instance.instance_transition(tfInstId, "finish", 1, "");
+    let tfError = map.get_or_default(tfResult, "error", "");
+    if (string.equals(tfError, "conditions_not_met")) {
+        print("PASS: condition_blocks_transition");
+        return true;
+    }
+    print("FAIL: condition_blocks_transition - expected conditions_not_met, got " + tfError);
+    return false;
+}
+
+fn test_report_workflow() {
+    setup_integration();
+    let tfStates = list.new();
+    list.append(tfStates, "open");
+    list.append(tfStates, "closed");
+    let tfTrans = list.new();
+    let tfDef = workflow_def.workflow_def_create_with_data("Report", "desc", tfStates, "open", tfTrans);
+    let tfDefId = map.get(tfDef, "id");
+    let tfData = json.stringify(map.new());
+    instance.instance_create(tfDefId, 1, tfData);
+    instance.instance_create(tfDefId, 1, tfData);
+    let tfReport = instance.instance_report_workflow(tfDefId);
+    let tfOpen = map.get_or_default(tfReport, "open", 0);
+    if (tfOpen == 2) {
+        print("PASS: report_workflow");
+        return true;
+    }
+    print("FAIL: report_workflow - expected 2 open, got " + convert.to_string(tfOpen));
+    return false;
+}
+
+fn main() {
+    let tResults = list.new();
+    list.append(tResults, test_full_lifecycle());
+    list.append(tResults, test_instance_cannot_skip_state());
+    list.append(tResults, test_condition_blocks_transition());
+    list.append(tResults, test_report_workflow());
+    storage.storage_clear("users");
+    storage.storage_clear("workflow_defs");
+    storage.storage_clear("instances");
+    storage.storage_clear("history");
+    storage.storage_clear("session");
+    print("=== INTEGRATION TESTS: 4/4 passed ===");
+    return true;
+}

@@ -1,0 +1,118 @@
+import file;
+import json;
+import path;
+import list;
+import map;
+import string;
+import convert;
+
+let STORAGE_DATA_DIR = "data";
+
+fn storage_collection_path(ccCollName) {
+    return path.join(STORAGE_DATA_DIR, ccCollName + ".json");
+}
+
+fn storage_load(ccCollName) {
+    let ccPath = storage_collection_path(ccCollName);
+    if (file.exists(ccPath) == false) {
+        return list.new();
+    }
+    let ccContent = file.read(ccPath);
+    let ccParsed = json.parse(ccContent);
+    if (ccParsed == false) {
+        return list.new();
+    }
+    return ccParsed;
+}
+
+fn storage_save(ccCollName, ccItems) {
+    let ccPath = storage_collection_path(ccCollName);
+    let ccJson = json.stringify(ccItems);
+    file.write(ccPath, ccJson);
+    return ccItems;
+}
+
+fn storage_find_max_id_rec(ccItems, ccIdx, ccCurrentMax) {
+    if (ccIdx >= list.len(ccItems)) {
+        return ccCurrentMax;
+    }
+    let ccItem = list.get(ccItems, ccIdx);
+    let ccItemId = map.get(ccItem, "id");
+    if (ccItemId > ccCurrentMax) {
+        return storage_find_max_id_rec(ccItems, ccIdx + 1, ccItemId);
+    }
+    return storage_find_max_id_rec(ccItems, ccIdx + 1, ccCurrentMax);
+}
+
+fn storage_next_id(ccCollName) {
+    let ccItems = storage_load(ccCollName);
+    if (list.len(ccItems) == 0) {
+        return 1;
+    }
+    return storage_find_max_id_rec(ccItems, 0, 0) + 1;
+}
+
+fn storage_append(ccCollName, ccItem) {
+    let ccItems = storage_load(ccCollName);
+    list.append(ccItems, ccItem);
+    return storage_save(ccCollName, ccItems);
+}
+
+fn storage_find_by_id_rec(cfItems, cfId, cfIdx) {
+    if (cfIdx >= list.len(cfItems)) {
+        return map.new();
+    }
+    let cfItem = list.get(cfItems, cfIdx);
+    if (map.get(cfItem, "id") == cfId) {
+        return cfItem;
+    }
+    return storage_find_by_id_rec(cfItems, cfId, cfIdx + 1);
+}
+
+fn storage_find_by_id(ccCollName, ccId) {
+    let ccItems = storage_load(ccCollName);
+    return storage_find_by_id_rec(ccItems, ccId, 0);
+}
+
+fn storage_update_field_rec(cuItems, cuId, cuField, cuValue, cuIdx) {
+    if (cuIdx >= list.len(cuItems)) {
+        return cuItems;
+    }
+    let cuItem = list.get(cuItems, cuIdx);
+    if (map.get(cuItem, "id") == cuId) {
+        map.set(cuItem, cuField, cuValue);
+    }
+    return storage_update_field_rec(cuItems, cuId, cuField, cuValue, cuIdx + 1);
+}
+
+fn storage_update_field(ccCollName, ccId, ccField, ccValue) {
+    let ccItems = storage_load(ccCollName);
+    let ccResult = storage_update_field_rec(ccItems, ccId, ccField, ccValue, 0);
+    storage_save(ccCollName, ccResult);
+    return true;
+}
+
+fn storage_delete_by_id_rec(cdItems, cdId, cdResult, cdIdx) {
+    if (cdIdx >= list.len(cdItems)) {
+        return cdResult;
+    }
+    let cdItem = list.get(cdItems, cdIdx);
+    if (map.get(cdItem, "id") != cdId) {
+        list.append(cdResult, cdItem);
+    }
+    return storage_delete_by_id_rec(cdItems, cdId, cdResult, cdIdx + 1);
+}
+
+fn storage_delete_by_id(ccCollName, ccId) {
+    let ccItems = storage_load(ccCollName);
+    let ccFiltered = list.new();
+    let ccResult = storage_delete_by_id_rec(ccItems, ccId, ccFiltered, 0);
+    storage_save(ccCollName, ccResult);
+    return true;
+}
+
+fn storage_clear(ccCollName) {
+    let ccEmpty = list.new();
+    storage_save(ccCollName, ccEmpty);
+    return true;
+}

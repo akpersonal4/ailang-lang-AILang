@@ -192,19 +192,20 @@ fn main() {
     assert result == 1
 
 
-def test_json_parse_invalid_raises_error() -> None:
-    """Parsing invalid JSON should raise a runtime error."""
-    import json as _json
-
-    with pytest.raises(_json.JSONDecodeError):
-        _run_program("""
+def test_json_parse_invalid_returns_false() -> None:
+    """Parsing invalid JSON should return false, not crash."""
+    result = _run_program("""
 import json;
 
 fn main() {
     let val = json.parse("{invalid}");
-    return 1;
+    if (val == false) {
+        return 1;
+    }
+    return 0;
 }
 """)
+    assert result == 1
 
 
 def test_json_stringify_int() -> None:
