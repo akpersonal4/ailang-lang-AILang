@@ -42,55 +42,126 @@ The test is not whether AILang works. The test is whether a developer with zero 
 | 9 | Build project | `ail build` succeeds | Time, output |
 | 10 | Create new function | Write and call a custom function | Time, errors |
 
-### Metrics
+## Participant Tasks
 
-| Metric | Target |
-|--------|--------|
-| Participants | 4 |
-| Critical interventions | 0 |
-| Tooling failures | 0 |
-| Compiler crashes | 0 |
-| Documentation blockers | 0 |
-| Median time to first successful build | < 30 minutes |
-| Successful task completion | ≥ 90% |
-| Total onboarding time | < 60 minutes |
+### Phase 1 — Installation
 
-### Intervention Classification
-
-**Critical Intervention (Target = 0)**
-
-Requires maintainer assistance to continue:
-
-- Installation impossible
-- Documentation missing required step
-- Compiler bug
-- Tooling failure
-
-These are **failures**.
-
-**Clarification Request (Valuable Signal)**
-
-Developer asks a question but can continue independently:
-
-- "Why does AILang require bottom-up ordering?"
-- "Why no break/continue?"
-- "Why immutable iterators?"
-
-These are **research signals**, not failures.
-
-### Hard Requirement
-
-```
-Critical interventions = 0
+```bash
+pip install ailang-lang
+ail --version
 ```
 
-If critical intervention occurs, failure is classified as:
+### Phase 2 — First Project
 
-- **Documentation defect** — Information missing or unclear
-- **Tooling defect** — Command failed or produced unclear output
-- **Diagnostics defect** — Error message didn't help
+```bash
+ail new inventory
+cd inventory
+ail build
+ail run
+```
 
-Never classified as: **User error**
+### Phase 3 — Intentional Errors
+
+Introduce errors and measure:
+
+- Missing import
+- Forward reference
+- Ordering violation
+- Syntax error
+
+Measure:
+- Diagnostic clarity
+- Correction time
+- Fix success rate
+
+### Phase 4 — Modification
+
+- Add feature
+- Rename symbol
+- Run formatter
+- Run tests
+
+### Phase 5 — Package Workflow
+
+```bash
+ail add
+ail remove
+ail publish
+```
+
+---
+
+## Metrics
+
+| Metric | Target | Purpose |
+|--------|--------|---------|
+| Participants | 4 | Sample size |
+| Critical interventions | 0 | Blocking failures |
+| Tooling failures | 0 | Infrastructure quality |
+| Compiler crashes | 0 | Stability |
+| Documentation blockers | 0 | Documentation quality |
+| Median time to first successful build | < 30 minutes | Onboarding speed |
+| Successful task completion | ≥ 90% | Overall quality |
+| First successful install | — | Onboarding quality |
+| First successful build | — | Documentation quality |
+| First successful fix | — | Diagnostics quality |
+| Number of searches | — | Discoverability |
+| Number of retries | — | Friction indicator |
+| Abandoned tasks | — | Severity indicator |
+
+---
+
+## Participant Feedback Questions
+
+After each session, ask:
+
+1. **Sabse confusing cheez kya thi?** (What was most confusing?)
+2. **Kaunsi error message sabse useful thi?** (Which error message was most useful?)
+3. **Kis jagah aapko laga documentation missing hai?** (Where did you feel documentation was missing?)
+
+Qualitative feedback is often more valuable than quantitative metrics.
+
+---
+
+## Known Issues
+
+| ID | Component | Issue | Severity | Target |
+|----|-----------|-------|----------|--------|
+| REL-001 | CLI | Version shows v0.10.0 instead of 1.0.1 | Low | v1.0.2 |
+
+---
+
+## CTO Assessment
+
+### M68.6
+
+```text
+Status: COMPLETE
+Confidence: High
+Risk: Low
+```
+
+### M69
+
+```text
+Status: ACTIVE
+Confidence: Unknown
+Risk: High
+```
+
+This is expected. Up until now almost all evidence came from maintainers.
+
+M69 is the first milestone where reality can disagree with architecture assumptions.
+
+Typical findings from external validation:
+
+- Documentation assumptions
+- Terminology confusion
+- Onboarding friction
+- Hidden maintainer knowledge
+- Unexpected workflows
+
+**Finding these issues is success, not failure.**
 
 ---
 

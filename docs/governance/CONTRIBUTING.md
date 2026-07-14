@@ -167,3 +167,10 @@ Before submitting, verify:
 - Open an issue on GitHub
 - Check the [documentation index](INDEX.md)
 - Read the canonical [Language Specification](../LANGUAGE_SPEC.md)
+
+## License Agreement
+
+By contributing to AILang you agree that your contribution is licensed
+under the Apache License, Version 2.0.
+
+See the [LICENSE](../../LICENSE) file for details.
