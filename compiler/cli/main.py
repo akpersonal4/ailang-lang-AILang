@@ -126,15 +126,31 @@ def _compile(
     session.analyze(reporter)
     # -------------------------------------------------
     # Run type checking – part of the required compilation pipeline
-+    session.type_check(reporter)
-+    # -------------------------------------------------
-+
-+    if reporter.error_count > 0:
-+        if not json_mode:
-+            formatter = DiagnosticFormatter()
-+            for diagnostic in reporter.diagnostics:
-+                print(formatter.format(diagnostic), file=sys.stderr)
-+        return None, reporter
+    # -------------------------------------------------
+    try:
+        session.type_check(reporter)
+    except Exception as e:
+        # Internal compiler error – emit CMP001 diagnostic
+        from compiler.diagnostics import Diagnostic, ErrorCode, Severity
+        diag = Diagnostic(
+            Severity.ERROR,
+            ErrorCode("CMP001", "Internal compiler error"),
+            str(e),
+            file_path=str(source_path),
+        )
+        reporter.report(diag)
+        if not json_mode:
+            formatter = DiagnosticFormatter()
+            print(formatter.format(diag), file=sys.stderr)
+        return None, reporter
+    # -------------------------------------------------
+    
+    if reporter.error_count > 0:
+        if not json_mode:
+            formatter = DiagnosticFormatter()
+            for diagnostic in reporter.diagnostics:
+                print(formatter.format(diagnostic), file=sys.stderr)
+        return None, reporter
 
     return session, reporter
 
@@ -204,7 +220,20 @@ def cmd_run(args: list[str]) -> int:
     if session is None:
         return 1
 
-    bundle = session.build_ir()
+    try:
+        bundle = session.build_ir()
+    except Exception as e:
+        # Internal compiler error during IR generation
+        from compiler.diagnostics import Diagnostic, ErrorCode, Severity
+        diag = Diagnostic(
+            Severity.ERROR,
+            ErrorCode("CMP001", "Internal compiler error"),
+            str(e),
+            file_path=str(source_path),
+        )
+        formatter = DiagnosticFormatter()
+        print(formatter.format(diag), file=sys.stderr)
+        return 1
     runtime = Runtime(bundle)
 
     for module_name in session._graph.topological_sort():
