@@ -15,7 +15,7 @@ from .stdlib_adapter import get_stdlib
 from .diagnostics_adapter import explain_diagnostic
 from .examples_adapter import get_examples
 
-VERSION = "1.0.4"
+VERSION = "1.0.5"
 
 TOOLS = [
     {

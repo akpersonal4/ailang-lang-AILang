@@ -1,5 +1,32 @@
 # Changelog
 
+## v1.0.5
+
+### M72 — VS Code Extension with MCP Integration
+
+- **VS Code Extension v0.3.0**: Full language support with LSP + MCP dual-server architecture
+- **LSP Server**: 14 methods — diagnostics, hover, completion, go-to-definition, find references, rename, signature help, symbols, code actions
+- **MCP Client**: JSON-RPC 2.0 over NDJSON transport with automatic server lifecycle management
+- **7 Commands**: Start/Stop/Restart MCP Server, Compile, Explain, Insert Example, Show Status
+- **Status Bar**: Real-time MCP server state indicator
+- **5 Configuration Settings**: Auto-start, command, args, timeout, max reconnect attempts
+- **Tests**: 26 new VS Code MCP integration tests, all passing
+
+### M73 — Reference Applications & AI Training Corpus
+
+- **8 Reference Applications** under `apps/reference/`:
+  - `todo_manager` — list CRUD, map operations, JSON persistence (~97 LOC)
+  - `expense_tracker` — aggregation, category filtering, CSV export (~145 LOC)
+  - `inventory_lite` — map CRUD, stock operations, JSON persistence (~120 LOC)
+  - `employee_management` — filtering, salary reports, CSV export (~142 LOC)
+  - `log_analyzer` — file parsing, string splitting, level counting (~137 LOC)
+  - `csv_etl` — CSV parsing, validation, transformation pipeline (~104 LOC)
+  - `json_transformer` — JSON normalization, string operations (~81 LOC)
+  - `invoice_generator` — business logic, tax calculation, JSON export (~110 LOC)
+- **AI Usage Documentation**: Each app includes `AI_USAGE.md` documenting AI-assisted development patterns
+- **MCP Examples**: 12 categories available via `get_examples` tool (6 original + 8 reference apps)
+- **Documentation**: `docs/reference/REFERENCE_APPLICATIONS.md`
+
 ## v1.0.4
 
 ### M71 — MCP Server + AI Toolchain Integration

@@ -21,7 +21,7 @@ def test_context_tool_generates_file():
     content = output_path.read_text(encoding="utf-8")
     assert "AILang Project Context" in content
     assert "Language Rules" in content
-    assert "1.0.4" in content
+    assert "1.0.5" in content
 
 
 def test_context_is_ai_friendly():
@@ -50,7 +50,7 @@ def test_context_json_output():
 
     data = json.loads(result.stdout)
     assert data["language"] == "AILang"
-    assert data["version"] == "1.0.4"
+    assert data["version"] == "1.0.5"
     assert "rules" in data
     assert "workflow" in data
     assert "diagnostics" in data

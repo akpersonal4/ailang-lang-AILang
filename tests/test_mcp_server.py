@@ -35,7 +35,7 @@ def test_mcp_initialize():
     assert response["id"] == 1
     assert "result" in response
     assert response["result"]["serverInfo"]["name"] == "ailang-mcp"
-    assert response["result"]["serverInfo"]["version"] == "1.0.4"
+    assert response["result"]["serverInfo"]["version"] == "1.0.5"
 
 
 def test_mcp_tools_list():
@@ -76,7 +76,7 @@ def test_mcp_get_language_context():
     assert len(content) == 1
     data = json.loads(content[0]["text"])
     assert data["language"] == "AILang"
-    assert data["version"] == "1.0.4"
+    assert data["version"] == "1.0.5"
     assert "rules" in data
     assert "workflow" in data
     assert "diagnostics" in data
