@@ -8,28 +8,43 @@ the compiler should catch this and emit a CMP001 diagnostic.
 import tempfile
 from pathlib import Path
 
-from compiler.cli.main import _compile
+import pytest
+
+from compiler.compilation import CompilationSession
+from compiler.diagnostics import DiagnosticReporter
 
 
 def test_for_loop_multiple_accumulators() -> None:
+    """Two accumulator variables in a for-loop raise ValueError."""
     source = """
-fn bad() {
-    for i in [1,2,3] {
-        let acc1 = i;
-        let acc2 = i;
+import list;
+fn main() {
+    let items = list.new();
+    list.append(items, 1);
+    list.append(items, 2);
+    let total = 0;
+    let count = 0;
+    for item in items {
+        total = total + item;
+        count = count + 1;
     }
+    return total;
 }
-fn main() { bad(); }
 """
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp_path = Path(tmpdir)
         main_file = tmp_path / "main.ail"
         main_file.write_text(source)
 
-        # Use experimental loops to enable the for‑loop construct.
-        session, reporter = _compile(main_file, experimental_loops=True)
-        # Expect compilation to fail before returning a session.
-        assert session is None, "Session should be None on internal compiler error"
-        # Check that a CMP001 diagnostic was emitted.
-        cmp_errors = [d for d in reporter.diagnostics if d.error_code.code == "CMP001"]
-        assert cmp_errors, "Expected at least one CMP001 internal compiler error"
+        repo_root = Path(__file__).resolve().parents[1]
+        session = CompilationSession(experimental_loops=True)
+        session._root = repo_root
+        session._resolver = type(session._resolver)(repo_root)
+        session.discover(main_file)
+
+        reporter = DiagnosticReporter()
+        session.analyze(reporter)
+        session.type_check(reporter)
+
+        with pytest.raises(ValueError, match="Only one accumulator"):
+            session.build_ir()

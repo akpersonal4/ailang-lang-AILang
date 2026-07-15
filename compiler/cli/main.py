@@ -1635,7 +1635,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if not argv:
         cmd_help([])
-        return 0
+        return 1
 
     command = argv[0]
     rest = argv[1:]

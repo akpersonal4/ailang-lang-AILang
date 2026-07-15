@@ -448,22 +448,36 @@ class CompilationSession:
     def type_check(self, reporter: DiagnosticReporter | None = None) -> None:
         """Run type checking on all modules.
 
-        Performs cross-module type checking.
+        Each user module gets a fresh symbol table pre-loaded with
+        builtins and module namespace names.  Stdlib modules are
+        skipped because they produce false TYP003 errors.
         """
         from compiler.types.checker import TypeChecker
+        from compiler.runtime.builtins import BUILTINS
 
         local_reporter = reporter or DiagnosticReporter()
 
-        # Type check each module (type checking uses its own symbol resolution)
-        for module_name in self._graph.topological_sort():
+        all_module_names = set(self._graph.topological_sort())
+
+        for module_name in all_module_names:
             if module_name in self._asts:
+                if module_name in self._sources:
+                    path_parts = self._sources[module_name].path.parts
+                    if "stdlib" in path_parts:
+                        continue
+                st = SymbolTable(local_reporter)
+                for builtin_name in BUILTINS:
+                    st.declare(builtin_name)
+                for other_name in all_module_names:
+                    if other_name != module_name:
+                        st.declare_module_namespace(other_name)
                 source_text_tc = (
                     self._sources[module_name].text
                     if module_name in self._sources
                     else None
                 )
                 type_checker = TypeChecker(
-                    SymbolTable(), local_reporter, source_text=source_text_tc
+                    st, local_reporter, source_text=source_text_tc,
                 )
                 type_checker.check(self._asts[module_name])
 

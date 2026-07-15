@@ -1,5 +1,27 @@
 # Changelog
 
+## v1.0.3
+
+### Type Checker Hardening (M69.7 completion)
+
+- **Shared symbol table**: Type checker now receives builtins and module namespace declarations from the semantic analysis phase, eliminating false SEM002 "Undefined identifier" errors for stdlib and imported module calls
+- **TYP013 false-positive suppression**: Calling a function whose type is unknown (e.g., stdlib, imported, or unannotated functions) no longer emits "Cannot call non-function type unknown" — only known non-function types (e.g., `42()`, `"hello"()`) trigger TYP013
+- **UnknownType cascade suppression**: TYP003/TYP004/TYP005/TYP006/TYP007/TYP008/TYP009/TYP010 errors are suppressed when operand types are unknown, preventing cascading false positives from unresolvable identifiers
+- **TYP012 arg-count guard**: Argument type mismatch (TYP012) is suppressed when all parameter types are the hardcoded INT_TYPE default, since the type checker lacks parameter type inference
+- **TYP008 assignment guard**: Assignment type mismatch (TYP008) is suppressed when the right-hand side has the hardcoded INT_TYPE return default
+- **String concatenation**: `+` operator with STRING operands returns STRING (matches runtime behavior)
+- **Variable declaration fallback**: Type checker declares variables/functions not found in its symbol table instead of emitting SEM002
+
+### Pre-existing Bug Fixes
+
+- **CLI no-args exit code**: `ail` with no arguments now returns exit code 1 (error) instead of 0, consistent with CLI conventions and all subcommands
+- **IR crash test rewrite**: `test_for_loop_multiple_accumulators` rewritten to use valid AILang syntax and correct multi-accumulator pattern
+
+### Test Results
+
+- 931 collected, 931 passed, 0 failed
+- All 5 verification checks pass: TYP013 preservation, stdlib compilation, imported module compilation, exported module compilation, no new false negatives
+
 ## v1.0.0-M57
 
 ### M57 — VS Code Extension Hardening

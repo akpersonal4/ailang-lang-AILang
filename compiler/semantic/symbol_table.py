@@ -81,6 +81,10 @@ class SymbolTable:
         if len(self.scopes) > 1:
             self.scopes.pop()
 
+    def reset_to_base(self) -> None:
+        """Reset scope stack to the root scope only."""
+        self.scopes = [self.scopes[0]]
+
     def declare(
         self,
         name: str,
