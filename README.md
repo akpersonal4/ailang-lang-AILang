@@ -2,22 +2,49 @@
 
 **AI-first programming language — deterministic, specification-driven, and compiler-friendly.**
 
-[![Tests](https://img.shields.io/badge/tests-772%20passing-brightgreen)](#)
+[![Tests](https://img.shields.io/badge/tests-931%20passing-brightgreen)](#)
 [![Python](https://img.shields.io/badge/python-3.11%2B-blue)](#)
-[![Version](https://img.shields.io/badge/version-1.0.0-blue)](#)
-[![License](https://img.shields.io/badge/license-MIT-green)](#)
+[![Version](https://img.shields.io/badge/version-1.0.3-blue)](#)
+[![License](https://img.shields.io/badge/license-Apache%202.0-green)](#)
 
-AILang is an AI-first programming language designed to be deterministic, specification-first, and easy for both humans and AI systems to reason about. It features a complete compiler pipeline, a 16-module standard library, and has been validated through 772 tests, stress testing up to 10,000 LOC, and AI-generated program verification with 100% first-pass success.
+AILang is an AI-first programming language designed to be deterministic, specification-first, and easy for both humans and AI systems to reason about. It features a complete compiler pipeline, a 16-module standard library, and has been validated through 931 tests, stress testing up to 10,000 LOC, and AI-generated program verification with 100% first-pass success.
+
+## AI Agent Setup
+
+For AI-assisted development, run this first:
+
+```bash
+# Get machine-readable language context
+ail context --json
+
+# Read the documentation (installed with the package)
+cat $(python -c "import compiler; import os; print(os.path.join(os.path.dirname(compiler.__file__), 'docs', 'AGENTS.md'))")
+```
+
+**Document hierarchy:**
+1. `AILANG_DEVELOPMENT_PLAYBOOK.md` — coding patterns and conventions
+2. `LANGUAGE_SPEC.md` — canonical language definition (authoritative)
+3. `AGENTS.md` — AI operational rules (derived from spec)
+4. `STDLIB_REFERENCE.md` — library API documentation
+
+> If `AGENTS.md` conflicts with `LANGUAGE_SPEC.md`, the spec wins.
 
 ## Quick Start
 
 ```bash
-# Install
-git clone https://github.com/anomalyco/ailang.git
-cd ailang
-python -m venv .venv
-source .venv/bin/activate      # Linux/macOS
-# .venv\Scripts\activate       # Windows
+# Install from PyPI
+pip install ailang-lang
+
+# Run your first program
+echo 'fn main() { print("Hello, AILang!"); return 0 }' > hello.ail
+ail hello.ail
+```
+
+Or install from source:
+
+```bash
+git clone https://github.com/akpersonal4/ailang-lang-AILang.git
+cd ailang-lang-AILang
 pip install -e .
 
 # Run your first program
@@ -32,6 +59,7 @@ ail hello.ail
 | [Getting Started](docs/reference/GETTING_STARTED.md) | Step-by-step introduction |
 | [Language Tour](docs/reference/LANGUAGE_TOUR.md) | Complete language feature tour |
 | [Standard Library Reference](docs/reference/STDLIB_REFERENCE.md) | All 16 modules documented |
+| [MCP Quick Start](docs/reference/MCP_QUICKSTART.md) | AI tool integration via MCP |
 | [Compiler Architecture](docs/reference/COMPILER_ARCHITECTURE.md) | Pipeline and design |
 | [Contributor Guide](docs/governance/CONTRIBUTING.md) | How to contribute |
 | [Testing Guide](docs/reference/TESTING.md) | Test patterns and practices |
@@ -52,10 +80,11 @@ Or package and install from the VS Code Marketplace: `extensions/vscode-ailang/`
 - **Simple, explicit syntax** — functions, variables, conditionals, recursion
 - **Deterministic compilation** — same source always produces same output
 - **16-module Standard Library** — string, math, collections, file I/O, JSON, CSV, time, random, environment, conversion
+- **AI-native tooling** — `ail mcp` exposes compiler to AI tools via Model Context Protocol
 - **AI-friendly** — validated with 23 AI-generated programs at 100% first-pass success
 - **Fast compile times** — 5000 LOC compiles in <2 seconds
 - **Low memory usage** — 5000 LOC uses <11 MB peak memory
-- **Complete test coverage** — 772 tests across all compiler stages
+- **Complete test coverage** — 931 tests across all compiler stages
 
 ## Example
 

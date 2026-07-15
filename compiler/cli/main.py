@@ -27,7 +27,7 @@ from compiler.runtime import builtins as runtime_builtins
 from compiler.runtime.interpreter import Runtime
 
 PROG = "ail"
-VERSION = "1.0.3"
+VERSION = "1.0.4"
 
 
 def _find_stdlib() -> Path:
@@ -1509,7 +1509,8 @@ def cmd_context(args: list[str]) -> int:
     """Generate AI-friendly project context.
 
     Usage:
-        ail context
+        ail context          Generate PROJECT_CONTEXT.md (human-readable)
+        ail context --json   Output machine-readable JSON to stdout
     """
     return _run_dx_tool("tools.ail_context", args)
 
@@ -1539,6 +1540,18 @@ def cmd_testgen(args: list[str]) -> int:
         ail testgen [options]
     """
     return _run_dx_tool("tools.ail_testgen", args)
+
+
+def cmd_mcp(args: list[str]) -> int:
+    """Start the AILang MCP server on stdio transport.
+
+    Usage:
+        ail mcp
+
+    Starts a Model Context Protocol server that exposes AILang compiler
+    capabilities to AI tools via stdio transport.
+    """
+    return _run_dx_tool("tools.ail_mcp", args)
 
 
 def cmd_help(args: list[str]) -> int:
@@ -1574,7 +1587,8 @@ def cmd_help(args: list[str]) -> int:
     print()
     print("Developer Tools:")
     print(f"  doctor              Run repository health checks")
-    print(f"  context             Generate AI-friendly project context")
+    print(f"  context [--json]    Generate AI-friendly project context (use --json for machine-readable)")
+    print(f"  mcp                 Start MCP server for AI tool integration (stdio transport)")
     print(f"  static-analyzer     Run static analysis on AILang source")
     print(f"  benchmark           Run the AILang benchmark suite")
     print(f"  testgen             Generate test cases for AILang apps")
@@ -1624,6 +1638,7 @@ def main(argv: list[str] | None = None) -> int:
         "help": cmd_help,
         "doctor": cmd_doctor,
         "context": cmd_context,
+        "mcp": cmd_mcp,
         "static-analyzer": cmd_static_analyzer,
         "static_analyzer": cmd_static_analyzer,
         "benchmark": cmd_benchmark,

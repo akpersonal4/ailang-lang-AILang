@@ -1,5 +1,28 @@
 # Changelog
 
+## v1.0.4
+
+### M71 — MCP Server + AI Toolchain Integration
+
+- **MCP Server**: `ail mcp` command starts a Model Context Protocol server on stdio transport
+- **5 MCP Tools**:
+  - `get_language_context` — returns language rules, workflow, diagnostics (equivalent to `ail context --json`)
+  - `get_stdlib` — returns standard library modules, functions, and signatures
+  - `compile_source` — compiles AILang source code and returns diagnostics
+  - `explain_diagnostic` — returns detailed explanation for diagnostic codes with examples
+  - `get_examples` — returns canonical AILang code examples
+- **JSON-RPC 2.0** — standard MCP protocol over stdio transport
+- **AI tool integration** — works with Claude Code, Cursor, and custom MCP clients
+- **Documentation**: `docs/architecture/MCP_SERVER.md`, `docs/reference/MCP_QUICKSTART.md`
+- **Tests**: 14 new MCP tests, all passing
+
+### AI Documentation Stack
+
+- **`ail context --json`** — machine-readable language manifest (v1.0.3)
+- **AGENTS.md in wheel** — AI agents find documentation after `pip install`
+- **README.md** — AI Agent Setup section with document hierarchy
+- **AGENTS.md** — "derived from LANGUAGE_SPEC.md" disclaimer
+
 ## v1.0.3
 
 ### Type Checker Hardening (M69.7 completion)

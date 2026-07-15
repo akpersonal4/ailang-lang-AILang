@@ -25,6 +25,7 @@ until this document has been reviewed. Update AGENTS.md reading order after revi
 | Platform Services | 100% |
 | Platform Integration | 100% |
 | VS Code Extension | v0.2.0 — syntax highlighting, diagnostics, LSP, code actions, `for` keyword |
+| MCP Server | v1.0.3 — 5 tools, stdio transport, AI tool integration |
 | Documentation | 100% |
 | Governance | 100% |
 | Validation Framework | 100% |
@@ -68,6 +69,17 @@ until this document has been reviewed. Update AGENTS.md reading order after revi
 - [x] Native builtins integration
 - [x] Variable Lookup Cache Optimization (RTO-001) ~6× speedup
 - [x] **FROZEN** — No further optimizations until community feedback
+
+### MCP Server (M71)
+- [x] `ail mcp` CLI command
+- [x] JSON-RPC 2.0 over stdio transport
+- [x] `get_language_context` tool — language rules, workflow, diagnostics
+- [x] `get_stdlib` tool — module functions and signatures
+- [x] `compile_source` tool — compile source, return diagnostics
+- [x] `explain_diagnostic` tool — detailed error explanations
+- [x] `get_examples` tool — canonical code examples
+- [x] 14 MCP tests, all passing
+- [x] Documentation: MCP_SERVER.md, MCP_QUICKSTART.md
 
 ### Stdlib
 - [x] **string** — concat, equals, uppercase, lowercase, length, contains, starts_with, ends_with, trim, substring, find, find_from, split

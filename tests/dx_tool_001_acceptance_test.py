@@ -190,28 +190,28 @@ def validate_content() -> bool:
     checks = []
     
     # Version check
-    if "v0.2.0" in content:
-        checks.append("✓ Version v0.2.0 present")
+    if "1.0.3" in content:
+        checks.append("✓ Version 1.0.3 present")
     else:
-        checks.append("✗ Version v0.2.0 MISSING")
+        checks.append("✗ Version 1.0.3 MISSING")
     
-    # Milestone check
-    if "Runtime Optimization #001" in content or "RTO-001" in content:
-        checks.append("✓ Runtime Optimization #001 mentioned")
+    # Language rules section
+    if "Language Rules" in content:
+        checks.append("✓ Language Rules section present")
     else:
-        checks.append("✗ Runtime Optimization #001 MISSING")
+        checks.append("✗ Language Rules section MISSING")
     
-    # Benchmark numbers
-    if "6,610 LOC" in content or "~6,610 LOC" in content:
-        checks.append("✓ Benchmark LOC count present")
+    # Workflow section
+    if "Workflow" in content:
+        checks.append("✓ Workflow section present")
     else:
-        checks.append("✗ Benchmark LOC count MISSING")
+        checks.append("✗ Workflow section MISSING")
     
-    # Stdlib count
-    if "16 modules" in content:
-        checks.append("✓ Stdlib count (16 modules) present")
+    # Diagnostics section
+    if "Diagnostics" in content:
+        checks.append("✓ Diagnostics section present")
     else:
-        checks.append("✗ Stdlib count MISSING")
+        checks.append("✗ Diagnostics section MISSING")
     
     # No duplicated sections
     lines = content.split("\n")

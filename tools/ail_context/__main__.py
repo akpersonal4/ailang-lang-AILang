@@ -1,204 +1,251 @@
 # AILang Developer Experience Tool: ail context
-# Generates a single AI-friendly project context document
+# Generates AI-friendly project context (markdown or JSON)
 
-"""AILang Context Generator - creates PROJECT_CONTEXT.md for AI consumption."""
+"""AILang Context Generator - creates PROJECT_CONTEXT.md or outputs JSON for AI consumption."""
 
+from __future__ import annotations
+
+import argparse
 import json
+import sys
 from pathlib import Path
 
-from ail_platform.project import get_project_root
+
+VERSION = "1.0.4"
+
+LANGUAGE_RULES = {
+    "no_loops": {
+        "enabled": True,
+        "description": "Use recursion only (while/for don't exist in AILang)",
+    },
+    "no_forward_references": {
+        "enabled": True,
+        "description": "Callee must be defined before caller",
+    },
+    "no_nested_functions": {
+        "enabled": True,
+        "description": "All functions at top level",
+    },
+    "bottom_up_ordering": {
+        "enabled": True,
+        "description": "Write in dependency order (Level 0 -> main)",
+    },
+    "let_requires_initializer": {
+        "enabled": True,
+        "description": "let x = value, never let x;",
+    },
+    "return_requires_value": {
+        "enabled": True,
+        "description": "return expr, never return;",
+    },
+    "import_top_level_only": {
+        "enabled": True,
+        "description": "Never inside a function body",
+    },
+    "unique_variable_names": {
+        "enabled": True,
+        "description": "No reuse of i, x, result, acc across functions",
+    },
+    "map_get_needs_guard": {
+        "enabled": True,
+        "description": "Always check map.has before map.get",
+    },
+    "list_get_needs_guard": {
+        "enabled": True,
+        "description": "Always check list.len before list.get",
+    },
+    "string_concat_two_args": {
+        "enabled": True,
+        "description": "string.concat takes exactly 2 args, use + for 3+",
+    },
+    "eager_logical_operators": {
+        "enabled": True,
+        "description": "Both && and || operands always execute; use nested if when right side depends on left",
+    },
+}
+
+WORKFLOW = ["fmt", "check", "build", "test", "run"]
+
+DIAGNOSTICS = {
+    "LEX001": "Unexpected character",
+    "LEX002": "Unterminated string literal",
+    "LEX003": "Invalid escape sequence",
+    "SEM001": "Undefined identifier",
+    "SEM002": "Forward reference",
+    "SEM003": "Duplicate variable declaration",
+    "TYP001": "Type mismatch in assignment",
+    "TYP002": "Invalid operator for type",
+    "TYP003": "Invalid arithmetic operand types",
+    "TYP004": "Invalid comparison operand types",
+    "TYP005": "Invalid arithmetic result type",
+    "TYP006": "Invalid comparison result type",
+    "TYP007": "Invalid logical operand types",
+    "TYP008": "Mismatched return type",
+    "TYP009": "Invalid function call arguments",
+    "TYP010": "Invalid unary operator",
+    "TYP011": "Invalid assignment target",
+    "TYP012": "Argument count mismatch",
+    "TYP013": "Assignment to function parameter",
+    "CMP001": "Internal compiler error",
+}
+
+STDLIB_MODULES = [
+    "string",
+    "math",
+    "list",
+    "map",
+    "set",
+    "file",
+    "path",
+    "json",
+    "csv",
+    "time",
+    "random",
+    "environment",
+    "convert",
+    "io",
+    "system",
+]
+
+TYPES = ["int", "float", "string", "bool", "list", "map", "set", "function", "None"]
+
+OPERATORS = {
+    "arithmetic": ["+", "-", "*", "/", "%"],
+    "comparison": ["==", "!=", "<", "<=", ">", ">="],
+    "logical": ["&&", "||", "!"],
+    "assignment": ["="],
+}
 
 
-def extract_summary(content: str | None, max_lines: int = 20) -> str:
-    """Extract a concise summary from file content."""
-    if not content:
-        return "*Not found*"
-    lines = content.strip().split("\n")
-    # Get first non-empty heading and a few lines
-    summary_lines = []
-    for line in lines[:max_lines]:
-        stripped = line.strip()
-        if stripped and not stripped.startswith("#"):
-            summary_lines.append(stripped)
-    return "\n".join(summary_lines[:10])
+def generate_json_context() -> dict:
+    """Generate machine-readable language context."""
+    # Find the documentation path
+    try:
+        import compiler
+        docs_path = Path(compiler.__file__).parent / "docs"
+        documentation = {
+            "agents": str(docs_path / "AGENTS.md"),
+            "language_spec": str(docs_path / "LANGUAGE_SPEC.md"),
+            "stdlib_reference": str(docs_path / "STDLIB_REFERENCE.md"),
+        }
+    except Exception:
+        documentation = {}
+
+    return {
+        "language": "AILang",
+        "version": VERSION,
+        "documentation": documentation,
+        "rules": LANGUAGE_RULES,
+        "workflow": WORKFLOW,
+        "diagnostics": DIAGNOSTICS,
+        "stdlib": STDLIB_MODULES,
+        "types": TYPES,
+        "operators": OPERATORS,
+    }
 
 
-def generate_context() -> str:
-    """Generate the PROJECT_CONTEXT.md content."""
-    root = get_project_root()
-    docs = root / "docs"
+def generate_markdown_context() -> str:
+    """Generate human-readable PROJECT_CONTEXT.md content."""
     lines = [
         "# AILang Project Context",
         "",
         "_Auto-generated by `ail context` tool for AI consumption_",
         "",
-        "## 1. Project Overview",
+        f"**Version:** {VERSION}",
         "",
-        "AILang — AI-first programming language — deterministic, specification-driven, and compiler-friendly.",
-        "Version: **v0.3.0** | Status: **STABLE and FROZEN**",
-        "Compiler: ~4,000 LOC in 40 Python files. Standard Library: 16 modules. Tests: 772 passing.",
-        "DX Tools: ail context, ail doctor, ail static_analyzer, ail benchmark, ail testgen — all complete and accepted.",
-        "Production readiness: **6.0/10** — suitable for CRUD/data-processing ≤2,000 LOC; not suitable for compute-heavy workloads.",
+        "## 1. Language Rules",
         "",
-        "## 2. Project Philosophy",
+    ]
+
+    for name, rule in LANGUAGE_RULES.items():
+        status = "YES" if rule["enabled"] else "NO"
+        lines.append(f"- **{name}**: {rule['description']} [{status}]")
+
+    lines.extend([
         "",
-        "- **AI-First**: Designed for reliable code generation by LLMs",
-        "- **Deterministic**: Same source produces identical IR SHA-256 across rebuilds",
-        "- **Specification-Driven**: Every feature documented before implementation",
-        "- **Evidence-First**: Optimizations require profiler evidence (ADR-007)",
-        "- **Benchmark Feedback Loop**: Lessons from ≥2 apps promote to documentation",
+        "## 2. Workflow",
         "",
-        "## 3. Compiler Architecture",
-        "",
-        "Pipeline (single-pass, deterministic):",
         "```",
-        "Source Code → Lexer → Parser → AST → Semantic Analyzer → Type Checker → IR → Runtime Interpreter",
+        " -> ".join(WORKFLOW),
         "```",
-        "No forward references. Functions must be defined before use (bottom-up ordering).",
         "",
-        "## 4. Runtime Architecture",
+        "## 3. Standard Library",
         "",
-        "- Tree-walking interpreter with lexical scoping",
-        "- Environment objects manage variable bindings and module imports",
-        "- **RTO-001**: Lexical Variable Lookup Cache (v0.2.0) — ~6× speedup on static analyzer, 52-64% cache hit rate",
+        ", ".join(STDLIB_MODULES),
         "",
-        "## 5. Language Constraints",
+        "## 4. Types",
         "",
-        "- No loops: use recursion only (while/for don't exist)",
-        "- No forward references: callee must be defined before caller",
-        "- No nested functions: all functions at top level",
-        "- `let` requires initializer: `let x = value`",
-        "- `return` requires value: `return expr`",
-        "- `string.concat` takes exactly 2 args (use `+` for 3+ strings)",
-        "- `&&` and `||` are eager (both operands always execute)",
+        ", ".join(TYPES),
         "",
-        "## 6. Current Milestone",
+        "## 5. Operators",
         "",
-        "v0.3.1 — DX-006 Package Manager (next priority).",
-        "v0.3.0 completed with **DX-004** (Benchmark Runner) and **DX-005** (Test Generator).",
-        "Runtime is frozen pending community feedback on new bottlenecks.",
+    ])
+
+    for op_type, ops in OPERATORS.items():
+        lines.append(f"- **{op_type}**: {', '.join(ops)}")
+
+    lines.extend([
         "",
-        "## 7. Project Memory Summary",
+        "## 6. Diagnostics",
         "",
-        "- 10 benchmarks, ~6,610 LOC of AILang",
-        "- 9 compiler bugs fixed, zero regressions",
-        "- 100% build+run achieved for all benchmarks after playbook methodology",
-        "- CRUD/data-processing ≤2,000 LOC is sweet spot; algorithmic workloads not viable",
-        "",
-        "## 8. Development Playbook Summary",
-        "",
-        "- **Dependency Planning**: Draw call graph, number functions by level (Level 0 → main)",
-        "- **Bottom-up Ordering**: Write in dependency order to avoid forward references",
-        "- **Stdlib Audit**: Check existence table before writing join/sort/list.copy (find and split are now in stdlib)",
-        "- **Validation Checklist**: 11 items to verify before declaring complete",
-        "- **Error Decoder**: Forward reference → move callee; concat 3-arg → use `+`; map.get crash → add map.has guard",
-        "",
-        "## 9. AGENTS Summary",
-        "",
-        "- Read PROJECT_MEMORY.md, PLAYBOOK, MASTER_PROMPT, LANGUAGE_SPEC before coding",
-        "- **Hard Rules**: No loops, no nested functions, no forward references, bottom-up ordering",
-        "- **Workflow**: Plan → Write → Build → Run → Verify (checklist)",
-        "- Report new lessons to Playbook if they appear in ≥2 independent apps",
-        "",
-        "## 10. Active ADRs",
-        "",
-        "- **ADR-003**: Eager `&&` and `||` — simpler evaluation model",
-        "- **ADR-004**: Bottom-up function ordering — no forward references",
-        "- **ADR-005**: Static lexical scoping",
-        "- **ADR-006**: Lexical Variable Lookup Cache — resolution is cached per-environment",
-        "- **ADR-007**: Evidence-First Optimization — profiler required before optimization",
-        "- **ADR-008**: Stdlib additions require ≥2 independent benchmarks",
-        "- **ADR-009**: AI-First Development — all knowledge documented for AI consumption",
-        "",
-        "## 11. Standard Library Summary",
-        "",
-        "16 modules: string (concat, length, contains, uppercase, lowercase, trim, substring, find, find_from, split),",
-        "math (add, sub, mul, div, abs, min, max), list (new, append, len, get, contains, remove, clear),",
-        "array (alias for list), map (new, set, get, has, delete, keys, clear), set (new, add, contains, len, remove, clear),",
-        "file (exists, read, write, append, remove), path (join, basename, dirname, extension, normalize),",
-        "json (parse, stringify), csv (parse, parse_header, stringify), time (now, timestamp, sleep, format),",
-        "random (int, float, choice), environment (get, cwd, args), convert (to_string, to_int, to_bool, to_number),",
-        "io (write, writeln, println), system (exit).",
-        "",
-        "**Missing functions (write custom):** join, sort, list.copy",
-        "See `examples/patterns/` for recursive implementations.",
-        "",
-        "## 12. Runtime Optimization Summary",
-        "",
-        "- **RTO-001** (v0.2.0): Lexical Variable Lookup Cache",
-        "  - Problem: `Environment.resolve()` was 85.4% of static analyzer runtime",
-        "  - Solution: Per-environment cache of binding locations after first resolution",
-        "  - Impact: ~6× speedup (373s → 19.5s), ~11 KB memory overhead",
-        "  - Status: Permanent. Do not remove without understanding ADR-006.",
-        "",
-        "## 13. Benchmark Summary",
-        "",
-        "10 benchmarks totaling ~6,610 LOC of AILang:",
-        "- B01 Task Manager (255 LOC) — CRUD sweet spot",
-        "- B02 Sudoku Solver (356 LOC) — timeout at 30–60s (algorithmic workloads not viable)",
-        "- B1 Library System (819 LOC) — CRUD sweet spot",
-        "- B2 Note Taking (346 LOC) — CRUD sweet spot",
-        "- B3 Calendar App (492 LOC) — map key mismatch pattern",
-        "- B4 Markdown→HTML (518 LOC) — string.concat 3-arg bug",
-        "- B5 HTTP Parser (405 LOC) — variable scoping compiler bug found",
-        "- B6 Mini SQL (839 LOC) — eager `&&` cascading failures",
-        "- B7 Hotel Mgmt (1,510 LOC) — largest app, 6 revisions",
-        "- B09 Spreadsheet (1,325 LOC) — mutual recursion challenge",
-        "",
-        "## 14. DX Tools Summary",
-        "",
-        "5 developer experience tools, all complete and accepted:",
-        "- **DX-001**: `ail context` — AI onboarding context generator",
-        "- **DX-002**: `ail doctor` — repository health checker",
-        "- **DX-003**: `ail static_analyzer` — static code analysis with JSON/Markdown reports",
-        "- **DX-004**: `ail benchmark` — automated benchmark suite execution, regression detection",
-        "- **DX-005**: `ail testgen` — automatic test generation with three-stage pipeline",
-        "",
-        "## 15. Testing Summary",
-        "",
-        "- 772 tests across 84 test scripts (34 manual + 7 DX tool + 43 generated)",
-        "- Quality gates: pytest, black, ruff, mypy all clean",
-        "- Deterministic compilation verified via IR SHA-256",
-        "",
-        "## 16. Do Not Change Rules",
-        "",
-        "The following components are FROZEN and must NOT be modified:",
-        "- `compiler/` — full compiler pipeline",
-        "- `runtime/` — tree-walking interpreter",
-        "- `lexer/` — tokenization",
-        "- `parser/` — syntax analysis",
-        "- Semantic analyzer and scope handling",
-        "- IR — intermediate representation",
-        "- `LANGUAGE_SPEC.md` — canonical language specification",
-        "- `STDLIB_REFERENCE.md` — standard library reference",
-        "- Existing benchmark applications",
-        "- Existing tests",
-        "- Existing runtime optimizations",
-        "- Existing CLI behavior (unless explicitly required for this tool)",
+    ])
+
+    for code, desc in DIAGNOSTICS.items():
+        lines.append(f"- **{code}**: {desc}")
+
+    lines.extend([
         "",
         "---",
         "_This document was generated by the `ail context` tool._",
         "",
-    ]
+    ])
 
     return "\n".join(lines)
 
 
 def main() -> int:
     """Main entry point for the ail context tool."""
-    root = get_project_root()
-    output_path = root / "generated" / "PROJECT_CONTEXT.md"
+    parser = argparse.ArgumentParser(
+        prog="ail context",
+        description="Generate AI-friendly AILang project context",
+    )
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Output machine-readable JSON to stdout",
+    )
+    parser.add_argument(
+        "--output",
+        "-o",
+        type=str,
+        default=None,
+        help="Output file path (markdown mode only, default: generated/PROJECT_CONTEXT.md)",
+    )
 
-    # Ensure generated directory exists
+    args = parser.parse_args()
+
+    if args.json:
+        context = generate_json_context()
+        print(json.dumps(context, indent=2))
+        return 0
+
+    # Markdown mode (default)
+    content = generate_markdown_context()
+
+    if args.output:
+        output_path = Path(args.output)
+    else:
+        # Try to find project root, fallback to current directory
+        try:
+            from ail_platform.project import get_project_root
+            root = get_project_root()
+        except Exception:
+            root = Path.cwd()
+        output_path = root / "generated" / "PROJECT_CONTEXT.md"
+
     output_path.parent.mkdir(parents=True, exist_ok=True)
-
-    # Generate content
-    content = generate_context()
-
-    # Write output
     output_path.write_text(content, encoding="utf-8")
     print(f"Generated: {output_path}")
-
     return 0
 
 
