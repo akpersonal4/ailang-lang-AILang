@@ -10,9 +10,9 @@ until this document has been reviewed. Update AGENTS.md reading order after revi
 
 | Attribute | Value |
 |:----------|:------|
-| **Current Version** | v1.0.0 |
-| **Current Milestone** | External Adoption Closure (M56 + M57 complete) |
-| **Project Phase** | Active Development |
+| **Current Version** | v1.0.5 |
+| **Current Milestone** | M74 — Public Beta Launch |
+| **Project Phase** | Public Beta |
 
 ### Maturity Assessment
 
@@ -24,13 +24,13 @@ until this document has been reviewed. Update AGENTS.md reading order after revi
 | Formatter | 99% |
 | Platform Services | 100% |
 | Platform Integration | 100% |
-| VS Code Extension | v0.2.0 — syntax highlighting, diagnostics, LSP, code actions, `for` keyword |
-| MCP Server | v1.0.3 — 5 tools, stdio transport, AI tool integration |
+| VS Code Extension | v0.3.0 — syntax highlighting, LSP, MCP integration, 7 commands, status bar |
+| MCP Server | v1.0.5 — 5 tools, JSON-RPC 2.0 over stdio, 12 example categories |
 | Documentation | 100% |
 | Governance | 100% |
 | Validation Framework | 100% |
-| Engineering Benchmarks | B1 framework active, B1.1 provider integration active, B2–B7 executed — evidence collected, **v0.7.0 optimization complete** |
-| AI Provider Abstraction | 4 providers (OpenAI, Anthropic, Google, Local), calibration module, B1 integration |
+| Reference Applications | 8 apps (todo, expense, inventory, employee, log_analyzer, csv_etl, json_transformer, invoice) |
+| Test Suite | 894 tests passing |
 
 --------------------------------------
 

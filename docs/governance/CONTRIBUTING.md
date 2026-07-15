@@ -19,7 +19,7 @@ All contributions must follow the [Project Constitution](PROJECT_CONSTITUTION.md
 
 ```bash
 # Clone the repository
-git clone https://github.com/anomalyco/ailang.git
+git clone https://github.com/akpersonal4/ailang-lang-AILang.git
 cd ailang
 
 # Create and activate a virtual environment

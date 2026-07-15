@@ -2,6 +2,21 @@
 
 All notable changes to the AILang VS Code extension will be documented in this file.
 
+## [0.3.0] - 2026-07-15
+
+### Added
+- MCP server integration with automatic lifecycle management
+- 7 commands: Start/Stop/Restart MCP Server, Compile, Explain, Insert Example, Show Output
+- Status bar indicator for MCP server state (running/stopped/reconnecting/failed)
+- 5 configuration settings: autoStart, command, args, timeout, maxReconnectAttempts
+- NDJSON transport for MCP communication
+- Reconnection with exponential backoff
+
+### Changed
+- License changed from MIT to Apache-2.0
+- Repository URL standardized to `akpersonal4/ailang-lang-AILang`
+- Added keywords for marketplace discoverability
+
 ## [0.2.0] - 2026-07-13
 
 ### Added

@@ -4,11 +4,21 @@
   "description": "AILang language support — syntax highlighting, LSP, MCP, AI-native diagnostics, go-to-definition, hover, rename, snippets",
   "version": "0.3.0",
   "publisher": "ailang",
-  "license": "MIT",
-  "icon": "icons/icon.png",
+  "license": "Apache-2.0",
+  "keywords": [
+    "ailang",
+    "ail",
+    "programming language",
+    "AI",
+    "deterministic",
+    "compiler",
+    "LSP",
+    "MCP",
+    "business applications"
+  ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/anomalyco/ailang.git"
+    "url": "https://github.com/akpersonal4/ailang-lang-AILang.git"
   },
   "engines": {
     "vscode": "^1.84.0"

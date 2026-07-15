@@ -1,6 +1,6 @@
 # AILang VS Code Extension
 
-Syntax highlighting, snippets, bracket matching, language configuration, and LSP support for [AILang](https://github.com/anomalyco/ailang).
+Syntax highlighting, snippets, bracket matching, language configuration, and LSP support for [AILang](https://github.com/akpersonal4/ailang-lang-AILang).
 
 ## Features
 
@@ -83,7 +83,13 @@ fn main() {
 
 ## Extension Settings
 
-This extension has no configurable settings — it works out of the box.
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `ailang.mcp.autoStart` | `true` | Automatically start MCP server on extension activation |
+| `ailang.mcp.command` | `"ail"` | Command to launch the MCP server |
+| `ailang.mcp.args` | `["mcp"]` | Arguments passed to the MCP server |
+| `ailang.mcp.timeout` | `30000` | Timeout (ms) for MCP server initialization |
+| `ailang.mcp.maxReconnectAttempts` | `3` | Max reconnect attempts after unexpected exit |
 
 ## Known Issues
 
@@ -92,12 +98,23 @@ This extension has no configurable settings — it works out of the box.
 
 ## Release Notes
 
+### 0.3.0
+
+- Added MCP server integration with automatic lifecycle management
+- Added 7 commands for MCP server control and diagnostics
+- Added status bar indicator and 5 configuration settings
+- License changed to Apache-2.0
+
+### 0.2.0
+
+- Added code actions with TextEdit edits
+- Fixed version synchronization and trailing comma issues
+
 ### 0.1.1
 
 - Added `import as` alias syntax highlighting
 - Added support for all 16 stdlib modules
 - Refined snippets and added `let` and `comment` snippets
-- Added test `.ail` files for all syntax categories
 
 ### 0.1.0
 
@@ -109,7 +126,7 @@ This extension has no configurable settings — it works out of the box.
 
 ```bash
 # Clone and navigate
-git clone https://github.com/anomalyco/ailang.git
+git clone https://github.com/akpersonal4/ailang-lang-AILang.git
 cd ailang/extensions/vscode-ailang
 
 # Open in VS Code to develop

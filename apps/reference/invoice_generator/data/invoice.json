@@ -1,0 +1,1 @@
+{"customer": {"name": "Acme Corp", "address": "123 Business St", "email": "billing@acme.com"}, "items": [{"desc": "Keyboard", "qty": 1, "price": 50, "total": 50}, {"desc": "Mouse", "qty": 2, "price": 25, "total": 50}, {"desc": "Monitor", "qty": 1, "price": 200, "total": 200}], "date": "2026-07-15 15:21:10", "subtotal": 300, "tax_rate": 8, "tax": 24.0, "total": 324.0}

@@ -5,7 +5,7 @@
 If you discover a security vulnerability in AILang, please report it privately
 by opening a security advisory on GitHub:
 
-<https://github.com/anomalyco/ailang/security/advisories/new>
+<https://github.com/akpersonal4/ailang-lang-AILang/security/advisories/new>
 
 Do **not** report security vulnerabilities through public GitHub issues,
 discussions, or pull requests.

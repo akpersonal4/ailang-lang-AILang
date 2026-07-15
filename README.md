@@ -2,12 +2,12 @@
 
 **AI-first programming language — deterministic, specification-driven, and compiler-friendly.**
 
-[![Tests](https://img.shields.io/badge/tests-931%20passing-brightgreen)](#)
+[![Tests](https://img.shields.io/badge/tests-894%20passing-brightgreen)](#)
 [![Python](https://img.shields.io/badge/python-3.11%2B-blue)](#)
-[![Version](https://img.shields.io/badge/version-1.0.3-blue)](#)
+[![Version](https://img.shields.io/badge/version-1.0.5-blue)](#)
 [![License](https://img.shields.io/badge/license-Apache%202.0-green)](#)
 
-AILang is an AI-first programming language designed to be deterministic, specification-first, and easy for both humans and AI systems to reason about. It features a complete compiler pipeline, a 16-module standard library, and has been validated through 931 tests, stress testing up to 10,000 LOC, and AI-generated program verification with 100% first-pass success.
+AILang is an AI-first programming language designed to be deterministic, specification-first, and easy for both humans and AI systems to reason about. It features a complete compiler pipeline, a 16-module standard library, and has been validated through 894 tests, stress testing up to 10,000 LOC, and AI-generated program verification with 100% first-pass success.
 
 ## AI Agent Setup
 
@@ -187,4 +187,4 @@ mypy
 
 ## License
 
-This project is licensed under the MIT License.
+This project is licensed under the Apache License 2.0.

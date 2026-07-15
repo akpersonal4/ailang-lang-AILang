@@ -88,12 +88,17 @@
 ### v1.0.0-M57 — VS Code Extension Hardening ✓
 - **M57** — Extension v0.2.0, code action TextEdits, `for` keyword in grammar and LSP, installation/feature documentation
 
+### v1.0.5 — MCP Server + VS Code Integration ✓
+- **M71** — MCP Server (5 tools, JSON-RPC 2.0 over stdio, AI tool integration)
+- **M72** — VS Code Extension v0.3.0 (LSP + MCP dual-server, 7 commands, status bar, auto-launch)
+- **M73** — 8 Reference Applications (todo, expense, inventory, employee, log_analyzer, csv_etl, json_transformer, invoice)
+
 ---
 
 ## Current: Active Work
 
-**v1.0.0-M56/M57 (complete)** — External Adoption Closure and VS Code Extension Hardening.
-**Next:** P2 — 90-Day Production Validation, P3 — Official Examples Repository.
+**v1.0.5 released** — MCP Server, VS Code extension with MCP integration, 8 reference applications.
+**Next:** M74 — Public Beta Launch, P2 — 90-Day Production Validation.
 
 ---
 

@@ -38,6 +38,7 @@ Homepage = "https://github.com/akpersonal4/ailang-lang-AILang"
 Repository = "https://github.com/akpersonal4/ailang-lang-AILang"
 Documentation = "https://github.com/akpersonal4/ailang-lang-AILang/tree/main/docs"
 Issues = "https://github.com/akpersonal4/ailang-lang-AILang/issues"
+Changelog = "https://github.com/akpersonal4/ailang-lang-AILang/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 dev = [

@@ -13,8 +13,8 @@ Optional but recommended:
 
 ```bash
 # Clone the repository
-git clone https://github.com/anomalyco/ailang.git
-cd ailang
+git clone https://github.com/akpersonal4/ailang-lang-AILang.git
+cd ailang-lang-AILang
 
 # Create and activate a virtual environment
 python -m venv .venv

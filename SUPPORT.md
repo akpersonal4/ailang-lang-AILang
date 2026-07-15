@@ -7,16 +7,16 @@
 Start with the [documentation index](docs/INDEX.md) for a complete list of guides.
 
 Key documents:
-- [Getting Started](docs/GETTING_STARTED.md) — Install, run your first program
-- [Language Tour](docs/LANGUAGE_TOUR.md) — Learn the language
-- [Stdlib Reference](docs/STDLIB_REFERENCE.md) — Standard library API
-- [Language Specification](LANGUAGE_SPEC.md) — Complete grammar and semantics
+- [Getting Started](docs/reference/GETTING_STARTED.md) — Install, run your first program
+- [Language Tour](docs/reference/LANGUAGE_TOUR.md) — Learn the language
+- [Stdlib Reference](docs/reference/STDLIB_REFERENCE.md) — Standard library API
+- [Language Specification](docs/reference/LANGUAGE_SPEC.md) — Complete grammar and semantics
 
 ### Issues
 
 If you find a bug or have a feature request, please open an issue:
 
-<https://github.com/anomalyco/ailang/issues>
+<https://github.com/akpersonal4/ailang-lang-AILang/issues>
 
 Before opening a new issue, search existing issues to avoid duplicates.
 
@@ -24,7 +24,7 @@ Before opening a new issue, search existing issues to avoid duplicates.
 
 For questions, ideas, and community conversation:
 
-<https://github.com/anomalyco/ailang/discussions>
+<https://github.com/akpersonal4/ailang-lang-AILang/discussions>
 
 ### Security
 
@@ -32,4 +32,4 @@ For security vulnerabilities, see [SECURITY.md](SECURITY.md).
 
 ## Contributing
 
-See [CONTRIBUTING.md](docs/CONTRIBUTING.md) for the contributor guide.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the contributor guide.
