@@ -1,0 +1,104 @@
+import list;
+import map;
+import csv;
+import string;
+import io;
+import convert;
+
+fn normalize_field(value) {
+    let trimmed_val = string.trim(value);
+    string.lowercase(trimmed_val);
+}
+
+fn validate_row(row_data, row_index) {
+    let name_val = map.get(row_data, "name");
+    let email_val = map.get(row_data, "email");
+    let age_val = map.get(row_data, "age");
+    if (string.length(string.trim(name_val)) == 0) {
+        return 0;
+    }
+    if (string.length(string.trim(email_val)) == 0) {
+        return 0;
+    }
+    if (string.length(string.trim(age_val)) == 0) {
+        return 0;
+    }
+    1;
+}
+
+fn validate_rows_helper(rows_vld, idx_vld, acc_vld) {
+    if (idx_vld >= list.len(rows_vld)) {
+        return acc_vld;
+    }
+    let current_row = list.get(rows_vld, idx_vld);
+    if (validate_row(current_row, idx_vld) == 1) {
+        list.append(acc_vld, current_row);
+    }
+    validate_rows_helper(rows_vld, idx_vld + 1, acc_vld);
+}
+
+fn validate(rows_vld_all) {
+    validate_rows_helper(rows_vld_all, 0, list.new());
+}
+
+fn transform_row(tr_row) {
+    let raw_name = map.get(tr_row, "name");
+    let raw_email = map.get(tr_row, "email");
+    let raw_age = map.get(tr_row, "age");
+    let clean_name = normalize_field(raw_name);
+    let clean_email = string.uppercase(raw_email);
+    let result_row = map.new();
+    map.set(result_row, "name", clean_name);
+    map.set(result_row, "email", clean_email);
+    map.set(result_row, "age", raw_age);
+    result_row;
+}
+
+fn transform_rows_helper(rows_tr, idx_tr, acc_tr) {
+    if (idx_tr >= list.len(rows_tr)) {
+        return acc_tr;
+    }
+    let orig_row = list.get(rows_tr, idx_tr);
+    let transformed = transform_row(orig_row);
+    list.append(acc_tr, transformed);
+    transform_rows_helper(rows_tr, idx_tr + 1, acc_tr);
+}
+
+fn transform_rows(rows_tr_all) {
+    transform_rows_helper(rows_tr_all, 0, list.new());
+}
+
+fn display_results_helper(rows_disp, idx_disp) {
+    if (idx_disp >= list.len(rows_disp)) {
+        return 0;
+    }
+    let disp_row = list.get(rows_disp, idx_disp);
+    let d_name = map.get(disp_row, "name");
+    let d_email = map.get(disp_row, "email");
+    let d_age = map.get(disp_row, "age");
+    io.writeln(d_name + " | " + d_email + " | " + d_age);
+    display_results_helper(rows_disp, idx_disp + 1);
+}
+
+fn display_results(rows_disp_all) {
+    display_results_helper(rows_disp_all, 0);
+}
+
+fn run_pipeline(input_csv) {
+    let raw_content = file.read(input_csv);
+    let data_rows = csv.parse_header(raw_content);
+    io.writeln("=== CSV ETL Pipeline ===");
+    io.writeln("Input: " + convert.to_string(list.len(data_rows)) + " rows");
+    let valid_rows = validate(data_rows);
+    let invalid_count = convert.to_int(list.len(data_rows) - list.len(valid_rows));
+    io.writeln("After validation: " + convert.to_string(list.len(valid_rows)) + " rows (" + convert.to_string(invalid_count) + " invalid removed)");
+    let output_rows = transform_rows(valid_rows);
+    io.writeln("After transform:");
+    display_results(output_rows);
+    io.writeln("Pipeline complete");
+    0;
+}
+
+fn main() {
+    run_pipeline("sample_input/raw_data.csv");
+}

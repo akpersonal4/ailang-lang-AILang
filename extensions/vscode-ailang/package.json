@@ -1,8 +1,8 @@
 {
   "name": "vscode-ailang",
   "displayName": "AILang",
-  "description": "AILang language support — syntax highlighting, LSP diagnostics, go-to-definition, hover, rename, snippets",
-  "version": "0.2.0",
+  "description": "AILang language support — syntax highlighting, LSP, MCP, AI-native diagnostics, go-to-definition, hover, rename, snippets",
+  "version": "0.3.0",
   "publisher": "ailang",
   "license": "MIT",
   "icon": "icons/icon.png",
@@ -37,7 +37,70 @@
         "language": "ailang",
         "path": "./snippets/snippets.code-snippets"
       }
-    ]
+    ],
+    "commands": [
+      {
+        "command": "ailang.mcp.start",
+        "title": "AILang MCP: Start Server"
+      },
+      {
+        "command": "ailang.mcp.stop",
+        "title": "AILang MCP: Stop Server"
+      },
+      {
+        "command": "ailang.mcp.restart",
+        "title": "AILang MCP: Restart Server"
+      },
+      {
+        "command": "ailang.mcp.compile",
+        "title": "AILang MCP: Compile Current File"
+      },
+      {
+        "command": "ailang.mcp.explainDiagnostic",
+        "title": "AILang MCP: Explain Diagnostic Under Cursor"
+      },
+      {
+        "command": "ailang.mcp.insertExample",
+        "title": "AILang MCP: Insert Code Example"
+      },
+      {
+        "command": "ailang.showOutput",
+        "title": "AILang: Show Output Channel"
+      }
+    ],
+    "configuration": {
+      "title": "AILang MCP",
+      "properties": {
+        "ailang.mcp.autoStart": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically start the MCP server when the extension activates"
+        },
+        "ailang.mcp.command": {
+          "type": "string",
+          "default": "ail",
+          "description": "Command to launch the MCP server"
+        },
+        "ailang.mcp.args": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": ["mcp"],
+          "description": "Arguments passed to the MCP server command"
+        },
+        "ailang.mcp.timeout": {
+          "type": "number",
+          "default": 30000,
+          "description": "Timeout in milliseconds for MCP server initialization and tool calls"
+        },
+        "ailang.mcp.maxReconnectAttempts": {
+          "type": "number",
+          "default": 3,
+          "description": "Maximum number of reconnect attempts after an unexpected server exit"
+        }
+      }
+    }
   },
   "main": "extension.js",
   "activationEvents": ["onLanguage:ailang"],

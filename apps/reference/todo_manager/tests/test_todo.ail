@@ -1,0 +1,124 @@
+import list;
+import map;
+import io;
+import convert;
+
+fn create_todo(title) {
+    let entry = map.new();
+    map.set(entry, "title", title);
+    map.set(entry, "done", false);
+    return entry
+}
+
+fn add_todo(todos, title) {
+    let entry = create_todo(title);
+    list.append(todos, entry);
+    return todos
+}
+
+fn complete_todo(todos, index) {
+    let entry = list.get(todos, index);
+    map.set(entry, "done", true);
+    return todos
+}
+
+fn delete_todo(todos, index) {
+    list.remove(todos, index);
+    return todos
+}
+
+fn count_pending_helper(todos, idx) {
+    if (idx >= list.len(todos)) {
+        return 0
+    }
+    let entry = list.get(todos, idx);
+    let done = map.get(entry, "done");
+    if (done) {
+        return count_pending_helper(todos, idx + 1)
+    } else {
+        return count_pending_helper(todos, idx + 1) + 1
+    }
+}
+
+fn count_pending(todos) {
+    return count_pending_helper(todos, 0)
+}
+
+fn test_create_todo() {
+    let item = create_todo("Test task");
+    let title = map.get(item, "title");
+    let done = map.get(item, "done");
+    if (title == "Test task") {
+        if (done == false) {
+            io.writeln("PASS: create_todo")
+        } else {
+            io.writeln("FAIL: create_todo - done should be false")
+        }
+    } else {
+        io.writeln("FAIL: create_todo - wrong title")
+    }
+}
+
+fn test_add_todo() {
+    let todos = list.new();
+    todos = add_todo(todos, "Task 1");
+    todos = add_todo(todos, "Task 2");
+    if (list.len(todos) == 2) {
+        io.writeln("PASS: add_todo")
+    } else {
+        io.writeln("FAIL: add_todo - expected 2 items")
+    }
+}
+
+fn test_complete_todo() {
+    let todos = list.new();
+    todos = add_todo(todos, "Task 1");
+    todos = complete_todo(todos, 0);
+    let entry = list.get(todos, 0);
+    let done = map.get(entry, "done");
+    if (done) {
+        io.writeln("PASS: complete_todo")
+    } else {
+        io.writeln("FAIL: complete_todo - should be done")
+    }
+}
+
+fn test_delete_todo() {
+    let todos = list.new();
+    todos = add_todo(todos, "Task 1");
+    todos = add_todo(todos, "Task 2");
+    todos = delete_todo(todos, 0);
+    if (list.len(todos) == 1) {
+        let remaining = list.get(todos, 0);
+        let title = map.get(remaining, "title");
+        if (title == "Task 2") {
+            io.writeln("PASS: delete_todo")
+        } else {
+            io.writeln("FAIL: delete_todo - wrong remaining task")
+        }
+    } else {
+        io.writeln("FAIL: delete_todo - expected 1 item")
+    }
+}
+
+fn test_count_pending() {
+    let todos = list.new();
+    todos = add_todo(todos, "Task 1");
+    todos = add_todo(todos, "Task 2");
+    todos = add_todo(todos, "Task 3");
+    todos = complete_todo(todos, 1);
+    let cnt = count_pending(todos);
+    if (cnt == 2) {
+        io.writeln("PASS: count_pending")
+    } else {
+        io.writeln("FAIL: count_pending - expected 2")
+    }
+}
+
+fn main() {
+    test_create_todo();
+    test_add_todo();
+    test_complete_todo();
+    test_delete_todo();
+    test_count_pending()
+}

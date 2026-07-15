@@ -1,0 +1,10 @@
+=== Expense Tracker ===
+Expenses (4 items):
+Groceries: $150 (Food)
+Gas: $45 (Transport)
+Dinner: $80 (Food)
+Movie: $25 (Entertainment)
+Total: $300
+Food total: $230
+Transport total: $45
+CSV exported to data/expenses.csv

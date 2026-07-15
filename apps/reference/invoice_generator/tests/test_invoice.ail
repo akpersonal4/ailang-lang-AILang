@@ -1,0 +1,69 @@
+import list;
+import map;
+import io;
+import math;
+import convert;
+
+fn test_create_line_item() {
+    let tcli = map.new();
+    map.set(tcli, "desc", "Keyboard");
+    map.set(tcli, "qty", 1);
+    map.set(tcli, "price", 50);
+    map.set(tcli, "total", math.mul(1, 50));
+    let tcli_d = map.get(tcli, "desc");
+    let tcli_t = map.get(tcli, "total");
+    if (tcli_d == "Keyboard") {
+        io.writeln("PASS: create_line_item desc")
+    } else {
+        io.writeln("FAIL: create_line_item desc")
+    }
+    if (tcli_t == 50) {
+        io.writeln("PASS: create_line_item total")
+    } else {
+        io.writeln("FAIL: create_line_item total")
+    }
+}
+
+fn test_line_total() {
+    let tlt = map.new();
+    map.set(tlt, "qty", 2);
+    map.set(tlt, "price", 25);
+    map.set(tlt, "total", math.mul(2, 25));
+    let tlt_res = map.get(tlt, "total");
+    if (tlt_res == 50) {
+        io.writeln("PASS: line_total")
+    } else {
+        io.writeln("FAIL: line_total")
+    }
+}
+
+fn test_calc_subtotal() {
+    let tcs_a = 50;
+    let tcs_b = 100;
+    let tcs_c = 200;
+    let tcs_result = tcs_a + tcs_b + tcs_c;
+    if (tcs_result == 350) {
+        io.writeln("PASS: calc_subtotal")
+    } else {
+        io.writeln("FAIL: calc_subtotal")
+    }
+}
+
+fn test_calc_tax() {
+    let tct_sub = 300;
+    let tct_rate = 8;
+    let tct_product = math.mul(tct_sub, tct_rate);
+    let tct_res = math.div(tct_product, 100);
+    if (tct_res == 24) {
+        io.writeln("PASS: calc_tax")
+    } else {
+        io.writeln("FAIL: calc_tax")
+    }
+}
+
+fn main() {
+    test_create_line_item();
+    test_line_total();
+    test_calc_subtotal();
+    test_calc_tax()
+}

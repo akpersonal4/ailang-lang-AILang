@@ -1,0 +1,8 @@
+=== Inventory Management ===
+Products (3 items):
+[1] Widget - $9.99 (100 in stock)
+[2] Gadget - $24.99 (50 in stock)
+[3] Doohickey - $4.99 (200 in stock)
+Total inventory value: $6497.00
+Stock in: Widget +25 = 125
+Stock out: Gadget -10 = 40

@@ -1,0 +1,138 @@
+import list;
+import map;
+import set;
+import json;
+import file;
+import csv;
+import io;
+import convert;
+import time;
+
+fn create_expense(desc, amount, category) {
+    let entry = map.new();
+    map.set(entry, "desc", desc);
+    map.set(entry, "amount", amount);
+    map.set(entry, "category", category);
+    return entry;
+}
+
+fn add_expense(expenses, desc, amount, category) {
+    let record = create_expense(desc, amount, category);
+    list.append(expenses, record);
+    return expenses;
+}
+
+fn total_by_category_helper(expenses, idx, category) {
+    if (idx >= list.len(expenses)) {
+        return 0;
+    }
+    let entry = list.get(expenses, idx);
+    let cat = map.get(entry, "category");
+    let amt = map.get(entry, "amount");
+    if (cat == category) {
+        return total_by_category_helper(expenses, idx + 1, category) + amt;
+    } else {
+        return total_by_category_helper(expenses, idx + 1, category);
+    }
+}
+
+fn total_by_category(expenses, category) {
+    return total_by_category_helper(expenses, 0, category);
+}
+
+fn total_all_helper(expenses, idx) {
+    if (idx >= list.len(expenses)) {
+        return 0;
+    }
+    let entry = list.get(expenses, idx);
+    let amt = map.get(entry, "amount");
+    return total_all_helper(expenses, idx + 1) + amt;
+}
+
+fn total_all(expenses) {
+    return total_all_helper(expenses, 0);
+}
+
+fn display_expenses_helper(expenses, pos) {
+    if (pos >= list.len(expenses)) {
+        return 0;
+    }
+    let entry = list.get(expenses, pos);
+    let desc = map.get(entry, "desc");
+    let amt = map.get(entry, "amount");
+    let cat = map.get(entry, "category");
+    io.writeln(desc + ": $" + convert.to_string(amt) + " (" + cat + ")");
+    return display_expenses_helper(expenses, pos + 1);
+}
+
+fn display_expenses(expenses) {
+    let summary = string.concat("Expenses (", string.concat(convert.to_string(list.len(expenses)), " items):"));
+    io.writeln(summary);
+    return display_expenses_helper(expenses, 0);
+}
+
+fn get_categories_helper(expenses, idx, cats) {
+    if (idx >= list.len(expenses)) {
+        return cats;
+    }
+    let entry = list.get(expenses, idx);
+    let cat = map.get(entry, "category");
+    if (set.contains(cats, cat)) {
+        return get_categories_helper(expenses, idx + 1, cats);
+    } else {
+        set.add(cats, cat);
+        return get_categories_helper(expenses, idx + 1, cats);
+    }
+}
+
+fn get_categories(expenses) {
+    let cats = set.new();
+    return get_categories_helper(expenses, 0, cats);
+}
+
+fn export_csv_row_helper(expenses, idx) {
+    if (idx >= list.len(expenses)) {
+        return 0;
+    }
+    let entry = list.get(expenses, idx);
+    let desc = map.get(entry, "desc");
+    let amt = map.get(entry, "amount");
+    let cat = map.get(entry, "category");
+    io.writeln(desc + "," + convert.to_string(amt) + "," + cat);
+    return export_csv_row_helper(expenses, idx + 1);
+}
+
+fn export_csv(filename, expenses) {
+    file.write(filename, "desc,amount,category\n");
+    export_csv_row_helper(expenses, 0);
+    io.writeln("CSV exported to " + filename);
+    return 0;
+}
+
+fn save_data(filename, expenses) {
+    let text = json.stringify(expenses);
+    file.write(filename, text);
+    return 1;
+}
+
+fn load_data(filename) {
+    let raw = file.read(filename);
+    let data = json.parse(raw);
+    return data;
+}
+
+fn main() {
+    io.writeln("=== Expense Tracker ===");
+    let expenses = list.new();
+    expenses = add_expense(expenses, "Groceries", 150, "Food");
+    expenses = add_expense(expenses, "Gas", 45, "Transport");
+    expenses = add_expense(expenses, "Dinner", 80, "Food");
+    expenses = add_expense(expenses, "Movie", 25, "Entertainment");
+    display_expenses(expenses);
+    io.writeln("Total: $" + convert.to_string(total_all(expenses)));
+    io.writeln("Food total: $" + convert.to_string(total_by_category(expenses, "Food")));
+    io.writeln("Transport total: $" + convert.to_string(total_by_category(expenses, "Transport")));
+    export_csv("data/expenses.csv", expenses);
+    save_data("data/expenses.json", expenses);
+    load_data("data/expenses.json");
+}

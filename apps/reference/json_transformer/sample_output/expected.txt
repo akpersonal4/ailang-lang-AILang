@@ -1,0 +1,7 @@
+=== JSON Transformer ===
+Loaded 3 records
+Normalized:
+ALICE | NEW YORK | 85
+BOB | LOS ANGELES | 92
+CAROL | CHICAGO | 78
+Output written to data/normalized.json

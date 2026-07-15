@@ -1,0 +1,8 @@
+=== CSV ETL Pipeline ===
+Input: 4 rows
+After validation: 3 rows (1 invalid removed)
+After transform:
+alice@example.com | ALICE@EXAMPLE.COM | 30
+bob@example.com | BOB@EXAMPLE.COM | 25
+carol@example.com | CAROL@EXAMPLE.COM | NA
+Pipeline complete

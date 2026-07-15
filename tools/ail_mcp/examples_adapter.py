@@ -191,6 +191,232 @@ fn main() {
     return 0;
 }""",
     },
+    "todo_manager": {
+        "title": "Todo Manager",
+        "description": "List CRUD with JSON persistence and recursive counting",
+        "code": """import list;
+import map;
+import json;
+import file;
+import io;
+import convert;
+
+fn create_todo(title) {
+    let entry = map.new();
+    map.set(entry, "title", title);
+    map.set(entry, "done", 0);
+    return entry;
+}
+
+fn add_todo(todos, title) {
+    let entry = create_todo(title);
+    list.append(todos, entry);
+    return todos;
+}
+
+fn complete_todo(todos, index) {
+    let entry = list.get(todos, index);
+    map.set(entry, "done", 1);
+    return todos;
+}
+
+fn display_todos_helper(todos, pos) {
+    if (pos >= list.len(todos)) { return 0 }
+    let entry = list.get(todos, pos);
+    let done = map.get(entry, "done");
+    if (done) {
+        io.writeln("[x]" + map.get(entry, "title"));
+    } else {
+        io.writeln("[ ]" + map.get(entry, "title"));
+    }
+    return display_todos_helper(todos, pos + 1);
+}
+
+fn main() {
+    let todos = list.new();
+    todos = add_todo(todos, "Learn AILang");
+    todos = add_todo(todos, "Build an app");
+    display_todos_helper(todos, 0);
+    todos = complete_todo(todos, 0);
+    io.writeln("After completing task 1:");
+    display_todos_helper(todos, 0);
+    file.write("data/todos.json", json.stringify(todos));
+    return 0;
+}""",
+    },
+    "expense_tracker": {
+        "title": "Expense Tracker",
+        "description": "Category-based aggregation with CSV export",
+        "code": """import list;
+import map;
+import io;
+import convert;
+
+fn create_expense(desc, amount, category) {
+    let entry = map.new();
+    map.set(entry, "desc", desc);
+    map.set(entry, "amount", amount);
+    map.set(entry, "category", category);
+    return entry;
+}
+
+fn total_by_category_helper(expenses, idx, category) {
+    if (idx >= list.len(expenses)) { return 0 }
+    let entry = list.get(expenses, idx);
+    let cat = map.get(entry, "category");
+    let amt = map.get(entry, "amount");
+    if (cat == category) {
+        return total_by_category_helper(expenses, idx + 1, category) + amt
+    }
+    return total_by_category_helper(expenses, idx + 1, category)
+}
+
+fn main() {
+    let expenses = list.new();
+    list.append(expenses, create_expense("Groceries", 150, "Food"));
+    list.append(expenses, create_expense("Gas", 45, "Transport"));
+    list.append(expenses, create_expense("Dinner", 80, "Food"));
+    io.writeln("Food total: $" + convert.to_string(total_by_category_helper(expenses, 0, "Food")));
+    io.writeln("Transport total: $" + convert.to_string(total_by_category_helper(expenses, 0, "Transport")));
+    return 0;
+}""",
+    },
+    "log_analyzer": {
+        "title": "Log Analyzer",
+        "description": "File parsing with string splitting and level-based reporting",
+        "code": """import list;
+import map;
+import string;
+import io;
+import convert;
+
+fn count_level_helper(entries, idx, target) {
+    if (idx >= list.len(entries)) { return 0 }
+    let entry = list.get(entries, idx);
+    let level = map.get(entry, "level");
+    if (level == target) {
+        return 1 + count_level_helper(entries, idx + 1, target)
+    }
+    return count_level_helper(entries, idx + 1, target)
+}
+
+fn main() {
+    let content = "2024-01-01 10:00 INFO Server started\\n2024-01-01 10:01 ERROR Connection failed\\n2024-01-01 10:02 WARN Retry";
+    let lines = string.split(content, "\\n");
+    io.writeln("Loaded " + convert.to_string(list.len(lines)) + " log entries");
+    io.writeln("Errors: " + convert.to_string(count_level_helper(lines, 0, "ERROR")));
+    io.writeln("Warnings: " + convert.to_string(count_level_helper(lines, 0, "WARN")));
+    return 0;
+}""",
+    },
+    "csv_etl": {
+        "title": "CSV ETL Pipeline",
+        "description": "Parse, validate, transform pipeline with CSV I/O",
+        "code": """import list;
+import map;
+import csv;
+import string;
+import io;
+import convert;
+
+fn validate_row(row) {
+    let name = map.get(row, "name");
+    let email = map.get(row, "email");
+    if (string.length(string.trim(name)) == 0) { return 0 }
+    if (string.length(string.trim(email)) == 0) { return 0 }
+    return 1
+}
+
+fn validate_helper(rows, idx, acc) {
+    if (idx >= list.len(rows)) { return acc }
+    let row = list.get(rows, idx);
+    if (validate_row(row) == 1) { list.append(acc, row) }
+    return validate_helper(rows, idx + 1, acc)
+}
+
+fn main() {
+    let content = "name,email,age\\nalice,alice@example.com,30\\nbob,bob@example.com,25\\n,,";
+    let rows = csv.parse_header(content);
+    io.writeln("Input: " + convert.to_string(list.len(rows)) + " rows");
+    let valid = validate_helper(rows, 0, list.new());
+    io.writeln("Valid: " + convert.to_string(list.len(valid)) + " rows");
+    return 0;
+}""",
+    },
+    "json_transformer": {
+        "title": "JSON Transformer",
+        "description": "JSON normalization with string operations and map transformation",
+        "code": """import list;
+import map;
+import json;
+import io;
+import string;
+
+fn normalize_record(original) {
+    let name_val = string.uppercase(map.get(original, "name"));
+    let city_val = string.uppercase(map.get(original, "city"));
+    let normalized = map.new();
+    map.set(normalized, "name", name_val);
+    map.set(normalized, "city", city_val);
+    map.set(normalized, "score", map.get(original, "score"));
+    return normalized;
+}
+
+fn normalize_helper(recs, idx, result) {
+    if (idx >= list.len(recs)) { return result }
+    let updated = normalize_record(list.get(recs, idx));
+    list.append(result, updated);
+    return normalize_helper(recs, idx + 1, result);
+}
+
+fn main() {
+    let json_str = "[{\\"name\\": \\"alice\\", \\"city\\": \\"new york\\", \\"score\\": 85}, {\\"name\\": \\"bob\\", \\"city\\": \\"los angeles\\", \\"score\\": 92}]";
+    let records = json.parse(json_str);
+    let result = normalize_helper(records, 0, list.new());
+    io.writeln("Normalized " + convert.to_string(list.len(result)) + " records");
+    io.writeln(json.stringify(result));
+    return 0;
+}""",
+    },
+    "invoice_generator": {
+        "title": "Invoice Generator",
+        "description": "Business logic with math operations and structured JSON output",
+        "code": """import list;
+import map;
+import json;
+import io;
+import convert;
+import math;
+
+fn create_line_item(desc, qty, price) {
+    let li = map.new();
+    map.set(li, "desc", desc);
+    map.set(li, "qty", qty);
+    map.set(li, "price", price);
+    map.set(li, "total", math.mul(qty, price));
+    return li;
+}
+
+fn calc_subtotal_helper(items, idx) {
+    if (idx >= list.len(items)) { return 0 }
+    let item = list.get(items, idx);
+    let item_total = map.get(item, "total");
+    return item_total + calc_subtotal_helper(items, idx + 1)
+}
+
+fn main() {
+    let items = list.new();
+    list.append(items, create_line_item("Keyboard", 1, 50));
+    list.append(items, create_line_item("Mouse", 2, 25));
+    list.append(items, create_line_item("Monitor", 1, 200));
+    let subtotal = calc_subtotal_helper(items, 0);
+    let tax = math.div(math.mul(subtotal, 8), 100);
+    io.writeln("Subtotal: $" + convert.to_string(subtotal));
+    io.writeln("Tax (8%): $" + convert.to_string(tax));
+    io.writeln("Total: $" + convert.to_string(subtotal + tax));
+    return 0;
+}""",
+    },
 }
 
 

@@ -1,0 +1,129 @@
+import list;
+import map;
+import io;
+import convert;
+
+fn create_employee(id, name, dept, salary) {
+    let emp = map.new();
+    map.set(emp, "id", id);
+    map.set(emp, "name", name);
+    map.set(emp, "dept", dept);
+    map.set(emp, "salary", salary);
+    return emp
+}
+
+fn add_employee(employees, id, name, dept, salary) {
+    let emp = create_employee(id, name, dept, salary);
+    list.append(employees, emp);
+    return employees
+}
+
+fn filter_by_dept_helper(employees, idx, dept, result) {
+    if (idx >= list.len(employees)) { return result }
+    let emp = list.get(employees, idx);
+    if (map.get(emp, "dept") == dept) {
+        list.append(result, emp)
+    };
+    return filter_by_dept_helper(employees, idx + 1, dept, result)
+}
+
+fn filter_by_dept(employees, dept) {
+    let result = list.new();
+    return filter_by_dept_helper(employees, 0, dept, result)
+}
+
+fn total_salary_helper(employees, idx) {
+    if (idx >= list.len(employees)) { return 0 }
+    let emp = list.get(employees, idx);
+    let sal = map.get(emp, "salary");
+    return sal + total_salary_helper(employees, idx + 1)
+}
+
+fn total_salary(employees) {
+    return total_salary_helper(employees, 0)
+}
+
+fn count_employees_helper(employees, idx) {
+    if (idx >= list.len(employees)) { return 0 }
+    return 1 + count_employees_helper(employees, idx + 1)
+}
+
+fn count_employees(employees) {
+    return count_employees_helper(employees, 0)
+}
+
+fn avg_salary(employees) {
+    let total = total_salary(employees);
+    let cnt = count_employees(employees);
+    return total / cnt
+}
+
+fn test_create_employee() {
+    let emp = create_employee(1, "Alice", "Engineering", 95000);
+    if (map.get(emp, "id") == 1) {
+        io.writeln("PASS: create_employee id")
+    };
+    if (map.get(emp, "name") == "Alice") {
+        io.writeln("PASS: create_employee name")
+    };
+    if (map.get(emp, "dept") == "Engineering") {
+        io.writeln("PASS: create_employee dept")
+    };
+    if (map.get(emp, "salary") == 95000) {
+        io.writeln("PASS: create_employee salary")
+    }
+}
+
+fn test_add_employee() {
+    let staff = list.new();
+    add_employee(staff, 1, "Alice", "Engineering", 95000);
+    add_employee(staff, 2, "Bob", "Marketing", 72000);
+    if (count_employees(staff) == 2) {
+        io.writeln("PASS: add_employee count")
+    }
+}
+
+fn test_filter_by_dept() {
+    let staff = list.new();
+    add_employee(staff, 1, "Alice", "Engineering", 95000);
+    add_employee(staff, 2, "Bob", "Marketing", 72000);
+    add_employee(staff, 3, "Carol", "Engineering", 105000);
+    let eng = filter_by_dept(staff, "Engineering");
+    if (count_employees(eng) == 2) {
+        io.writeln("PASS: filter_by_dept engineering")
+    };
+    let mkt = filter_by_dept(staff, "Marketing");
+    if (count_employees(mkt) == 1) {
+        io.writeln("PASS: filter_by_dept marketing")
+    };
+    let sales = filter_by_dept(staff, "Sales");
+    if (count_employees(sales) == 0) {
+        io.writeln("PASS: filter_by_dept empty")
+    }
+}
+
+fn test_salary_calculations() {
+    let staff = list.new();
+    add_employee(staff, 1, "A", "Eng", 90000);
+    add_employee(staff, 2, "B", "Mkt", 60000);
+    add_employee(staff, 3, "C", "Eng", 90000);
+    let tot = total_salary(staff);
+    if (tot == 240000) {
+        io.writeln("PASS: total_salary")
+    };
+    let av = avg_salary(staff);
+    if (av == 80000) {
+        io.writeln("PASS: avg_salary")
+    }
+}
+
+fn main() {
+    io.writeln("=== Employee Tests ===");
+    test_create_employee();
+    test_add_employee();
+    test_filter_by_dept();
+    test_salary_calculations();
+    io.writeln("All tests completed.")
+}
+
+main()

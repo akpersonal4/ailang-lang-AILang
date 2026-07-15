@@ -1,0 +1,9 @@
+=== Log Analyzer ===
+Loaded 10 log entries
+Errors: 3
+Warnings: 2
+Report:
+  INFO: 3
+  DEBUG: 2
+  WARN: 2
+  ERROR: 3
