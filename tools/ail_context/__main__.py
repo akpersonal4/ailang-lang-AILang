@@ -93,6 +93,7 @@ STDLIB_MODULES = [
     "string",
     "math",
     "list",
+    "array",
     "map",
     "set",
     "file",
