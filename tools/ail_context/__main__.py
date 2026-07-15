@@ -11,7 +11,7 @@ import sys
 from pathlib import Path
 
 
-VERSION = "1.0.5"
+VERSION = "1.0.5.2"
 
 LANGUAGE_RULES = {
     "no_loops": {
@@ -119,24 +119,25 @@ OPERATORS = {
 
 
 def generate_json_context() -> dict:
-    """Generate machine-readable language context."""
-    # Find the documentation path (relative to compiler package)
+    """Generate machine-readable language context.
+
+    Documentation is always embedded — only filenames are exposed, never paths.
+    """
     try:
         import compiler
         docs_path = Path(compiler.__file__).parent / "docs"
         documentation = {
-            "agents": str(docs_path / "AGENTS.md"),
-            "language_spec": str(docs_path / "LANGUAGE_SPEC.md"),
-            "stdlib_reference": str(docs_path / "STDLIB_REFERENCE.md"),
             "agents_embedded": (docs_path / "AGENTS.md").exists(),
             "language_spec_embedded": (docs_path / "LANGUAGE_SPEC.md").exists(),
             "stdlib_reference_embedded": (docs_path / "STDLIB_REFERENCE.md").exists(),
+            "documents": ["AGENTS.md", "LANGUAGE_SPEC.md", "STDLIB_REFERENCE.md"],
         }
     except Exception:
         documentation = {
             "agents_embedded": False,
             "language_spec_embedded": False,
             "stdlib_reference_embedded": False,
+            "documents": ["AGENTS.md", "LANGUAGE_SPEC.md", "STDLIB_REFERENCE.md"],
         }
 
     return {

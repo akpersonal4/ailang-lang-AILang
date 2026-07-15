@@ -21,7 +21,7 @@ def test_context_tool_generates_file():
     content = output_path.read_text(encoding="utf-8")
     assert "AILang Project Context" in content
     assert "Language Rules" in content
-    assert "1.0.5" in content
+    assert "1.0.5.2" in content
 
 
 def test_context_is_ai_friendly():
@@ -50,7 +50,7 @@ def test_context_json_output():
 
     data = json.loads(result.stdout)
     assert data["language"] == "AILang"
-    assert data["version"] == "1.0.5"
+    assert data["version"] == "1.0.5.2"
     assert "rules" in data
     assert "workflow" in data
     assert "diagnostics" in data
@@ -112,3 +112,39 @@ def test_context_json_has_diagnostics():
     expected_codes = ["SEM002", "TYP005", "TYP006", "TYP008", "TYP012", "TYP013", "CMP001"]
     for code in expected_codes:
         assert code in data["diagnostics"], f"Missing diagnostic: {code}"
+
+
+def test_context_json_no_path_leakage():
+    """JSON output must not expose absolute filesystem paths."""
+    result = subprocess.run(
+        [sys.executable, "-m", "tools.ail_context", "--json"],
+        capture_output=True,
+        text=True,
+    )
+    data = json.loads(result.stdout)
+
+    json_str = json.dumps(data)
+
+    # No absolute path indicators
+    assert "C:\\" not in json_str, "Leaked Windows absolute path"
+    assert "/home/" not in json_str, "Leaked Unix home path"
+    assert "/Users/" not in json_str, "Leaked macOS user path"
+    assert "compiler/docs/" not in json_str, "Leaked repository structure"
+    assert "Projects/" not in json_str, "Leaked repository structure"
+
+    # Documentation must have filenames only
+    doc = data["documentation"]
+    assert "documents" in doc, "Missing documents list"
+    assert "AGENTS.md" in doc["documents"]
+    assert "LANGUAGE_SPEC.md" in doc["documents"]
+    assert "STDLIB_REFERENCE.md" in doc["documents"]
+
+    # Embedded flags must still exist
+    assert "agents_embedded" in doc
+    assert "language_spec_embedded" in doc
+    assert "stdlib_reference_embedded" in doc
+
+    # No path keys remain
+    assert "agents" not in doc or isinstance(doc.get("agents"), bool)
+    assert "language_spec" not in doc or isinstance(doc.get("language_spec"), bool)
+    assert "stdlib_reference" not in doc or isinstance(doc.get("stdlib_reference"), bool)
