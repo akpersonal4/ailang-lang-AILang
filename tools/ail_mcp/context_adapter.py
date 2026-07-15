@@ -119,9 +119,30 @@ def get_language_context() -> dict[str, Any]:
     Returns:
         Dictionary with language rules, workflow, diagnostics, etc.
     """
+    # Find the documentation path (relative to compiler package)
+    try:
+        import compiler
+        from pathlib import Path
+        docs_path = Path(compiler.__file__).parent / "docs"
+        documentation = {
+            "agents": str(docs_path / "AGENTS.md"),
+            "language_spec": str(docs_path / "LANGUAGE_SPEC.md"),
+            "stdlib_reference": str(docs_path / "STDLIB_REFERENCE.md"),
+            "agents_embedded": (docs_path / "AGENTS.md").exists(),
+            "language_spec_embedded": (docs_path / "LANGUAGE_SPEC.md").exists(),
+            "stdlib_reference_embedded": (docs_path / "STDLIB_REFERENCE.md").exists(),
+        }
+    except Exception:
+        documentation = {
+            "agents_embedded": False,
+            "language_spec_embedded": False,
+            "stdlib_reference_embedded": False,
+        }
+
     return {
         "language": "AILang",
         "version": VERSION,
+        "documentation": documentation,
         "rules": LANGUAGE_RULES,
         "workflow": WORKFLOW,
         "diagnostics": DIAGNOSTICS,

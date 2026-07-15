@@ -119,7 +119,7 @@ OPERATORS = {
 
 def generate_json_context() -> dict:
     """Generate machine-readable language context."""
-    # Find the documentation path
+    # Find the documentation path (relative to compiler package)
     try:
         import compiler
         docs_path = Path(compiler.__file__).parent / "docs"
@@ -127,9 +127,16 @@ def generate_json_context() -> dict:
             "agents": str(docs_path / "AGENTS.md"),
             "language_spec": str(docs_path / "LANGUAGE_SPEC.md"),
             "stdlib_reference": str(docs_path / "STDLIB_REFERENCE.md"),
+            "agents_embedded": (docs_path / "AGENTS.md").exists(),
+            "language_spec_embedded": (docs_path / "LANGUAGE_SPEC.md").exists(),
+            "stdlib_reference_embedded": (docs_path / "STDLIB_REFERENCE.md").exists(),
         }
     except Exception:
-        documentation = {}
+        documentation = {
+            "agents_embedded": False,
+            "language_spec_embedded": False,
+            "stdlib_reference_embedded": False,
+        }
 
     return {
         "language": "AILang",

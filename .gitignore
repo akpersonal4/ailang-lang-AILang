@@ -43,3 +43,6 @@ generated/
 
 # Benchmark results (immutable runtime artifacts, not committed)
 benchmarks/results/
+
+# Verification environments
+verify_env/
