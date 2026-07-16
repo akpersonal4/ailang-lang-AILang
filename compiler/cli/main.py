@@ -30,7 +30,7 @@ from compiler.runtime import builtins as runtime_builtins
 from compiler.runtime.interpreter import Runtime
 
 PROG = "ail"
-VERSION = "1.0.8"
+VERSION = "1.0.9"
 
 
 # =============================================================================
