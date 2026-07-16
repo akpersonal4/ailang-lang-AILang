@@ -10,8 +10,8 @@ until this document has been reviewed. Update AGENTS.md reading order after revi
 
 | Attribute | Value |
 |:----------|:------|
-| **Current Version** | v1.0.8 |
-| **Current Milestone** | M75.3 — Type Inference & Discoverability |
+| **Current Version** | v1.0.9 |
+| **Current Milestone** | M76.1 — Arithmetic Inference Improvements |
 | **Project Phase** | Public Beta |
 
 ### Maturity Assessment
@@ -489,5 +489,5 @@ Every document type has exactly one owner. If you need to add information, first
 | Field | Value |
 |:------|:------|
 | **Date** | 2026-07-16 |
-| **Version** | v1.0.8 |
-| **Milestone** | M75.3 — Type Inference & Discoverability |
+| **Version** | v1.0.9 |
+| **Milestone** | M76.1 — Arithmetic Inference Improvements |

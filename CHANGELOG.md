@@ -1,5 +1,24 @@
 # Changelog
 
+## v1.0.9
+
+### M76.1 — Arithmetic Inference Improvements
+
+- **Arithmetic with UnknownType**: Type checker now infers numeric types in arithmetic operations when one operand is UnknownType
+  - `UnknownType + INT_TYPE` → `INT_TYPE` (enables `map.get(m, "qty") + 1`)
+  - `INT_TYPE + UnknownType` → `INT_TYPE`
+  - `UnknownType - INT_TYPE` → `INT_TYPE`
+  - `INT_TYPE - UnknownType` → `INT_TYPE`
+  - `UnknownType * INT_TYPE` → `INT_TYPE`
+  - `INT_TYPE * UnknownType` → `INT_TYPE`
+  - `UnknownType / INT_TYPE` → `FLOAT_TYPE`
+  - `INT_TYPE / UnknownType` → `FLOAT_TYPE`
+  - `UnknownType % INT_TYPE` → `INT_TYPE`
+  - `INT_TYPE % UnknownType` → `INT_TYPE`
+  - Same support for FLOAT_TYPE operands
+- **Source-diverse UnknownType support**: Arithmetic inference works with UnknownType from any source (map.get, json.parse, unknown functions, module functions)
+- **Regression tests**: Added 7 new tests covering all arithmetic operator combinations with UnknownType
+
 ## v1.0.8
 
 ### M75.4 — Developer Experience & Discoverability

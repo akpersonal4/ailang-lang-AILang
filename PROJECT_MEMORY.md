@@ -7,8 +7,7 @@ Project history, key decisions, and evolution timeline for AI coding assistants.
 ## Project Identity
 
 - **Language:** AILang — AI-first, deterministic, specification-driven
-- **Version:** v1.0.8
-- **Compiler:** 41 Python source files, ~4,300 LOC
+- **Version:** v1.0.9
 - **Standard Library:** 16 `.ail` modules (extended: `file.listdir`, `list.sum`, `list.find_by_key`, `io.read`; fixed: `convert.to_number`)
 - **Test Suite:** 894+ passing tests across 44+ test scripts
 - **Applications:** 66+ across `apps/`, `ai_benchmarks/`, `examples/patterns/`
@@ -419,6 +418,16 @@ A chronological record of every major engineering phase, with results, lessons, 
 | **Result** | 8 files changed, 597 insertions. 103/103 LSP tests passing, zero regressions. Extension v0.2.0 with full code action support. |
 | **Files** | `compiler/lsp/features/code_actions.py`, `compiler/lsp/features/completion.py`, `extensions/vscode-ailang/package.json`, `extensions/vscode-ailang/CHANGELOG.md`, `extensions/vscode-ailang/syntaxes/ailang.tmLanguage.json`, `docs/vscode/INSTALLATION.md`, `docs/vscode/FEATURES.md`, `docs/releases/M57_VSCODE_EXTENSION_REPORT.md` |
 | **Lessons** | Code actions must generate TextEdit operations, not just diagnostic messages, for VS Code to apply quick fixes. The `for` keyword was implemented in M25/M26 but not added to the VS Code grammar — extension updates must track language changes. |
+
+### M76.1 — Arithmetic Inference Improvements (v1.0.9)
+
+| Aspect | Detail |
+|--------|--------|
+| **What** | Enhanced type checker to infer numeric types in arithmetic operations when one operand is UnknownType |
+| **Why** | Business applications frequently use patterns like `map.get(m, "qty") + 1` which previously required workarounds or produced TYP001 errors |
+| **Result** | All arithmetic operators (`+`, `-`, `*`, `/`, `%`) now infer to INT_TYPE when pairing UnknownType with INT_TYPE; FLOAT_TYPE when pairing UnknownType with FLOAT_TYPE. 7 new regression tests added. |
+| **Files** | `compiler/types/checker.py` (already implemented), `tests/test_type_checker.py` (added 7 new tests) |
+| **Lessons** | Type inference for UnknownType with known numeric types eliminates boilerplate and improves AI code generation success rate |
 
 ### Governance
 

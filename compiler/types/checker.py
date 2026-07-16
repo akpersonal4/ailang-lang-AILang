@@ -224,6 +224,16 @@ class TypeChecker:
                 )
             ):
                 return STRING_TYPE
+            # Allow UnknownType + known numeric to infer to the known numeric type.
+            # This enables natural patterns like map.get(m, "qty") + 1
+            if left_type is INT_TYPE and isinstance(right_type, UnknownType):
+                return INT_TYPE
+            if right_type is INT_TYPE and isinstance(left_type, UnknownType):
+                return INT_TYPE
+            if left_type is FLOAT_TYPE and isinstance(right_type, UnknownType):
+                return FLOAT_TYPE
+            if right_type is FLOAT_TYPE and isinstance(left_type, UnknownType):
+                return FLOAT_TYPE
             if left_type in {INT_TYPE, FLOAT_TYPE} and right_type in {
                 INT_TYPE,
                 FLOAT_TYPE,

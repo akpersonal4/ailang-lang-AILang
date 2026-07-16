@@ -365,6 +365,7 @@ Derived from 10 benchmarks. Each lesson confirmed in ≥2 independent apps befor
 10. **~100 functions per file is the practical max** — beyond this, forward reference ordering becomes unmanageable without multi-file support. Plan to split early.
 11. **`ail run` strips the script path from `environment.args()`** — `args[0]` is the first user argument, not the script filename. Test runners that previously expected the script path as `args[0]` must be updated to `args[0] = first user argument`.
 12. **`json.parse` does not return `false` on invalid input** — the runtime raises a Python `JSONDecodeError` instead. Always validate the string is non-empty before calling `json.parse`. Known bug BUG-008.
+13. **`map.get()` values can be used in arithmetic** — `UnknownType + int` now infers to `int`. Patterns like `map.get(m, "qty") + 1` compile without workarounds (M76.1 fix).
 
 ---
 
