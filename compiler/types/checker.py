@@ -107,8 +107,10 @@ class TypeChecker:
             )
 
     def _check_FunctionDeclarationNode(self, node: FunctionDeclarationNode) -> None:
-        param_types: tuple[Type, ...] = tuple(INT_TYPE for _ in node.parameters)
-        return_type: Type | None = INT_TYPE
+        param_types: tuple[Type, ...] = tuple(
+            UnknownType() for _ in node.parameters
+        )
+        return_type: Type | None = UnknownType()
         func_type = FunctionType("function", param_types, return_type)
         symbol = self.symbol_table.scopes[-1].resolve(node.name.name)
         if symbol is not None:
@@ -124,15 +126,20 @@ class TypeChecker:
         for parameter in node.parameters:
             param_symbol = self.symbol_table.scopes[-1].resolve(parameter.name)
             if param_symbol is not None:
-                param_symbol.type = INT_TYPE
+                param_symbol.type = UnknownType()
             else:
                 self.symbol_table.declare(
                     parameter.name, parameter.start_span, parameter.end_span,
-                    type=INT_TYPE,
+                    type=UnknownType(),
                 )
 
         self.current_function_return_type = return_type
         self.check(node.body)
+        # Write back the inferred return type (FunctionType is frozen)
+        inferred_return = self.current_function_return_type
+        func_type = FunctionType("function", param_types, inferred_return)
+        if symbol is not None:
+            symbol.type = func_type
         # Exit the function scope
         self.symbol_table.exit_scope()
         # Restore previous context
@@ -215,8 +222,6 @@ class TypeChecker:
                     left_type is STRING_TYPE
                     or right_type is STRING_TYPE
                 )
-                and not isinstance(left_type, UnknownType)
-                and not isinstance(right_type, UnknownType)
             ):
                 return STRING_TYPE
             if left_type in {INT_TYPE, FLOAT_TYPE} and right_type in {
@@ -250,14 +255,21 @@ class TypeChecker:
                 FLOAT_TYPE,
                 STRING_TYPE,
                 LIST_TYPE,
+                BOOL_TYPE,
             } and right_type in {
                 INT_TYPE,
                 FLOAT_TYPE,
                 STRING_TYPE,
                 LIST_TYPE,
+                BOOL_TYPE,
             }:
                 if left_type is right_type:
                     return BOOL_TYPE
+            # Comparisons always return bool even with unknown operands
+            if isinstance(left_type, UnknownType) or isinstance(
+                right_type, UnknownType
+            ):
+                return BOOL_TYPE
             if not isinstance(left_type, UnknownType) and not isinstance(
                 right_type, UnknownType
             ):
@@ -352,15 +364,12 @@ class TypeChecker:
                     node.end_span,
                 )
             else:
-                all_default = all(
-                    t is INT_TYPE for t in callee_type.parameter_types
-                )
                 for arg, expected_type in zip(
                     node.arguments, callee_type.parameter_types
                 ):
                     arg_type = self._infer_expression(arg)
                     if (
-                        not all_default
+                        not isinstance(expected_type, UnknownType)
                         and not isinstance(arg_type, UnknownType)
                         and arg_type is not expected_type
                     ):

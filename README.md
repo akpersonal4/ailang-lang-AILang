@@ -4,30 +4,10 @@
 
 [![Tests](https://img.shields.io/badge/tests-894%20passing-brightgreen)](#)
 [![Python](https://img.shields.io/badge/python-3.11%2B-blue)](#)
-[![Version](https://img.shields.io/badge/version-1.0.5-blue)](#)
+[![Version](https://img.shields.io/badge/version-1.0.7-blue)](#)
 [![License](https://img.shields.io/badge/license-Apache%202.0-green)](#)
 
 AILang is an AI-first programming language designed to be deterministic, specification-first, and easy for both humans and AI systems to reason about. It features a complete compiler pipeline, a 16-module standard library, and has been validated through 894 tests, stress testing up to 10,000 LOC, and AI-generated program verification with 100% first-pass success.
-
-## AI Agent Setup
-
-For AI-assisted development, run this first:
-
-```bash
-# Get machine-readable language context
-ail context --json
-
-# Read the documentation (installed with the package)
-cat $(python -c "import compiler; import os; print(os.path.join(os.path.dirname(compiler.__file__), 'docs', 'AGENTS.md'))")
-```
-
-**Document hierarchy:**
-1. `AILANG_DEVELOPMENT_PLAYBOOK.md` — coding patterns and conventions
-2. `LANGUAGE_SPEC.md` — canonical language definition (authoritative)
-3. `AGENTS.md` — AI operational rules (derived from spec)
-4. `STDLIB_REFERENCE.md` — library API documentation
-
-> If `AGENTS.md` conflicts with `LANGUAGE_SPEC.md`, the spec wins.
 
 ## Quick Start
 
@@ -50,6 +30,76 @@ pip install -e .
 # Run your first program
 echo 'fn main() { print("Hello, AILang!"); return 0 }' > hello.ail
 ail hello.ail
+```
+
+## Core Commands
+
+```bash
+ail <file.ail>           # Run a program
+ail fmt <file.ail>       # Format code (one style, no config)
+ail fmt --check <file>   # Check if formatted
+ail doctor               # Diagnose environment issues
+ail context --json       # Get machine-readable language context
+ail docs <NAME>          # Read documentation (AGENTS, LANGUAGE_SPEC, STDLIB_REFERENCE)
+ail test <file_or_dir>   # Run tests
+ail mcp                  # Start MCP server for AI tool integration
+```
+
+## AI Agent Setup
+
+For AI-assisted development, run this first:
+
+```bash
+# Get machine-readable language context
+ail context --json
+
+# Read the documentation
+ail docs AGENTS
+ail docs LANGUAGE_SPEC
+```
+
+**Document hierarchy:**
+1. `LANGUAGE_SPEC.md` — canonical language definition (authoritative)
+2. `AGENTS.md` — AI operational rules (derived from spec)
+3. `AILANG_DEVELOPMENT_PLAYBOOK.md` — coding patterns and conventions
+4. `STDLIB_REFERENCE.md` — library API documentation
+
+> If `AGENTS.md` conflicts with `LANGUAGE_SPEC.md`, the spec wins.
+
+## Language Tour
+
+```ail
+import string;
+import math;
+import list;
+
+// Functions are top-level, recursion only (no loops)
+fn factorial(n) {
+    if (n <= 1) {
+        return 1
+    }
+    return math.mul(n, factorial(math.sub(n, 1)))
+}
+
+// Import aliases
+import map as m;
+
+fn main() {
+    // Variables with let
+    let greeting = "Hello, AILang!";
+    print(greeting);
+
+    // Map operations
+    let config = map.new();
+    map.set(config, "version", "1.0");
+    let v = map.get(config, "version");
+
+    // Recursion
+    let result = factorial(5);
+    print(result);
+
+    return 0
+}
 ```
 
 ## Documentation
@@ -127,7 +177,7 @@ fn main() {
 | [random](docs/reference/STDLIB_REFERENCE.md#random) | `int`, `float`, `choice` |
 | [environment](docs/reference/STDLIB_REFERENCE.md#environment) | `get`, `cwd`, `args` |
 | [convert](docs/reference/STDLIB_REFERENCE.md#convert) | `to_string`, `to_int`, `to_bool`, `to_number` |
-| [io](docs/reference/STDLIB_REFERENCE.md#io) | `write`, `writeln`, `println` |
+| [io](docs/reference/STDLIB_REFERENCE.md#io) | `write`, `writeln`, `println`, `read` |
 | [system](docs/reference/STDLIB_REFERENCE.md#system) | `exit` |
 
 ## Project Status
@@ -137,10 +187,10 @@ fn main() {
 | Python version | 3.11+ |
 | Compiler LOC | ~3,950 (39 Python files) |
 | Stdlib modules | 16 |
-| Tests | **772 passing** |
+| Tests | **894 passing** |
 | Example programs | 55+ |
 | Application programs | 43+ |
-| DX Tools | ail context, ail doctor, ail static_analyzer, ail benchmark, ail testgen |
+| DX Tools | ail context, ail doctor, ail static_analyzer, ail benchmark, ail testgen, ail docs, ail mcp |
 | Quality gates | black, ruff, mypy all clean |
 | Validation | Deterministic, AI-verified, stress-tested |
 

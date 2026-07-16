@@ -6,6 +6,7 @@ import tempfile
 from pathlib import Path
 
 from compiler.compilation import CompilationSession
+from compiler.runtime.interpreter import Runtime
 
 
 def test_multi_file_compilation() -> None:
@@ -520,3 +521,41 @@ def test_qualified_module_import_no_duplicate_declaration() -> None:
         assert (
             captured.getvalue().strip() == "30"
         ), f"Expected '30' but got: {captured.getvalue().strip()!r}"
+
+
+def test_import_alias_runtime() -> None:
+    """Test that import aliases work at runtime."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmp_path = Path(tmpdir)
+
+        # Create the module file
+        math_file = tmp_path / "math.ail"
+        math_file.write_text("fn add(a, b) {\n    return a + b\n}\n")
+
+        # Create the entry file with alias
+        main_file = tmp_path / "main.ail"
+        main_file.write_text(
+            "import math as m\n\nfn main() {\n    return m.add(1, 2)\n}\n"
+        )
+
+        session = CompilationSession()
+        session._root = tmp_path
+        session._resolver = type(session._resolver)(tmp_path)
+        session.discover(main_file)
+
+        bundle = session.build_ir()
+        runtime = Runtime(bundle)
+
+        for module_name in session._graph.topological_sort():
+            runtime._initialize_module(module_name)
+
+        # Find the main module (non-stdlib)
+        main_key = None
+        for key in bundle.module_irs:
+            if "main" in key:
+                main_key = key
+                break
+        assert main_key is not None, "Main module not found in bundle"
+
+        result = runtime.execute(bundle.module_irs[main_key])
+        assert result == 3, f"Expected 3, got {result}"

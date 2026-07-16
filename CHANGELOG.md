@@ -1,5 +1,25 @@
 # Changelog
 
+## v1.0.7
+
+### M75.3 — Type Inference & Discoverability
+
+- **String concatenation with UnknownType**: Fixed type checker to allow `STRING_TYPE + UnknownType → STRING_TYPE` (was erroring with TYP005)
+- **Import alias runtime support**: `import module as alias` now works at runtime — aliases are registered in the interpreter and resolved during execution
+- **Unicode encoding fix**: `ail docs` now handles Unicode characters on Windows (reconfigure stdout to UTF-8)
+- **Discoverability improvements**: Updated README with Core Commands section, Language Tour with import alias example, and `io.read` in stdlib table
+- **Documentation**: Updated LANGUAGE_SPEC, STDLIB_REFERENCE, DEVELOPMENT_STATUS, PROJECT_MEMORY with v1.0.7 features
+
+## v1.0.6
+
+### M75.2 — Validator-Driven Polish
+
+- **Boolean type inference**: Fixed return/param types to use `UnknownType()` instead of `INT_TYPE` for better inference
+- **`io.read()` builtin**: Added stdin reading capability to the `io` module
+- **SEM002 diagnostics**: Improved error messages for undefined identifiers
+- **MCP Server tool**: Added `get_document` tool for document retrieval
+- **Tests**: Updated type checker, MCP, and VS Code integration tests
+
 ## v1.0.5
 
 ### M72 — VS Code Extension with MCP Integration

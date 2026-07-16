@@ -60,7 +60,7 @@ def test_type_checker_accepts_comparison() -> None:
 
 
 def test_type_checker_rejects_return_type_mismatch() -> None:
-    source = 'fn foo() { return "hello"; }'
+    source = 'fn foo() { return "hello"; return 42; }'
     _, reporter = _type_check(source)
     assert reporter.error_count == 1
     assert "TYP003" in reporter.diagnostics[0].error_code.code
@@ -88,6 +88,29 @@ def test_type_checker_rejects_non_bool_condition() -> None:
 # ------------------------------------------------------------------
 # Unary operator type checking
 # ------------------------------------------------------------------
+
+
+# ------------------------------------------------------------------
+# String concatenation with UnknownType
+# ------------------------------------------------------------------
+
+
+def test_type_checker_allows_string_concat_with_unknown() -> None:
+    """String + unknown should return string, not error."""
+    # map.get returns UnknownType; string + UnknownType should be allowed
+    source = (
+        'import map;\n'
+        'let m = map.new();\n'
+        'fn foo() {\n'
+        '    let name = map.get(m, "key");\n'
+        '    let msg = "Hello, " + name;\n'
+        '    return msg;\n'
+        '}\n'
+    )
+    _, reporter = _type_check(source)
+    # Should have no TYP005 errors for the string concatenation
+    typ005_errors = [d for d in reporter.diagnostics if "TYP005" in d.error_code.code]
+    assert len(typ005_errors) == 0
 
 
 # ------------------------------------------------------------------

@@ -44,6 +44,7 @@ class Runtime:
         self._frame_stack: list[StackFrame] = []
         self._functions: dict[str, FunctionIR] = {}
         self._modules: dict[str, Any] = {}  # module_name -> module environment
+        self._aliases: dict[str, str] = {}  # alias -> real_module_name
         self._module_bundle = module_bundle
         self._initialized_modules: set[str] = set()
 
@@ -267,6 +268,18 @@ class Runtime:
 
         self._modules[module_name] = module_env
         self._initialized_modules.add(module_name)
+
+        # Register import aliases for this module in both the alias dict
+        # and the global environment so they're accessible during execution
+        if self._module_bundle is not None:
+            aliases = getattr(self._module_bundle, 'import_aliases', {}).get(module_name, {})
+            for alias, real_module in aliases.items():
+                self._aliases[alias] = real_module
+                # Also define the alias as a module reference in global env
+                module_env = self._modules.get(real_module)
+                if module_env is not None:
+                    self._global_environment.define(alias, module_env)
+
         return module_env
 
     def _execute_node_in_module(
@@ -301,6 +314,12 @@ class Runtime:
         module_env = self._modules.get(name)
         if module_env is not None:
             return module_env
+        # Check import aliases
+        if name in self._aliases:
+            real_module = self._aliases[name]
+            module_env = self._modules.get(real_module)
+            if module_env is not None:
+                return module_env
         if "." in name:
             base_name, member = name.split(".", 1)
             try:

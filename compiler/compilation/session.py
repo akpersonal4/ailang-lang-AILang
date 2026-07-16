@@ -26,6 +26,7 @@ class ModuleIRBundle:
 
     def __init__(self) -> None:
         self.module_irs: dict[str, ProgramIR] = {}  # module_name -> IR
+        self.import_aliases: dict[str, dict[str, str]] = {}  # module_name -> {alias -> real_module}
         self.initialized: set[str] = set()
 
     def get_or_initialize(self, module_name: str) -> ProgramIR | None:
@@ -434,6 +435,8 @@ class CompilationSession:
         Returns:
             ModuleIRBundle containing IR for each module in dependency order.
         """
+        from compiler.ast.nodes import ImportDeclarationNode, ProgramNode
+
         bundle = ModuleIRBundle()
         ir_builder = IRBuilder()
 
@@ -442,6 +445,23 @@ class CompilationSession:
                 ast = self._asts[module_name]
                 ir = ir_builder.build(ast)
                 bundle.module_irs[module_name] = ir
+
+                # Extract import aliases for runtime resolution
+                aliases: dict[str, str] = {}
+                if isinstance(ast, ProgramNode):
+                    for stmt in ast.children:
+                        if isinstance(stmt, ImportDeclarationNode) and stmt.alias:
+                            # Resolve the import path to the actual module name
+                            try:
+                                resolved_path = self._resolver.resolve(stmt.module_path)
+                                real_module = self._path_to_module_name(resolved_path)
+                                aliases[stmt.alias] = real_module
+                            except Exception:
+                                # Fallback: use the dot-joined path
+                                real_module = ".".join(stmt.module_path)
+                                aliases[stmt.alias] = real_module
+                if aliases:
+                    bundle.import_aliases[module_name] = aliases
 
         return bundle
 

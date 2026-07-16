@@ -811,6 +811,13 @@ Prints a value followed by a newline.
 io.println("line 2");
 ```
 
+### `read()`
+Reads a line from stdin and returns it as a string. Returns an empty string on EOF.
+```ail
+let name = io.read();
+io.writeln("Hello, " + name);
+```
+
 ---
 
 ## system

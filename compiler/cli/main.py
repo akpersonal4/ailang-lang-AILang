@@ -7,6 +7,9 @@ Usage:
     ail check <file>     Check for forward references and ordering violations
     ail fmt <file>       Format AILang source files
     ail test             Run test_*.ail files
+    ail docs <name>      Retrieve documentation (AGENTS, LANGUAGE_SPEC, STDLIB_REFERENCE)
+    ail context [--json] Generate AI-friendly project context
+    ail mcp              Start MCP server for AI tool integration
     ail version          Print version information
     ail help             Print this help message
     ail <file>           Shorthand for `ail run <file>`
@@ -27,7 +30,7 @@ from compiler.runtime import builtins as runtime_builtins
 from compiler.runtime.interpreter import Runtime
 
 PROG = "ail"
-VERSION = "1.0.5.2"
+VERSION = "1.0.7"
 
 
 def _find_stdlib() -> Path:
@@ -1505,6 +1508,17 @@ def cmd_doctor(args: list[str]) -> int:
     return _run_dx_tool("tools.ail_doctor", args)
 
 
+def cmd_docs(args: list[str]) -> int:
+    """Retrieve AILang documentation without filesystem access.
+
+    Usage:
+        ail docs                  List available documents
+        ail docs <name>           Print document content
+        ail docs --json           Machine-readable output
+    """
+    return _run_dx_tool("tools.ail_docs", args)
+
+
 def cmd_context(args: list[str]) -> int:
     """Generate AI-friendly project context.
 
@@ -1587,6 +1601,7 @@ def cmd_help(args: list[str]) -> int:
     print()
     print("Developer Tools:")
     print(f"  doctor              Run repository health checks")
+    print(f"  docs [<name>]       Retrieve AILang documentation (no filesystem access)")
     print(f"  context [--json]    Generate AI-friendly project context (use --json for machine-readable)")
     print(f"  mcp                 Start MCP server for AI tool integration (stdio transport)")
     print(f"  static-analyzer     Run static analysis on AILang source")
@@ -1637,6 +1652,7 @@ def main(argv: list[str] | None = None) -> int:
         "version": cmd_version,
         "help": cmd_help,
         "doctor": cmd_doctor,
+        "docs": cmd_docs,
         "context": cmd_context,
         "mcp": cmd_mcp,
         "static-analyzer": cmd_static_analyzer,

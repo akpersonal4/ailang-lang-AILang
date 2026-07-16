@@ -201,6 +201,8 @@ if (map.has(data, "key")) {
 
 `string.length`, `string.equals`, `string.concat(a, b)`, `string.substring(s, start, end)`, `string.contains(s, pattern)`, `string.starts_with`, `string.ends_with`, `string.uppercase`, `string.lowercase`, `string.trim`
 
+`io.write(value)`, `io.writeln(value)`, `io.println(value)`, `io.read()` — reads a line from stdin
+
 ### Must be written manually
 
 - **replace:** `string.replace(s, from, to)` does not exist. Write character-by-character.
@@ -282,6 +284,34 @@ fn save_data(filepath, data) {
 - No streaming parse (JSON Lines)
 - Sets are serialized as arrays
 - `null` cannot be written or compared in AILang source
+
+---
+
+## Import Syntax
+
+### Basic import
+
+```ail
+import math;
+import string;
+import list;
+```
+
+### Import with alias
+
+```ail
+import math as m;
+import string as str;
+
+fn main() {
+    let result = m.add(1, 2);
+    let name = str.uppercase("hello");
+    print(result, name);
+    return 0
+}
+```
+
+**Note:** Import aliases are resolved at runtime. The alias becomes a reference to the module's environment.
 
 ---
 
