@@ -6,8 +6,8 @@ import sys
 from pathlib import Path
 
 
-def test_context_tool_generates_file():
-    """The ail context tool should generate PROJECT_CONTEXT.md."""
+def test_context_tool_prints_to_stdout():
+    """The ail context tool should print to stdout."""
     result = subprocess.run(
         [sys.executable, "-m", "tools.ail_context"],
         capture_output=True,
@@ -15,19 +15,20 @@ def test_context_tool_generates_file():
     )
     assert result.returncode == 0, f"Tool failed: {result.stderr}"
 
-    output_path = Path(__file__).parent.parent / "generated" / "PROJECT_CONTEXT.md"
-    assert output_path.exists(), "PROJECT_CONTEXT.md was not created"
-
-    content = output_path.read_text(encoding="utf-8")
+    content = result.stdout
     assert "AILang Project Context" in content
     assert "Language Rules" in content
-    assert "1.0.5.2" in content
+    assert "1.0.8" in content
 
 
 def test_context_is_ai_friendly():
-    """The generated context should be suitable for LLM consumption."""
-    output_path = Path(__file__).parent.parent / "generated" / "PROJECT_CONTEXT.md"
-    content = output_path.read_text(encoding="utf-8")
+    """The context should be suitable for LLM consumption."""
+    result = subprocess.run(
+        [sys.executable, "-m", "tools.ail_context"],
+        capture_output=True,
+        text=True,
+    )
+    content = result.stdout
 
     # Check length is reasonable (< 8KB for context windows - still small)
     assert len(content) < 8000, "Context file too large for LLM consumption"
@@ -50,7 +51,7 @@ def test_context_json_output():
 
     data = json.loads(result.stdout)
     assert data["language"] == "AILang"
-    assert data["version"] == "1.0.5.2"
+    assert data["version"] == "1.0.8"
     assert "rules" in data
     assert "workflow" in data
     assert "diagnostics" in data
@@ -148,3 +149,18 @@ def test_context_json_no_path_leakage():
     assert "agents" not in doc or isinstance(doc.get("agents"), bool)
     assert "language_spec" not in doc or isinstance(doc.get("language_spec"), bool)
     assert "stdlib_reference" not in doc or isinstance(doc.get("stdlib_reference"), bool)
+
+
+def test_context_json_has_retrieval_policy():
+    """JSON output should include retrieval_policy."""
+    result = subprocess.run(
+        [sys.executable, "-m", "tools.ail_context", "--json"],
+        capture_output=True,
+        text=True,
+    )
+    data = json.loads(result.stdout)
+    assert "retrieval_policy" in data
+    policy = data["retrieval_policy"]
+    assert "allowed" in policy
+    assert "forbidden" in policy
+    assert "note" in policy

@@ -14,8 +14,9 @@ from .compiler_adapter import compile_source
 from .stdlib_adapter import get_stdlib
 from .diagnostics_adapter import explain_diagnostic
 from .examples_adapter import get_examples
+from .docs_adapter import get_document, list_documents
 
-VERSION = "1.0.5"
+VERSION = "1.0.8"
 
 TOOLS = [
     {
@@ -78,6 +79,20 @@ TOOLS = [
                 "category": {
                     "type": "string",
                     "description": "Optional category (hello, inventory, csv, json)",
+                },
+            },
+            "required": [],
+        },
+    },
+    {
+        "name": "get_document",
+        "description": "Retrieve AILang documentation content (AGENTS.md, LANGUAGE_SPEC.md, STDLIB_REFERENCE.md)",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "Document filename (AGENTS.md, LANGUAGE_SPEC.md, STDLIB_REFERENCE.md)",
                 },
             },
             "required": [],
@@ -155,6 +170,12 @@ def call_tool(name: str, arguments: dict[str, Any]) -> dict[str, Any]:
     elif name == "get_examples":
         category = arguments.get("category")
         result = get_examples(category)
+    elif name == "get_document":
+        doc_name = arguments.get("name", "")
+        if doc_name:
+            result = get_document(doc_name)
+        else:
+            result = list_documents()
     else:
         raise ValueError(f"Unknown tool: {name}")
 

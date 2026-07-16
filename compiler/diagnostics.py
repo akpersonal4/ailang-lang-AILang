@@ -50,6 +50,43 @@ class Diagnostic:
     column: int | None = None
     file_path: str | None = None  # Source file path for multi-module compilation
     suggestion: str | None = None  # Optional suggestion for typo fixes
+    next_steps: str | None = None  # Context-aware tool suggestions
+
+
+# Mapping of error codes to suggested next steps
+_NEXT_STEPS: dict[str, str] = {
+    # Type errors
+    "TYP001": "  ail explain TYP001\n  ail heal",
+    "TYP003": "  ail explain TYP003\n  ail heal",
+    "TYP005": "  ail explain TYP005",
+    "TYP006": "  ail explain TYP006",
+    "TYP007": "  ail explain TYP007",
+    "TYP008": "  ail explain TYP008\n  ail heal",
+    # Semantic errors
+    "SEM002": "  ail docs AGENTS.md\n  ail fmt",
+    "SEM003": "  ail explain SEM003\n  ail heal",
+    "SEM004": "  ail docs STDLIB_REFERENCE.md",
+    # Module errors
+    "MOD001": "  ail docs AGENTS.md",
+    "MOD003": "  ail docs STDLIB_REFERENCE.md",
+    "MOD004": "  ail docs STDLIB_REFERENCE.md",
+}
+
+# Error code descriptions for context
+_ERROR_DESCRIPTIONS: dict[str, str] = {
+    "TYP001": "Type mismatch",
+    "TYP003": "Return type mismatch",
+    "TYP005": "Arithmetic requires numeric types",
+    "TYP006": "Comparison requires matching types",
+    "TYP007": "Logical operator requires bool",
+    "TYP008": "Assignment type mismatch",
+    "SEM002": "Forward reference",
+    "SEM003": "Wrong number of arguments",
+    "SEM004": "Unknown stdlib function",
+    "MOD001": "Circular import",
+    "MOD003": "Module not found",
+    "MOD004": "Symbol not found in module",
+}
 
 
 class DiagnosticReporter:
@@ -57,6 +94,19 @@ class DiagnosticReporter:
         self.diagnostics: list[Diagnostic] = []
 
     def report(self, diagnostic: Diagnostic) -> None:
+        # Auto-populate next_steps if not already set
+        if diagnostic.next_steps is None and diagnostic.error_code.code in _NEXT_STEPS:
+            # Create a new Diagnostic with next_steps (frozen dataclass)
+            diagnostic = Diagnostic(
+                severity=diagnostic.severity,
+                error_code=diagnostic.error_code,
+                message=diagnostic.message,
+                line=diagnostic.line,
+                column=diagnostic.column,
+                file_path=diagnostic.file_path,
+                suggestion=diagnostic.suggestion,
+                next_steps=_NEXT_STEPS[diagnostic.error_code.code],
+            )
         self.diagnostics.append(diagnostic)
 
     @property
@@ -93,10 +143,61 @@ class DiagnosticFormatter:
         )
         if diagnostic.suggestion:
             result += f"\n\nDid you mean: {diagnostic.suggestion}?"
+        if diagnostic.next_steps:
+            result += f"\n\nSuggested next steps:\n{diagnostic.next_steps}"
         return result
+
+    @staticmethod
+    def suggest_next_steps(error_code: str) -> str | None:
+        """Get suggested next steps for an error code."""
+        return _NEXT_STEPS.get(error_code)
+
+    @staticmethod
+    def get_error_description(error_code: str) -> str | None:
+        """Get human-readable description for an error code."""
+        return _ERROR_DESCRIPTIONS.get(error_code)
 
     @staticmethod
     def find_suggestion(unknown_name: str, known_names: set[str]) -> str | None:
         """Find a close matching identifier for spell-check suggestions."""
         matches = difflib.get_close_matches(unknown_name, known_names, n=1, cutoff=0.6)
         return matches[0] if matches else None
+
+    @staticmethod
+    def format_summary(reporter: 'DiagnosticReporter', file_path: str | None = None) -> str:
+        """Format a summary of diagnostics with suggested next steps."""
+        error_count = reporter.error_count
+        warning_count = reporter.warning_count
+        
+        if error_count == 0 and warning_count == 0:
+            return ""
+        
+        lines = []
+        if error_count > 0:
+            lines.append(f"{error_count} diagnostic(s) found.")
+        if warning_count > 0:
+            lines.append(f"{warning_count} warning(s) found.")
+        
+        # Suggest next steps based on error types
+        error_codes = {d.error_code.code for d in reporter.diagnostics if d.severity == Severity.ERROR}
+        
+        suggestions = set()
+        if error_codes & {"TYP001", "TYP003", "TYP005", "TYP006", "TYP007", "TYP008"}:
+            suggestions.add("ail heal")
+        if error_codes & {"SEM002"}:
+            suggestions.add("ail docs AGENTS.md")
+        if error_codes & {"MOD003", "MOD004"}:
+            suggestions.add("ail docs STDLIB_REFERENCE.md")
+        if len(reporter.diagnostics) > 3:
+            suggestions.add("ail check")
+        
+        if suggestions:
+            lines.append("")
+            lines.append("Suggested next steps:")
+            for s in sorted(suggestions):
+                lines.append(f"  {s}")
+        
+        if file_path:
+            lines.append(f"\nFor more help: ail explain <ERROR_CODE>")
+        
+        return "\n".join(lines)

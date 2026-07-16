@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import Any
 
-VERSION = "1.0.5.2"
+VERSION = "1.0.8"
 
 LANGUAGE_RULES = {
     "no_loops": {
@@ -149,4 +149,79 @@ def get_language_context() -> dict[str, Any]:
         "stdlib": STDLIB_MODULES,
         "types": TYPES,
         "operators": OPERATORS,
+        "recommended_workflows": {
+            "new_project": [
+                "doctor",
+                "docs AGENTS.md",
+                "fmt",
+                "check",
+                "build",
+                "run",
+            ],
+            "type_error": [
+                "explain_diagnostic",
+                "heal",
+            ],
+            "forward_reference": [
+                "docs AGENTS.md",
+                "fmt",
+            ],
+            "many_errors": [
+                "check",
+            ],
+            "fresh_install": [
+                "doctor",
+                "docs AGENTS.md",
+                "context --json",
+            ],
+        },
+        "dx_tools": {
+            "doctor": {
+                "purpose": "Environment validation",
+                "recommended_when": ["fresh_install", "unexpected_behavior"],
+            },
+            "heal": {
+                "purpose": "Automatic fix suggestions",
+                "recommended_when": ["type_errors", "import_errors"],
+            },
+            "fmt": {
+                "purpose": "Canonical formatting",
+                "recommended_when": ["before_build"],
+            },
+            "check": {
+                "purpose": "Static validation",
+                "recommended_when": ["many_errors", "before_build"],
+            },
+            "docs": {
+                "purpose": "Documentation retrieval",
+                "recommended_when": ["learning", "forward_reference"],
+            },
+            "context": {
+                "purpose": "Machine-readable language context",
+                "recommended_when": ["ai_assisted_development"],
+            },
+            "mcp": {
+                "purpose": "AI tool integration via MCP",
+                "recommended_when": ["ai_assisted_development"],
+            },
+        },
+        "retrieval_policy": {
+            "allowed": [
+                "ail docs <DOCUMENT_NAME>",
+                "MCP get_document(name=<filename>)",
+                "ail context --json",
+                "ail doctor",
+                "ail heal",
+            ],
+            "forbidden": [
+                "local filesystem access",
+                "generated artifacts",
+                "source tree inspection",
+                "repository traversal",
+                "compiler/ directory",
+                "tools/ directory",
+                "tests/ directory",
+            ],
+            "note": "All information must be retrieved through CLI commands or MCP tools. Never access the local filesystem directly.",
+        },
     }

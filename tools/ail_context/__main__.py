@@ -11,7 +11,7 @@ import sys
 from pathlib import Path
 
 
-VERSION = "1.0.5.2"
+VERSION = "1.0.8"
 
 LANGUAGE_RULES = {
     "no_loops": {
@@ -131,6 +131,11 @@ def generate_json_context() -> dict:
             "language_spec_embedded": (docs_path / "LANGUAGE_SPEC.md").exists(),
             "stdlib_reference_embedded": (docs_path / "STDLIB_REFERENCE.md").exists(),
             "documents": ["AGENTS.md", "LANGUAGE_SPEC.md", "STDLIB_REFERENCE.md"],
+            "retrieval": {
+                "cli": "ail docs <DOCUMENT_NAME>",
+                "mcp": "get_document(name=<filename>)",
+                "note": "Use these commands to retrieve document content. Do not access filesystem directly.",
+            },
         }
     except Exception:
         documentation = {
@@ -138,6 +143,11 @@ def generate_json_context() -> dict:
             "language_spec_embedded": False,
             "stdlib_reference_embedded": False,
             "documents": ["AGENTS.md", "LANGUAGE_SPEC.md", "STDLIB_REFERENCE.md"],
+            "retrieval": {
+                "cli": "ail docs <DOCUMENT_NAME>",
+                "mcp": "get_document(name=<filename>)",
+                "note": "Use these commands to retrieve document content. Do not access filesystem directly.",
+            },
         }
 
     return {
@@ -150,6 +160,81 @@ def generate_json_context() -> dict:
         "stdlib": STDLIB_MODULES,
         "types": TYPES,
         "operators": OPERATORS,
+        "recommended_workflows": {
+            "new_project": [
+                "doctor",
+                "docs AGENTS.md",
+                "fmt",
+                "check",
+                "build",
+                "run",
+            ],
+            "type_error": [
+                "explain_diagnostic",
+                "heal",
+            ],
+            "forward_reference": [
+                "docs AGENTS.md",
+                "fmt",
+            ],
+            "many_errors": [
+                "check",
+            ],
+            "fresh_install": [
+                "doctor",
+                "docs AGENTS.md",
+                "context --json",
+            ],
+        },
+        "dx_tools": {
+            "doctor": {
+                "purpose": "Environment validation",
+                "recommended_when": ["fresh_install", "unexpected_behavior"],
+            },
+            "heal": {
+                "purpose": "Automatic fix suggestions",
+                "recommended_when": ["type_errors", "import_errors"],
+            },
+            "fmt": {
+                "purpose": "Canonical formatting",
+                "recommended_when": ["before_build"],
+            },
+            "check": {
+                "purpose": "Static validation",
+                "recommended_when": ["many_errors", "before_build"],
+            },
+            "docs": {
+                "purpose": "Documentation retrieval",
+                "recommended_when": ["learning", "forward_reference"],
+            },
+            "context": {
+                "purpose": "Machine-readable language context",
+                "recommended_when": ["ai_assisted_development"],
+            },
+            "mcp": {
+                "purpose": "AI tool integration via MCP",
+                "recommended_when": ["ai_assisted_development"],
+            },
+        },
+        "retrieval_policy": {
+            "allowed": [
+                "ail docs <DOCUMENT_NAME>",
+                "MCP get_document(name=<filename>)",
+                "ail context --json",
+                "ail doctor",
+                "ail heal",
+            ],
+            "forbidden": [
+                "local filesystem access",
+                "generated artifacts",
+                "source tree inspection",
+                "repository traversal",
+                "compiler/ directory",
+                "tools/ directory",
+                "tests/ directory",
+            ],
+            "note": "All information must be retrieved through CLI commands or MCP tools. Never access the local filesystem directly.",
+        },
     }
 
 
@@ -228,7 +313,7 @@ def main() -> int:
         "-o",
         type=str,
         default=None,
-        help="Output file path (markdown mode only, default: generated/PROJECT_CONTEXT.md)",
+        help="Output file path (markdown mode only, default: stdout)",
     )
 
     args = parser.parse_args()
@@ -243,18 +328,11 @@ def main() -> int:
 
     if args.output:
         output_path = Path(args.output)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text(content, encoding="utf-8")
+        print(f"Written to: {args.output}")
     else:
-        # Try to find project root, fallback to current directory
-        try:
-            from ail_platform.project import get_project_root
-            root = get_project_root()
-        except Exception:
-            root = Path.cwd()
-        output_path = root / "generated" / "PROJECT_CONTEXT.md"
-
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(content, encoding="utf-8")
-    print(f"Generated: {output_path}")
+        print(content)
     return 0
 
 

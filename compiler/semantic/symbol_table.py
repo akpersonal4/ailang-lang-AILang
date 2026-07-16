@@ -134,7 +134,12 @@ class SymbolTable:
         # Detect forward reference: name is a known function from another module or
         # a function defined later in this file.
         if name in self._all_function_names:
-            msg = f"Undefined identifier: {name} — this looks like a forward reference. Functions must be defined before their callers."
+            msg = (
+                f"Forward reference: '{name}' is used before its declaration.\n"
+                f"\n"
+                f"AILang requires bottom-up ordering. Move '{name}' above "
+                f"the function that calls it."
+            )
         else:
             msg = f"Undefined identifier: {name}"
 

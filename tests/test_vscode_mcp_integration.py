@@ -74,12 +74,13 @@ class TestMCPProtocol:
         })
         tools = resp["result"]["tools"]
         names = [t["name"] for t in tools]
-        assert len(tools) == 5
+        assert len(tools) == 6
         assert "get_language_context" in names
         assert "get_stdlib" in names
         assert "compile_source" in names
         assert "explain_diagnostic" in names
         assert "get_examples" in names
+        assert "get_document" in names
 
     def test_tools_have_schemas(self):
         resp = run_mcp_command({
@@ -313,7 +314,7 @@ class TestMCPClient:
         )
         out = self._run_node(script)
         assert "server=ailang-mcp" in out
-        assert "tools=5" in out
+        assert "tools=6" in out
 
     def test_client_calls_tool(self):
         py = self._py_path()
@@ -386,7 +387,7 @@ class TestMCPClient:
         )
         out = self._run_node(script)
         assert "state=running" in out
-        assert "tools=5" in out
+        assert "tools=6" in out
         assert "stopped=true" in out
 
 

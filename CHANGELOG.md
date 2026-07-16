@@ -1,5 +1,31 @@
 # Changelog
 
+## v1.0.8
+
+### M75.4 — Developer Experience & Discoverability
+
+- **Context-aware diagnostics**: Error output now shows specific next-step commands (e.g., `ail heal`, `ail docs AGENTS.md`)
+- **First-run experience**: New users see a welcome guide on first `ail` invocation, persisted to `~/.ail/state.json`
+- **`ail heal` tool**: New command providing fix suggestions for forward references, type errors, missing imports, import aliases, operator errors, loops, and environment setup
+- **Improved `ail doctor`**: Added checks for Python version, stdlib availability, docs, MCP server, LSP server, PATH, VS Code extension, and ailang package
+- **Enhanced `ail --help`**: Added "New to AILang?" onboarding section with recommended workflow
+- **Workflow metadata**: `ail context --json` and MCP `get_language_context` now include `recommended_workflows` and `dx_tools` metadata for AI-guided development
+- **Improved diagnostics**: `Diagnostic` dataclass now includes `next_steps` field; `DiagnosticFormatter` provides `format_summary()` and `suggest_next_steps()` methods
+- **Tests**: 27 new tests for diagnostics, context, heal, first-run, doctor, and path-leakage prevention
+
+### M75.5 — Remove Local Path Leakage
+
+- **Path leakage audit**: Systematic scan of entire repository for absolute paths, developer-specific filesystem references, and internal structure hints
+- **Fixed `ail doctor`**: Now prints to stdout instead of writing to `generated/DOCTOR_REPORT.md`; removed path disclosure from `ail CLI` check
+- **Fixed `ail context`**: Now prints to stdout by default; `--output` flag available for explicit file writes
+- **Added `retrieval_policy`**: Both `ail context --json` and MCP `get_language_context` now include explicit policy declaring allowed/forbidden retrieval methods
+- **Sanitized benchmark metadata**: Replaced all absolute paths with relative paths in `benchmarks/datasets/`
+- **Sanitized reports**: Replaced absolute paths with relative paths in `reports/DEPENDENCY_ORDERING_REPORT.md` and `reports/dependency_ordering.md`
+- **Sanitized docs**: Cleaned absolute paths from `docs/research/M63_FALSE_POSITIVE_ANALYSIS.md` and `docs/releases/M63_AIL_CHECK_REPORT.md`
+- **Cleaned profile data**: Sanitized `tools/python_profile_data.json` (65+ absolute path entries)
+- **Cleaned rename manifests**: Sanitized `.ail/rename/` manifest files
+- **Path-leak-free tests**: 6 new tests verifying no local paths leak through `ail context`, `ail doctor`, `ail heal`, or benchmark metadata
+
 ## v1.0.7
 
 ### M75.3 — Type Inference & Discoverability

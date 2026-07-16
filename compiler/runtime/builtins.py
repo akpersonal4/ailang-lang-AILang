@@ -425,6 +425,14 @@ def system_exit(args: tuple[RuntimeValue, ...]) -> None:
     sys.exit(code)
 
 
+def io_read(args: tuple[RuntimeValue, ...]) -> str:
+    """Read a line from stdin."""
+    try:
+        return input()
+    except EOFError:
+        return ""
+
+
 BUILTINS: dict[str, Any] = {
     "print": print_builtin,
     "list_new": list_new,
@@ -495,4 +503,5 @@ BUILTINS: dict[str, Any] = {
     "__native_to_int": native_to_int,
     "__native_to_string": native_to_string,
     "system_exit": system_exit,
+    "io_read": io_read,
 }

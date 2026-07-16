@@ -2,11 +2,11 @@
   "metadata": {
     "tool": "ail_order",
     "version": "0.1.0",
-    "timestamp": "2026-07-15T20:23:21.804054+00:00"
+    "timestamp": "2026-07-16T20:26:15.381660+00:00"
   },
   "summary": {
     "total": 16,
-    "functions": 103,
+    "functions": 104,
     "errors": 0,
     "warnings": 0,
     "cycles": 0
@@ -16,7 +16,7 @@
       "metadata": {
         "tool": "ail_order",
         "version": "0.1.0",
-        "timestamp": "2026-07-15T20:23:21.804054+00:00"
+        "timestamp": "2026-07-16T20:26:15.381660+00:00"
       },
       "summary": {
         "total": 7,
@@ -104,7 +104,7 @@
       "metadata": {
         "tool": "ail_order",
         "version": "0.1.0",
-        "timestamp": "2026-07-15T20:23:21.804054+00:00"
+        "timestamp": "2026-07-16T20:26:15.381660+00:00"
       },
       "summary": {
         "total": 4,
@@ -163,7 +163,7 @@
       "metadata": {
         "tool": "ail_order",
         "version": "0.1.0",
-        "timestamp": "2026-07-15T20:23:21.804054+00:00"
+        "timestamp": "2026-07-16T20:26:15.381660+00:00"
       },
       "summary": {
         "total": 3,
@@ -215,7 +215,7 @@
       "metadata": {
         "tool": "ail_order",
         "version": "0.1.0",
-        "timestamp": "2026-07-15T20:23:21.804054+00:00"
+        "timestamp": "2026-07-16T20:26:15.381660+00:00"
       },
       "summary": {
         "total": 3,
@@ -267,7 +267,7 @@
       "metadata": {
         "tool": "ail_order",
         "version": "0.1.0",
-        "timestamp": "2026-07-15T20:23:21.804054+00:00"
+        "timestamp": "2026-07-16T20:26:15.381660+00:00"
       },
       "summary": {
         "total": 6,
@@ -346,10 +346,10 @@
       "metadata": {
         "tool": "ail_order",
         "version": "0.1.0",
-        "timestamp": "2026-07-15T20:23:21.804054+00:00"
+        "timestamp": "2026-07-16T20:26:15.381660+00:00"
       },
       "summary": {
-        "total": 3,
+        "total": 4,
         "errors": 0,
         "warnings": 0,
         "cycles": 0,
@@ -360,7 +360,8 @@
         "0": [
           "write",
           "writeln",
-          "println"
+          "println",
+          "read"
         ]
       },
       "functions": [
@@ -387,6 +388,14 @@
           "calls": [
             "print"
           ]
+        },
+        {
+          "name": "read",
+          "line": 15,
+          "level": 0,
+          "calls": [
+            "io_read"
+          ]
         }
       ],
       "cycles": [],
@@ -398,7 +407,7 @@
       "metadata": {
         "tool": "ail_order",
         "version": "0.1.0",
-        "timestamp": "2026-07-15T20:23:21.804054+00:00"
+        "timestamp": "2026-07-16T20:26:15.381660+00:00"
       },
       "summary": {
         "total": 2,
@@ -441,7 +450,7 @@
       "metadata": {
         "tool": "ail_order",
         "version": "0.1.0",
-        "timestamp": "2026-07-15T20:23:21.804054+00:00"
+        "timestamp": "2026-07-16T20:26:15.381660+00:00"
       },
       "summary": {
         "total": 23,
@@ -673,7 +682,7 @@
       "metadata": {
         "tool": "ail_order",
         "version": "0.1.0",
-        "timestamp": "2026-07-15T20:23:21.804054+00:00"
+        "timestamp": "2026-07-16T20:26:15.381660+00:00"
       },
       "summary": {
         "total": 10,
@@ -788,7 +797,7 @@
       "metadata": {
         "tool": "ail_order",
         "version": "0.1.0",
-        "timestamp": "2026-07-15T20:23:21.804054+00:00"
+        "timestamp": "2026-07-16T20:26:15.381660+00:00"
       },
       "summary": {
         "total": 7,
@@ -862,7 +871,7 @@
       "metadata": {
         "tool": "ail_order",
         "version": "0.1.0",
-        "timestamp": "2026-07-15T20:23:21.804054+00:00"
+        "timestamp": "2026-07-16T20:26:15.381660+00:00"
       },
       "summary": {
         "total": 5,
@@ -932,7 +941,7 @@
       "metadata": {
         "tool": "ail_order",
         "version": "0.1.0",
-        "timestamp": "2026-07-15T20:23:21.804054+00:00"
+        "timestamp": "2026-07-16T20:26:15.381660+00:00"
       },
       "summary": {
         "total": 3,
@@ -984,7 +993,7 @@
       "metadata": {
         "tool": "ail_order",
         "version": "0.1.0",
-        "timestamp": "2026-07-15T20:23:21.804054+00:00"
+        "timestamp": "2026-07-16T20:26:15.381660+00:00"
       },
       "summary": {
         "total": 6,
@@ -1063,7 +1072,7 @@
       "metadata": {
         "tool": "ail_order",
         "version": "0.1.0",
-        "timestamp": "2026-07-15T20:23:21.804054+00:00"
+        "timestamp": "2026-07-16T20:26:15.381660+00:00"
       },
       "summary": {
         "total": 16,
@@ -1214,7 +1223,7 @@
       "metadata": {
         "tool": "ail_order",
         "version": "0.1.0",
-        "timestamp": "2026-07-15T20:23:21.804054+00:00"
+        "timestamp": "2026-07-16T20:26:15.381660+00:00"
       },
       "summary": {
         "total": 1,
@@ -1248,7 +1257,7 @@
       "metadata": {
         "tool": "ail_order",
         "version": "0.1.0",
-        "timestamp": "2026-07-15T20:23:21.804054+00:00"
+        "timestamp": "2026-07-16T20:26:15.381660+00:00"
       },
       "summary": {
         "total": 4,

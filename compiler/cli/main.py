@@ -30,7 +30,77 @@ from compiler.runtime import builtins as runtime_builtins
 from compiler.runtime.interpreter import Runtime
 
 PROG = "ail"
-VERSION = "1.0.7"
+VERSION = "1.0.8"
+
+
+# =============================================================================
+# First-run experience
+# =============================================================================
+
+
+def _get_config_dir() -> Path:
+    """Get the AILang config directory (~/.ail)."""
+    config_dir = Path.home() / ".ail"
+    config_dir.mkdir(exist_ok=True)
+    return config_dir
+
+
+def _get_state_file() -> Path:
+    """Get the state file path (~/.ail/state.json)."""
+    return _get_config_dir() / "state.json"
+
+
+def _load_state() -> dict:
+    """Load the state file, returning empty dict if not found."""
+    import json
+    state_file = _get_state_file()
+    if state_file.exists():
+        try:
+            return json.loads(state_file.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            return {}
+    return {}
+
+
+def _save_state(state: dict) -> None:
+    """Save the state file."""
+    import json
+    state_file = _get_state_file()
+    state_file.write_text(json.dumps(state, indent=2), encoding="utf-8")
+
+
+def _is_first_run() -> bool:
+    """Check if this is the first run of AILang."""
+    state = _load_state()
+    return not state.get("onboarded", False)
+
+
+def _mark_onboarded() -> None:
+    """Mark the first-run experience as completed."""
+    state = _load_state()
+    state["onboarded"] = True
+    state["version"] = VERSION
+    _save_state(state)
+
+
+def _show_welcome() -> None:
+    """Display the first-run welcome message."""
+    print(f"""
+Welcome to AILang.
+
+Recommended startup sequence:
+
+  1. ail doctor          Check your environment
+  2. ail docs AGENTS     Read the AI agent instructions
+  3. ail context --json  Get machine-readable language context
+  4. ail fmt             Format your code
+  5. ail check           Validate before building
+  6. ail build           Compile and check for errors
+  7. ail run             Compile and execute
+
+For more help: ail --help
+""")
+    _mark_onboarded()
 
 
 def _find_stdlib() -> Path:
@@ -153,6 +223,10 @@ def _compile(
             formatter = DiagnosticFormatter()
             for diagnostic in reporter.diagnostics:
                 print(formatter.format(diagnostic), file=sys.stderr)
+            # Print summary with next steps
+            summary = DiagnosticFormatter.format_summary(reporter, str(source_path))
+            if summary:
+                print(f"\n{summary}", file=sys.stderr)
         return None, reporter
 
     return session, reporter
@@ -1163,6 +1237,34 @@ def cmd_test(args: list[str]) -> int:
         ail test --verbose               Print per-test names and output
         ail test --root <dir>            Set project root for module resolution
         ail test --no-check              Skip pre-flight ordering check
+
+    Examples:
+        # Run tests in current project
+        ail test
+
+        # Run tests for a specific application
+        ail test --root apps/inventory
+
+        # Run tests from application directory
+        cd apps/inventory
+        ail test
+
+        # Run a specific test file
+        ail test apps/inventory/tests/test_supplier.ail
+
+    Supported Patterns:
+        - test_*.ail
+        - *_test.ail
+
+    Excluded Directories:
+        - .ail/ (internal backups)
+        - backups/
+        - __pycache__/
+        - dist/
+        - build/
+        - .git/
+        - node_modules/
+        - .venv/
     """
     import io
 
@@ -1194,14 +1296,30 @@ def cmd_test(args: list[str]) -> int:
     if root_override is None:
         root_override = str(Path.cwd())
 
+# Directories to exclude from test discovery
+    _TEST_EXCLUDE_DIRS = {".ail", "backups", "__pycache__", "dist", "build", ".git", "node_modules", ".venv", ".venv_test"}
+
+    def _should_exclude_path(path: Path) -> bool:
+        """Check if a path should be excluded from test discovery."""
+        for part in path.parts:
+            if part in _TEST_EXCLUDE_DIRS:
+                return True
+        return False
+
     # Collect test files
-    test_files: list[Path] = []
+    patterns = ["test_*.ail", "*_test.ail"]
+    test_files_set: set[Path] = set()
     if not paths:
         root = Path.cwd()
-        for f in sorted(root.glob("test_*.ail")):
-            test_files.append(f)
-        if not test_files:
-            print("No test_*.ail files found", file=sys.stderr)
+        for pattern in patterns:
+            for f in sorted(root.rglob(pattern)):
+                if not _should_exclude_path(f):
+                    test_files_set.add(f)
+        if not test_files_set:
+            print("No tests found", file=sys.stderr)
+            print("Supported patterns:", file=sys.stderr)
+            print("- test_*.ail", file=sys.stderr)
+            print("- *_test.ail", file=sys.stderr)
             return 1
     else:
         for p in paths:
@@ -1210,16 +1328,22 @@ def cmd_test(args: list[str]) -> int:
                 print(f"Error: not found: {path}", file=sys.stderr)
                 return 1
             if path.is_dir():
-                for f in sorted(path.glob("test_*.ail")):
-                    test_files.append(f)
+                for pattern in patterns:
+                    for f in sorted(path.rglob(pattern)):
+                        if not _should_exclude_path(f):
+                            test_files_set.add(f)
             elif path.suffix == ".ail":
-                test_files.append(path)
+                test_files_set.add(path)
             else:
                 print(f"Error: not an .ail file: {path}", file=sys.stderr)
                 return 1
 
+    test_files = sorted(test_files_set)
     if not test_files:
-        print("No test files found", file=sys.stderr)
+        print("No tests found", file=sys.stderr)
+        print("Supported patterns:", file=sys.stderr)
+        print("- test_*.ail", file=sys.stderr)
+        print("- *_test.ail", file=sys.stderr)
         return 1
 
     # Auto-check: detect forward references and ordering violations before test execution
@@ -1267,6 +1391,32 @@ def cmd_test(args: list[str]) -> int:
                 formatter = DiagnosticFormatter()
                 for diagnostic in reporter.diagnostics:
                     print("  " + formatter.format(diagnostic), file=sys.stderr)
+            
+            # Check for common import-related errors and provide guidance
+            has_import_error = False
+            suggested_root = None
+            for diagnostic in reporter.diagnostics:
+                msg = diagnostic.get("message", "")
+                if "Symbol not found in module" in msg or "Undefined identifier" in msg:
+                    # Check if this looks like an app-local import
+                    file_path = Path(test_file)
+                    parts = file_path.parts
+                    # Look for apps/<app_name>/tests/ pattern
+                    if "apps" in parts and "tests" in parts:
+                        apps_idx = parts.index("apps")
+                        tests_idx = parts.index("tests")
+                        if tests_idx > apps_idx:
+                            app_name = parts[apps_idx + 1]
+                            suggested_root = f"apps/{app_name}"
+                            has_import_error = True
+            
+            if has_import_error and suggested_root:
+                print(f"\n  Hint: This appears to be an application-local import.", file=sys.stderr)
+                print(f"  Try running with --root flag:", file=sys.stderr)
+                print(f"    ail test --root {suggested_root}", file=sys.stderr)
+                print(f"  Or run from the application directory:", file=sys.stderr)
+                print(f"    cd {suggested_root}", file=sys.stderr)
+                print(f"    ail test", file=sys.stderr)
             continue
 
         # Execute the test file
@@ -1499,6 +1649,16 @@ def _run_dx_tool(module_name: str, args: list[str]) -> int:
     ).returncode
 
 
+def cmd_heal(args: list[str]) -> int:
+    """Get fix suggestions for common errors.
+
+    Usage:
+        ail heal                  List available topics
+        ail heal <topic>          Show fix suggestions for a topic
+    """
+    return _run_dx_tool("tools.ail_heal", args)
+
+
 def cmd_doctor(args: list[str]) -> int:
     """Run repository health checks.
 
@@ -1601,6 +1761,7 @@ def cmd_help(args: list[str]) -> int:
     print()
     print("Developer Tools:")
     print(f"  doctor              Run repository health checks")
+    print(f"  heal                Get fix suggestions for common errors")
     print(f"  docs [<name>]       Retrieve AILang documentation (no filesystem access)")
     print(f"  context [--json]    Generate AI-friendly project context (use --json for machine-readable)")
     print(f"  mcp                 Start MCP server for AI tool integration (stdio transport)")
@@ -1622,6 +1783,18 @@ def cmd_help(args: list[str]) -> int:
     print(f"  {PROG} doctor")
     print(f"  {PROG} --version")
     print(f"  {PROG} --help")
+    print()
+    print("New to AILang?")
+    print()
+    print("Recommended workflow:")
+    print()
+    print(f"  {PROG} doctor              # 1. Check your environment")
+    print(f"  {PROG} docs AGENTS         # 2. Read the AI agent instructions")
+    print(f"  {PROG} context --json      # 3. Get machine-readable language context")
+    print(f"  {PROG} fmt                 # 4. Format your code")
+    print(f"  {PROG} check               # 5. Validate before building")
+    print(f"  {PROG} build               # 6. Compile and check for errors")
+    print(f"  {PROG} run                 # 7. Compile and execute")
     return 0
 
 
@@ -1652,6 +1825,7 @@ def main(argv: list[str] | None = None) -> int:
         "version": cmd_version,
         "help": cmd_help,
         "doctor": cmd_doctor,
+        "heal": cmd_heal,
         "docs": cmd_docs,
         "context": cmd_context,
         "mcp": cmd_mcp,
@@ -1661,8 +1835,17 @@ def main(argv: list[str] | None = None) -> int:
         "testgen": cmd_testgen,
     }
 
+    # Check for first run (skip for version/help/help flags)
     if argv is None:
         argv = sys.argv[1:]
+    
+    skip_first_run_check = (
+        not argv
+        or argv[0] in ("-v", "--version", "-h", "--help", "help", "version")
+    )
+    
+    if not skip_first_run_check and _is_first_run():
+        _show_welcome()
 
     if not argv:
         cmd_help([])

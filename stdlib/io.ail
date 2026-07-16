@@ -12,3 +12,7 @@ fn println(value) {
     print(value)
     return value
 }
+
+fn read() {
+    return io_read()
+}

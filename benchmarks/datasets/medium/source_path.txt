@@ -1,1 +1,1 @@
-C:\Users\aleckhan\Projects\AiLang_New\apps\inventory_mgmt
+apps/inventory_mgmt

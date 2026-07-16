@@ -1,6 +1,6 @@
 {
   "name": "small",
-  "description": "Project at C:\\Users\\aleckhan\\Projects\\AiLang_New\\apps\\calculator",
+  "description": "Calculator app - simple arithmetic expressions",
   "language": "ailang",
   "loc": 13,
   "file_count": 1,
@@ -10,5 +10,5 @@
   "variable_count": 0,
   "doc_size_bytes": 372,
   "dependency_count": 0,
-  "path": "C:\\Users\\aleckhan\\Projects\\AiLang_New\\apps\\calculator"
+  "path": "apps/calculator"
 }

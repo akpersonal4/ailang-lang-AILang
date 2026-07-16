@@ -10,7 +10,7 @@ until this document has been reviewed. Update AGENTS.md reading order after revi
 
 | Attribute | Value |
 |:----------|:------|
-| **Current Version** | v1.0.7 |
+| **Current Version** | v1.0.8 |
 | **Current Milestone** | M75.3 — Type Inference & Discoverability |
 | **Project Phase** | Public Beta |
 
@@ -25,7 +25,7 @@ until this document has been reviewed. Update AGENTS.md reading order after revi
 | Platform Services | 100% |
 | Platform Integration | 100% |
 | VS Code Extension | v0.3.0 — syntax highlighting, LSP, MCP integration, 7 commands, status bar |
-| MCP Server | v1.0.7 — 6 tools, JSON-RPC 2.0 over stdio, 12 example categories |
+| MCP Server | v1.0.8 — 6 tools, JSON-RPC 2.0 over stdio, 12 example categories |
 | Documentation | 100% |
 | Governance | 100% |
 | Validation Framework | 100% |
@@ -489,5 +489,5 @@ Every document type has exactly one owner. If you need to add information, first
 | Field | Value |
 |:------|:------|
 | **Date** | 2026-07-16 |
-| **Version** | v1.0.7 |
+| **Version** | v1.0.8 |
 | **Milestone** | M75.3 — Type Inference & Discoverability |

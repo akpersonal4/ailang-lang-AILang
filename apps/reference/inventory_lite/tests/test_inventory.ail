@@ -2,6 +2,7 @@ import list;
 import map;
 import io;
 import convert;
+import json;
 
 fn create_product(id, name, price, stock) {
     let product = map.new();
@@ -19,7 +20,7 @@ fn add_product(products, id, name, price, stock) {
 }
 
 fn find_product_helper(products, id, index) {
-    if (index >= list.len(products)) { return none }
+    if (index >= list.len(products)) { return json.parse("null") }
     let item = list.get(products, index);
     if (map.get(item, "id") == id) { return item }
     return find_product_helper(products, id, index + 1)
@@ -31,7 +32,8 @@ fn find_product(products, id) {
 
 fn stock_in(products, id, qty) {
     let item = find_product(products, id);
-    if (item != none) {
+    let null_val = json.parse("null");
+    if (item != null_val) {
         let current = map.get(item, "stock");
         map.set(item, "stock", current + qty)
     };
@@ -40,7 +42,8 @@ fn stock_in(products, id, qty) {
 
 fn stock_out(products, id, qty) {
     let item = find_product(products, id);
-    if (item != none) {
+    let null_val = json.parse("null");
+    if (item != null_val) {
         let current = map.get(item, "stock");
         map.set(item, "stock", current - qty)
     };
@@ -92,11 +95,12 @@ fn test_add_and_find() {
         io.writeln("PASS: add_product count")
     };
     let found = find_product(inv, 1);
-    if (found != none) {
+    let null_val = json.parse("null");
+    if (found != null_val) {
         io.writeln("PASS: find_product found")
     };
     let missing = find_product(inv, 99);
-    if (missing == none) {
+    if (missing == null_val) {
         io.writeln("PASS: find_product missing")
     }
 }

@@ -5,8 +5,8 @@ import subprocess
 from pathlib import Path
 
 
-def test_doctor_tool_generates_file():
-    """The ail doctor tool should generate DOCTOR_REPORT.md."""
+def test_doctor_tool_prints_to_stdout():
+    """The ail doctor tool should print report to stdout."""
     result = subprocess.run(
         [sys.executable, "-m", "tools.ail_doctor"],
         capture_output=True,
@@ -14,25 +14,20 @@ def test_doctor_tool_generates_file():
     )
     assert result.returncode == 0, f"Tool failed: {result.stderr}"
 
-    output_path = Path(__file__).parent.parent / "generated" / "DOCTOR_REPORT.md"
-    assert output_path.exists(), "DOCTOR_REPORT.md was not created"
-
-    content = output_path.read_text(encoding="utf-8")
+    content = result.stdout
+    assert "AILang Doctor Report" in content
     assert "Repository Health Score" in content
-    assert "Documentation Health Score" in content
-    assert "Project Health Score" in content
-    assert "Archive Candidates" in content
-    assert "Duplicate Candidates" in content
-    assert "Version Consistency" in content
+    assert "Environment" in content
+    assert "Components" in content
+    assert "Warnings" in content
+    assert "Recommendations" in content
 
 
 def test_doctor_is_read_only():
     """The doctor tool should be read-only and never modify source files."""
-    # Get list of files before running
     root = Path(__file__).parent.parent
     all_files_before = set(str(p.relative_to(root)) for p in root.rglob("*") if p.is_file())
 
-    # Run the tool
     result = subprocess.run(
         [sys.executable, "-m", "tools.ail_doctor"],
         capture_output=True,
@@ -40,29 +35,30 @@ def test_doctor_is_read_only():
     )
     assert result.returncode == 0
 
-    # Get list of files after running
     all_files_after = set(str(p.relative_to(root)) for p in root.rglob("*") if p.is_file())
 
-    # Files should be unchanged (no new source files created, no existing files modified)
-    # We allow generated files to be created
     new_files = all_files_after - all_files_before
     non_generated_new_files = [f for f in new_files if not f.startswith("generated/")]
     assert len(non_generated_new_files) == 0, f"Unexpected new files: {non_generated_new_files}"
 
 
 def test_doctor_report_sections():
-    """The generated report should contain all required sections."""
-    output_path = Path(__file__).parent.parent / "generated" / "DOCTOR_REPORT.md"
-    content = output_path.read_text(encoding="utf-8")
+    """The report should contain all required sections."""
+    result = subprocess.run(
+        [sys.executable, "-m", "tools.ail_doctor"],
+        capture_output=True,
+        text=True,
+    )
+    content = result.stdout
 
     required_sections = [
+        "## Environment",
+        "## Components",
         "## Warnings",
         "## Errors",
         "## Recommendations",
-        "## Archive Candidates",
-        "## Duplicate Candidates",
-        "## Missing References",
         "## Version Consistency",
+        "## Next Steps",
     ]
 
     for section in required_sections:
@@ -71,11 +67,14 @@ def test_doctor_report_sections():
 
 def test_doctor_score_format():
     """The health score should be in X/100 format."""
-    output_path = Path(__file__).parent.parent / "generated" / "DOCTOR_REPORT.md"
-    content = output_path.read_text(encoding="utf-8")
+    result = subprocess.run(
+        [sys.executable, "-m", "tools.ail_doctor"],
+        capture_output=True,
+        text=True,
+    )
+    content = result.stdout
 
-    # Check for score pattern
     import re
     score_pattern = r"\*\*(\d+)/100\*\*"
     scores = re.findall(score_pattern, content)
-    assert len(scores) >= 3, "Expected at least 3 health scores"
+    assert len(scores) >= 1, "Expected at least 1 health score"

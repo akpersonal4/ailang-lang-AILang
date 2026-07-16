@@ -5,7 +5,10 @@
 
 import hashlib
 import json
+import os
 import re
+import shutil
+import sys
 from pathlib import Path
 
 from ail_platform.project import get_project_root, read_file_safe
@@ -243,6 +246,107 @@ def check_orphan_documents(root: Path) -> list[Path]:
     return orphan_docs
 
 
+def check_python_version() -> dict:
+    """Check Python version compatibility."""
+    version = sys.version_info
+    required = (3, 11)
+    return {
+        "current": f"{version.major}.{version.minor}.{version.micro}",
+        "required": f"{required[0]}.{required[1]}",
+        "ok": version >= required,
+    }
+
+
+def check_stdlib_available(root: Path) -> list[dict]:
+    """Check if standard library modules are available."""
+    missing = []
+    expected = [
+        "stdlib/io.ail",
+        "stdlib/list.ail",
+        "stdlib/map.ail",
+        "stdlib/string.ail",
+        "stdlib/math.ail",
+        "stdlib/json.ail",
+        "stdlib/system.ail",
+        "stdlib/convert.ail",
+        "stdlib/environment.ail",
+    ]
+    for mod in expected:
+        if not (root / mod).exists():
+            missing.append({"module": mod})
+    return missing
+
+
+def check_docs_available(root: Path) -> list[dict]:
+    """Check if embedded documentation is available."""
+    missing = []
+    docs_dir = root / "compiler" / "docs"
+    expected = ["AGENTS.md", "LANGUAGE_SPEC.md", "STDLIB_REFERENCE.md"]
+    for doc in expected:
+        if not (docs_dir / doc).exists():
+            missing.append({"document": doc})
+    return missing
+
+
+def check_mcp_available(root: Path) -> dict:
+    """Check if MCP server is available."""
+    mcp_dir = root / "tools" / "ail_mcp"
+    server_exists = (mcp_dir / "server.py").exists()
+    adapter_exists = (mcp_dir / "context_adapter.py").exists()
+    return {
+        "server_exists": server_exists,
+        "adapter_exists": adapter_exists,
+        "ok": server_exists and adapter_exists,
+    }
+
+
+def check_lsp_available(root: Path) -> dict:
+    """Check if LSP server is available."""
+    lsp_dir = root / "compiler" / "lsp"
+    server_exists = (lsp_dir / "server.py").exists()
+    return {
+        "server_exists": server_exists,
+        "ok": server_exists,
+    }
+
+
+def check_ail_on_path() -> dict:
+    """Check if 'ail' command is on PATH."""
+    ail_path = shutil.which("ail")
+    return {
+        "found": ail_path is not None,
+    }
+
+
+def check_vscode_extension(root: Path) -> dict:
+    """Check if VS Code extension is available."""
+    ext_dir = root / "extensions" / "vscode-ailang"
+    pkg_file = ext_dir / "package.json"
+    if not pkg_file.exists():
+        return {"installed": False, "ok": False}
+    content = read_file_safe(pkg_file)
+    if not content:
+        return {"installed": False, "ok": False}
+    try:
+        pkg = json.loads(content)
+        return {
+            "installed": True,
+            "version": pkg.get("version", "unknown"),
+            "ok": True,
+        }
+    except json.JSONDecodeError:
+        return {"installed": True, "version": "parse_error", "ok": False}
+
+
+def check_ail_package() -> dict:
+    """Check if the ailang Python package is installed."""
+    try:
+        import ailang
+        return {"installed": True, "version": getattr(ailang, "__version__", "unknown"), "ok": True}
+    except ImportError:
+        return {"installed": False, "version": None, "ok": False}
+
+
 def generate_report() -> str:
     """Generate the DOCTOR_REPORT.md content."""
     root = get_project_root()
@@ -255,10 +359,35 @@ def generate_report() -> str:
     large_files = check_large_generated_files(root)
     version_issues = check_version_consistency(root)
     orphan_docs = check_orphan_documents(root)
+    python_version = check_python_version()
+    stdlib_missing = check_stdlib_available(root)
+    docs_missing = check_docs_available(root)
+    mcp = check_mcp_available(root)
+    lsp = check_lsp_available(root)
+    ail_path = check_ail_on_path()
+    vscode = check_vscode_extension(root)
+    ail_pkg = check_ail_package()
 
     # Compute scores (simple metric: fewer issues = higher score)
-    total_issues = len(broken_links) + len(missing_files) + len(duplicate_files) + len(empty_files) + len(large_files) + len(version_issues) + len(orphan_docs)
-    health_score = max(0, 100 - total_issues * 2)
+    issues = (
+        len(broken_links) + len(missing_files) + len(duplicate_files) +
+        len(empty_files) + len(large_files) + len(version_issues) +
+        len(orphan_docs) + len(stdlib_missing) + len(docs_missing)
+    )
+    if not python_version["ok"]:
+        issues += 3
+    if not mcp["ok"]:
+        issues += 2
+    if not lsp["ok"]:
+        issues += 2
+    if not ail_path["found"]:
+        issues += 2
+    if not vscode["ok"]:
+        issues += 1
+    if not ail_pkg["ok"]:
+        issues += 2
+
+    health_score = max(0, 100 - issues * 2)
 
     lines = [
         "# AILang Doctor Report",
@@ -269,13 +398,19 @@ def generate_report() -> str:
         "",
         f"**{health_score}/100**",
         "",
-        "## Documentation Health Score",
+        "## Environment",
         "",
-        f"**{health_score}/100**",
+        f"- **Python**: {python_version['current']} {'OK' if python_version['ok'] else 'ERROR: need ' + python_version['required'] + '+'}",
+        f"- **ail CLI**: {'OK' if ail_path['found'] else 'NOT ON PATH (run: pip install -e .)'}",
+        f"- **ailang package**: {'v' + ail_pkg['version'] if ail_pkg['ok'] else 'NOT INSTALLED (run: pip install -e .)'}",
+        f"- **VS Code extension**: {'v' + vscode.get('version', '?') if vscode['ok'] else 'NOT INSTALLED'}",
         "",
-        "## Project Health Score",
+        "## Components",
         "",
-        f"**{health_score}/100**",
+        f"- **MCP server**: {'OK' if mcp['ok'] else 'MISSING'}",
+        f"- **LSP server**: {'OK' if lsp['ok'] else 'MISSING'}",
+        f"- **Embedded docs**: {'OK' if not docs_missing else 'MISSING: ' + ', '.join(d['document'] for d in docs_missing)}",
+        f"- **Standard library**: {'OK' if not stdlib_missing else 'MISSING: ' + ', '.join(d['module'] for d in stdlib_missing)}",
         "",
         "## Warnings",
         "",
@@ -333,8 +468,24 @@ def generate_report() -> str:
         lines.append("- Remove or populate empty files")
     if large_files:
         lines.append("- Consider splitting or archiving large generated files")
+    if not python_version["ok"]:
+        lines.append(f"- Upgrade Python to {python_version['required']}+ (current: {python_version['current']})")
+    if stdlib_missing:
+        lines.append("- Run `ail new <project>` to generate stdlib, or copy from existing project")
+    if docs_missing:
+        lines.append("- Reinstall ailang: `pip install -e .` to restore embedded docs")
+    if not mcp["ok"]:
+        lines.append("- Ensure tools/ail_mcp/ directory exists with server.py")
+    if not lsp["ok"]:
+        lines.append("- Ensure compiler/lsp/ directory exists with server.py")
+    if not ail_path["found"]:
+        lines.append("- Install ail CLI: `pip install -e .` or check PATH")
+    if not vscode["ok"]:
+        lines.append("- Install VS Code extension: `cd extensions/vscode-ailang && npm install && npm run package`")
+    if not ail_pkg["ok"]:
+        lines.append("- Install ailang package: `pip install -e .`")
 
-    if not any([orphan_docs, version_issues, missing_files, broken_links, duplicate_files, empty_files, large_files]):
+    if not any([orphan_docs, version_issues, missing_files, broken_links, duplicate_files, empty_files, large_files, stdlib_missing, docs_missing, not python_version["ok"], not mcp["ok"], not lsp["ok"], not ail_path["found"], not vscode["ok"], not ail_pkg["ok"]]):
         lines.append("- Repository is healthy!")
 
     lines.append("")
@@ -391,6 +542,22 @@ def generate_report() -> str:
 
     lines.extend([
         "",
+        "## Next Steps",
+        "",
+    ])
+
+    if issues == 0:
+        lines.append("Your environment is healthy! Try:")
+        lines.append("")
+        lines.append("  ail docs AGENTS         # Read the AI agent instructions")
+        lines.append("  ail context --json      # Get machine-readable language context")
+        lines.append("  ail new myproject       # Create a new project")
+    else:
+        lines.append("Fix the issues above, then re-run `ail doctor` to verify.")
+        lines.append("If problems persist, run `ail heal` for diagnostic guidance.")
+
+    lines.extend([
+        "",
         "---",
         "_This report was generated by the `ail doctor` tool._",
         "",
@@ -401,14 +568,8 @@ def generate_report() -> str:
 
 def main() -> int:
     """Main entry point for the ail doctor tool."""
-    root = get_project_root()
-    output_path = root / "generated" / "DOCTOR_REPORT.md"
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-
     content = generate_report()
-    output_path.write_text(content, encoding="utf-8")
-    print(f"Generated: {output_path}")
-
+    print(content)
     return 0
 
 

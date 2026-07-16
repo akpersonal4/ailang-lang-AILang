@@ -235,3 +235,70 @@ The project remains tightly aligned with:
 > **AI-assisted, deterministic, low-maintenance business software development.**
 
 Features that damage determinism, add unmeasured complexity, or solve no observed pain point are out of scope for v1.x.
+
+---
+
+## 9. Known Patterns and Limitations
+
+### 9.1 Map Creation
+
+AILang does not support map literal syntax like `{"id": 1}`. Use the `map.*` API instead:
+
+**Unsupported:**
+```
+let product = {"id": 1, "name": "Widget"}
+```
+
+**Supported:**
+```
+let product = map.new()
+map.set(product, "id", 1)
+map.set(product, "name", "Widget")
+```
+
+### 9.2 Type Inference
+
+AILang uses type inference but has known limitations:
+
+- **Boolean return types:** Functions returning `true`, `false`, or boolean expressions (`x < 10`) are correctly inferred as returning `bool`.
+- **Parameter types:** Function parameters are inferred from usage, not from annotations.
+- **Comparison operators:** `==`, `!=`, `<`, `>`, `<=`, `>=` return `bool` when both operands are the same type.
+- **Arithmetic operators:** `+`, `-`, `*`, `/`, `%` return `int` for integer operands, `float` if either operand is float.
+- **String concatenation:** Use `+` operator. `string.concat` takes exactly 2 arguments.
+
+### 9.3 Standard Library Patterns
+
+Common stdlib usage patterns:
+
+```
+# List operations
+let items = list.new()
+list.append(items, value)
+let count = list.len(items)
+
+# Map operations
+let data = map.new()
+map.set(data, "key", value)
+if map.has(data, "key")
+    let val = map.get(data, "key")
+end
+
+# File I/O
+let content = file.read("data.txt")
+file.write("output.txt", content)
+
+# Stdin
+let name = io.read()
+```
+
+### 9.4 Error Messages
+
+Common error messages and their fixes:
+
+| Error | Meaning | Fix |
+|-------|---------|-----|
+| `Forward reference: 'X' used before declaration` | Function X called before it's defined | Move X above the calling function |
+| `Return type mismatch` | Function returns different types | Ensure all return paths return the same type |
+| `Arithmetic operator requires numeric types` | Non-numeric operands in math | Convert to int/float first |
+| `Comparison operator requires matching types` | Comparing different types | Ensure both sides are the same type |
+| `Condition must be bool` | Non-boolean in if/while | Use comparison or logical operator |
