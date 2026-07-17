@@ -20,6 +20,22 @@ jobs:
       - name: Install package
         run: pip install -e .
 
+      - name: Validate version consistency
+        shell: python
+        run: |
+          import tomllib
+          import compiler
+          
+          # Read pyproject.toml version
+          with open("pyproject.toml", "rb") as f:
+              pyproject_version = tomllib.load(f)["project"]["version"]
+          
+          # Check compiler.__version__
+          module_version = compiler.__version__
+          
+          assert pyproject_version == module_version, f"Version mismatch: pyproject={pyproject_version} module={module_version}"
+          print(f"Version consistency verified: {pyproject_version}")
+
       - name: Install dev dependencies
         run: pip install black ruff mypy pytest
 

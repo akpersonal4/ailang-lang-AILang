@@ -29,9 +29,9 @@ from compiler.compilation import CompilationSession
 from compiler.diagnostics import DiagnosticFormatter, DiagnosticReporter
 from compiler.runtime import builtins as runtime_builtins
 from compiler.runtime.interpreter import Runtime
+from compiler import __version__
 
 PROG = "ail"
-VERSION = "1.1.0"
 
 # =============================================================================
 # Development mode controls — M78 Design Improvement
@@ -89,7 +89,7 @@ def _mark_onboarded() -> None:
     """Mark the first-run experience as completed."""
     state = _load_state()
     state["onboarded"] = True
-    state["version"] = VERSION
+    state["version"] = __version__
     _save_state(state)
 
 
@@ -177,7 +177,7 @@ def _find_stdlib() -> Path:
 
 
 def _get_version() -> str:
-    return f"AILang v{VERSION}"
+    return f"AILang v{__version__}"
 
 
 # =============================================================================
