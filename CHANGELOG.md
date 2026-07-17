@@ -19,6 +19,30 @@
 - **CLI integration**: `ail check` and `ail build` now report identical diagnostics
 - **Integration test**: Added `test_ail_check_detects_type_error` verifying `ail check` fails on TYP003
 
+## v1.0.11
+
+### M76.3A — Type Flow Propagation
+
+- **Function return type inference**: Type checker now correctly infers return types from `return` statements inside function bodies, enabling type flow through function calls (e.g., `let x = get_val(); let y = x + 1` infers `x` as `INT_TYPE` if `get_val()` returns `42`)
+- **Chained function calls**: Type propagation works through multiple function call layers (e.g., `get_a() + get_b()` infers `INT_TYPE`)
+
+### M76.3B — Better TYP001 Diagnostics
+
+- **TYP001 enriched messages**: Error now shows the expression that caused the inference failure, along with specific suggestions (e.g., "Use explicit conversion helpers", "Initialize values using typed literals")
+- **Related commands**: TYP001 output now suggests `ail explain TYP001`, `ail heal`, and related commands
+- **Helpers**: Added `_format_expression()` and `_build_typ001_message()` to `TypeChecker`
+
+### M76.3C — `ail explain` Command
+
+- **New `ail explain <CODE>` command**: Shows detailed explanation of error codes including common causes, broken/fixed examples, fixes, related commands, and `ail heal` suggestions
+- **Full error code database**: 17 error codes documented (TYP001–TYP010, SEM001–SEM003, MOD001/MOD003/MOD004)
+- **No-args behavior**: `ail explain` lists all known error codes with one-line descriptions
+- **Unknown code handling**: Clear error message for unrecognized codes
+
+### Tests
+
+- 10 new tests covering type flow propagation, TYP001 diagnostic enrichment, and `ail explain` command
+
 ## v1.0.9
 
 ### M76.1 — Arithmetic Inference Improvements

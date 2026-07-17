@@ -210,7 +210,7 @@ Changes to syntax, semantics, types, or execution model.
 
 Non-language additions to the developer experience.
 
-**Examples:** `ail test`, `ail rename`, `ail fmt`, `ail watch`, `ail new`, `ail mcp`, VS Code extension, LSP features.
+**Examples:** `ail test`, `ail rename`, `ail fmt`, `ail watch`, `ail new`, `ail mcp`, `ail explain`, VS Code extension, LSP features.
 
 **Review:** Q1–Q3 only, lightweight maintainer approval.
 

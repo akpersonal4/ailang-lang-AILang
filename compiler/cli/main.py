@@ -8,6 +8,7 @@ Usage:
     ail fmt <file>       Format AILang source files
     ail test             Run test_*.ail files
     ail docs <name>      Retrieve documentation (AGENTS, LANGUAGE_SPEC, STDLIB_REFERENCE)
+    ail explain <CODE>   Explain a compiler error code in detail
     ail context [--json] Generate AI-friendly project context
     ail mcp              Start MCP server for AI tool integration
     ail version          Print version information
@@ -30,7 +31,7 @@ from compiler.runtime import builtins as runtime_builtins
 from compiler.runtime.interpreter import Runtime
 
 PROG = "ail"
-VERSION = "1.0.10"
+VERSION = "1.0.11"
 
 
 # =============================================================================
@@ -1834,6 +1835,34 @@ def cmd_heal(args: list[str]) -> int:
     return _run_dx_tool("tools.ail_heal", args)
 
 
+def cmd_explain(args: list[str]) -> int:
+    """Explain a compiler error code in detail.
+
+    Usage:
+        ail explain              List all known error codes
+        ail explain <CODE>       Show detailed explanation for CODE
+
+    Examples:
+        ail explain TYP001
+        ail explain SEM002
+        ail explain MOD004
+    """
+    from compiler.cli.explain import explain, list_codes
+
+    if not args or args[0] in ("-h", "--help"):
+        print(list_codes())
+        return 0
+
+    code = args[0].upper()
+    result = explain(code)
+    if result is None:
+        print(f"Unknown error code: {args[0]}", file=sys.stderr)
+        print("Run 'ail explain' to see all known codes.", file=sys.stderr)
+        return 1
+    print(result)
+    return 0
+
+
 def cmd_doctor(args: list[str]) -> int:
     """Run repository health checks.
 
@@ -1937,6 +1966,7 @@ def cmd_help(args: list[str]) -> int:
     print("Developer Tools:")
     print(f"  doctor              Run repository health checks")
     print(f"  heal                Get fix suggestions for common errors")
+    print(f"  explain <CODE>      Explain a compiler error code in detail")
     print(f"  docs [<name>]       Retrieve AILang documentation (no filesystem access)")
     print(
         f"  context [--json]    Generate AI-friendly project context (use --json for machine-readable)"
@@ -2005,6 +2035,7 @@ def main(argv: list[str] | None = None) -> int:
         "help": cmd_help,
         "doctor": cmd_doctor,
         "heal": cmd_heal,
+        "explain": cmd_explain,
         "docs": cmd_docs,
         "context": cmd_context,
         "mcp": cmd_mcp,

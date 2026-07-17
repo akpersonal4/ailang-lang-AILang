@@ -7,7 +7,7 @@ Project history, key decisions, and evolution timeline for AI coding assistants.
 ## Project Identity
 
 - **Language:** AILang — AI-first, deterministic, specification-driven
-- **Version:** v1.0.9
+- **Version:** v1.0.11
 - **Standard Library:** 16 `.ail` modules (extended: `file.listdir`, `list.sum`, `list.find_by_key`, `io.read`; fixed: `convert.to_number`)
 - **Test Suite:** 894+ passing tests across 44+ test scripts
 - **Applications:** 66+ across `apps/`, `ai_benchmarks/`, `examples/patterns/`

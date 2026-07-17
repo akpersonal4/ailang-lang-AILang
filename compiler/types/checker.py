@@ -103,8 +103,9 @@ class TypeChecker:
         if isinstance(expr_type, UnknownType) and not isinstance(
             node.initializer, CallExpressionNode
         ):
+            message = self._build_typ001_message(node.name.name, node.initializer)
             self._report_error(
-                f"Cannot infer type for variable '{node.name.name}'",
+                message,
                 "TYP001",
                 node.name.start_span,
                 node.name.end_span,
@@ -440,6 +441,58 @@ class TypeChecker:
     # ------------------------------------------------------------------
     # Helpers
     # ------------------------------------------------------------------
+
+    def _format_expression(self, node: ASTNode) -> str:
+        """Format an AST node as a human-readable expression string."""
+        if isinstance(node, BinaryExpressionNode):
+            left = self._format_expression(node.left)
+            right = self._format_expression(node.right)
+            return f"{left} {node.operator} {right}"
+        if isinstance(node, UnaryExpressionNode):
+            operand = self._format_expression(node.operand)
+            return f"{node.operator}{operand}"
+        if isinstance(node, CallExpressionNode):
+            callee = self._format_expression(node.callee)
+            args = ", ".join(self._format_expression(a) for a in node.arguments)
+            return f"{callee}({args})"
+        if isinstance(node, MemberAccessNode):
+            receiver = self._format_expression(node.receiver)
+            return f"{receiver}.{node.member.name}"
+        if isinstance(node, IdentifierNode):
+            return node.name
+        if isinstance(node, NumberLiteralNode):
+            return node.value
+        if isinstance(node, StringLiteralNode):
+            return f'"{node.value}"'
+        if isinstance(node, BooleanLiteralNode):
+            return "true" if node.value else "false"
+        return "..."
+
+    def _build_typ001_message(self, var_name: str, expr_node: ASTNode) -> str:
+        """Build a rich TYP001 diagnostic message with expression and operand info."""
+        expr_str = self._format_expression(expr_node)
+        lines = [f"Cannot infer type for variable '{var_name}'"]
+        lines.append("")
+        lines.append("Expression:")
+        lines.append(f"    {expr_str}")
+
+        # For binary expressions, show operand types
+        if isinstance(expr_node, BinaryExpressionNode):
+            left_type = self._infer_expression(expr_node.left)
+            right_type = self._infer_expression(expr_node.right)
+            left_str = self._format_expression(expr_node.left)
+            right_str = self._format_expression(expr_node.right)
+            lines.append("")
+            lines.append("Operand types:")
+            lines.append(f"    {left_str} -> {left_type!r}")
+            lines.append(f"    {right_str} -> {right_type!r}")
+
+        lines.append("")
+        lines.append("Suggestions:")
+        lines.append("    - Use explicit conversion helpers (convert.to_int, convert.to_string).")
+        lines.append("    - Initialize values using typed literals (let x = 0; let s = \"\").")
+        lines.append("    - Check return types of upstream functions with ail explain.")
+        return "\n".join(lines)
 
     def _report_error(
         self, message: str, code: str, start_span: int | None, end_span: int | None

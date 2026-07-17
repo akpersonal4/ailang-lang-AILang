@@ -10,8 +10,8 @@ until this document has been reviewed. Update AGENTS.md reading order after revi
 
 | Attribute | Value |
 |:----------|:------|
-| **Current Version** | v1.0.10 |
-| **Current Milestone** | M76.2 — NumericUnknownType & ail check Semantic Analysis |
+| **Current Version** | v1.0.11 |
+| **Current Milestone** | M76.3 — Type Flow, TYP001 Diagnostics, ail explain |
 | **Project Phase** | Public Beta |
 
 ### Maturity Assessment
@@ -489,5 +489,5 @@ Every document type has exactly one owner. If you need to add information, first
 | Field | Value |
 |:------|:------|
 | **Date** | 2026-07-17 |
-| **Version** | v1.0.10 |
-| **Milestone** | M76.2 — NumericUnknownType & ail check Semantic Analysis |
+| **Version** | v1.0.11 |
+| **Milestone** | M76.3 — Type Flow, TYP001 Diagnostics, ail explain |
