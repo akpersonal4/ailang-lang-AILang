@@ -33,6 +33,13 @@ from compiler.runtime.interpreter import Runtime
 PROG = "ail"
 VERSION = "1.1.0"
 
+# =============================================================================
+# Development mode controls — M78 Design Improvement
+# =============================================================================
+
+_DEV_MODE = False  # Set to True via --dev flag or AILANG_DEV_ROOT env var
+_DEV_ROOT_OVERRIDE = os.environ.get("AILANG_DEV_ROOT")  # Explicit dev root path
+
 
 # =============================================================================
 # First-run experience
@@ -109,18 +116,21 @@ For more help: ail --help
 def _find_stdlib() -> Path:
     """Locate the stdlib directory.
 
-    Order:
-    1. Next to the compiler package (works for installed non-editable wheels).
-    2. Next to the compiler package parent (works for dev-tree editable installs).
-    3. Walk up from CWD looking for stdlib + pyproject.toml (works when run from repo).
-    4. Fallback to a bundled path inside site-packages (post-install copy).
+    Order (M78 Design Improvement):
+    1. Next to the compiler package (highest priority: installed packages).
+    2. Next to the compiler package parent (editable installs).
+    3. Walk up from CWD ONLY if dev mode is enabled (AILANG_DEV_ROOT or --dev).
+    4. Fallback to a bundled path inside site-packages.
     5. Last resort: stdlib next to the compiler package root.
+
+    Production mode NEVER walks upward, preventing accidental repository coupling.
     """
     # Path of the current file = compiler/cli/main.py
     this_file = Path(__file__).resolve()
     pkg_dir = this_file.parent.parent.parent  # site-packages/ or repo root
 
     # 1. Check next to the compiler package (installed wheel: site-packages/stdlib/)
+    #    This has HIGHEST priority - never bypassed
     candidate = pkg_dir / "stdlib"
     if candidate.is_dir() and any(candidate.iterdir()):
         return candidate
@@ -130,15 +140,25 @@ def _find_stdlib() -> Path:
     if parent_candidate.is_dir() and any(parent_candidate.iterdir()):
         return parent_candidate
 
-    # 3. Walk up from CWD
-    for start in [Path.cwd(), pkg_dir]:
-        current = start
-        while True:
-            if (current / "stdlib").is_dir() and (current / "pyproject.toml").is_file():
-                return current / "stdlib"
-            if current == current.parent:
-                break
-            current = current.parent
+    # 3. Walk up from CWD - ONLY in dev mode
+    # Production installations must NEVER walk upward
+    dev_mode = _DEV_MODE or (_DEV_ROOT_OVERRIDE is not None)
+    if dev_mode:
+        # If AILANG_DEV_ROOT is set, use it directly
+        if _DEV_ROOT_OVERRIDE:
+            dev_root = Path(_DEV_ROOT_OVERRIDE).resolve()
+            dev_stdlib = dev_root / "stdlib"
+            if dev_stdlib.is_dir():
+                return dev_stdlib
+        # Otherwise walk upward from CWD
+        for start in [Path.cwd(), pkg_dir]:
+            current = start
+            while True:
+                if (current / "stdlib").is_dir() and (current / "pyproject.toml").is_file():
+                    return current / "stdlib"
+                if current == current.parent:
+                    break
+                current = current.parent
 
     # 4. Fallback: look inside site-packages for a bundled stdlib copy
     import site
@@ -2013,7 +2033,12 @@ def cmd_help(args: list[str]) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
-    """Main entry point. Parses args and dispatches to the appropriate command."""
+    """Main entry point. Parses args and dispatches to the appropriate command.
+    
+    Supports global --dev flag in two positions:
+        ail --dev <command>
+        ail <command> --dev
+    """
     commands: dict[str, Callable[[list[str]], int]] = {
         "run": cmd_run,
         "build": cmd_build,
@@ -2064,6 +2089,25 @@ def main(argv: list[str] | None = None) -> int:
     if not argv:
         cmd_help([])
         return 1
+
+    # Parse global --dev flag (supports both positions: ail --dev CMD and ail CMD --dev)
+    dev_mode_requested = False
+    new_argv = []
+    i = 0
+    while i < len(argv):
+        if argv[i] == "--dev":
+            dev_mode_requested = True
+            i += 1
+            continue
+        new_argv.append(argv[i])
+        i += 1
+
+    if dev_mode_requested:
+        # Set the global dev mode flag for _find_stdlib() to use
+        import compiler.cli.main as cli_module
+        cli_module._DEV_MODE = True
+
+    argv = new_argv
 
     command = argv[0]
     rest = argv[1:]
