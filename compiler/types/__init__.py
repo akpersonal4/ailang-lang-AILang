@@ -3,6 +3,7 @@
 from compiler.types.checker import TypeChecker
 from compiler.types.types import (
     FunctionType,
+    NumericUnknownType,
     PrimitiveType,
     Type,
     UnknownType,
@@ -14,4 +15,5 @@ __all__ = [
     "PrimitiveType",
     "FunctionType",
     "UnknownType",
+    "NumericUnknownType",
 ]

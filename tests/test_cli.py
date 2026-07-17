@@ -339,6 +339,41 @@ class TestAilCommand:
         assert result.returncode == 0
         assert "Check passed" in result.stdout
 
+    def test_ail_check_detects_type_error(self) -> None:
+        """M76.2B: `ail check` detects TYP errors (identical to `ail build`)."""
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # Source with a return type mismatch (TYP003)
+            source = Path(tmpdir) / "type_err.ail"
+            source.write_text(
+                "fn get_num() {\n"
+                "    return 42;\n"
+                "}\n"
+                "fn get_str() {\n"
+                "    return get_num();\n"
+                '    return "hello";\n'
+                "}\n"
+                "fn main() {\n"
+                "    return 0;\n"
+                "}\n",
+                encoding="utf-8",
+            )
+            # ail check should detect the type error
+            check_result = subprocess.run(
+                [sys.executable, "-m", "compiler", "check", str(source)],
+                capture_output=True,
+                text=True,
+            )
+            assert check_result.returncode == 1, (
+                f"ail check should fail on type error.\n"
+                f"stdout: {check_result.stdout}\nstderr: {check_result.stderr}"
+            )
+            assert "TYP" in check_result.stderr, (
+                f"ail check should report TYP diagnostics.\n"
+                f"stderr: {check_result.stderr}"
+            )
+
     def test_ail_run_missing_file(self) -> None:
         """`ail run <missing>` returns error."""
         result = subprocess.run(

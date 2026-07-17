@@ -1,5 +1,24 @@
 # Changelog
 
+## v1.0.10
+
+### M76.2A — NumericUnknownType for Unknown+Unknown Arithmetic
+
+- **NumericUnknownType**: Introduced separate frozen dataclass (not a subclass of UnknownType) to represent Unknown+Unknown arithmetic results without silent incorrect inference
+  - `UnknownType + UnknownType → NumericUnknownType` (not directly INT_TYPE, avoiding false positives when values are strings)
+  - Runtime validation unchanged: `NumericUnknownType` values are still dynamically typed at runtime
+- **Type checker arithmetic block**: Updated all `isinstance` checks to handle `NumericUnknownType` via `_num_unk` lambda for proper inference
+- **Type checker comparison/assignment/return/member-access blocks**: Updated to suppress TYP003, TYP006, TYP008, TYP009 for `NumericUnknownType`
+- **Type checker logical operators**: `NumericUnknownType` intentionally triggers TYP004/TYP007/TYP010 as errors (logical ops on numeric unknown is invalid)
+- **Regression tests**: 5 new tests covering Unknown+Unknown, Unknown*Unknown, unknown functions, accumulator patterns, and Unknown-Unknown
+
+### M76.2B — ail check Semantic Analysis
+
+- **ail check rewrite**: Now runs full compilation pipeline (forward-reference check → semantic analysis → type checking) instead of only forward-reference checks
+- **Session type_check fix**: `type_check()` now pre-declares user functions in the fresh SymbolTable so the type checker can resolve cross-function calls and detect TYP003
+- **CLI integration**: `ail check` and `ail build` now report identical diagnostics
+- **Integration test**: Added `test_ail_check_detects_type_error` verifying `ail check` fails on TYP003
+
 ## v1.0.9
 
 ### M76.1 — Arithmetic Inference Improvements

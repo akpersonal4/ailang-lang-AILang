@@ -26,7 +26,9 @@ class ModuleIRBundle:
 
     def __init__(self) -> None:
         self.module_irs: dict[str, ProgramIR] = {}  # module_name -> IR
-        self.import_aliases: dict[str, dict[str, str]] = {}  # module_name -> {alias -> real_module}
+        self.import_aliases: dict[str, dict[str, str]] = (
+            {}
+        )  # module_name -> {alias -> real_module}
         self.initialized: set[str] = set()
 
     def get_or_initialize(self, module_name: str) -> ProgramIR | None:
@@ -115,8 +117,9 @@ class CompilationSession:
                 ast = _cast(ProgramNode, ASTBuilder().build(cst))
                 self._asts[module_name] = ast
 
-    def discover(self, entry_path: str | Path,
-                 reporter: DiagnosticReporter | None = None) -> None:
+    def discover(
+        self, entry_path: str | Path, reporter: DiagnosticReporter | None = None
+    ) -> None:
         """Discover all modules starting from an entry point.
 
         Traverses import declarations recursively and builds the
@@ -162,14 +165,16 @@ class CompilationSession:
     def _try_discover_stdlib_via_package(self) -> None:
         """Try to locate stdlib via the compiler package installation path."""
         from pathlib import Path as _Path
+
         this_file = _Path(__file__).resolve()
         # compiler/compilation/session.py -> compiler/ -> site-packages/
         pkg_dir = this_file.parent.parent
         candidates = [
-            pkg_dir / "stdlib",                 # site-packages/stdlib/
-            pkg_dir.parent / "stdlib",           # repo root in dev tree
+            pkg_dir / "stdlib",  # site-packages/stdlib/
+            pkg_dir.parent / "stdlib",  # repo root in dev tree
         ]
         import site as _site
+
         for site_dir in _site.getsitepackages():
             candidates.append(_Path(site_dir) / "ailang" / "stdlib")
             candidates.append(_Path(site_dir) / "stdlib")
@@ -232,7 +237,9 @@ class CompilationSession:
                 pkg_toml = lib_dir / pkg_name / "ail.toml"
                 if pkg_toml.exists():
                     pkg_entry = _read_package_entry(pkg_toml)
-                    pkg_entry_stem = Path(pkg_entry).with_suffix("").as_posix().replace("/", ".")
+                    pkg_entry_stem = (
+                        Path(pkg_entry).with_suffix("").as_posix().replace("/", ".")
+                    )
                     if file_stem == pkg_entry_stem:
                         return pkg_name
                 # Otherwise use the file stem as module name
@@ -248,8 +255,12 @@ class CompilationSession:
         stem = relative.with_suffix("")
         return ".".join(stem.parts)
 
-    def _discover_recursive(self, file_path: Path, importer: str | None,
-                            reporter: DiagnosticReporter | None = None) -> None:
+    def _discover_recursive(
+        self,
+        file_path: Path,
+        importer: str | None,
+        reporter: DiagnosticReporter | None = None,
+    ) -> None:
         """Recursively discover modules and add to graph."""
         module_name = self._path_to_module_name(file_path)
         if module_name in self._sources:
@@ -270,7 +281,9 @@ class CompilationSession:
             lexer = Lexer(reporter, source_path=str(source.path))
             tokens = lexer.tokenize(source.text)
             parser = Parser(
-                tokens, reporter, source_path=str(source.path),
+                tokens,
+                reporter,
+                source_path=str(source.path),
                 experimental_loops=self._experimental_loops,
             )
             cst = parser.parse_program()
@@ -309,7 +322,9 @@ class CompilationSession:
                     lexer = Lexer(reporter, source_path=file_path)
                     tokens = lexer.tokenize(source.text)
                     parser = Parser(
-                        tokens, reporter, source_path=file_path,
+                        tokens,
+                        reporter,
+                        source_path=file_path,
                         experimental_loops=self._experimental_loops,
                     )
                     cst = parser.parse_program()
@@ -373,10 +388,7 @@ class CompilationSession:
             symbol_table.declare(builtin_name)
 
         # Collect all top-level function names for forward-reference detection.
-        from compiler.ast.nodes import (
-            FunctionDeclarationNode,
-            VariableDeclarationNode,
-        )
+        from compiler.ast.nodes import FunctionDeclarationNode
 
         all_function_names: set[str] = set()
         for module_name, ast in self._asts.items():
@@ -469,11 +481,13 @@ class CompilationSession:
         """Run type checking on all modules.
 
         Each user module gets a fresh symbol table pre-loaded with
-        builtins and module namespace names.  Stdlib modules are
-        skipped because they produce false TYP003 errors.
+        builtins, module namespace names, and user function declarations.
+        Stdlib modules are skipped because they produce false TYP003 errors.
         """
-        from compiler.types.checker import TypeChecker
+        from compiler.ast.nodes import FunctionDeclarationNode
         from compiler.runtime.builtins import BUILTINS
+        from compiler.types.checker import TypeChecker
+        from compiler.types.types import FunctionType, UnknownType
 
         local_reporter = reporter or DiagnosticReporter()
 
@@ -491,15 +505,33 @@ class CompilationSession:
                 for other_name in all_module_names:
                     if other_name != module_name:
                         st.declare_module_namespace(other_name)
+                # Pre-declare user functions so the type checker can resolve
+                # cross-function calls and detect type errors (M76.2B).
+                ast = self._asts[module_name]
+                for child in ast.children:
+                    if isinstance(child, FunctionDeclarationNode):
+                        func_type = FunctionType(
+                            "function",
+                            tuple(UnknownType() for _ in child.parameters),
+                            UnknownType(),
+                        )
+                        st.declare(
+                            child.name.name,
+                            child.start_span,
+                            child.end_span,
+                            type=func_type,
+                        )
                 source_text_tc = (
                     self._sources[module_name].text
                     if module_name in self._sources
                     else None
                 )
                 type_checker = TypeChecker(
-                    st, local_reporter, source_text=source_text_tc,
+                    st,
+                    local_reporter,
+                    source_text=source_text_tc,
                 )
-                type_checker.check(self._asts[module_name])
+                type_checker.check(ast)
 
         # ------------------------------------------------------------------
         # Incremental compilation support
@@ -520,7 +552,9 @@ class CompilationSession:
             lexer = Lexer(reporter, source_path=file_path)
             tokens = lexer.tokenize(source.text)
             parser = Parser(
-                tokens, reporter, source_path=file_path,
+                tokens,
+                reporter,
+                source_path=file_path,
                 experimental_loops=self._experimental_loops,
             )
             cst = parser.parse_program()
@@ -543,19 +577,20 @@ class CompilationSession:
         except ValueError as e:
             msg = str(e) or "Compilation error"
             if reporter is not None:
-                reporter.report(Diagnostic(
-                    Severity.ERROR, ErrorCode("CMP001", msg), msg,
-                    file_path=file_path,
-                ))
+                reporter.report(
+                    Diagnostic(
+                        Severity.ERROR,
+                        ErrorCode("CMP001", msg),
+                        msg,
+                        file_path=file_path,
+                    )
+                )
             self._asts[module_name] = ProgramNode(())
             return False
 
     def get_dependents(self, module_name: str) -> list[str]:
         """Return list of modules that directly depend on *module_name*."""
-        return [
-            m for m in self._graph._edges
-            if module_name in self._graph._edges[m]
-        ]
+        return [m for m in self._graph._edges if module_name in self._graph._edges[m]]
 
     def get_transitive_dependents(self, module_name: str) -> list[str]:
         """Return all modules that transitively depend on *module_name*."""
@@ -594,10 +629,14 @@ class CompilationSession:
                 break
 
         if module_name is None:
-            reporter.report(Diagnostic(
-                Severity.ERROR, ErrorCode("CMP001", f"File not in session: {file_path}"),
-                f"File not in session: {file_path}", file_path=file_path,
-            ))
+            reporter.report(
+                Diagnostic(
+                    Severity.ERROR,
+                    ErrorCode("CMP001", f"File not in session: {file_path}"),
+                    f"File not in session: {file_path}",
+                    file_path=file_path,
+                )
+            )
             return False, []
 
         source_text = fp.read_text(encoding="utf-8")

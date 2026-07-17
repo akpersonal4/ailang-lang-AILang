@@ -30,7 +30,7 @@ from compiler.runtime import builtins as runtime_builtins
 from compiler.runtime.interpreter import Runtime
 
 PROG = "ail"
-VERSION = "1.0.9"
+VERSION = "1.0.10"
 
 
 # =============================================================================
@@ -53,6 +53,7 @@ def _get_state_file() -> Path:
 def _load_state() -> dict:
     """Load the state file, returning empty dict if not found."""
     import json
+
     state_file = _get_state_file()
     if state_file.exists():
         try:
@@ -65,6 +66,7 @@ def _load_state() -> dict:
 def _save_state(state: dict) -> None:
     """Save the state file."""
     import json
+
     state_file = _get_state_file()
     state_file.write_text(json.dumps(state, indent=2), encoding="utf-8")
 
@@ -139,6 +141,7 @@ def _find_stdlib() -> Path:
 
     # 4. Fallback: look inside site-packages for a bundled stdlib copy
     import site
+
     for site_dir in site.getsitepackages():
         bundled = Path(site_dir) / "ailang" / "stdlib"
         if bundled.is_dir():
@@ -166,6 +169,7 @@ def _compile(
     json_mode: bool = False,
     experimental_loops: bool = False,
     root_override: str | None = None,
+    quiet: bool = False,
 ) -> tuple[CompilationSession | None, DiagnosticReporter]:
     """Compile a source file and return the session and reporter.
 
@@ -174,6 +178,7 @@ def _compile(
             module resolution instead of source_path.parent. This is needed
             when test files live in a subdirectory (tests/) and import
             modules from the parent app directory.
+        quiet: If True, suppress diagnostic output to stderr.
 
     Returns:
         tuple of (session, reporter) where session is None on error.
@@ -205,6 +210,7 @@ def _compile(
     except Exception as e:
         # Internal compiler error – emit CMP001 diagnostic
         from compiler.diagnostics import Diagnostic, ErrorCode, Severity
+
         diag = Diagnostic(
             Severity.ERROR,
             ErrorCode("CMP001", "Internal compiler error"),
@@ -217,9 +223,9 @@ def _compile(
             print(formatter.format(diag), file=sys.stderr)
         return None, reporter
     # -------------------------------------------------
-    
+
     if reporter.error_count > 0:
-        if not json_mode:
+        if not json_mode and not quiet:
             formatter = DiagnosticFormatter()
             for diagnostic in reporter.diagnostics:
                 print(formatter.format(diagnostic), file=sys.stderr)
@@ -251,14 +257,20 @@ def cmd_run(args: list[str]) -> int:
         elif arg == "--no-check":
             no_check = True
         elif arg.startswith("-"):
-            print(f"Usage: {PROG} run [--experimental-loops] [--no-check] <file>", file=sys.stderr)
+            print(
+                f"Usage: {PROG} run [--experimental-loops] [--no-check] <file>",
+                file=sys.stderr,
+            )
             return 1
         else:
             positional.append(arg)
 
     if not positional:
         print("Error: missing file argument", file=sys.stderr)
-        print(f"Usage: {PROG} run [--experimental-loops] [--no-check] <file>", file=sys.stderr)
+        print(
+            f"Usage: {PROG} run [--experimental-loops] [--no-check] <file>",
+            file=sys.stderr,
+        )
         return 1
 
     source_path = Path(positional[0]).resolve()
@@ -286,7 +298,10 @@ def cmd_run(args: list[str]) -> int:
                     print(f"    Add: import {v['module']};")
                 print()
             print(f"Check failed: {len(check_violations)} violation(s) found.")
-            print("Fix these issues before running. Use --no-check to skip.", file=sys.stderr)
+            print(
+                "Fix these issues before running. Use --no-check to skip.",
+                file=sys.stderr,
+            )
             return 1
 
     # Strip CLI plumbing so env_args() returns only the user's args.
@@ -302,6 +317,7 @@ def cmd_run(args: list[str]) -> int:
     except Exception as e:
         # Internal compiler error during IR generation
         from compiler.diagnostics import Diagnostic, ErrorCode, Severity
+
         diag = Diagnostic(
             Severity.ERROR,
             ErrorCode("CMP001", "Internal compiler error"),
@@ -368,14 +384,20 @@ def cmd_build(args: list[str]) -> int:
             experimental_loops = True
         elif arg.startswith("-"):
             print(f"Unknown option: {arg}", file=sys.stderr)
-            print(f"Usage: {PROG} build [--json] [--experimental-loops] <file>", file=sys.stderr)
+            print(
+                f"Usage: {PROG} build [--json] [--experimental-loops] <file>",
+                file=sys.stderr,
+            )
             return 1
         else:
             paths.append(arg)
 
     if not paths:
         print("Error: missing file argument", file=sys.stderr)
-        print(f"Usage: {PROG} build [--json] [--experimental-loops] <file>", file=sys.stderr)
+        print(
+            f"Usage: {PROG} build [--json] [--experimental-loops] <file>",
+            file=sys.stderr,
+        )
         return 1
 
     source_path = Path(paths[0]).resolve()
@@ -398,7 +420,10 @@ def cmd_build(args: list[str]) -> int:
 
 
 def cmd_check(args: list[str]) -> int:
-    """Check AILang source for forward references, missing imports, and ordering violations.
+    """Check AILang source for semantic errors, type errors, forward references, and ordering violations.
+
+    Runs the full compilation pipeline (discover → analyze → type_check)
+    so that ail check and ail build report identical diagnostics.
 
     Usage:
         ail check <file>         Check a single file
@@ -420,14 +445,19 @@ def cmd_check(args: list[str]) -> int:
             recursive = True
         elif arg.startswith("-"):
             print(f"Unknown option: {arg}", file=sys.stderr)
-            print(f"Usage: {PROG} check [--json] [--recursive] <file_or_dir>", file=sys.stderr)
+            print(
+                f"Usage: {PROG} check [--json] [--recursive] <file_or_dir>",
+                file=sys.stderr,
+            )
             return 1
         else:
             paths.append(arg)
 
     if not paths:
         print("Error: missing file argument", file=sys.stderr)
-        print(f"Usage: {PROG} check [--json] [--recursive] <file_or_dir>", file=sys.stderr)
+        print(
+            f"Usage: {PROG} check [--json] [--recursive] <file_or_dir>", file=sys.stderr
+        )
         return 1
 
     # Collect files to check
@@ -454,46 +484,55 @@ def cmd_check(args: list[str]) -> int:
         print("No .ail files found to check.", file=sys.stderr)
         return 1
 
-    # Check each file
-    total_violations = 0
-    all_violations: list[dict] = []
+    # Run full compilation pipeline on each file (discover → analyze → type_check)
+    total_errors = 0
+    all_reporters: list[tuple[Path, DiagnosticReporter]] = []
 
     for file_path in files_to_check:
-        violations = _check_file_forward_references(file_path)
-        all_violations.extend(violations)
-        total_violations += len(violations)
+        session, reporter = _compile(file_path, quiet=True)
+        all_reporters.append((file_path, reporter))
+        total_errors += reporter.error_count
 
     # Output results
     if json_mode:
         import json
+
+        all_diags = []
+        for file_path, reporter in all_reporters:
+            for d in reporter.diagnostics:
+                all_diags.append(
+                    {
+                        "file": d.file_path or str(file_path),
+                        "line": d.line,
+                        "column": d.column,
+                        "code": d.error_code.code,
+                        "message": d.message,
+                        "severity": d.severity.name.lower(),
+                        "suggestion": d.suggestion,
+                    }
+                )
         result = {
-            "passed": total_violations == 0,
-            "violations": all_violations,
-            "total_violations": total_violations,
+            "passed": total_errors == 0,
+            "errors": all_diags,
+            "total_errors": total_errors,
         }
         print(json.dumps(result, indent=2))
     else:
-        if total_violations == 0:
-            print(f"Check passed: {len(files_to_check)} file(s) checked, no violations found.")
+        if total_errors == 0:
+            print(
+                f"Check passed: {len(files_to_check)} file(s) checked, no errors found."
+            )
         else:
             formatter = DiagnosticFormatter()
-            for v in all_violations:
-                print()
-                print(f"FORWARD_REF:" if v["type"] == "forward_reference" else "MISSING_IMPORT:")
-                print(f"{v['file']}:{v['line']}")
-                print()
-                print(f"  {v['caller']}()")
-                print(f"  calls {v['callee']}()")
-                print()
-                print(f"  Suggestion:")
-                if v["type"] == "forward_reference":
-                    print(f"    Move {v['callee']}() definition above {v['caller']}()")
-                elif v["type"] == "missing_import":
-                    print(f"    Add: import {v['module']};")
-                print()
-            print(f"Total: {total_violations} violation(s) in {len(files_to_check)} file(s)")
+            for file_path, reporter in all_reporters:
+                for diag in reporter.diagnostics:
+                    print(formatter.format(diag), file=sys.stderr)
+            print(
+                f"\nTotal: {total_errors} error(s) in {len(files_to_check)} file(s)",
+                file=sys.stderr,
+            )
 
-    return 1 if total_violations > 0 else 0
+    return 1 if total_errors > 0 else 0
 
 
 def _check_file_forward_references(file_path: Path) -> list[dict]:
@@ -544,6 +583,7 @@ def _check_file_forward_references(file_path: Path) -> list[dict]:
 
         # Helper to convert span to line number
         source_lines = source_text.split("\n")
+
         def span_to_line(span: int | None) -> int:
             if span is None:
                 return 0
@@ -580,7 +620,7 @@ def _check_file_forward_references(file_path: Path) -> list[dict]:
                 imports.add(module_path)
                 # Also add the root module name
                 imports.add(node.module_path[0])
-            elif hasattr(node, 'body'):
+            elif hasattr(node, "body"):
                 # Recurse into other nodes with bodies (if, for, etc.)
                 _collect_declarations(node.body, context)
 
@@ -594,7 +634,13 @@ def _check_file_forward_references(file_path: Path) -> list[dict]:
                     if isinstance(callee.receiver, IdentifierNode):
                         module_name = callee.receiver.name
                         func_name = callee.member.name
-                        calls.append((context, f"{module_name}.{func_name}", span_to_line(node.start_span)))
+                        calls.append(
+                            (
+                                context,
+                                f"{module_name}.{func_name}",
+                                span_to_line(node.start_span),
+                            )
+                        )
                 # Recurse into arguments
                 for arg in node.arguments:
                     _collect_calls(arg, context)
@@ -653,14 +699,16 @@ def _check_file_forward_references(file_path: Path) -> list[dict]:
 
                 # Forward reference: callee is defined after the caller
                 if callee_def_line > caller_def_line and caller_context != "global":
-                    violations.append({
-                        "type": "forward_reference",
-                        "file": str(file_path),
-                        "line": call_line,
-                        "caller": caller_context,
-                        "callee": callee,
-                        "module": None,
-                    })
+                    violations.append(
+                        {
+                            "type": "forward_reference",
+                            "file": str(file_path),
+                            "line": call_line,
+                            "caller": caller_context,
+                            "callee": callee,
+                            "module": None,
+                        }
+                    )
 
         # Analyze for missing imports
         # A missing import is when a function calls module.function()
@@ -681,14 +729,16 @@ def _check_file_forward_references(file_path: Path) -> list[dict]:
                         # Check if the module exists as a file in the same directory
                         module_file = file_path.parent / f"{module_name}.ail"
                         if module_file.exists():
-                            violations.append({
-                                "type": "missing_import",
-                                "file": str(file_path),
-                                "line": call_line,
-                                "caller": caller_context,
-                                "callee": callee,
-                                "module": module_name,
-                            })
+                            violations.append(
+                                {
+                                    "type": "missing_import",
+                                    "file": str(file_path),
+                                    "line": call_line,
+                                    "caller": caller_context,
+                                    "callee": callee,
+                                    "module": module_name,
+                                }
+                            )
 
     except Exception:
         # If parsing fails, return empty violations
@@ -698,41 +748,133 @@ def _check_file_forward_references(file_path: Path) -> list[dict]:
 
 
 # Known stdlib functions and modules to skip during checking
-_STDLIB_FUNCTIONS = frozenset({
-    "math.add", "math.sub", "math.mul", "math.div", "math.abs", "math.min", "math.max",
-    "string.concat", "string.equals", "string.uppercase", "string.lowercase",
-    "string.length", "string.contains", "string.starts_with", "string.ends_with",
-    "string.trim", "string.substring", "string.find", "string.find_from", "string.split",
-    "list.new", "list.append", "list.len", "list.get", "list.contains", "list.remove",
-    "list.clear", "list.sum", "list.find_by_key", "list.filter_by_key",
-    "list.filter_by_contains", "list.collect_key",
-    "map.new", "map.set", "map.get", "map.has", "map.delete", "map.keys", "map.clear",
-    "set.new", "set.add", "set.contains", "set.len", "set.remove", "set.clear",
-    "file.exists", "file.read", "file.write", "file.append", "file.remove", "file.listdir",
-    "path.join", "path.basename", "path.dirname", "path.extension", "path.normalize",
-    "json.parse", "json.stringify",
-    "csv.parse", "csv.parse_header", "csv.stringify",
-    "time.now", "time.timestamp", "time.sleep", "time.format",
-    "random.int", "random.float", "random.choice",
-    "environment.get", "environment.cwd", "environment.args",
-    "convert.to_string", "convert.to_int", "convert.to_bool", "convert.to_number",
-    "io.write", "io.writeln", "io.println",
-    "system.exit",
-    "array.new", "array.push", "array.len", "array.get", "array.contains",
-    "array.remove", "array.clear",
-})
+_STDLIB_FUNCTIONS = frozenset(
+    {
+        "math.add",
+        "math.sub",
+        "math.mul",
+        "math.div",
+        "math.abs",
+        "math.min",
+        "math.max",
+        "string.concat",
+        "string.equals",
+        "string.uppercase",
+        "string.lowercase",
+        "string.length",
+        "string.contains",
+        "string.starts_with",
+        "string.ends_with",
+        "string.trim",
+        "string.substring",
+        "string.find",
+        "string.find_from",
+        "string.split",
+        "list.new",
+        "list.append",
+        "list.len",
+        "list.get",
+        "list.contains",
+        "list.remove",
+        "list.clear",
+        "list.sum",
+        "list.find_by_key",
+        "list.filter_by_key",
+        "list.filter_by_contains",
+        "list.collect_key",
+        "map.new",
+        "map.set",
+        "map.get",
+        "map.has",
+        "map.delete",
+        "map.keys",
+        "map.clear",
+        "set.new",
+        "set.add",
+        "set.contains",
+        "set.len",
+        "set.remove",
+        "set.clear",
+        "file.exists",
+        "file.read",
+        "file.write",
+        "file.append",
+        "file.remove",
+        "file.listdir",
+        "path.join",
+        "path.basename",
+        "path.dirname",
+        "path.extension",
+        "path.normalize",
+        "json.parse",
+        "json.stringify",
+        "csv.parse",
+        "csv.parse_header",
+        "csv.stringify",
+        "time.now",
+        "time.timestamp",
+        "time.sleep",
+        "time.format",
+        "random.int",
+        "random.float",
+        "random.choice",
+        "environment.get",
+        "environment.cwd",
+        "environment.args",
+        "convert.to_string",
+        "convert.to_int",
+        "convert.to_bool",
+        "convert.to_number",
+        "io.write",
+        "io.writeln",
+        "io.println",
+        "system.exit",
+        "array.new",
+        "array.push",
+        "array.len",
+        "array.get",
+        "array.contains",
+        "array.remove",
+        "array.clear",
+    }
+)
 
-_STDLIB_MODULES = frozenset({
-    "math", "string", "list", "map", "set", "file", "path", "json", "csv",
-    "time", "random", "environment", "convert", "io", "system", "array",
-})
+_STDLIB_MODULES = frozenset(
+    {
+        "math",
+        "string",
+        "list",
+        "map",
+        "set",
+        "file",
+        "path",
+        "json",
+        "csv",
+        "time",
+        "random",
+        "environment",
+        "convert",
+        "io",
+        "system",
+        "array",
+    }
+)
 
 
 # Directories to skip when formatting a project directory
-_FMT_SKIP_DIRS = frozenset({
-    ".venv", ".venv_test", ".git", ".mypy_cache", ".pytest_cache",
-    ".ruff_cache", "node_modules", "__pycache__", ".ail",
-})
+_FMT_SKIP_DIRS = frozenset(
+    {
+        ".venv",
+        ".venv_test",
+        ".git",
+        ".mypy_cache",
+        ".pytest_cache",
+        ".ruff_cache",
+        "node_modules",
+        "__pycache__",
+        ".ail",
+    }
+)
 
 
 def _collect_ail_files(paths: list[str]) -> list[Path] | None:
@@ -761,7 +903,8 @@ def _print_diff(filepath: str, original: str, formatted: str) -> None:
     orig_lines = original.splitlines(keepends=True)
     fmt_lines = formatted.splitlines(keepends=True)
     diff = difflib.unified_diff(
-        orig_lines, fmt_lines,
+        orig_lines,
+        fmt_lines,
         fromfile=f"a/{filepath}",
         tofile=f"b/{filepath}",
     )
@@ -967,7 +1110,7 @@ An AILang project.
 ## Quick start
 
     ail run main.ail
-"""
+""",
 }
 
 _TEMPLATE_EMPTY_PROJECT: dict[str, str] = {
@@ -985,7 +1128,7 @@ fn main() {
 ## Quick start
 
     ail run main.ail
-"""
+""",
 }
 
 _AIL_TOML_TEMPLATE = """\
@@ -1198,7 +1341,10 @@ def cmd_publish(args: list[str]) -> int:
             return 1
 
     from compiler.package.registry import (
-        load_registry_url, publish_local, publish_remote, RegistryError,
+        load_registry_url,
+        publish_local,
+        publish_remote,
+        RegistryError,
     )
 
     if registry_url is None:
@@ -1287,7 +1433,10 @@ def cmd_test(args: list[str]) -> int:
                 print("Error: --root requires a directory argument", file=sys.stderr)
                 return 1
         elif arg.startswith("-"):
-            print(f"Usage: {PROG} test [--verbose] [--no-check] [--root <dir>] [<file_or_dir>]", file=sys.stderr)
+            print(
+                f"Usage: {PROG} test [--verbose] [--no-check] [--root <dir>] [<file_or_dir>]",
+                file=sys.stderr,
+            )
             return 1
         else:
             paths.append(arg)
@@ -1296,8 +1445,18 @@ def cmd_test(args: list[str]) -> int:
     if root_override is None:
         root_override = str(Path.cwd())
 
-# Directories to exclude from test discovery
-    _TEST_EXCLUDE_DIRS = {".ail", "backups", "__pycache__", "dist", "build", ".git", "node_modules", ".venv", ".venv_test"}
+    # Directories to exclude from test discovery
+    _TEST_EXCLUDE_DIRS = {
+        ".ail",
+        "backups",
+        "__pycache__",
+        "dist",
+        "build",
+        ".git",
+        "node_modules",
+        ".venv",
+        ".venv_test",
+    }
 
     def _should_exclude_path(path: Path) -> bool:
         """Check if a path should be excluded from test discovery."""
@@ -1373,7 +1532,10 @@ def cmd_test(args: list[str]) -> int:
                     print(f"    Add: import {v['module']};")
                 print()
             print(f"Check failed: {len(all_violations)} violation(s) found.")
-            print("Fix these issues before running tests. Use --no-check to skip.", file=sys.stderr)
+            print(
+                "Fix these issues before running tests. Use --no-check to skip.",
+                file=sys.stderr,
+            )
             return 1
 
     total = len(test_files)
@@ -1391,7 +1553,7 @@ def cmd_test(args: list[str]) -> int:
                 formatter = DiagnosticFormatter()
                 for diagnostic in reporter.diagnostics:
                     print("  " + formatter.format(diagnostic), file=sys.stderr)
-            
+
             # Check for common import-related errors and provide guidance
             has_import_error = False
             suggested_root = None
@@ -1409,9 +1571,12 @@ def cmd_test(args: list[str]) -> int:
                             app_name = parts[apps_idx + 1]
                             suggested_root = f"apps/{app_name}"
                             has_import_error = True
-            
+
             if has_import_error and suggested_root:
-                print(f"\n  Hint: This appears to be an application-local import.", file=sys.stderr)
+                print(
+                    f"\n  Hint: This appears to be an application-local import.",
+                    file=sys.stderr,
+                )
                 print(f"  Try running with --root flag:", file=sys.stderr)
                 print(f"    ail test --root {suggested_root}", file=sys.stderr)
                 print(f"  Or run from the application directory:", file=sys.stderr)
@@ -1468,8 +1633,10 @@ def cmd_test(args: list[str]) -> int:
             errors.append(test_file.name)
             print(f"FAIL  {test_file.name} (runtime error: {e})", file=sys.stderr)
 
-    print(f"\nTest results: {passed}/{total} passed",
-          file=sys.stderr if failed else sys.stdout)
+    print(
+        f"\nTest results: {passed}/{total} passed",
+        file=sys.stderr if failed else sys.stdout,
+    )
     if failed:
         print(f"Failed: {', '.join(errors)}", file=sys.stderr)
     return 1 if failed else 0
@@ -1477,7 +1644,9 @@ def cmd_test(args: list[str]) -> int:
 
 def cmd_order(args: list[str]) -> int:
     """Run the dependency ordering assistant."""
-    return subprocess.run([sys.executable, "-m", "tools.ail_order"] + list(args)).returncode
+    return subprocess.run(
+        [sys.executable, "-m", "tools.ail_order"] + list(args)
+    ).returncode
 
 
 def cmd_rename(args: list[str]) -> int:
@@ -1510,7 +1679,10 @@ def cmd_rename(args: list[str]) -> int:
         elif arg == "--no-verify":
             no_verify = True
         elif arg.startswith("-"):
-            print(f"Usage: {PROG} rename [--dry-run] [--diff] [--strings] [--no-verify] <old_name> <new_name>", file=sys.stderr)
+            print(
+                f"Usage: {PROG} rename [--dry-run] [--diff] [--strings] [--no-verify] <old_name> <new_name>",
+                file=sys.stderr,
+            )
             return 1
         else:
             positional.append(arg)
@@ -1614,7 +1786,10 @@ def cmd_watch(args: list[str]) -> int:
             else:
                 poll_interval = int(remaining.pop(0))
         elif arg.startswith("-"):
-            print(f"Usage: {PROG} watch [--poll] [--json] [--no-initial] [<file>]", file=sys.stderr)
+            print(
+                f"Usage: {PROG} watch [--poll] [--json] [--no-initial] [<file>]",
+                file=sys.stderr,
+            )
             return 1
         else:
             positional.append(arg)
@@ -1763,8 +1938,12 @@ def cmd_help(args: list[str]) -> int:
     print(f"  doctor              Run repository health checks")
     print(f"  heal                Get fix suggestions for common errors")
     print(f"  docs [<name>]       Retrieve AILang documentation (no filesystem access)")
-    print(f"  context [--json]    Generate AI-friendly project context (use --json for machine-readable)")
-    print(f"  mcp                 Start MCP server for AI tool integration (stdio transport)")
+    print(
+        f"  context [--json]    Generate AI-friendly project context (use --json for machine-readable)"
+    )
+    print(
+        f"  mcp                 Start MCP server for AI tool integration (stdio transport)"
+    )
     print(f"  static-analyzer     Run static analysis on AILang source")
     print(f"  benchmark           Run the AILang benchmark suite")
     print(f"  testgen             Generate test cases for AILang apps")
@@ -1838,12 +2017,16 @@ def main(argv: list[str] | None = None) -> int:
     # Check for first run (skip for version/help/help flags)
     if argv is None:
         argv = sys.argv[1:]
-    
-    skip_first_run_check = (
-        not argv
-        or argv[0] in ("-v", "--version", "-h", "--help", "help", "version")
+
+    skip_first_run_check = not argv or argv[0] in (
+        "-v",
+        "--version",
+        "-h",
+        "--help",
+        "help",
+        "version",
     )
-    
+
     if not skip_first_run_check and _is_first_run():
         _show_welcome()
 

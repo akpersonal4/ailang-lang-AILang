@@ -33,9 +33,11 @@ from compiler.types.types import (
     BOOL_TYPE,
     FLOAT_TYPE,
     INT_TYPE,
-    STRING_TYPE,
     LIST_TYPE,
+    NUMERIC_UNKNOWN_TYPE,
+    STRING_TYPE,
     FunctionType,
+    NumericUnknownType,
     Type,
     UnknownType,
 )
@@ -93,7 +95,9 @@ class TypeChecker:
             symbol.type = expr_type
         else:
             self.symbol_table.declare(
-                node.name.name, node.name.start_span, node.name.end_span,
+                node.name.name,
+                node.name.start_span,
+                node.name.end_span,
                 type=expr_type,
             )
         if isinstance(expr_type, UnknownType) and not isinstance(
@@ -107,9 +111,7 @@ class TypeChecker:
             )
 
     def _check_FunctionDeclarationNode(self, node: FunctionDeclarationNode) -> None:
-        param_types: tuple[Type, ...] = tuple(
-            UnknownType() for _ in node.parameters
-        )
+        param_types: tuple[Type, ...] = tuple(UnknownType() for _ in node.parameters)
         return_type: Type | None = UnknownType()
         func_type = FunctionType("function", param_types, return_type)
         symbol = self.symbol_table.scopes[-1].resolve(node.name.name)
@@ -117,7 +119,9 @@ class TypeChecker:
             symbol.type = func_type
         else:
             self.symbol_table.declare(
-                node.name.name, node.name.start_span, node.name.end_span,
+                node.name.name,
+                node.name.start_span,
+                node.name.end_span,
                 type=func_type,
             )
         previous_return_type = self.current_function_return_type
@@ -129,7 +133,9 @@ class TypeChecker:
                 param_symbol.type = UnknownType()
             else:
                 self.symbol_table.declare(
-                    parameter.name, parameter.start_span, parameter.end_span,
+                    parameter.name,
+                    parameter.start_span,
+                    parameter.end_span,
                     type=UnknownType(),
                 )
 
@@ -164,7 +170,7 @@ class TypeChecker:
             self.current_function_return_type = value_type
         elif (
             value_type != self.current_function_return_type
-            and not isinstance(value_type, UnknownType)
+            and not isinstance(value_type, (UnknownType, NumericUnknownType))
             and not isinstance(self.current_function_return_type, UnknownType)
         ):
             self._report_error(
@@ -216,23 +222,22 @@ class TypeChecker:
             "/",
             "%",
         }:
-            if (
-                operator == "+"
-                and (
-                    left_type is STRING_TYPE
-                    or right_type is STRING_TYPE
-                )
+            if operator == "+" and (
+                left_type is STRING_TYPE or right_type is STRING_TYPE
             ):
                 return STRING_TYPE
-            # Allow UnknownType + known numeric to infer to the known numeric type.
+            # Allow UnknownType/NumericUnknownType + known numeric to infer
+            # to the known numeric type.
             # This enables natural patterns like map.get(m, "qty") + 1
-            if left_type is INT_TYPE and isinstance(right_type, UnknownType):
+            def _num_unk(t: Type) -> bool:
+                return isinstance(t, (UnknownType, NumericUnknownType))
+            if left_type is INT_TYPE and _num_unk(right_type):
                 return INT_TYPE
-            if right_type is INT_TYPE and isinstance(left_type, UnknownType):
+            if right_type is INT_TYPE and _num_unk(left_type):
                 return INT_TYPE
-            if left_type is FLOAT_TYPE and isinstance(right_type, UnknownType):
+            if left_type is FLOAT_TYPE and _num_unk(right_type):
                 return FLOAT_TYPE
-            if right_type is FLOAT_TYPE and isinstance(left_type, UnknownType):
+            if right_type is FLOAT_TYPE and _num_unk(left_type):
                 return FLOAT_TYPE
             if left_type in {INT_TYPE, FLOAT_TYPE} and right_type in {
                 INT_TYPE,
@@ -241,9 +246,11 @@ class TypeChecker:
                 if left_type is FLOAT_TYPE or right_type is FLOAT_TYPE:
                     return FLOAT_TYPE
                 return INT_TYPE
-            if not isinstance(left_type, UnknownType) and not isinstance(
-                right_type, UnknownType
-            ):
+            # M76.2A: Unknown + Unknown → NumericUnknownType.
+            # Both operands are unknown but used in arithmetic context.
+            if _num_unk(left_type) and _num_unk(right_type):
+                return NUMERIC_UNKNOWN_TYPE
+            if not _num_unk(left_type) and not _num_unk(right_type):
                 self._report_error(
                     f"Arithmetic operator '{operator}' requires numeric types, "
                     f"got {left_type!r} and {right_type!r}",
@@ -251,7 +258,7 @@ class TypeChecker:
                     node.start_span,
                     node.end_span,
                 )
-            return UnknownType()
+            return NUMERIC_UNKNOWN_TYPE
         if operator in {
             "==",
             "!=",
@@ -276,13 +283,11 @@ class TypeChecker:
                 if left_type is right_type:
                     return BOOL_TYPE
             # Comparisons always return bool even with unknown operands
-            if isinstance(left_type, UnknownType) or isinstance(
-                right_type, UnknownType
-            ):
+            def _num_unk(t: Type) -> bool:
+                return isinstance(t, (UnknownType, NumericUnknownType))
+            if _num_unk(left_type) or _num_unk(right_type):
                 return BOOL_TYPE
-            if not isinstance(left_type, UnknownType) and not isinstance(
-                right_type, UnknownType
-            ):
+            if not _num_unk(left_type) and not _num_unk(right_type):
                 self._report_error(
                     f"Comparison operator '{operator}' requires matching types, "
                     f"got {left_type!r} and {right_type!r}",
@@ -312,7 +317,7 @@ class TypeChecker:
             if (
                 left_type != right_type
                 and not isinstance(left_type, UnknownType)
-                and not isinstance(right_type, UnknownType)
+                and not isinstance(right_type, (UnknownType, NumericUnknownType))
                 and right_type is not INT_TYPE
             ):
                 self._report_error(
@@ -331,14 +336,14 @@ class TypeChecker:
         if operator == "-":
             if operand_type in {INT_TYPE, FLOAT_TYPE}:
                 return operand_type
-            if not isinstance(operand_type, UnknownType):
+            if not isinstance(operand_type, (UnknownType, NumericUnknownType)):
                 self._report_error(
                     f"Unary minus requires numeric type, got {operand_type!r}",
                     "TYP009",
                     node.start_span,
                     node.end_span,
                 )
-            return UnknownType()
+            return operand_type
         if operator == "!":
             if operand_type is BOOL_TYPE:  # Fixed Issue 6
                 return BOOL_TYPE
@@ -357,7 +362,7 @@ class TypeChecker:
 
     def _infer_MemberAccessNode(self, node: MemberAccessNode) -> Type:
         receiver_type = self._infer_expression(node.receiver)
-        if isinstance(receiver_type, UnknownType):
+        if isinstance(receiver_type, (UnknownType, NumericUnknownType)):
             return UnknownType()
         return receiver_type
 

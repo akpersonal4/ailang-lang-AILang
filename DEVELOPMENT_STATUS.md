@@ -10,8 +10,8 @@ until this document has been reviewed. Update AGENTS.md reading order after revi
 
 | Attribute | Value |
 |:----------|:------|
-| **Current Version** | v1.0.9 |
-| **Current Milestone** | M76.1 — Arithmetic Inference Improvements |
+| **Current Version** | v1.0.10 |
+| **Current Milestone** | M76.2 — NumericUnknownType & ail check Semantic Analysis |
 | **Project Phase** | Public Beta |
 
 ### Maturity Assessment
@@ -30,7 +30,7 @@ until this document has been reviewed. Update AGENTS.md reading order after revi
 | Governance | 100% |
 | Validation Framework | 100% |
 | Reference Applications | 8 apps (todo, expense, inventory, employee, log_analyzer, csv_etl, json_transformer, invoice) |
-| Test Suite | 894 tests passing |
+| Test Suite | 937 tests passing |
 
 --------------------------------------
 
@@ -488,6 +488,6 @@ Every document type has exactly one owner. If you need to add information, first
 
 | Field | Value |
 |:------|:------|
-| **Date** | 2026-07-16 |
-| **Version** | v1.0.9 |
-| **Milestone** | M76.1 — Arithmetic Inference Improvements |
+| **Date** | 2026-07-17 |
+| **Version** | v1.0.10 |
+| **Milestone** | M76.2 — NumericUnknownType & ail check Semantic Analysis |
