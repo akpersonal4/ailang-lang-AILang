@@ -115,34 +115,55 @@ def _resolve_deps(
     resolved: dict[str, ResolvedDependency],
     visited: set[str],
     chain: list[str] | None,
+    constraints: dict[str, list[str]] | None = None,
 ) -> None:
     """Recursively resolve a set of dependencies.
 
-    Raises ValueError on circular dependency or resolution failure.
+    Raises ValueError on circular dependency, version conflict, or resolution failure.
     """
     if chain is None:
         chain = []
-    if chain:
-        current = chain[-1]
+    if constraints is None:
+        constraints = {}
 
     for dep_name, dep_spec in deps.items():
-        if dep_name in visited:
-            continue
-
         if dep_name in chain:
             cycle = " -> ".join(chain + [dep_name])
             raise ValueError(f"Circular dependency detected: {cycle}")
 
+        if dep_name in visited:
+            # Already resolved — check for version conflict
+            if dep_spec.version_req != "*" and dep_name in resolved:
+                existing = resolved[dep_name]
+                if existing.version != dep_spec.version_req:
+                    prior = constraints.get(dep_name, [])
+                    prior_str = ", ".join(prior) if prior else "unknown"
+                    raise ValueError(
+                        f"Version conflict for '{dep_name}': "
+                        f"already resolved to {existing.version} (from {prior_str}), "
+                        f"but {dep_spec.version_req} is required"
+                    )
+            continue
+
         visited.add(dep_name)
         chain.append(dep_name)
 
+        # Track constraints for conflict detection
+        constraint_str = dep_spec.version_req
+        if dep_spec.path:
+            constraint_str = f"path={dep_spec.path}"
+        elif dep_spec.git:
+            constraint_str = f"git={dep_spec.git}"
+        constraints.setdefault(dep_name, []).append(constraint_str)
+
         if dep_spec.path:
             _resolve_local_dep(
-                dep_spec, project_root, cache_dir, resolved, visited, chain
+                dep_spec, project_root, cache_dir, resolved, visited, chain,
+                constraints,
             )
         elif dep_spec.git:
             _resolve_git_dep(
-                dep_spec, cache_dir, resolved, visited, chain
+                dep_spec, cache_dir, resolved, visited, chain, constraints,
             )
         else:
             # Registry dependency
@@ -162,8 +183,6 @@ def _resolve_deps(
                     from tools.ail_package_manager.registry import (
                         download_from_local_registry as _dl_local,
                     )
-                    # Use a temp dir to extract and read metadata
-                    import tempfile
                     meta = _fetch_local_package_meta(dep_name, local_registry_dir)
                 else:
                     meta = fetch_package_metadata(dep_name, registry_url)
@@ -214,6 +233,7 @@ def _resolve_deps(
                     resolved=resolved,
                     visited=visited,
                     chain=chain,
+                    constraints=constraints,
                 )
 
         chain.pop()
@@ -226,6 +246,7 @@ def _resolve_local_dep(
     resolved: dict[str, ResolvedDependency],
     visited: set[str],
     chain: list[str],
+    constraints: dict[str, list[str]] | None = None,
 ) -> None:
     """Resolve a local path dependency and its transitive deps."""
     dep_manifest, checksum = resolve_local_dep(dep_spec, project_root, cache_dir)
@@ -248,6 +269,7 @@ def _resolve_local_dep(
         resolved=resolved,
         visited=visited,
         chain=chain,
+        constraints=constraints,
     )
 
 
@@ -257,6 +279,7 @@ def _resolve_git_dep(
     resolved: dict[str, ResolvedDependency],
     visited: set[str],
     chain: list[str],
+    constraints: dict[str, list[str]] | None = None,
 ) -> None:
     """Resolve a Git dependency and its transitive deps."""
     dep_manifest, checksum, clone_path = clone_git_dep(dep_spec, cache_dir)
@@ -281,6 +304,7 @@ def _resolve_git_dep(
         resolved=resolved,
         visited=visited,
         chain=chain,
+        constraints=constraints,
     )
 
 

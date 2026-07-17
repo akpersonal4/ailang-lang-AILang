@@ -31,7 +31,7 @@ from compiler.runtime import builtins as runtime_builtins
 from compiler.runtime.interpreter import Runtime
 
 PROG = "ail"
-VERSION = "1.0.11"
+VERSION = "1.1.0"
 
 
 # =============================================================================
@@ -1559,7 +1559,7 @@ def cmd_test(args: list[str]) -> int:
             has_import_error = False
             suggested_root = None
             for diagnostic in reporter.diagnostics:
-                msg = diagnostic.get("message", "")
+                msg = getattr(diagnostic, "message", "")
                 if "Symbol not found in module" in msg or "Undefined identifier" in msg:
                     # Check if this looks like an app-local import
                     file_path = Path(test_file)

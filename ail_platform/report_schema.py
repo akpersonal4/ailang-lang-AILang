@@ -16,6 +16,13 @@ class ExitCode:
     REGRESSION = 2
     INTERNAL_ERROR = 3
 
+    # Package manager specific codes (M77.1)
+    RESOLUTION_FAILURE = 1
+    CIRCULAR_DEPENDENCY = 2
+    INVALID_MANIFEST = 3
+    LOCKFILE_MISMATCH = 4
+    GIT_CLONE_FAILURE = 5
+
 
 @dataclass
 class ReportMetadata:

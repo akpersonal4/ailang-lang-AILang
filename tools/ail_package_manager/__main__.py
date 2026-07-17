@@ -77,7 +77,8 @@ def cmd_install(args: argparse.Namespace) -> int:
         project_root=Path.cwd(),
         no_lock=args.no_lock,
         offline=args.offline,
-        frozen_lockfile=args.frozen_lockfile,
+        frozen_lockfile=args.frozen_lockfile or args.frozen,
+        verbose=args.verbose,
     )
 
 
@@ -134,6 +135,8 @@ def main() -> int:
     install_parser.add_argument("--no-lock", action="store_true", help="Skip lock file creation")
     install_parser.add_argument("--offline", action="store_true", help="Fail if network access required")
     install_parser.add_argument("--frozen-lockfile", action="store_true", help="Fail if lock file would change")
+    install_parser.add_argument("--frozen", action="store_true", help="Alias for --frozen-lockfile")
+    install_parser.add_argument("--verbose", "-v", action="store_true", help="Show detailed installation output")
 
     # ail update
     update_parser = subparsers.add_parser("update", help="Update dependencies")

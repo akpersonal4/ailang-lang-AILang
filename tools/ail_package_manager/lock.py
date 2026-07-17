@@ -13,7 +13,7 @@ _LOCK_HEADER = """\
 # ail.lock — Auto-generated. Do not edit manually.
 version = {version}
 
-# input_hash = sha256 hash of [dependencies] section from ail.toml
+# input_hash = sha256 hash of ail.toml
 input_hash = "{input_hash}"
 
 """
@@ -60,9 +60,9 @@ def generate_lock(
     lines = [_LOCK_HEADER.format(version=1, input_hash=input_hash)]
 
     for dep in resolved:
-        lines.append(f"[[packages]]")
+        lines.append("[[package]]")
         lines.append(f'name = "{dep.name}"')
-        lines.append(f'version = "{dep.version}"')
+        lines.append(f'resolved_version = "{dep.version}"')
         lines.append(f'source = "{dep.source}"')
 
         if dep.checksum:
@@ -80,6 +80,8 @@ def generate_lock(
             lines.append(f'git = "{dep.git}"')
         if dep.tag:
             lines.append(f'tag = "{dep.tag}"')
+        if dep.checksum and dep.source == "git":
+            lines.append(f'commit = "{dep.checksum}"')
 
         lines.append("")  # blank line between entries
 
@@ -95,9 +97,7 @@ def write_lock(lock_path: Path, content: str) -> None:
 def read_lock_packages(lock_path: Path) -> list[LockFilePackage]:
     """Parse an ail.lock file and extract package entries.
 
-    This is a simple parser that finds [[packages]] sections.
-    For a full TOML-based approach, we'd use tomllib, but the
-    lock file format is simple enough for line-by-line parsing.
+    Supports both [[package]] (M77.1) and [[packages]] (legacy) formats.
     """
     if not lock_path.exists():
         return []
@@ -110,7 +110,7 @@ def read_lock_packages(lock_path: Path) -> list[LockFilePackage]:
         if stripped.startswith("#") or not stripped:
             continue
 
-        if stripped == "[[packages]]":
+        if stripped in ("[[package]]", "[[packages]]"):
             if current is not None:
                 packages.append(_dict_to_package(current))
             current = {}
@@ -129,17 +129,28 @@ def read_lock_packages(lock_path: Path) -> list[LockFilePackage]:
 
 
 def _dict_to_package(d: dict) -> LockFilePackage:
-    """Convert a parsed dict to a LockFilePackage."""
+    """Convert a parsed dict to a LockFilePackage.
+
+    Handles both [[package]] (resolved_version, commit) and
+    [[packages]] (version) formats.
+    """
+    version = d.get("resolved_version", "") or d.get("version", "")
     deps = d.get("dependencies", "[]")
     deps = deps.strip("[]").strip()
     dep_list = [d.strip().strip('"') for d in deps.split(",") if d.strip()] if deps else []
 
+    checksum = d.get("checksum", "")
+    commit = d.get("commit", "")
+    if not checksum and commit:
+        checksum = commit
+
     return LockFilePackage(
         name=d.get("name", ""),
-        version=d.get("version", ""),
+        version=version,
         source=d.get("source", ""),
-        checksum=d.get("checksum", ""),
+        checksum=checksum,
         dependencies=dep_list,
         path=d.get("path"),
         git=d.get("git"),
+        tag=d.get("tag"),
     )

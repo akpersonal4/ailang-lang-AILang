@@ -59,8 +59,19 @@ def validate_version(version: str) -> Optional[str]:
 
 
 def _parse_dep_value(name: str, value) -> DependencySpec:
-    """Parse a single dependency value from TOML."""
+    """Parse a single dependency value from TOML.
+
+    Supports:
+    - Version string: ">=1.0.0"
+    - Local path: { path = "../auth" }
+    - Git URL string: "git+https://..."
+    - Git table: { git = "https://...", tag = "v1.0.0" }
+    """
     if isinstance(value, str):
+        # git+https:// or git+ssh:// string format
+        if value.startswith("git+"):
+            git_url = value[4:]  # strip "git+"
+            return DependencySpec(name=name, git=git_url, version_req="*")
         return DependencySpec(name=name, version_req=value)
     if isinstance(value, dict):
         if "path" in value:

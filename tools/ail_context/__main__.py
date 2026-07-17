@@ -11,7 +11,7 @@ import sys
 from pathlib import Path
 
 
-VERSION = "1.0.11"
+VERSION = "1.1.0"
 
 LANGUAGE_RULES = {
     "no_loops": {

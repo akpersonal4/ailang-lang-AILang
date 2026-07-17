@@ -27,12 +27,16 @@ def install(
     no_lock: bool = False,
     offline: bool = False,
     frozen_lockfile: bool = False,
+    verbose: bool = False,
 ) -> int:
     """Install all dependencies declared in ail.toml."""
     manifest_path = find_manifest(project_root)
     if manifest_path is None:
         print("Error: No ail.toml found")
         return ExitCode.INTERNAL_ERROR
+
+    if verbose:
+        print(f"Manifest: {manifest_path}")
 
     try:
         manifest = parse_manifest(manifest_path)
@@ -51,8 +55,26 @@ def install(
     lib_dir.mkdir(parents=True, exist_ok=True)
     cache_dir.mkdir(parents=True, exist_ok=True)
 
+    if verbose:
+        print(f"Project root: {project_root}")
+        print(f"Lib dir: {lib_dir}")
+        print(f"Cache dir: {cache_dir}")
+        print(f"Lock file: {lock_path}")
+
     if frozen_lockfile and lock_path.exists():
         print("Checking lock file consistency...")
+        if verbose:
+            from tools.ail_package_manager.lock import deps_hash_matches
+            if deps_hash_matches(manifest_path, lock_path):
+                print("  Lock file is fresh")
+            else:
+                print("  Warning: Lock file is stale")
+
+    if verbose:
+        deps = manifest.dependencies
+        for name, spec in deps.items():
+            source = spec.path or spec.git or "registry"
+            print(f"  {name}: {spec.version_req} (source: {source})")
 
     print(f"Resolving dependencies for '{manifest.name}'...")
 
@@ -73,21 +95,28 @@ def install(
         from tools.ail_package_manager.lock import deps_hash_matches
         if not deps_hash_matches(manifest_path, lock_path):
             print("Error: Lock file is stale (--frozen-lockfile)", file=__import__("sys").stderr)
-            return ExitCode.FAILURE
+            return ExitCode.LOCKFILE_MISMATCH
 
     installed_names: set[str] = set()
     for dep in resolved:
-        print(f"  Installing {dep.name} v{dep.version} ({dep.source})...")
+        if verbose:
+            print(f"  Installing {dep.name} v{dep.version} ({dep.source})...")
+        else:
+            print(f"  Installing {dep.name} v{dep.version} ({dep.source})...")
 
         if dep.source == "local":
             source_spec = manifest.dependencies.get(dep.name)
             if source_spec and source_spec.path:
                 source_path = (project_root / source_spec.path).resolve()
+                if verbose:
+                    print(f"    Copying from {source_path}")
                 copy_package_to_lib(source_path, lib_dir, dep.name)
 
         elif dep.source == "git":
             dep_spec = manifest.dependencies.get(dep.name)
             if dep_spec and dep_spec.git:
+                if verbose:
+                    print(f"    Cloning {dep_spec.git}")
                 try:
                     _manifest, _checksum, clone_path = clone_git_dep(dep_spec, cache_dir)
                     copy_package_to_lib(clone_path, lib_dir, dep.name)
@@ -105,14 +134,18 @@ def install(
                 if registry_url.startswith(("file://", "/", ".", "\\")):
                     raw = registry_url
                     if raw.startswith("file:///"):
-                        raw = raw[8:]  # file:///C:/... -> C:/...
+                        raw = raw[8:]
                     elif raw.startswith("file://"):
-                        raw = raw[7:]  # file://host/path
+                        raw = raw[7:]
                     registry_dir = Path(raw).resolve()
+                    if verbose:
+                        print(f"    Downloading from local registry: {registry_dir}")
                     download_from_local_registry(
                         dep.name, dep.version, registry_dir, dest
                     )
                 else:
+                    if verbose:
+                        print(f"    Downloading from {registry_url}")
                     download_package_archive(
                         dep.name, dep.version, registry_url, dest
                     )
@@ -128,6 +161,8 @@ def install(
     if not no_lock:
         lock_content = generate_lock(resolved, manifest_path)
         write_lock(lock_path, lock_content)
+        if verbose:
+            print(f"Lock file updated: {lock_path}")
 
     print(f"\nInstalled {len(resolved)} packages")
     return ExitCode.SUCCESS

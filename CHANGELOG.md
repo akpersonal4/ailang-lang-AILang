@@ -1,5 +1,23 @@
 # Changelog
 
+## v1.1.0
+
+### M77.1 — Local Package Management MVP
+
+- **Lock file format update**: `ail.lock` now uses `[[package]]` (singular), `resolved_version` instead of `version`, and `commit` field for git dependencies
+- **Git+ URL shorthand**: Manifest now supports `audit = "git+https://..."` string format alongside the existing table syntax
+- **Version conflict detection**: Resolver now detects and reports version conflicts with actionable diagnostics showing conflicting constraints
+- **Improved circular dependency detection**: Circular dependencies are now detected even when the cycle involves already-visited packages, with clear cycle path in error message
+- **`--verbose` flag**: `ail install --verbose` (or `-v`) shows manifest path, project root, lib/cache dirs, dependency details, and per-package install steps
+- **`--frozen` alias**: `ail install --frozen` is now a shortcut for `--frozen-lockfile`
+- **Lockfile staleness exit code**: `--frozen-lockfile` now returns exit code 4 (LOCKFILE_MISMATCH) instead of generic FAILURE when the lockfile is stale
+- **Package-specific exit codes**: Added `RESOLUTION_FAILURE=1`, `CIRCULAR_DEPENDENCY=2`, `INVALID_MANIFEST=3`, `LOCKFILE_MISMATCH=4`, `GIT_CLONE_FAILURE=5` to `ExitCode`
+- **Lockfile input hash comment**: Updated comment to clarify hash is of `ail.toml`
+
+### Tests
+
+- 16 new tests covering local deps install, lockfile format, reproducible installs, circular detection, verbose output, frozen lockfile, and exit codes
+
 ## v1.0.10
 
 ### M76.2A — NumericUnknownType for Unknown+Unknown Arithmetic

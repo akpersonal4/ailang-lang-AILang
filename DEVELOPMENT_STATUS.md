@@ -10,8 +10,8 @@ until this document has been reviewed. Update AGENTS.md reading order after revi
 
 | Attribute | Value |
 |:----------|:------|
-| **Current Version** | v1.0.11 |
-| **Current Milestone** | M76.3 — Type Flow, TYP001 Diagnostics, ail explain |
+| **Current Version** | v1.1.0 |
+| **Current Milestone** | M77.1 — Local Package Management MVP |
 | **Project Phase** | Public Beta |
 
 ### Maturity Assessment
@@ -30,7 +30,7 @@ until this document has been reviewed. Update AGENTS.md reading order after revi
 | Governance | 100% |
 | Validation Framework | 100% |
 | Reference Applications | 8 apps (todo, expense, inventory, employee, log_analyzer, csv_etl, json_transformer, invoice) |
-| Test Suite | 937 tests passing |
+| Test Suite | 955 tests passing |
 
 --------------------------------------
 

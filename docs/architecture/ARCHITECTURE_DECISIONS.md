@@ -239,3 +239,149 @@ Every major permanent decision made during AILang development, preserved so that
 **Status:** Accepted. Permanent.
 
 **Future Impact:** Any new documentation must be AI-consumable (structured, referenced from AGENTS.md). The Benchmark Feedback Loop ensures continuous improvement of AI guidance.
+
+---
+
+## ADR-010: Consolidate Package Manager Code
+
+**Problem:** `compiler/package/registry.py` and `tools/ail_package_manager/registry.py` are near-identical copies of the same registry client, creating confusion about which is authoritative.
+
+**Decision:** Merge `compiler/package/registry.py` into `tools/ail_package_manager/registry.py`. Remove the `compiler/package/` directory. Wire all package management through `tools/ail_package_manager/`.
+
+**Reason:**
+- Two copies create divergence risk (they already differ slightly)
+- The `tools/` copy is more complete (typed models, checksum verification)
+- The `compiler/` copy is used only by `cmd_publish`
+- Single source of truth eliminates maintenance burden
+
+**Alternatives Considered:**
+- Keep both copies — ongoing divergence risk
+- Move everything to `compiler/package/` — would break the standalone tool pattern
+
+**Evidence:** `compiler/package/registry.py` (264 LOC) vs `tools/ail_package_manager/registry.py` (360 LOC) — the `tools/` version is strictly more complete.
+
+**Status:** Accepted. M77 phase 1.
+
+**Future Impact:** All package management code lives in `tools/ail_package_manager/`. The `compiler/cli/main.py` commands import from there.
+
+---
+
+## ADR-011: `ail new` is the Public API, `ail init` is Internal
+
+**Problem:** User docs (PACKAGES.md) document `ail new` while the design doc (PACKAGE_MANAGER_DESIGN.md) specifies `ail init`.
+
+**Decision:** `ail new` remains the user-facing command for project scaffolding. `ail init` (if kept) is an internal alias used by the package manager tool.
+
+**Reason:**
+- `ail new` is documented in PACKAGES.md and has been the public API since v1.0.8
+- Changing it would break existing documentation and user muscle memory
+- `ail init` exists in `tools/ail_package_manager/init.py` but is not wired to the main CLI
+- No breaking change required
+
+**Alternatives Considered:**
+- Rename `ail new` to `ail init` — breaking change, documentation churn
+- Wire `ail init` to the main CLI as an alias — adds confusion about which to use
+
+**Evidence:** `ail new` appears in 3+ user-facing documents. `ail init` appears only in the design doc and the standalone tool.
+
+**Status:** Accepted. M77 phase 1.
+
+**Future Impact:** `ail new` stays in main CLI dispatch. `ail init` stays in `tools/ail_package_manager/__main__.py` for internal use only.
+
+---
+
+## ADR-012: Local-First, Registry-Ready Architecture
+
+**Problem:** Whether to implement a remote registry server for M77, or design for it but defer.
+
+**Decision:** M77 implements full package management for local path and git dependencies. Registry support is designed but not implemented (server does not exist). The architecture must not block future registry addition.
+
+**Reason:**
+- Per PACKAGE_MANAGER_DESIGN.md §3.3, the official registry is out of scope for v1
+- Building a registry server is a separate project (infrastructure, hosting, auth)
+- Designing for registry-ready architecture means the API surface is stable when a registry is added later
+- Local directory registry provides a working publish/install flow for teams
+
+**Alternatives Considered:**
+- Build a minimal registry server — scope creep, hosting requirements, auth complexity
+- Skip registry design entirely — would require API redesign when registry is added
+
+**Evidence:** The existing `registry.py` already has both `publish_local()` and `publish_remote()` functions. The remote path is implemented but requires a server.
+
+**Status:** Accepted. M77 phase 1.
+
+**Future Impact:** All resolver and installer interfaces accept a `source_type` parameter that can be extended. Registry client code is retained but marked as `@future`.
+
+---
+
+## ADR-013: Semver Range Parsing
+
+**Problem:** The current resolver only handles exact match or `*` (latest). Real package management requires version ranges.
+
+**Decision:** Implement full semver range parsing (>=, ^, ~, exact, range) using a standalone `_parse_version_requirement()` function. No external dependency.
+
+**Reason:**
+- `^1.0.0` is the most common constraint format in package managers (Cargo, npm)
+- Without ranges, users must pin exact versions, making dependency management brittle
+- Semver 2.0 parsing is well-defined and implementable in ~80 lines
+- No external dependency (stdlib only) — respects ADR-001 constraint
+
+**Alternatives Considered:**
+- Exact-only (current) — too restrictive for real use
+- npm-style complex ranges — over-engineered for v1
+- Cargo-style ranges — good balance, adopted
+
+**Evidence:** Cargo, npm, and pip all support semver ranges. AILang's design doc (§10) specifies SemVer 2.0.
+
+**Status:** Accepted. M77 phase 2.
+
+**Future Impact:** All version constraints in `ail.toml` support range operators. The resolver uses `_parse_version_requirement()` for all constraint evaluation.
+
+---
+
+## ADR-014: Dependency Conflict Detection
+
+**Problem:** Without conflict detection, `ail install` silently installs whatever version it encounters last, leading to non-reproducible builds.
+
+**Decision:** Implement conflict detection during resolution. When two packages require incompatible versions of the same dependency, emit a clear diagnostic with the conflicting constraints and suggested resolution.
+
+**Reason:**
+- Silent version resolution leads to runtime errors that are hard to diagnose
+- Clear conflict messages with suggested fixes reduce developer friction
+- Conflict detection is O(n) in the number of constraints — negligible performance cost
+- Exit code on conflict prevents broken installations
+
+**Alternatives Considered:**
+- Silent "last wins" (current behavior) — non-reproducible, hides bugs
+- Auto-upgrade to highest compatible — may break packages that depend on specific versions
+
+**Evidence:** Cargo and npm both detect conflicts and report them clearly. npm v7+ made conflict detection the default behavior.
+
+**Status:** Accepted. M77 phase 3.
+
+**Future Impact:** Resolution algorithm tracks all constraints per package name. On conflict: collect all constraints, find intersection, report if empty.
+
+---
+
+## ADR-015: Circular Dependency Detection
+
+**Problem:** Circular dependencies are undefined in AILang (no loops, no lazy evaluation). They must be detected at install time, not at runtime.
+
+**Decision:** Track the resolution path and detect cycles. On cycle, emit diagnostic with the cycle path.
+
+**Reason:**
+- AILang has no lazy evaluation — circular deps would cause infinite recursion
+- Detection at install time prevents cryptic runtime errors
+- Resolution path tracking is O(depth) in memory — negligible cost
+- Clear cycle path in diagnostic helps developers understand the problem
+
+**Alternatives Considered:**
+- Detect at runtime — too late, wastes developer time
+- Prohibit all cycles in packages — too strict, may block valid use cases (e.g., mutually recursive modules within a package)
+- Allow cycles with lazy evaluation — language change, out of scope
+
+**Evidence:** Cargo detects circular dependencies at build time. npm detects them at install time. Both report the cycle path.
+
+**Status:** Accepted. M77 phase 4.
+
+**Future Impact:** Resolution maintains a `resolution_path: list[str]` stack. Before recursing into a dep, check if it's already in the path. On cycle: report `CIRCULAR: A → B → C → A`.
