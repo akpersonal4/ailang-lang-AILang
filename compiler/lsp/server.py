@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from compiler.formatter import format_source
 from compiler.lsp.documents import Document
 from compiler.lsp.features.code_actions import get_code_actions
 from compiler.lsp.features.completion import get_completions
@@ -71,6 +72,8 @@ class LspServer:
             "textDocument/documentSymbol": self._handle_document_symbols,
             "textDocument/codeAction": self._handle_code_action,
             "workspace/symbol": self._handle_workspace_symbols,
+            "textDocument/formatting": self._handle_formatting,
+            "textDocument/rangeFormatting": self._handle_range_formatting,
         }
         handler = handlers.get(method)
         if handler is not None:
@@ -103,12 +106,14 @@ class LspServer:
             "documentSymbolProvider": True,
             "workspaceSymbolProvider": True,
             "codeActionProvider": True,
+            "documentFormattingProvider": True,
+            "documentRangeFormattingProvider": True,
         }
         return {
             "capabilities": self._capabilities,
             "serverInfo": {
                 "name": "ailang-lsp",
-                "version": "0.2.0",
+                "version": "1.1.0",
             },
         }
 
@@ -243,3 +248,52 @@ class LspServer:
         context = params.get("context", {})
         doc = self._get_document(uri)
         return get_code_actions(doc, _range, context)
+
+    # -----------------------------------------------------------------------
+    # Formatting
+    # -----------------------------------------------------------------------
+
+    def _handle_formatting(self, params: dict[str, Any]) -> list[dict[str, Any]]:
+        text_doc = params.get("textDocument", {})
+        uri = text_doc.get("uri", "")
+        doc = self._get_document(uri)
+        try:
+            formatted = format_source(doc.text)
+            if formatted == doc.text:
+                return []
+            full_range = {
+                "start": {"line": 0, "character": 0},
+                "end": {"line": doc.text.count("\n"), "character": 0},
+            }
+            return [{"range": full_range, "newText": formatted}]
+        except (ValueError, Exception):
+            return []
+
+    def _handle_range_formatting(self, params: dict[str, Any]) -> list[dict[str, Any]]:
+        text_doc = params.get("textDocument", {})
+        uri = text_doc.get("uri", "")
+        _range = params.get("range", {})
+        doc = self._get_document(uri)
+        try:
+            lines = doc.text.split("\n")
+            start_line = _range.get("start", {}).get("line", 0)
+            end_line = _range.get("end", {}).get("line", len(lines) - 1)
+            start_char = _range.get("start", {}).get("character", 0)
+            end_char = _range.get("end", {}).get("character", 0)
+
+            selected = "\n".join(lines[start_line : end_line + 1])
+            formatted = format_source(selected)
+            if formatted == selected:
+                return []
+
+            prefix = lines[start_line][:start_char] if start_line < len(lines) else ""
+            suffix = (
+                lines[end_line][end_char:]
+                if end_line < len(lines) and end_char < len(lines[end_line])
+                else ""
+            )
+            new_text = prefix + formatted.rstrip("\n") + suffix
+
+            return [{"range": _range, "newText": new_text}]
+        except (ValueError, Exception):
+            return []

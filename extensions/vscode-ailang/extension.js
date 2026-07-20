@@ -8,7 +8,7 @@ let mcpManager = null;
 let logger = null;
 let statusBarItem = null;
 
-function getConfig() {
+function getMCPConfig() {
     const cfg = vscode.workspace.getConfiguration('ailang.mcp');
     return {
         autoStart: cfg.get('autoStart', true),
@@ -16,6 +16,17 @@ function getConfig() {
         args: cfg.get('args', ['mcp']),
         timeout: cfg.get('timeout', 30000),
         maxReconnectAttempts: cfg.get('maxReconnectAttempts', 3),
+    };
+}
+
+function getLSPConfig() {
+    const cfg = vscode.workspace.getConfiguration('ailang');
+    return {
+        compilerPath: cfg.get('compilerPath', 'ail'),
+        formatOnSave: cfg.get('formatOnSave', true),
+        enableDiagnostics: cfg.get('enableDiagnostics', true),
+        maxProblems: cfg.get('maxProblems', 100),
+        traceServer: cfg.get('trace.server', 'off'),
     };
 }
 
@@ -174,12 +185,137 @@ async function insertExample() {
     }
 }
 
+// ---------------------------------------------------------------------------
+// CLI Commands (build, run, check, version)
+// ---------------------------------------------------------------------------
+
+async function runCLICommand(command, args = [], showOutput = true) {
+    const config = getLSPConfig();
+    const cli = config.compilerPath;
+    const { spawn } = require('child_process');
+
+    return new Promise((resolve, reject) => {
+        const proc = spawn(cli, [command, ...args], {
+            shell: process.platform === 'win32',
+            env: { ...process.env },
+        });
+
+        let stdout = '';
+        let stderr = '';
+
+        proc.stdout.on('data', (data) => { stdout += data.toString(); });
+        proc.stderr.on('data', (data) => { stderr += data.toString(); });
+
+        proc.on('close', (code) => {
+            if (showOutput && stdout) {
+                logger.info(`[${command}] ${stdout.trim()}`);
+            }
+            if (stderr) {
+                logger.warn(`[${command}] ${stderr.trim()}`);
+            }
+            resolve({ code, stdout, stderr });
+        });
+
+        proc.on('error', (err) => {
+            logger.error(`[${command}] Failed to start: ${err.message}`);
+            reject(err);
+        });
+    });
+}
+
+async function ailBuild() {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor || !editor.document.fileName.endsWith('.ail')) {
+        vscode.window.showWarningMessage('No active AILang file');
+        return;
+    }
+    const file = editor.document.fileName;
+    try {
+        const result = await runCLICommand('build', [file]);
+        if (result.code === 0) {
+            vscode.window.showInformationMessage('AILang: Build successful');
+        } else {
+            vscode.window.showErrorMessage('AILang: Build failed — see output');
+        }
+    } catch (err) {
+        vscode.window.showErrorMessage(`AILang build failed: ${err.message}`);
+    }
+}
+
+async function ailRun() {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor || !editor.document.fileName.endsWith('.ail')) {
+        vscode.window.showWarningMessage('No active AILang file');
+        return;
+    }
+    const file = editor.document.fileName;
+    try {
+        const result = await runCLICommand('run', [file]);
+        if (result.stdout) {
+            logger.info(`[run] ${result.stdout.trim()}`);
+        }
+        if (result.code !== 0) {
+            vscode.window.showErrorMessage('AILang: Run failed — see output');
+        }
+    } catch (err) {
+        vscode.window.showErrorMessage(`AILang run failed: ${err.message}`);
+    }
+}
+
+async function ailCheck() {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor || !editor.document.fileName.endsWith('.ail')) {
+        vscode.window.showWarningMessage('No active AILang file');
+        return;
+    }
+    const file = editor.document.fileName;
+    try {
+        const result = await runCLICommand('check', [file]);
+        if (result.code === 0) {
+            vscode.window.showInformationMessage('AILang: Check passed');
+        } else {
+            vscode.window.showWarningMessage('AILang: Check found issues — see output');
+        }
+    } catch (err) {
+        vscode.window.showErrorMessage(`AILang check failed: ${err.message}`);
+    }
+}
+
+async function ailVersion() {
+    try {
+        const result = await runCLICommand('version', []);
+        const version = result.stdout.trim() || 'AILang (unknown version)';
+        vscode.window.showInformationMessage(version);
+    } catch (err) {
+        vscode.window.showErrorMessage(`AILang version failed: ${err.message}`);
+    }
+}
+
+async function ailFormat() {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor || !editor.document.fileName.endsWith('.ail')) {
+        vscode.window.showWarningMessage('No active AILang file');
+        return;
+    }
+    try {
+        await vscode.commands.executeCommand('editor.action.formatDocument');
+    } catch (err) {
+        vscode.window.showErrorMessage(`AILang format failed: ${err.message}`);
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Activation
+// ---------------------------------------------------------------------------
+
 function activate(context) {
-    logger = new Logger('AILang MCP');
+    logger = new Logger('AILang');
+
+    const config = getLSPConfig();
 
     // --- LSP Client ---
     const lspServerOptions = {
-        command: 'ail',
+        command: config.compilerPath,
         args: ['lsp'],
     };
     const lspClientOptions = {
@@ -187,7 +323,12 @@ function activate(context) {
         synchronize: {
             fileEvents: vscode.workspace.createFileSystemWatcher('**/*.ail'),
         },
+        outputChannel: logger.outputChannel,
     };
+
+    if (config.traceServer !== 'off') {
+        lspClientOptions.traceOutputChannel = logger.outputChannel;
+    }
 
     lspClient = new LanguageClient(
         'ailangLanguageServer',
@@ -195,7 +336,14 @@ function activate(context) {
         lspServerOptions,
         lspClientOptions
     );
-    lspClient.start();
+
+    lspClient.start().catch((err) => {
+        logger.error(`LSP server failed to start: ${err.message}`);
+        vscode.window.showErrorMessage(
+            `AILang Language Server failed to start. Is the 'ail' CLI installed?\n${err.message}`
+        );
+    });
+
     context.subscriptions.push(lspClient);
 
     // --- Status Bar ---
@@ -207,8 +355,8 @@ function activate(context) {
     context.subscriptions.push(statusBarItem);
 
     // --- MCP Manager ---
-    const config = getConfig();
-    mcpManager = new MCPManager(logger, config);
+    const mcpConfig = getMCPConfig();
+    mcpManager = new MCPManager(logger, mcpConfig);
 
     mcpManager.on('stateChange', (state) => {
         updateStatusBar(state);
@@ -222,19 +370,40 @@ function activate(context) {
         logger.info('MCP reconnected successfully');
     });
 
+    // --- Format on Save ---
+    if (config.formatOnSave) {
+        context.subscriptions.push(
+            vscode.workspace.onWillSaveTextDocument((event) => {
+                if (event.document.languageId === 'ailang') {
+                    const edit = vscode.commands.executeCommand(
+                        'editor.action.formatDocument'
+                    );
+                    event.waitUntil(edit);
+                }
+            })
+        );
+    }
+
     // --- Commands ---
     context.subscriptions.push(
+        // MCP commands
         vscode.commands.registerCommand('ailang.mcp.start', startMCP),
         vscode.commands.registerCommand('ailang.mcp.stop', stopMCP),
         vscode.commands.registerCommand('ailang.mcp.restart', restartMCP),
         vscode.commands.registerCommand('ailang.mcp.compile', compileCurrentFile),
         vscode.commands.registerCommand('ailang.mcp.explainDiagnostic', explainDiagnostic),
         vscode.commands.registerCommand('ailang.mcp.insertExample', insertExample),
-        vscode.commands.registerCommand('ailang.showOutput', () => logger.show())
+        vscode.commands.registerCommand('ailang.showOutput', () => logger.show()),
+        // CLI commands
+        vscode.commands.registerCommand('ailang.build', ailBuild),
+        vscode.commands.registerCommand('ailang.run', ailRun),
+        vscode.commands.registerCommand('ailang.check', ailCheck),
+        vscode.commands.registerCommand('ailang.version', ailVersion),
+        vscode.commands.registerCommand('ailang.format', ailFormat)
     );
 
     // --- Auto-start MCP ---
-    if (config.autoStart) {
+    if (mcpConfig.autoStart) {
         startMCP();
     }
 

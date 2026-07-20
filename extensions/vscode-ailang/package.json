@@ -1,8 +1,8 @@
 {
   "name": "vscode-ailang",
   "displayName": "AILang",
-  "description": "AILang language support — syntax highlighting, LSP, MCP, AI-native diagnostics, go-to-definition, hover, rename, snippets",
-  "version": "0.3.0",
+  "description": "AILang language support — syntax highlighting, diagnostics, formatting, hover, go-to-definition, snippets, build/run",
+  "version": "1.1.0",
   "publisher": "ailang",
   "license": "Apache-2.0",
   "keywords": [
@@ -50,46 +50,104 @@
     ],
     "commands": [
       {
-        "command": "ailang.mcp.start",
-        "title": "AILang MCP: Start Server"
+        "command": "ailang.build",
+        "title": "AILang: Build Current File",
+        "category": "AILang"
       },
       {
-        "command": "ailang.mcp.stop",
-        "title": "AILang MCP: Stop Server"
+        "command": "ailang.run",
+        "title": "AILang: Run Current File",
+        "category": "AILang"
       },
       {
-        "command": "ailang.mcp.restart",
-        "title": "AILang MCP: Restart Server"
+        "command": "ailang.check",
+        "title": "AILang: Check Current File",
+        "category": "AILang"
       },
       {
-        "command": "ailang.mcp.compile",
-        "title": "AILang MCP: Compile Current File"
+        "command": "ailang.version",
+        "title": "AILang: Show Version",
+        "category": "AILang"
       },
       {
-        "command": "ailang.mcp.explainDiagnostic",
-        "title": "AILang MCP: Explain Diagnostic Under Cursor"
-      },
-      {
-        "command": "ailang.mcp.insertExample",
-        "title": "AILang MCP: Insert Code Example"
+        "command": "ailang.format",
+        "title": "AILang: Format Document",
+        "category": "AILang"
       },
       {
         "command": "ailang.showOutput",
-        "title": "AILang: Show Output Channel"
+        "title": "AILang: Show Output Channel",
+        "category": "AILang"
+      },
+      {
+        "command": "ailang.mcp.start",
+        "title": "AILang MCP: Start Server",
+        "category": "AILang MCP"
+      },
+      {
+        "command": "ailang.mcp.stop",
+        "title": "AILang MCP: Stop Server",
+        "category": "AILang MCP"
+      },
+      {
+        "command": "ailang.mcp.restart",
+        "title": "AILang MCP: Restart Server",
+        "category": "AILang MCP"
+      },
+      {
+        "command": "ailang.mcp.compile",
+        "title": "AILang MCP: Compile Current File",
+        "category": "AILang MCP"
+      },
+      {
+        "command": "ailang.mcp.explainDiagnostic",
+        "title": "AILang MCP: Explain Diagnostic Under Cursor",
+        "category": "AILang MCP"
+      },
+      {
+        "command": "ailang.mcp.insertExample",
+        "title": "AILang MCP: Insert Code Example",
+        "category": "AILang MCP"
       }
     ],
     "configuration": {
-      "title": "AILang MCP",
+      "title": "AILang",
       "properties": {
+        "ailang.compilerPath": {
+          "type": "string",
+          "default": "ail",
+          "description": "Path to the 'ail' CLI executable. Override if 'ail' is not on PATH."
+        },
+        "ailang.formatOnSave": {
+          "type": "boolean",
+          "default": true,
+          "description": "Format AILang files automatically when saving."
+        },
+        "ailang.enableDiagnostics": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable real-time error checking while editing."
+        },
+        "ailang.maxProblems": {
+          "type": "number",
+          "default": 100,
+          "description": "Maximum number of diagnostics to report per file."
+        },
+        "ailang.trace.server": {
+          "type": "string",
+          "enum": ["off", "messages", "verbose"],
+          "default": "off",
+          "description": "Log LSP communication for debugging."
+        },
         "ailang.mcp.autoStart": {
           "type": "boolean",
           "default": true,
-          "description": "Automatically start the MCP server when the extension activates"
+          "description": "Automatically start the MCP server when the extension activates."
         },
         "ailang.mcp.command": {
           "type": "string",
           "default": "ail",
-          "description": "Command to launch the MCP server"
+          "description": "Command to launch the MCP server."
         },
         "ailang.mcp.args": {
           "type": "array",
@@ -97,17 +155,17 @@
             "type": "string"
           },
           "default": ["mcp"],
-          "description": "Arguments passed to the MCP server command"
+          "description": "Arguments passed to the MCP server command."
         },
         "ailang.mcp.timeout": {
           "type": "number",
           "default": 30000,
-          "description": "Timeout in milliseconds for MCP server initialization and tool calls"
+          "description": "Timeout in milliseconds for MCP server initialization and tool calls."
         },
         "ailang.mcp.maxReconnectAttempts": {
           "type": "number",
           "default": 3,
-          "description": "Maximum number of reconnect attempts after an unexpected server exit"
+          "description": "Maximum number of reconnect attempts after an unexpected server exit."
         }
       }
     }

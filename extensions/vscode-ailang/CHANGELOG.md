@@ -2,6 +2,27 @@
 
 All notable changes to the AILang VS Code extension will be documented in this file.
 
+## [1.1.0] - 2026-07-20
+
+### Added
+- `textDocument/formatting` — format entire document via LSP
+- `textDocument/rangeFormatting` — format selected range via LSP
+- Format on save (configurable via `ailang.formatOnSave`)
+- CLI commands: Build, Run, Check, Version, Format (`ailang.build`, `ailang.run`, `ailang.check`, `ailang.version`, `ailang.format`)
+- Extension settings: `ailang.compilerPath`, `ailang.formatOnSave`, `ailang.enableDiagnostics`, `ailang.maxProblems`, `ailang.trace.server`
+- LSP server version bumped to 1.1.0
+- LSP startup error handling with user-facing message
+
+### Changed
+- Extension version aligned with AILang v1.1.0
+- Status bar shows MCP state with category prefix
+- Commands organized under "AILang" and "AILang MCP" categories
+- Description updated to reflect MVP scope
+
+### Fixed
+- LSP server `documentFormattingProvider` now declared in capabilities
+- LSP server `documentRangeFormattingProvider` now declared in capabilities
+
 ## [0.3.0] - 2026-07-15
 
 ### Added

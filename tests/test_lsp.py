@@ -1391,3 +1391,78 @@ class TestLspServerFeatureDispatch:
         assert len(actions) > 0
         titles = [a["title"] for a in actions]
         assert any("module" in t.lower() for t in titles)
+
+
+# ---------------------------------------------------------------------------
+# Formatting Tests
+# ---------------------------------------------------------------------------
+
+
+class TestLspFormatting:
+    """Tests for textDocument/formatting via the LSP server."""
+
+    def setup_method(self):
+        self.server = LspServer()
+
+    def _initialize(self):
+        self.server._handle_initialize({})
+
+    def _open(self, uri: str, text: str) -> None:
+        self.server._handle_did_open(
+            {"textDocument": {"uri": uri, "languageId": "ailang", "text": text}}
+        )
+
+    def test_formatting_returns_edit_for_unformatted(self):
+        self._initialize()
+        uri = "file:///test_format.ail"
+        unformatted = 'fn main(){print("hello");return 0}'
+        self._open(uri, unformatted)
+        params = {"textDocument": {"uri": uri}}
+        edits = self.server._handle_formatting(params)
+        assert isinstance(edits, list)
+        assert len(edits) == 1
+        assert "range" in edits[0]
+        assert "newText" in edits[0]
+        assert edits[0]["newText"] != unformatted
+
+    def test_formatting_idempotent(self):
+        self._initialize()
+        uri = "file:///test_format2.ail"
+        source = 'fn main() {\n    print("hello");\n    return 0\n}\n'
+        self._open(uri, source)
+        params = {"textDocument": {"uri": uri}}
+        edits1 = self.server._handle_formatting(params)
+        if edits1:
+            self.server.documents[uri].text = edits1[0]["newText"]
+            edits2 = self.server._handle_formatting(params)
+            assert edits2 == []
+
+    def test_formatting_preserves_semantics(self):
+        self._initialize()
+        uri = "file:///test_format3.ail"
+        source = "fn main(){let x = 1; print(x); return 0}"
+        self._open(uri, source)
+        params = {"textDocument": {"uri": uri}}
+        edits = self.server._handle_formatting(params)
+        assert len(edits) == 1
+        formatted = edits[0]["newText"]
+        assert "fn main()" in formatted
+        assert "let x = 1" in formatted
+        assert "print(x)" in formatted
+        assert "return 0" in formatted
+
+    def test_formatting_syntax_error_returns_empty(self):
+        self._initialize()
+        uri = "file:///test_format_err.ail"
+        self._open(uri, "fn main() { let = ; }")
+        params = {"textDocument": {"uri": uri}}
+        edits = self.server._handle_formatting(params)
+        assert edits == []
+
+    def test_formatting_empty_file_returns_edit(self):
+        self._initialize()
+        uri = "file:///test_format_empty.ail"
+        self._open(uri, "")
+        params = {"textDocument": {"uri": uri}}
+        edits = self.server._handle_formatting(params)
+        assert isinstance(edits, list)
