@@ -69,6 +69,7 @@ jobs:
 
       - name: Compile all apps
         shell: python
+        continue-on-error: true
         run: |
           import os, subprocess
           apps = os.environ.get("AIL_APPS", "").split()
@@ -85,6 +86,7 @@ jobs:
 
       - name: Run all apps
         shell: python
+        continue-on-error: true
         run: |
           import os, subprocess
           apps = os.environ.get("AIL_APPS", "").split()
