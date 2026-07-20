@@ -223,10 +223,33 @@ class TypeChecker:
             "/",
             "%",
         }:
+            # String concatenation validation
+            # string + string -> STRING_TYPE (valid)
+            # string + UnknownType -> STRING_TYPE (valid, for inference patterns like "Hello, " + map.get(m, "key"))
+            # string + NumericUnknownType/int/float/bool -> error (TYP005)
             if operator == "+" and (
                 left_type is STRING_TYPE or right_type is STRING_TYPE
             ):
-                return STRING_TYPE
+                # Both operands must be STRING or UnknownType (not NumericUnknownType) for valid string concatenation
+                if left_type is STRING_TYPE and right_type is STRING_TYPE:
+                    return STRING_TYPE
+                # string + UnknownType is allowed for patterns like "prefix" + map.get(m, "key")
+                # BUT NOT NumericUnknownType (that's a numeric context)
+                # Use isinstance() because UnknownType is a dataclass instance, not a singleton
+                left_is_unknown = isinstance(left_type, UnknownType) and not isinstance(left_type, NumericUnknownType)
+                right_is_unknown = isinstance(right_type, UnknownType) and not isinstance(right_type, NumericUnknownType)
+                if (left_type is STRING_TYPE and right_is_unknown) or \
+                   (right_type is STRING_TYPE and left_is_unknown):
+                    return STRING_TYPE
+                # All other cases (string + int, float, bool, NumericUnknownType) are errors
+                self._report_error(
+                    f"Operator '+' requires both operands to be string when string is involved, "
+                    f"got {left_type!r} and {right_type!r}",
+                    "TYP005",
+                    node.start_span,
+                    node.end_span,
+                )
+                return NUMERIC_UNKNOWN_TYPE
             # Allow UnknownType/NumericUnknownType + known numeric to infer
             # to the known numeric type.
             # This enables natural patterns like map.get(m, "qty") + 1

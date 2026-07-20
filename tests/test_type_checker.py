@@ -682,3 +682,194 @@ def test_ail_explain_list_codes() -> None:
     assert "Known error codes" in result
     assert "TYP001" in result
     assert "SEM002" in result
+
+
+# ------------------------------------------------------------------
+# M79.1 — Binary + type checking (string + non-string rejection)
+# ------------------------------------------------------------------
+
+
+def test_string_concat_string_string() -> None:
+    """string + string should be valid."""
+    source = 'fn main() { let msg = "abc" + "def"; return msg; }'
+    _, reporter = _type_check(source)
+    typ_errors = [d for d in reporter.diagnostics if d.error_code.code.startswith("TYP")]
+    assert len(typ_errors) == 0, f"Unexpected type errors: {typ_errors}"
+
+
+def test_string_concat_string_int_rejected() -> None:
+    """string + int should be rejected with TYP005."""
+    source = 'fn main() { let msg = "abc" + 5; return msg; }'
+    _, reporter = _type_check(source)
+    typ005_errors = [d for d in reporter.diagnostics if "TYP005" in d.error_code.code]
+    assert len(typ005_errors) == 1, f"Expected 1 TYP005 error, got {len(typ005_errors)}"
+    assert "string" in reporter.diagnostics[0].message.lower() or "int" in reporter.diagnostics[0].message.lower()
+
+
+def test_string_concat_int_string_rejected() -> None:
+    """int + string should be rejected with TYP005."""
+    source = "fn main() { let x = 5 + \"abc\"; return x; }"
+    _, reporter = _type_check(source)
+    typ005_errors = [d for d in reporter.diagnostics if "TYP005" in d.error_code.code]
+    assert len(typ005_errors) == 1, f"Expected 1 TYP005 error, got {len(typ005_errors)}"
+
+
+def test_string_concat_string_float_rejected() -> None:
+    """string + float should be rejected with TYP005."""
+    source = "fn main() { let msg = \"abc\" + 2.5; return msg; }"
+    _, reporter = _type_check(source)
+    typ005_errors = [d for d in reporter.diagnostics if "TYP005" in d.error_code.code]
+    assert len(typ005_errors) == 1, f"Expected 1 TYP005 error, got {len(typ005_errors)}"
+
+
+def test_string_concat_float_string_rejected() -> None:
+    """float + string should be rejected with TYP005."""
+    source = "fn main() { let msg = 2.5 + \"abc\"; return msg; }"
+    _, reporter = _type_check(source)
+    typ005_errors = [d for d in reporter.diagnostics if "TYP005" in d.error_code.code]
+    assert len(typ005_errors) == 1, f"Expected 1 TYP005 error, got {len(typ005_errors)}"
+
+
+def test_string_concat_string_bool_rejected() -> None:
+    """string + bool should be rejected with TYP005 (bool arithmetic is separate from concat)."""
+    source = "fn main() { let msg = \"abc\" + true; return msg; }"
+    _, reporter = _type_check(source)
+    # Note: bool arithmetic may be handled elsewhere, but string + bool is still error
+    typ005_errors = [d for d in reporter.diagnostics if "TYP005" in d.error_code.code]
+    assert len(typ005_errors) == 1, f"Expected 1 TYP005 error, got {len(typ005_errors)}"
+
+
+def test_numeric_unknown_concat_string_rejected() -> None:
+    """NumericUnknownType + string should be rejected with TYP005.
+
+    NumericUnknownType represents values in a numeric context, so string concatenation
+    is not allowed. This occurs when UnknownType + UnknownType is evaluated first,
+    producing NumericUnknownType, and then concatenated with a string.
+    """
+    source = (
+        "import map;\n"
+        "fn main() {\n"
+        "    let m = map.new();\n"
+        "    let a = map.get(m, \"x\");\n"
+        "    let b = map.get(m, \"y\");\n"
+        "    let sum = a + b;  // This produces NumericUnknownType\n"
+        "    let msg = sum + \"abc\";  // NumericUnknownType + string should error\n"
+        "    return msg;\n"
+        "}\n"
+    )
+    _, reporter = _type_check(source)
+    typ005_errors = [d for d in reporter.diagnostics if "TYP005" in d.error_code.code]
+    assert len(typ005_errors) == 1, f"Expected 1 TYP005 error, got {len(typ005_errors)}"
+
+
+def test_unknown_concat_string_valid() -> None:
+    """UnknownType + string should be valid (inference-friendly pattern)."""
+    source = (
+        "import map;\n"
+        "fn main() {\n"
+        "    let m = map.new();\n"
+        "    let x = map.get(m, \"key\");\n"
+        "    let msg = x + \"abc\";\n"
+        "    return msg;\n"
+        "}\n"
+    )
+    _, reporter = _type_check(source)
+    typ_errors = [d for d in reporter.diagnostics if d.error_code.code.startswith("TYP")]
+    assert len(typ_errors) == 0, f"Unexpected type errors: {typ_errors}"
+
+
+# ------------------------------------------------------------------
+# M79.1 Additional cases: Nested and Chained
+# ------------------------------------------------------------------
+
+
+def test_nested_concat_string_invalid() -> None:
+    """("abc" + unknown) + "def" should be valid (outer string + string)."""
+    source = (
+        "import map;\n"
+        "fn main() {\n"
+        "    let m = map.new();\n"
+        "    let unknown = map.get(m, \"key\");\n"
+        "    let msg = (\"abc\" + unknown) + \"def\";\n"
+        "    return msg;\n"
+        "}\n"
+    )
+    _, reporter = _type_check(source)
+    typ_errors = [d for d in reporter.diagnostics if d.error_code.code.startswith("TYP")]
+    assert len(typ_errors) == 0, f"Unexpected type errors: {typ_errors}"
+
+
+def test_chained_concat_string_invalid() -> None:
+    """"a" + unknown + "b" should be valid.
+
+    Left associates in AILang, so this is ("a" + unknown) + "b"
+    which is string + UnknownType -> string, then string + string -> string.
+    """
+    source = (
+        "import map;\n"
+        "fn main() {\n"
+        "    let m = map.new();\n"
+        "    let unknown = map.get(m, \"key\");\n"
+        "    let msg = \"a\" + unknown + \"b\";\n"
+        "    return msg;\n"
+        "}\n"
+    )
+    _, reporter = _type_check(source)
+    typ_errors = [d for d in reporter.diagnostics if d.error_code.code.startswith("TYP")]
+    assert len(typ_errors) == 0, f"Unexpected type errors: {typ_errors}"
+
+
+def test_nested_string_int_rejected() -> None:
+    """("a" + 1) + "b" should be rejected - string + int is invalid.
+
+    The first + fails (string + int) and returns NUMERIC_UNKNOWN_TYPE,
+    then the second + fails (NUMERIC_UNKNOWN_TYPE + string).
+    So we expect 2 TYP005 errors.
+    """
+    source = 'fn main() { let msg = ("a" + 1) + "b"; return msg; }'
+    _, reporter = _type_check(source)
+    typ005_errors = [d for d in reporter.diagnostics if "TYP005" in d.error_code.code]
+    assert len(typ005_errors) >= 1, f"Expected at least 1 TYP005 error, got {len(typ005_errors)}"
+
+
+# ------------------------------------------------------------------
+# M79.1 - Additional required tests from specification
+# ------------------------------------------------------------------
+
+
+def test_map_get_plus_int_valid() -> None:
+    """map.get(...) + 1 should be valid (UnknownType + int infers to int)."""
+    source = 'import map; fn main() { let x = map.get(map.new(), "key") + 1; return x; }'
+    _, reporter = _type_check(source)
+    typ_errors = [d for d in reporter.diagnostics if d.error_code.code.startswith("TYP")]
+    assert len(typ_errors) == 0, f"Unexpected type errors: {typ_errors}"
+
+
+def test_list_get_plus_int_valid() -> None:
+    """list.get(...) + 1 should be valid (UnknownType + int infers to int)."""
+    source = 'import list; fn main() { let x = list.get(list.new(), 0) + 1; return x; }'
+    _, reporter = _type_check(source)
+    typ_errors = [d for d in reporter.diagnostics if d.error_code.code.startswith("TYP")]
+    assert len(typ_errors) == 0, f"Unexpected type errors: {typ_errors}"
+
+
+def test_function_returning_string_plus_int_rejected() -> None:
+    """functionReturningString() + 1 should be rejected (string + int)."""
+    source = (
+        'fn get_str() { return "hello"; }'
+        ' fn main() { let x = get_str() + 1; return x; }'
+    )
+    _, reporter = _type_check(source)
+    typ005_errors = [d for d in reporter.diagnostics if "TYP005" in d.error_code.code]
+    assert len(typ005_errors) >= 1, f"Expected 1 TYP005 error, got {len(typ005_errors)}"
+
+
+def test_function_returning_int_plus_string_rejected() -> None:
+    """functionReturningInt() + "abc" should be rejected (int + string)."""
+    source = (
+        'fn get_int() { return 42; }'
+        ' fn main() { let x = get_int() + "abc"; return x; }'
+    )
+    _, reporter = _type_check(source)
+    typ005_errors = [d for d in reporter.diagnostics if "TYP005" in d.error_code.code]
+    assert len(typ005_errors) >= 1, f"Expected 1 TYP005 error, got {len(typ005_errors)}"
