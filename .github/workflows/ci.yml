@@ -140,17 +140,16 @@ jobs:
               r2 = subprocess.run(["ail", "run", app], capture_output=True, text=True, timeout=30)
               if r2.returncode == 0:
                 ran_ok += 1
-          summary = f"""
-## Benchmark Summary
-
-| Metric | Value |
-|--------|-------|
-| Total apps | {len(apps)} |
-| Compiled | {compiled} |
-| Ran successfully | {ran_ok} |
-| Build rate | {compiled}/{len(apps)} ({100*compiled//len(apps) if apps else 0}%) |
-| Run rate | {ran_ok}/{len(apps)} ({100*ran_ok//len(apps) if apps else 0}%) |
-"""
+          summary = (
+            "## Benchmark Summary\n\n"
+            "| Metric | Value |\n"
+            "|--------|-------|\n"
+            f"| Total apps | {len(apps)} |\n"
+            f"| Compiled | {compiled} |\n"
+            f"| Ran successfully | {ran_ok} |\n"
+            f"| Build rate | {compiled}/{len(apps)} ({100*compiled//len(apps) if apps else 0}%) |\n"
+            f"| Run rate | {ran_ok}/{len(apps)} ({100*ran_ok//len(apps) if apps else 0}%) |\n"
+          )
           with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as f:
             f.write(summary)
           print(summary)
