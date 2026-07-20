@@ -14,7 +14,7 @@ Get from zero to running AILang code in under 5 minutes.
 ## Step 1: Install AILang
 
 ```bash
-pip install ailang
+pip install ailang-lang
 ```
 
 Verify:
@@ -86,7 +86,7 @@ ail run main.ail
 
 | Step | Command | What It Does |
 |------|---------|--------------|
-| Install | `pip install ailang` | Installs the AILang compiler, runtime, and standard library |
+| Install | `pip install ailang-lang` | Installs the AILang compiler, runtime, and standard library |
 | Create | `ail new my_app` | Scaffolds a project with `ail.toml`, `ail.lock`, and `main.ail` |
 | Run | `ail run main.ail` | Compiles and executes your AILang program |
 
@@ -114,14 +114,14 @@ Run `ail new <project_name>` to scaffold, or `ail init` in an existing directory
 
 ### "ail: command not found"
 
-Ensure `pip install ailang` succeeded and your Python `Scripts/` or `bin/` directory is in your `PATH`.
+Ensure `pip install ailang-lang` succeeded and your Python `Scripts/` or `bin/` directory is in your `PATH`.
 
 ---
 
 ## Minimal Example (copy-paste)
 
 ```bash
-pip install ailang
+pip install ailang-lang
 ail new hello
 cd hello
 ail run main.ail

@@ -12,7 +12,7 @@ A step-by-step guide for new developers joining the AILang project.
 - [ ] **Run the environment check** — `ail doctor` (look for score > 0/100)
 - [ ] **Clone the repo** — `git clone https://github.com/akpersonal4/ailang-lang-AILang.git`
 - [ ] **Install dev dependencies** — `pip install -e .` then `pip install pytest black ruff`
-- [ ] **Run the test suite** — `ail test` (expect 1074+ passing)
+- [ ] **Run the test suite** — `ail test` (expect 1079+ passing)
 
 ## Day 1: Write Your First Program
 

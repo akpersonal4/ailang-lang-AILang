@@ -203,7 +203,7 @@ Every major permanent decision made during AILang development, preserved so that
 
 **Evidence:**
 - 16 stdlib modules, all documented in `docs/reference/STDLIB_REFERENCE.md`
-- Missing functions (split, find, join, sort, list.copy) are confirmed needs across multiple benchmarks but not yet meeting the ≥2 bar for stdlib inclusion after the governance process was established
+- Missing functions (split, find, join, sort, list.copy) were confirmed needs across multiple benchmarks — all are now in stdlib (added v0.7.0+)
 - All missing-function patterns are documented in `examples/patterns/`
 
 **Status:** Accepted. Stable.

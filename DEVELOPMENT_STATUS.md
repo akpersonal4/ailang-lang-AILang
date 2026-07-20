@@ -11,7 +11,7 @@ until this document has been reviewed. Update AGENTS.md reading order after revi
 | Attribute | Value |
 |:----------|:------|
 | **Current Version** | v1.1.0 |
-| **Current Milestone** | M82 — Developer Experience & Onboarding |
+| **Current Milestone** | M83C — VS Code Extension Release |
 | **Project Phase** | Public Beta |
 
 ### Maturity Assessment
@@ -24,13 +24,13 @@ until this document has been reviewed. Update AGENTS.md reading order after revi
 | Formatter | 99% |
 | Platform Services | 100% |
 | Platform Integration | 100% |
-| VS Code Extension | v0.3.0 — syntax highlighting, LSP, MCP integration, 7 commands, status bar |
+| VS Code Extension | v1.1.0 — syntax highlighting, LSP, MCP integration, formatting, 12 commands, 10 settings |
 | MCP Server | v1.2.0 — 6 tools, JSON-RPC 2.0 over stdio, 12 example categories |
 | Documentation | 100% |
 | Governance | 100% |
 | Validation Framework | 100% |
 | Reference Applications | 8 apps (todo, expense, inventory, employee, log_analyzer, csv_etl, json_transformer, invoice) |
-| Test Suite | 1074 tests passing |
+| Test Suite | 1079 tests passing |
 
 --------------------------------------
 
@@ -325,6 +325,9 @@ in the ecosystem that makes AILang productive for both human and AI developers.
 
 | Item | Version | Date |
 |------|---------|------|
+| **M83C — VS Code Extension Public Release** — Packaged VSIX (19.73 KB), created GitHub Release v1.1.0-vscode, uploaded VSIX asset. Extension 1.1.0, LSP 1.1.0, VSIX 1.1.0. 13 files in package. | v1.1.0 | 2026-07-20 |
+| **M83B — VS Code Extension MVP** — Wired formatter to LSP (formatting handlers, v1.1.0). Added format-on-save, 5 CLI commands (build/run/check/version/format), MVP settings. 5 new tests (108 total). | v1.1.0 | 2026-07-20 |
+| **M83A — VS Code Extension Architecture** — Created `VSCODE_EXTENSION_ARCHITECTURE.md` (682 lines). Two-server design: LSP (deterministic IDE) + MCP (AI-assisted tools). 31 error codes mapped. Feature roadmap: MVP, Phase 2, Phase 3. | v1.1.0 | 2026-07-20 |
 | **M82 — Developer Experience & Onboarding** — Created Quick Start guide (`docs/getting-started/QUICK_START.md`) and Onboarding Checklist (`docs/getting-started/ONBOARDING_CHECKLIST.md`). Fixed stale documentation across README.md, DEVELOPMENT_STATUS.md, PROJECT_MEMORY.md, and GETTING_STARTED.md. Updated test counts (894→1074), version badges (v1.0.11→v1.1.0), CLI command references (`ail hello.ail`→`ail run hello.ail`). | v1.1.0 | 2026-07-20 |
 | **M81 — Formatting & Auto-fix Lint Baseline** — `black .` reformatted 248 files (270 total with M81.2). `ruff check --fix` fixed 562 violations (263 targeted rules): 239 unused imports, 86 f-string, 170 unnecessary parens, 56 trailing whitespace, 11 type annotations. Restored `find_manifest` re-export (false positive). 377 files black-clean, 377 ruff-clean for targeted rules. | v1.1.0 | 2026-07-20 |
 | **M80 — Technical Debt Roadmap** — Created `docs/architecture/M80_TECHNICAL_DEBT_ROADMAP.md` (382 lines). Cataloged 7 debt categories, 4 milestone plan (M81–M84). Established formatting/lint baseline as prerequisite for all future work. | v1.1.0 | 2026-07-20 |
@@ -492,6 +495,6 @@ Every document type has exactly one owner. If you need to add information, first
 
 | Field | Value |
 |:------|:------|
-| **Date** | 2026-07-17 |
-| **Version** | v1.0.11 |
-| **Milestone** | M76.3 — Type Flow, TYP001 Diagnostics, ail explain |
+| **Date** | 2026-07-20 |
+| **Version** | v1.1.0 |
+| **Milestone** | M83C — VS Code Extension Release |

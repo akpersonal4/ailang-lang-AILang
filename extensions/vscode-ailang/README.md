@@ -15,6 +15,7 @@ When the `ail` CLI is installed and on your PATH, the extension provides:
 - **Rename Symbol** — Rename variables, functions, and parameters
 - **Signature Help** — Function parameter hints
 - **Document Symbols** — Outline view for functions and imports
+- **Formatting** — Format-on-save via LSP
 
 ### Syntax highlighting
 
@@ -49,7 +50,7 @@ code --install-extension extensions/vscode-ailang
 
 ```bash
 cd extensions/vscode-ailang
-code --install-extension vscode-ailang-0.1.0.vsix
+code --install-extension vscode-ailang-1.1.0.vsix
 ```
 
 ## Usage
@@ -90,6 +91,12 @@ fn main() {
 | `ailang.mcp.args` | `["mcp"]` | Arguments passed to the MCP server |
 | `ailang.mcp.timeout` | `30000` | Timeout (ms) for MCP server initialization |
 | `ailang.mcp.maxReconnectAttempts` | `3` | Max reconnect attempts after unexpected exit |
+| `ailang.lint.enabled` | `true` | Enable real-time linting via LSP |
+| `ailang.lint.runOnSave` | `true` | Run linter when file is saved |
+| `ailang.format.enabled` | `true` | Enable formatting via LSP |
+| `ailang.format.runOnSave` | `true` | Format code when file is saved |
+| `ailang.lsp.command` | `"ail"` | Command to launch the LSP server |
+| `ailang.lsp.args` | `["lsp"]` | Arguments passed to the LSP server |
 
 ## Known Issues
 
@@ -97,6 +104,15 @@ fn main() {
 - Multi-line comments not supported (language has none)
 
 ## Release Notes
+
+### 1.1.0
+
+- Added document formatting (format-on-save via LSP)
+- Added 5 CLI commands: build, run, check, version, format
+- Added 10 configuration settings
+- Added MVP status bar indicator
+- LSP server version synced to 1.1.0
+- Available via GitHub Releases as VSIX
 
 ### 0.3.0
 
@@ -127,7 +143,7 @@ fn main() {
 ```bash
 # Clone and navigate
 git clone https://github.com/akpersonal4/ailang-lang-AILang.git
-cd ailang/extensions/vscode-ailang
+cd AiLang_New/extensions/vscode-ailang
 
 # Open in VS Code to develop
 code .

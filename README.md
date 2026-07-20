@@ -2,12 +2,12 @@
 
 **AI-first programming language — deterministic, specification-driven, and compiler-friendly.**
 
-[![Tests](https://img.shields.io/badge/tests-1074%20passing-brightgreen)](#)
+[![Tests](https://img.shields.io/badge/tests-1079%20passing-brightgreen)](#)
 [![Python](https://img.shields.io/badge/python-3.11%2B-blue)](#)
 [![Version](https://img.shields.io/badge/version-1.1.0-blue)](#)
 [![License](https://img.shields.io/badge/license-Apache%202.0-green)](#)
 
-AILang is an AI-first programming language designed to be deterministic, specification-first, and easy for both humans and AI systems to reason about. It features a complete compiler pipeline, a 16-module standard library, and has been validated through 1074 tests, stress testing up to 10,000 LOC, and AI-generated program verification with 100% first-pass success.
+AILang is an AI-first programming language designed to be deterministic, specification-first, and easy for both humans and AI systems to reason about. It features a complete compiler pipeline, a 16-module standard library, and has been validated through 1079 tests, stress testing up to 10,000 LOC, and AI-generated program verification with 100% first-pass success.
 
 ## Quick Start
 
@@ -173,7 +173,7 @@ Or package and install from the VS Code Marketplace: `extensions/vscode-ailang/`
 - **AI-friendly** — validated with 23 AI-generated programs at 100% first-pass success
 - **Fast compile times** — 5000 LOC compiles in <2 seconds
 - **Low memory usage** — 5000 LOC uses <11 MB peak memory
-- **Complete test coverage** — 1074 tests across all compiler stages
+- **Complete test coverage** — 1079 tests across all compiler stages
 
 ## Example
 
@@ -226,7 +226,7 @@ fn main() {
 | Python version | 3.11+ |
 | Compiler LOC | ~3,950 (39 Python files) |
 | Stdlib modules | 16 |
-| Tests | **1074 passing** |
+| Tests | **1079 passing** |
 | Example programs | 55+ |
 | Application programs | 43+ |
 | DX Tools | ail context, ail doctor, ail static_analyzer, ail benchmark, ail testgen, ail docs, ail mcp |

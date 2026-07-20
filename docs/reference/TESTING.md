@@ -39,7 +39,7 @@ tests/
 ├── test_lexer.py                  # Lexer unit tests
 ├── test_parser.py                 # Parser unit tests
 ├── test_ast_builder.py            # CST → AST conversion
-├ test_ir_builder.py               # AST → IR conversion
+├── test_ir_builder.py               # AST → IR conversion
 ├── test_semantic.py               # Semantic analysis
 ├── test_type_checker.py           # Type checking
 ├── test_runtime.py                # Runtime interpreter
@@ -187,7 +187,7 @@ def test_memory_usage() -> None:
 ## Continuous Integration
 
 All quality gates must pass before merging:
-- **pytest**: 360+ tests, all passing
+- **pytest**: 1079+ tests, all passing
 - **black**: Code formatting check
 - **ruff**: Lint check
 - **mypy**: Type check (strict mode)

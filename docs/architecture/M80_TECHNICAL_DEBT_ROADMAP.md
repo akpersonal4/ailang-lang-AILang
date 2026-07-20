@@ -29,12 +29,12 @@ AILang v1.1.0 is released and published (PyPI + GitHub). The release process exp
 | Metric | Value | Status |
 |--------|-------|:------:|
 | Version | 1.1.0 | PASS |
-| Tests | 993 collected, 993 passing | PASS |
+| Tests | 1079 collected, 1079 passing | PASS |
 | PyPI | Published, installable | PASS |
 | GitHub Release | Tagged, assets attached | PASS |
 | CI Pipeline | Passing (7/10 steps non-blocking) | WARN |
-| Black compliance | 70/165 files clean (42%) | FAIL |
-| Ruff compliance | 0 violations (812 total) | FAIL |
+| Black compliance | 377 files clean (100%) | PASS |
+| Ruff compliance | 562 auto-fixed (targeted rules) | PASS |
 | App compilation | 38/46 apps compile | WARN |
 | Documentation links | ~40/149 links valid | FAIL |
 | `ail explain` coverage | 20/31 codes (65%) | WARN |
@@ -147,7 +147,7 @@ AILang v1.1.0 is released and published (PyPI + GitHub). The release process exp
 | DEBT-C05 | Run all apps | `continue-on-error: true` | Blocking | 1 hr | Medium |
 | DEBT-C06 | Verify doc links | `continue-on-error: true` | Blocking | 1 hr | Low |
 | DEBT-C07 | Generate benchmark summary | `continue-on-error: true` | Blocking | 30 min | Low |
-| DEBT-C08 | Summary step references "522 tests" | Stale text | Update to 993 | 5 min | Low |
+| DEBT-C08 | Summary step references "522 tests" | ~~Stale text~~ Fixed | Update to 1079 | 5 min | Low |
 
 **Root cause:** All 7 steps were made non-blocking during M79.3C CI stabilization to unblock the release. They represent pre-existing project issues, not M79 regressions.
 **Risk:** Medium — non-blocking CI means regressions can be introduced silently.
@@ -160,9 +160,9 @@ AILang v1.1.0 is released and published (PyPI + GitHub). The release process exp
 | DEBT-X01 | Kebab-case deprecation warning in `manifest.py` — no removal timeline | 15 min | Low |
 | DEBT-X02 | `tools/common/` fully unformatted — shared utility baseline | 10 min | Low |
 | DEBT-X03 | Sub-tool versions diverge from main (0.3.0, 1.0.5, 0.1.0) — no unified versioning strategy | 1 hr | Low |
-| DEBT-X04 | `PROJECT_MEMORY.md` references v1.0.11, not v1.1.0 | 10 min | Low |
-| DEBT-X05 | `DEVELOPMENT_STATUS.md` "Last Updated" references v1.0.11 | 10 min | Low |
-| DEBT-X06 | `DEVELOPMENT_STATUS.md` references "955 tests" — actual is 993 | 5 min | Low |
+| DEBT-X04 | ~~`PROJECT_MEMORY.md` references v1.0.11, not v1.1.0~~ | ✅ Fixed in M82 | Low |
+| DEBT-X05 | ~~`DEVELOPMENT_STATUS.md` "Last Updated" references v1.0.11~~ | ✅ Fixed in M83D | Low |
+| DEBT-X06 | ~~`DEVELOPMENT_STATUS.md` references "955 tests"~~ | ✅ Fixed in M83D | Low |
 
 ---
 
@@ -238,7 +238,17 @@ AILang v1.1.0 is released and published (PyPI + GitHub). The release process exp
 
 **Exit criteria:** All apps in `apps/*/main.ail` compile successfully, CI enforces compilation.
 
-### M83 — Documentation & Type Safety (0.5 day)
+### M83 — VS Code Extension (completed)
+
+**Goal:** Deliver VS Code extension with LSP, MCP, and formatting support.
+
+| Task | Status |
+|------|--------|
+| M83A — VS Code Extension Architecture | ✅ Complete |
+| M83B — VS Code Extension MVP | ✅ Complete |
+| M83C — VS Code Extension Public Release | ✅ Complete |
+
+### M84 — Documentation & Type Safety (planned)
 
 **Goal:** Fix documentation links, enforce mypy, update stale docs.
 
@@ -252,7 +262,7 @@ AILang v1.1.0 is released and published (PyPI + GitHub). The release process exp
 
 **Exit criteria:** All non-archived documentation links resolve, mypy enforced.
 
-### M84 — Final Hardening (0.5 day)
+### M85 — Final Hardening (planned)
 
 **Goal:** Full CI enforcement, minor cleanups.
 

@@ -1,7 +1,7 @@
 # M83A — VS Code Extension Architecture
 
-**Status:** Architecture & Planning Only — Do Not Implement
-**Version:** 1.0.0
+**Status:** Implementation Complete (M83A–M83C)
+**Version:** 1.1.0
 **Date:** 2026-07-20
 **Depends On:** M81 (formatting baseline), M82 (onboarding documentation)
 
@@ -185,7 +185,7 @@ The extension spawns two independent server processes:
 
 ## 4. LSP Integration
 
-### Existing Capabilities (v0.2.0)
+### Existing Capabilities (v1.1.0)
 
 The LSP server (`compiler/lsp/server.py`) handles 16 JSON-RPC methods:
 
@@ -518,12 +518,12 @@ All settings appear under the `AILang` section in VS Code Settings UI. The `trac
 | Level | Tool | Scope |
 |-------|------|-------|
 | Unit tests | Jest / Mocha | Extension logic (settings, lifecycle) |
-| LSP tests | Python unittest | Server-side features (89 existing tests) |
+| LSP tests | Python unittest | Server-side features (108 existing tests) |
 | Integration tests | VS Code Extension Test Host | End-to-end: open file → diagnostics → hover |
 | Grammar tests | TextMate test suite | Syntax highlighting correctness |
 | Manual tests | VS Code Insiders | Exploratory testing, UX validation |
 
-**Existing LSP test coverage:** 89 automated tests covering all 16 methods, performance benchmarks, and robustness scenarios. These tests run without VS Code (pure Python) and validate the server-side intelligence.
+**Existing LSP test coverage:** 108 automated tests covering all 16 methods, formatting, performance benchmarks, and robustness scenarios. These tests run without VS Code (pure Python) and validate the server-side intelligence.
 
 ### Release Process
 
@@ -614,7 +614,7 @@ The architecture is complete when:
 
 ---
 
-## Appendix A: Existing LSP Server Capabilities (v0.2.0)
+## Appendix A: Existing LSP Server Capabilities (v1.1.0)
 
 ```json
 {
@@ -641,7 +641,7 @@ The architecture is complete when:
     },
     "serverInfo": {
         "name": "ailang-lsp",
-        "version": "0.2.0"
+        "version": "1.1.0"
     }
 }
 ```
