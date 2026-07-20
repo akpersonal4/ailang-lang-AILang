@@ -1,8 +1,13 @@
+.vscode/
 .vscodeignore
 test-files/
 icons/
 **/__pycache__/**
+**/.mypy_cache/**
 **/*.pyc
+**/*.pyo
 **/.DS_Store
 **/Thumbs.db
 node_modules/
+*.vsix
+package-lock.json
