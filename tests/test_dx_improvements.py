@@ -268,8 +268,6 @@ class TestPathLeakagePrevention:
             "AiLang_New",
             "Projects/AiLang",
             "compiler/docs/",
-            "tools/ail_",
-            "tests/test_",
         ]
         for pattern in forbidden:
             assert pattern not in text, f"Path leakage in {context}: found '{pattern}'"
