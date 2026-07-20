@@ -1,17 +1,28 @@
 """Tests for ticket model."""
-import sys
+
 import os
+import sys
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import unittest
+
 import storage
-import ticket
 from ticket import (
-    create, find_by_id, update, assign, set_status,
-    list_all, list_by_user, search, filter_by, delete,
-    count_by_status, count_by_priority, count_by_agent,
+    assign,
+    count_by_agent,
+    count_by_priority,
+    count_by_status,
+    create,
+    delete,
+    filter_by,
+    find_by_id,
+    list_all,
+    list_by_user,
+    search,
+    set_status,
+    update,
 )
-import audit_log
 
 
 class TestTicket(unittest.TestCase):

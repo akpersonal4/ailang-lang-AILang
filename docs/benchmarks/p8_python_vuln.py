@@ -2,13 +2,12 @@
 Each function contains one vulnerability pattern (V1-V10).
 We measure: mypy detection, ruff detection, runtime detection, or undetected.
 """
-from typing import Optional
 
 
 # --- V1: Null dereference ---
 # Python: None is a valid value. mypy catches Optional misuse.
 def v1_null_dereference() -> None:
-    val: Optional[str] = None
+    val: str | None = None
     # mypy with --strict catches this:
     # error: Item "None" of "Optional[str]" has no attribute "upper"
     print(val.upper())  # Runtime: AttributeError
@@ -26,9 +25,9 @@ def v2_missing_guard() -> None:
 # --- V3: Type confusion ---
 # Python: dynamic typing allows reassignment to different types
 def v3_type_confusion() -> None:
-    val = 42          # type: int
-    val = "hello"     # Reassignment allowed (dynamic typing)
-    val2 = val + 42   # Runtime: TypeError (str + int)
+    val = 42  # type: int
+    val = "hello"  # Reassignment allowed (dynamic typing)
+    val2 = val + 42  # Runtime: TypeError (str + int)
     print(val2)
 
 

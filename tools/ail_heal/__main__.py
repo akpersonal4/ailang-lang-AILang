@@ -4,8 +4,6 @@
 """AILang Heal - fix suggestions for common AILang compilation errors."""
 
 import sys
-from pathlib import Path
-
 
 HELP_TOPICS = {
     "forward_reference": {
@@ -163,7 +161,10 @@ def print_help(topic: str | None = None) -> int:
     if topic:
         if topic not in HELP_TOPICS:
             print(f"Unknown topic: {topic}", file=sys.stderr)
-            print(f"Available topics: {', '.join(sorted(HELP_TOPICS.keys()))}", file=sys.stderr)
+            print(
+                f"Available topics: {', '.join(sorted(HELP_TOPICS.keys()))}",
+                file=sys.stderr,
+            )
             return 1
 
         info = HELP_TOPICS[topic]

@@ -1,20 +1,19 @@
 import sys
 
-from core.storage import storage_clear_all
-from business.report import (
-    stock_report_all_products, stock_report_valuation, stock_report_get_qty,
-    stock_report_aging, sales_report_all, sales_report_total_revenue,
-    sales_report_count_by_status, sales_report_items,
-    profit_report_summary
+from audit.audit_integration import audit_integration_full_report
+from business.dashboard import dashboard_summary
+from business.permission import (
+    permission_add_action,
+    permission_check,
+    permission_define,
 )
+from business.report import (
+    stock_report_all_products,
+)
+from business.workflow import workflow_pending_approvals
 from export.csv_export import csv_products
 from export.json_export import json_export_products
-from business.search import search_all
-from business.dashboard import dashboard_summary
-from business.permission import permission_define, permission_add_action, permission_check
 from logistics.batch import batch_list
-from business.workflow import workflow_pending_approvals
-from audit.audit_integration import audit_integration_full_report
 
 
 def main_demo_create_products():
@@ -25,7 +24,9 @@ def main_demo_create_products():
     cat2 = category_create("Office Supplies", "Paper, pens, and office equipment", "")
     cat1_id = cat1.get("id", "")
     cat2_id = cat2.get("id", "")
-    product_create("Laptop", "High-performance laptop", "LAP-001", cat1_id, 1200, 900, "pcs")
+    product_create(
+        "Laptop", "High-performance laptop", "LAP-001", cat1_id, 1200, 900, "pcs"
+    )
     product_create("Mouse", "Wireless mouse", "MOU-001", cat1_id, 25, 15, "pcs")
     product_create("Notebook", "A5 ruled notebook", "NTB-001", cat2_id, 5, 3, "pcs")
     product_create("Desk Lamp", "LED desk lamp", "LMP-001", cat2_id, 45, 30, "pcs")
@@ -35,6 +36,7 @@ def main_demo_create_products():
 
 def main_demo_create_customers():
     from models.customer import customer_create
+
     customer_create("Alice Corp", "alice@example.com", "555-0101")
     customer_create("Bob Industries", "bob@example.com", "555-0102")
     customer_create("Charlie Ltd", "charlie@example.com", "555-0103")
@@ -44,6 +46,7 @@ def main_demo_create_customers():
 
 def main_demo_create_vendors():
     from models.vendor import vendor_create
+
     vendor_create("TechSupply Inc", "info@techsupply.com", "555-0201", "John Vendor")
     vendor_create("OfficeMart", "sales@officemart.com", "555-0202", "Jane Vendor")
     print("Created 2 vendors")
@@ -51,12 +54,12 @@ def main_demo_create_vendors():
 
 
 def main_demo_stock_and_orders():
-    from models.product import product_list
-    from models.customer import customer_list
-    from models.vendor import vendor_list
     from inventory.stock_movement import movement_create
-    from orders.sales_order import sales_create, sales_add_item
-    from orders.purchase_order import purchase_create, purchase_add_item
+    from models.customer import customer_list
+    from models.product import product_list
+    from models.vendor import vendor_list
+    from orders.purchase_order import purchase_add_item, purchase_create
+    from orders.sales_order import sales_add_item, sales_create
 
     all_products = product_list()
     prod_count = len(all_products)
@@ -87,12 +90,12 @@ def main_demo_stock_and_orders():
 
 
 def main_report():
+    from inventory.stock_movement import movement_list
     from models.category import category_list
     from models.customer import customer_list
     from models.vendor import vendor_list
-    from inventory.stock_movement import movement_list
-    from orders.sales_order import sales_list
     from orders.purchase_order import purchase_list
+    from orders.sales_order import sales_list
 
     all_products = stock_report_all_products()
     prod_count = len(all_products)
@@ -159,13 +162,14 @@ def main_help():
 
 def main_seed():
     from business.data_seed import seed_all
+
     seed_all()
     return 0
 
 
 def main_reserve():
-    from models.product import product_list
     from inventory.stock_reservation import reservation_create
+    from models.product import product_list
 
     mr_all_products = product_list()
     mr_prod_count = len(mr_all_products)
@@ -183,8 +187,8 @@ def main_reserve():
 
 
 def main_adjust():
-    from models.product import product_list
     from inventory.stock_adjustment import adjustment_create
+    from models.product import product_list
 
     ma_all_products = product_list()
     ma_prod_count = len(ma_all_products)
@@ -200,6 +204,7 @@ def main_adjust():
 
 def main_warehouse():
     from models.warehouse import warehouse_list
+
     mw_all = warehouse_list()
     mw_count = len(mw_all)
     print("Total warehouses: " + str(mw_count))

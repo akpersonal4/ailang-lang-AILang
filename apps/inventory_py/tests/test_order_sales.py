@@ -1,6 +1,12 @@
-from orders.sales_order import sales_create, sales_get, sales_add_item, sales_get_items, sales_confirm
 from core.helpers import helpers_get_map_value_safe
 from core.storage import storage_add
+from orders.sales_order import (
+    sales_add_item,
+    sales_confirm,
+    sales_create,
+    sales_get,
+    sales_get_items,
+)
 
 
 def test_so_get_nonexistent():

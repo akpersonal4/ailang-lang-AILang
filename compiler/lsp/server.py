@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from compiler.lsp.documents import Document
+from compiler.lsp.features.code_actions import get_code_actions
 from compiler.lsp.features.completion import get_completions
 from compiler.lsp.features.definition import get_definition
 from compiler.lsp.features.diagnostics import get_diagnostics
@@ -14,7 +15,6 @@ from compiler.lsp.features.rename import get_rename_edits
 from compiler.lsp.features.signature_help import get_signature_help
 from compiler.lsp.features.symbols import get_document_symbols
 from compiler.lsp.features.workspace_symbols import get_workspace_symbols
-from compiler.lsp.features.code_actions import get_code_actions
 from compiler.lsp.protocol import _read_message, _send_message
 
 
@@ -232,15 +232,11 @@ class LspServer:
         doc = self._get_document(uri)
         return get_document_symbols(doc)
 
-    def _handle_workspace_symbols(
-        self, params: dict[str, Any]
-    ) -> list[dict[str, Any]]:
+    def _handle_workspace_symbols(self, params: dict[str, Any]) -> list[dict[str, Any]]:
         query = params.get("query", "")
         return get_workspace_symbols(self.documents, query)
 
-    def _handle_code_action(
-        self, params: dict[str, Any]
-    ) -> list[dict[str, Any]]:
+    def _handle_code_action(self, params: dict[str, Any]) -> list[dict[str, Any]]:
         text_doc = params.get("textDocument", {})
         uri = text_doc.get("uri", "")
         _range = params.get("range", {})

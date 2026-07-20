@@ -1,15 +1,19 @@
 from core.helpers import (
-    helpers_get_map_value_safe, helpers_generate_id,
-    helpers_current_timestamp
+    helpers_current_timestamp,
+    helpers_generate_id,
+    helpers_get_map_value_safe,
 )
-from core.storage import storage_list, storage_add, storage_update, storage_get_by_id
+from core.storage import storage_add, storage_get_by_id, storage_list, storage_update
 
 
 def serial_find_rec(sfr_items, sfr_product_id, sfr_serial_num, sfr_idx):
     for sfr_item in sfr_items:
         sfr_item_product_id = helpers_get_map_value_safe(sfr_item, "product_id", "")
         sfr_item_serial_num = helpers_get_map_value_safe(sfr_item, "serial_number", "")
-        if sfr_item_product_id == sfr_product_id and sfr_item_serial_num == sfr_serial_num:
+        if (
+            sfr_item_product_id == sfr_product_id
+            and sfr_item_serial_num == sfr_serial_num
+        ):
             return sfr_item
     return False
 

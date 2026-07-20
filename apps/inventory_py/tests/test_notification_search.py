@@ -1,7 +1,14 @@
-from core.helpers import helpers_get_map_value_safe, helpers_current_timestamp, helpers_find_in_list
-from core.storage import storage_add, storage_list
-from business.notification import notification_check_low_stock, notification_check_out_of_stock
+from business.notification import (
+    notification_check_low_stock,
+    notification_check_out_of_stock,
+)
 from business.search import search_all
+from core.helpers import (
+    helpers_current_timestamp,
+    helpers_find_in_list,
+    helpers_get_map_value_safe,
+)
+from core.storage import storage_add, storage_list
 
 
 def tn_create_product():
@@ -15,7 +22,7 @@ def tn_create_product():
         "unit": "pcs",
         "active": True,
         "created_at": helpers_current_timestamp(),
-        "updated_at": ""
+        "updated_at": "",
     }
     storage_add("products", tnpProduct)
     tnpLoaded = helpers_find_in_list(storage_list("products"), "id", "TNOT-PRD-001")
@@ -31,7 +38,7 @@ def tn_create_valuation_low():
         "method": "fifo",
         "current_cost": 15,
         "quantity_on_hand": 2,
-        "last_updated": helpers_current_timestamp()
+        "last_updated": helpers_current_timestamp(),
     }
     storage_add("valuations", tnvlVal)
     tnvlLoaded = helpers_find_in_list(storage_list("valuations"), "id", "TNOT-VAL-001")
@@ -47,7 +54,7 @@ def tn_create_valuation_out():
         "method": "fifo",
         "current_cost": 0,
         "quantity_on_hand": 0,
-        "last_updated": helpers_current_timestamp()
+        "last_updated": helpers_current_timestamp(),
     }
     storage_add("valuations", tnvoVal)
     tnvoLoaded = helpers_find_in_list(storage_list("valuations"), "id", "TNOT-VAL-002")
@@ -64,7 +71,7 @@ def tn_create_search_customer():
         "phone": "555-SRC",
         "active": True,
         "created_at": helpers_current_timestamp(),
-        "updated_at": helpers_current_timestamp()
+        "updated_at": helpers_current_timestamp(),
     }
     storage_add("customers", tnscCustomer)
     tnscLoaded = helpers_find_in_list(storage_list("customers"), "id", "TNOT-CUS-001")
@@ -82,7 +89,7 @@ def tn_create_search_vendor():
         "contact_person": "SearchContact",
         "active": True,
         "created_at": helpers_current_timestamp(),
-        "updated_at": helpers_current_timestamp()
+        "updated_at": helpers_current_timestamp(),
     }
     storage_add("vendors", tnsvVendor)
     tnsvLoaded = helpers_find_in_list(storage_list("vendors"), "id", "TNOT-VEN-001")

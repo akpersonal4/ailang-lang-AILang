@@ -8,17 +8,16 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 from benchmarks.providers.base import (
-    ProviderResult,
     AIProvider,
-    estimate_tokens_heuristic,
-    _estimate_openai_cost,
+    ProviderResult,
     _estimate_anthropic_cost,
     _estimate_google_cost,
+    _estimate_openai_cost,
+    estimate_tokens_heuristic,
 )
-
 
 # ── ProviderResult Tests ──────────────────────────────────────────────
 
@@ -131,6 +130,7 @@ class TestAIProviderInterface:
 
     def test_concrete_provider_must_implement_interface(self):
         """A minimal provider must implement all abstract methods."""
+
         class MinimalProvider(AIProvider):
             @property
             def provider_name(self) -> str:
@@ -172,30 +172,35 @@ class TestProviderFactory:
 
     def test_create_openai(self):
         from benchmarks.providers import create_provider
+
         provider = create_provider("openai", model="gpt-4o-mini")
         assert provider.provider_name == "openai"
         assert provider.model == "gpt-4o-mini"
 
     def test_create_anthropic(self):
         from benchmarks.providers import create_provider
+
         provider = create_provider("anthropic", model="claude-3-haiku-20240307")
         assert provider.provider_name == "anthropic"
         assert provider.model == "claude-3-haiku-20240307"
 
     def test_create_google(self):
         from benchmarks.providers import create_provider
+
         provider = create_provider("google", model="gemini-1.5-flash")
         assert provider.provider_name == "google"
         assert provider.model == "gemini-1.5-flash"
 
     def test_create_local(self):
         from benchmarks.providers import create_provider
+
         provider = create_provider("local", model="llama3.2")
         assert provider.provider_name == "local"
         assert provider.model == "llama3.2"
 
     def test_create_unknown_provider_raises(self):
         from benchmarks.providers import create_provider
+
         try:
             create_provider("nonexistent")
             assert False, "Should have raised ValueError"
@@ -204,6 +209,7 @@ class TestProviderFactory:
 
     def test_list_providers(self):
         from benchmarks.providers import list_providers
+
         names = list_providers()
         assert "openai" in names
         assert "anthropic" in names
@@ -380,7 +386,9 @@ class TestLocalProviderMocked:
 
         provider = LocalProvider(model="llama3.2", base_url="http://localhost:9999/v1")
         mock_client = MagicMock()
-        mock_client.chat.completions.create.side_effect = RuntimeError("Connection refused")
+        mock_client.chat.completions.create.side_effect = RuntimeError(
+            "Connection refused"
+        )
         provider._client = mock_client
 
         result = provider.complete("Say hello")
@@ -498,14 +506,26 @@ class TestProviderSchemaStability:
         d = result.to_dict()
 
         required_fields = [
-            "provider_name", "model", "model_version",
-            "request_id", "timestamp",
-            "queue_time_seconds", "request_latency_seconds",
+            "provider_name",
+            "model",
+            "model_version",
+            "request_id",
+            "timestamp",
+            "queue_time_seconds",
+            "request_latency_seconds",
             "total_execution_time_seconds",
-            "prompt_characters", "prompt_tokens_estimated", "prompt_tokens_exact",
-            "response_characters", "response_tokens", "completion_status",
-            "clarification_turns", "retry_count", "failure_reason",
-            "cost_prompt_tokens", "cost_completion_tokens", "estimated_cost_usd",
+            "prompt_characters",
+            "prompt_tokens_estimated",
+            "prompt_tokens_exact",
+            "response_characters",
+            "response_tokens",
+            "completion_status",
+            "clarification_turns",
+            "retry_count",
+            "failure_reason",
+            "cost_prompt_tokens",
+            "cost_completion_tokens",
+            "estimated_cost_usd",
         ]
         for field in required_fields:
             assert field in d, f"Missing required field: {field}"

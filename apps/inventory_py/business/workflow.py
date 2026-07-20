@@ -1,8 +1,9 @@
 from core.helpers import (
-    helpers_get_map_value_safe, helpers_generate_id,
-    helpers_current_timestamp
+    helpers_current_timestamp,
+    helpers_generate_id,
+    helpers_get_map_value_safe,
 )
-from core.storage import storage_list, storage_get_by_id, storage_add, storage_update
+from core.storage import storage_add, storage_get_by_id, storage_list, storage_update
 
 
 def wfgor_find_by_order_rec(wfgor_items, wfgor_order_id, wfgor_idx):
@@ -75,7 +76,7 @@ def workflow_approve_director(wfad_id, wfad_approver):
     wfad_changes = {
         "stage": "approved_by_director",
         "approver": wfad_approver,
-        "updated_at": wfad_now
+        "updated_at": wfad_now,
     }
     return storage_update("workflows", wfad_id, wfad_changes)
 
@@ -85,10 +86,7 @@ def workflow_fulfill(wff_id):
     if wff_workflow is False:
         return False
     wff_now = helpers_current_timestamp()
-    wff_changes = {
-        "stage": "fulfilled",
-        "updated_at": wff_now
-    }
+    wff_changes = {"stage": "fulfilled", "updated_at": wff_now}
     return storage_update("workflows", wff_id, wff_changes)
 
 
@@ -97,10 +95,7 @@ def workflow_close(wfcl_id):
     if wfcl_workflow is False:
         return False
     wfcl_now = helpers_current_timestamp()
-    wfcl_changes = {
-        "stage": "closed",
-        "updated_at": wfcl_now
-    }
+    wfcl_changes = {"stage": "closed", "updated_at": wfcl_now}
     return storage_update("workflows", wfcl_id, wfcl_changes)
 
 
@@ -112,7 +107,7 @@ def workflow_reject(wfr_id, wfr_reason):
     wfr_changes = {
         "stage": "rejected",
         "reject_reason": wfr_reason,
-        "updated_at": wfr_now
+        "updated_at": wfr_now,
     }
     return storage_update("workflows", wfr_id, wfr_changes)
 

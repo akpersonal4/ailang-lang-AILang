@@ -1,12 +1,12 @@
 # DX Tool #002 Acceptance Testing
 # Comprehensive test suite for ail doctor tool
 
+import hashlib
 import os
-import sys
 import subprocess
+import sys
 import time
 import tracemalloc
-import hashlib
 from pathlib import Path
 
 
@@ -38,7 +38,9 @@ def test_tool_runs_successfully() -> bool:
 def test_output_file_created() -> bool:
     """Test: generated/DOCTOR_REPORT.md is created."""
     print("\nTEST 2: Output file created...")
-    output_path = Path(__file__).resolve().parent.parent / "generated" / "DOCTOR_REPORT.md"
+    output_path = (
+        Path(__file__).resolve().parent.parent / "generated" / "DOCTOR_REPORT.md"
+    )
     if output_path.exists():
         print(f"  ✓ PASS: {output_path} exists")
         return True
@@ -63,7 +65,7 @@ def test_deterministic_output() -> bool:
         print(f"  ✓ PASS: Hashes match ({hash1[:16]}...)")
         return True
     else:
-        print(f"  ✗ FAIL: Hashes differ")
+        print("  ✗ FAIL: Hashes differ")
         print(f"    Run 1: {hash1}")
         print(f"    Run 2: {hash2}")
         return False
@@ -119,7 +121,9 @@ def test_performance() -> tuple[bool, float, float, int]:
     tracemalloc.stop()
 
     # Output size
-    output_path = Path(__file__).resolve().parent.parent / "generated" / "DOCTOR_REPORT.md"
+    output_path = (
+        Path(__file__).resolve().parent.parent / "generated" / "DOCTOR_REPORT.md"
+    )
     output_size = output_path.stat().st_size if output_path.exists() else 0
 
     print(f"  Generation time: {elapsed:.4f}s")
@@ -143,7 +147,9 @@ def test_performance() -> tuple[bool, float, float, int]:
 def validate_content() -> bool:
     """Test: Content validation checks."""
     print("\nTEST 7: Content validation...")
-    output_path = Path(__file__).resolve().parent.parent / "generated" / "DOCTOR_REPORT.md"
+    output_path = (
+        Path(__file__).resolve().parent.parent / "generated" / "DOCTOR_REPORT.md"
+    )
     content = output_path.read_text(encoding="utf-8")
 
     checks = []
@@ -177,7 +183,9 @@ def validate_content() -> bool:
 def validate_version_check() -> bool:
     """Test: Version consistency check detects issues."""
     print("\nTEST 8: Version consistency check...")
-    output_path = Path(__file__).resolve().parent.parent / "generated" / "DOCTOR_REPORT.md"
+    output_path = (
+        Path(__file__).resolve().parent.parent / "generated" / "DOCTOR_REPORT.md"
+    )
     content = output_path.read_text(encoding="utf-8")
 
     # The tool should detect the version mismatch between pyproject.toml (0.2.0) and vscode-extension (0.1.2)

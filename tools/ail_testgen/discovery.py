@@ -5,7 +5,8 @@ from __future__ import annotations
 from pathlib import Path
 
 from tools.ail_testgen.models import AppInfo
-from tools.common.filesystem import get_project_root, discover_apps as _discover_apps
+from tools.common.filesystem import discover_apps as _discover_apps
+from tools.common.filesystem import get_project_root
 
 
 def discover_apps() -> list[AppInfo]:

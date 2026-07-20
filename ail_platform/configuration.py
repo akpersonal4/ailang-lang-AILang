@@ -3,7 +3,12 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from ail_platform.manifest import ManifestError, ProjectManifest, find_manifest, get_tool_config, parse_manifest
+from ail_platform.manifest import (
+    ManifestError,
+    find_manifest,
+    get_tool_config,
+    parse_manifest,
+)
 
 
 @dataclass
@@ -13,6 +18,7 @@ class ToolConfig:
     Provides typed access to common configuration fields,
     with raw dict access for tool-specific fields.
     """
+
     data: dict = field(default_factory=dict)
 
     def get(self, key: str, default: object = None) -> object:
@@ -44,9 +50,7 @@ class ToolConfig:
         return list(value) if value else (default or [])
 
 
-def load_tool_config(
-    tool_name: str, start_dir: Path | None = None
-) -> ToolConfig:
+def load_tool_config(tool_name: str, start_dir: Path | None = None) -> ToolConfig:
     """Load tool configuration from ail.toml.
 
     Searches for ail.toml starting from start_dir (or cwd),

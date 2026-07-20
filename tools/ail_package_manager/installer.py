@@ -2,22 +2,20 @@
 
 from __future__ import annotations
 
-import shutil
 from pathlib import Path
 
 from ail_platform.report_schema import ExitCode
 from tools.ail_package_manager.cache import (
     clone_git_dep,
     copy_package_to_lib,
-    resolve_local_dep,
 )
 from tools.ail_package_manager.lock import generate_lock, write_lock
 from tools.ail_package_manager.manifest import find_manifest, parse_manifest
 from tools.ail_package_manager.registry import (
+    RegistryError,
     download_from_local_registry,
     download_package_archive,
     load_registry_url,
-    RegistryError,
 )
 from tools.ail_package_manager.resolver import resolve
 
@@ -65,6 +63,7 @@ def install(
         print("Checking lock file consistency...")
         if verbose:
             from tools.ail_package_manager.lock import deps_hash_matches
+
             if deps_hash_matches(manifest_path, lock_path):
                 print("  Lock file is fresh")
             else:
@@ -93,8 +92,12 @@ def install(
 
     if frozen_lockfile and lock_path.exists():
         from tools.ail_package_manager.lock import deps_hash_matches
+
         if not deps_hash_matches(manifest_path, lock_path):
-            print("Error: Lock file is stale (--frozen-lockfile)", file=__import__("sys").stderr)
+            print(
+                "Error: Lock file is stale (--frozen-lockfile)",
+                file=__import__("sys").stderr,
+            )
             return ExitCode.LOCKFILE_MISMATCH
 
     installed_names: set[str] = set()
@@ -118,15 +121,23 @@ def install(
                 if verbose:
                     print(f"    Cloning {dep_spec.git}")
                 try:
-                    _manifest, _checksum, clone_path = clone_git_dep(dep_spec, cache_dir)
+                    _manifest, _checksum, clone_path = clone_git_dep(
+                        dep_spec, cache_dir
+                    )
                     copy_package_to_lib(clone_path, lib_dir, dep.name)
                 except ValueError as e:
-                    print(f"  Error installing {dep.name}: {e}", file=__import__("sys").stderr)
+                    print(
+                        f"  Error installing {dep.name}: {e}",
+                        file=__import__("sys").stderr,
+                    )
                     return ExitCode.FAILURE
 
         elif dep.source == "registry":
             if offline:
-                print(f"  Error: {dep.name} requires network (--offline)", file=__import__("sys").stderr)
+                print(
+                    f"  Error: {dep.name} requires network (--offline)",
+                    file=__import__("sys").stderr,
+                )
                 return ExitCode.FAILURE
             registry_url = load_registry_url(project_root)
             dest = lib_dir / dep.name
@@ -146,16 +157,17 @@ def install(
                 else:
                     if verbose:
                         print(f"    Downloading from {registry_url}")
-                    download_package_archive(
-                        dep.name, dep.version, registry_url, dest
-                    )
+                    download_package_archive(dep.name, dep.version, registry_url, dest)
             except RegistryError as e:
-                print(f"  Error installing {dep.name}: {e}", file=__import__("sys").stderr)
+                print(
+                    f"  Error installing {dep.name}: {e}", file=__import__("sys").stderr
+                )
                 return ExitCode.FAILURE
 
         installed_names.add(dep.name)
 
     from tools.ail_package_manager.cache import clean_lib
+
     clean_lib(lib_dir, installed_names)
 
     if not no_lock:

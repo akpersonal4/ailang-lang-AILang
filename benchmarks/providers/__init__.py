@@ -7,12 +7,11 @@ provider is executing the benchmark.
 
 from __future__ import annotations
 
-from benchmarks.providers.base import AIProvider, ProviderResult
-from benchmarks.providers.openai_provider import OpenAIProvider
 from benchmarks.providers.anthropic_provider import AnthropicProvider
+from benchmarks.providers.base import AIProvider, ProviderResult
 from benchmarks.providers.google_provider import GoogleProvider
 from benchmarks.providers.local_provider import LocalProvider
-
+from benchmarks.providers.openai_provider import OpenAIProvider
 
 PROVIDER_REGISTRY: dict[str, type[AIProvider]] = {
     "openai": OpenAIProvider,
@@ -45,9 +44,7 @@ def create_provider(
     cls = PROVIDER_REGISTRY.get(name)
     if cls is None:
         known = ", ".join(sorted(PROVIDER_REGISTRY))
-        raise ValueError(
-            f"Unknown provider: '{name}'. Known providers: {known}"
-        )
+        raise ValueError(f"Unknown provider: '{name}'. Known providers: {known}")
     return cls(model=model, api_key=api_key, **kwargs)
 
 

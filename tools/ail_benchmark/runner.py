@@ -11,7 +11,6 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from ail_platform.project import get_project_root
-from typing import Any
 
 
 @dataclass
@@ -124,7 +123,7 @@ def compute_stats(values: list[float]) -> RunStats:
 
 
 def run_benchmark(
-    benchmark: "Benchmark",
+    benchmark: Benchmark,
     repeat: int = 3,
     timeout: int = 300,
     memory: bool = False,
@@ -202,8 +201,10 @@ def run_benchmark(
         run_times.append(run_measurement.time)
 
         if not quiet:
-            print(f"  [OK] {benchmark.name} — build {build_measurement.time:.3f}s, "
-                  f"run {run_measurement.time:.3f}s")
+            print(
+                f"  [OK] {benchmark.name} — build {build_measurement.time:.3f}s, "
+                f"run {run_measurement.time:.3f}s"
+            )
 
     # Compute stats from successful runs only
     if build_times:

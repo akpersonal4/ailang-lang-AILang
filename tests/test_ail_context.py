@@ -3,7 +3,6 @@
 import json
 import subprocess
 import sys
-from pathlib import Path
 
 
 def test_context_tool_prints_to_stdout():
@@ -110,7 +109,15 @@ def test_context_json_has_diagnostics():
     )
     data = json.loads(result.stdout)
 
-    expected_codes = ["SEM002", "TYP005", "TYP006", "TYP008", "TYP012", "TYP013", "CMP001"]
+    expected_codes = [
+        "SEM002",
+        "TYP005",
+        "TYP006",
+        "TYP008",
+        "TYP012",
+        "TYP013",
+        "CMP001",
+    ]
     for code in expected_codes:
         assert code in data["diagnostics"], f"Missing diagnostic: {code}"
 
@@ -148,7 +155,9 @@ def test_context_json_no_path_leakage():
     # No path keys remain
     assert "agents" not in doc or isinstance(doc.get("agents"), bool)
     assert "language_spec" not in doc or isinstance(doc.get("language_spec"), bool)
-    assert "stdlib_reference" not in doc or isinstance(doc.get("stdlib_reference"), bool)
+    assert "stdlib_reference" not in doc or isinstance(
+        doc.get("stdlib_reference"), bool
+    )
 
 
 def test_context_json_has_retrieval_policy():

@@ -236,10 +236,15 @@ class TypeChecker:
                 # string + UnknownType is allowed for patterns like "prefix" + map.get(m, "key")
                 # BUT NOT NumericUnknownType (that's a numeric context)
                 # Use isinstance() because UnknownType is a dataclass instance, not a singleton
-                left_is_unknown = isinstance(left_type, UnknownType) and not isinstance(left_type, NumericUnknownType)
-                right_is_unknown = isinstance(right_type, UnknownType) and not isinstance(right_type, NumericUnknownType)
-                if (left_type is STRING_TYPE and right_is_unknown) or \
-                   (right_type is STRING_TYPE and left_is_unknown):
+                left_is_unknown = isinstance(left_type, UnknownType) and not isinstance(
+                    left_type, NumericUnknownType
+                )
+                right_is_unknown = isinstance(
+                    right_type, UnknownType
+                ) and not isinstance(right_type, NumericUnknownType)
+                if (left_type is STRING_TYPE and right_is_unknown) or (
+                    right_type is STRING_TYPE and left_is_unknown
+                ):
                     return STRING_TYPE
                 # All other cases (string + int, float, bool, NumericUnknownType) are errors
                 self._report_error(
@@ -250,11 +255,13 @@ class TypeChecker:
                     node.end_span,
                 )
                 return NUMERIC_UNKNOWN_TYPE
+
             # Allow UnknownType/NumericUnknownType + known numeric to infer
             # to the known numeric type.
             # This enables natural patterns like map.get(m, "qty") + 1
             def _num_unk(t: Type) -> bool:
                 return isinstance(t, (UnknownType, NumericUnknownType))
+
             if left_type is INT_TYPE and _num_unk(right_type):
                 return INT_TYPE
             if right_type is INT_TYPE and _num_unk(left_type):
@@ -306,9 +313,11 @@ class TypeChecker:
             }:
                 if left_type is right_type:
                     return BOOL_TYPE
+
             # Comparisons always return bool even with unknown operands
             def _num_unk(t: Type) -> bool:
                 return isinstance(t, (UnknownType, NumericUnknownType))
+
             if _num_unk(left_type) or _num_unk(right_type):
                 return BOOL_TYPE
             if not _num_unk(left_type) and not _num_unk(right_type):
@@ -512,8 +521,12 @@ class TypeChecker:
 
         lines.append("")
         lines.append("Suggestions:")
-        lines.append("    - Use explicit conversion helpers (convert.to_int, convert.to_string).")
-        lines.append("    - Initialize values using typed literals (let x = 0; let s = \"\").")
+        lines.append(
+            "    - Use explicit conversion helpers (convert.to_int, convert.to_string)."
+        )
+        lines.append(
+            '    - Initialize values using typed literals (let x = 0; let s = "").'
+        )
         lines.append("    - Check return types of upstream functions with ail explain.")
         return "\n".join(lines)
 

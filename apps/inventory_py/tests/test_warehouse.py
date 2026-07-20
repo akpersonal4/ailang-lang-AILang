@@ -1,9 +1,15 @@
 from core.helpers import helpers_get_map_value_safe
-from models.warehouse import warehouse_create, warehouse_get_by_id, warehouse_search, warehouse_list
+from models.warehouse import (
+    warehouse_create,
+    warehouse_get_by_id,
+    warehouse_search,
+)
 
 
 def test_warehouse_create():
-    twc_result = warehouse_create("Main Warehouse", "WH-001", "123 Main St", "New York", "USA")
+    twc_result = warehouse_create(
+        "Main Warehouse", "WH-001", "123 Main St", "New York", "USA"
+    )
     if twc_result == False:
         print("FAIL: warehouse_create returned false")
         return False
@@ -37,7 +43,9 @@ def test_warehouse_get_by_id_missing():
 
 
 def test_warehouse_get_by_id():
-    twg_created = warehouse_create("GetTest WH", "WH-GET", "456 Oak Ave", "Chicago", "USA")
+    twg_created = warehouse_create(
+        "GetTest WH", "WH-GET", "456 Oak Ave", "Chicago", "USA"
+    )
     twg_id = helpers_get_map_value_safe(twg_created, "id", "")
     twg_found = warehouse_get_by_id(twg_id)
     if twg_found == False:
@@ -52,7 +60,9 @@ def test_warehouse_get_by_id():
 
 
 def test_warehouse_search_by_name():
-    tws_created = warehouse_create("SearchTest Warehouse", "SRC-001", "789 Pine Rd", "Houston", "USA")
+    tws_created = warehouse_create(
+        "SearchTest Warehouse", "SRC-001", "789 Pine Rd", "Houston", "USA"
+    )
     tws_results = warehouse_search("SearchTest")
     if tws_results == False:
         print("FAIL: warehouse_search_by_name returned false")

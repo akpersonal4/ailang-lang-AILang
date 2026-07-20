@@ -1,5 +1,6 @@
 import json
 
+
 def main():
     with open("benchmarks/datasets/b2_features/ailang/test_data.json") as f:
         records = [json.loads(line.strip()) for line in f if line.strip()]
@@ -8,6 +9,7 @@ def main():
     for r in sorted_records:
         print(json.dumps(r))
     return 0
+
 
 if __name__ == "__main__":
     main()

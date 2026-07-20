@@ -85,9 +85,7 @@ def get_workspace_symbols(
                                 uri=uri,
                                 range=Range(
                                     start=offset_to_position(span, text),
-                                    end=offset_to_position(
-                                        span + len(name) + 7, text
-                                    ),
+                                    end=offset_to_position(span + len(name) + 7, text),
                                 ),
                             ),
                         )

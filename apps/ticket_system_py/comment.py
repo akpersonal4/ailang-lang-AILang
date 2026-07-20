@@ -1,9 +1,8 @@
 """Comment model for ticket discussions."""
 
 import time
-from typing import Optional
 
-from storage import load, append, find_by_id, next_id
+from storage import append, load, next_id
 
 
 def create(ticket_id: int, author_id: int, content: str) -> dict:

@@ -1,5 +1,8 @@
+from core.helpers import (
+    helpers_current_timestamp,
+    helpers_generate_id,
+)
 from core.storage import storage_list
-from core.helpers import helpers_get_map_value_safe, helpers_generate_id, helpers_current_timestamp
 
 
 def movement_create(product_id, typ, quantity, ref_type, ref_id, notes):
@@ -28,7 +31,8 @@ def movement_list_by_product(product_id):
 
 def movement_get_quantity_on_hand(product_id):
     return sum(
-        m.get("quantity", 0) for m in storage_list("movements")
+        m.get("quantity", 0)
+        for m in storage_list("movements")
         if m.get("product_id") == product_id
     )
 

@@ -1,5 +1,10 @@
+from business.dashboard import (
+    dashboard_low_stock_count,
+    dashboard_recent_movements,
+    dashboard_summary,
+    dashboard_top_products,
+)
 from core.helpers import helpers_get_map_value_safe
-from business.dashboard import dashboard_summary, dashboard_low_stock_count, dashboard_top_products, dashboard_recent_movements
 
 
 def test_dashboard_summary():

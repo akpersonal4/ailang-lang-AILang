@@ -2,31 +2,56 @@
 
 import hashlib
 import time
-from typing import Optional
 
 import storage
-from storage import load, save, append, update_field, next_id
+from storage import append, load, next_id, update_field
 
 PERMISSIONS = {
     "admin": {
-        "create_ticket", "update_own_ticket", "update_any_ticket",
-        "assign_ticket", "resolve_ticket", "close_ticket", "reopen_ticket",
-        "add_comment", "view_ticket", "search_tickets", "view_reports",
-        "export_csv", "import_csv", "delete_ticket", "manage_users",
+        "create_ticket",
+        "update_own_ticket",
+        "update_any_ticket",
+        "assign_ticket",
+        "resolve_ticket",
+        "close_ticket",
+        "reopen_ticket",
+        "add_comment",
+        "view_ticket",
+        "search_tickets",
+        "view_reports",
+        "export_csv",
+        "import_csv",
+        "delete_ticket",
+        "manage_users",
     },
     "manager": {
-        "create_ticket", "update_own_ticket", "update_any_ticket",
-        "assign_ticket", "resolve_ticket", "close_ticket", "reopen_ticket",
-        "add_comment", "view_ticket", "search_tickets", "view_reports",
-        "export_csv", "import_csv",
+        "create_ticket",
+        "update_own_ticket",
+        "update_any_ticket",
+        "assign_ticket",
+        "resolve_ticket",
+        "close_ticket",
+        "reopen_ticket",
+        "add_comment",
+        "view_ticket",
+        "search_tickets",
+        "view_reports",
+        "export_csv",
+        "import_csv",
     },
     "agent": {
-        "create_ticket", "update_own_ticket",
-        "resolve_ticket", "close_ticket", "reopen_ticket",
-        "add_comment", "view_ticket", "search_tickets",
+        "create_ticket",
+        "update_own_ticket",
+        "resolve_ticket",
+        "close_ticket",
+        "reopen_ticket",
+        "add_comment",
+        "view_ticket",
+        "search_tickets",
     },
     "viewer": {
-        "view_ticket", "search_tickets",
+        "view_ticket",
+        "search_tickets",
     },
 }
 
@@ -35,7 +60,7 @@ def hash_password(password: str) -> str:
     return hashlib.sha256(password.encode("utf-8")).hexdigest()
 
 
-def create(username: str, email: str, password: str) -> Optional[dict]:
+def create(username: str, email: str, password: str) -> dict | None:
     users = load("users")
     for u in users:
         if u["username"] == username or u["email"] == email:
@@ -52,7 +77,7 @@ def create(username: str, email: str, password: str) -> Optional[dict]:
     return user
 
 
-def find_by_username(username: str) -> Optional[dict]:
+def find_by_username(username: str) -> dict | None:
     users = load("users")
     for u in users:
         if u["username"] == username:
@@ -60,11 +85,11 @@ def find_by_username(username: str) -> Optional[dict]:
     return None
 
 
-def find_by_id(user_id: int) -> Optional[dict]:
+def find_by_id(user_id: int) -> dict | None:
     return storage.find_by_id("users", user_id)
 
 
-def authenticate(username: str, password: str) -> Optional[dict]:
+def authenticate(username: str, password: str) -> dict | None:
     user = find_by_username(username)
     if not user:
         return None

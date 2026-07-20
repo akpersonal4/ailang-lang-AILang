@@ -6,11 +6,10 @@ independently reproduce results.
 
 from __future__ import annotations
 
-import os
 import platform
 import subprocess
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -31,7 +30,10 @@ def get_git_commit(root: Path | None = None) -> str:
     try:
         result = subprocess.run(
             ["git", "rev-parse", "HEAD"],
-            capture_output=True, text=True, cwd=root, timeout=10,
+            capture_output=True,
+            text=True,
+            cwd=root,
+            timeout=10,
         )
         if result.returncode == 0:
             return result.stdout.strip()
@@ -47,7 +49,10 @@ def get_git_branch(root: Path | None = None) -> str:
     try:
         result = subprocess.run(
             ["git", "rev-parse", "--abbrev-ref", "HEAD"],
-            capture_output=True, text=True, cwd=root, timeout=10,
+            capture_output=True,
+            text=True,
+            cwd=root,
+            timeout=10,
         )
         if result.returncode == 0:
             return result.stdout.strip()
@@ -63,7 +68,10 @@ def get_git_dirty(root: Path | None = None) -> bool:
     try:
         result = subprocess.run(
             ["git", "status", "--porcelain"],
-            capture_output=True, text=True, cwd=root, timeout=10,
+            capture_output=True,
+            text=True,
+            cwd=root,
+            timeout=10,
         )
         return bool(result.stdout.strip())
     except Exception:
@@ -95,5 +103,5 @@ def snapshot() -> dict[str, Any]:
             "dirty": get_git_dirty(root),
             "root": str(root),
         },
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
     }

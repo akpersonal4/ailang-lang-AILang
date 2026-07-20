@@ -3,7 +3,6 @@
 import json
 import subprocess
 import sys
-from pathlib import Path
 
 
 def run_mcp_command(request: dict) -> dict:
@@ -25,12 +24,14 @@ def run_mcp_command(request: dict) -> dict:
 
 def test_mcp_initialize():
     """Test MCP initialize method."""
-    response = run_mcp_command({
-        "jsonrpc": "2.0",
-        "id": 1,
-        "method": "initialize",
-        "params": {},
-    })
+    response = run_mcp_command(
+        {
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": "initialize",
+            "params": {},
+        }
+    )
     assert response["jsonrpc"] == "2.0"
     assert response["id"] == 1
     assert "result" in response
@@ -40,12 +41,14 @@ def test_mcp_initialize():
 
 def test_mcp_tools_list():
     """Test MCP tools/list method."""
-    response = run_mcp_command({
-        "jsonrpc": "2.0",
-        "id": 2,
-        "method": "tools/list",
-        "params": {},
-    })
+    response = run_mcp_command(
+        {
+            "jsonrpc": "2.0",
+            "id": 2,
+            "method": "tools/list",
+            "params": {},
+        }
+    )
     assert response["jsonrpc"] == "2.0"
     assert response["id"] == 2
     assert "result" in response
@@ -61,15 +64,17 @@ def test_mcp_tools_list():
 
 def test_mcp_get_language_context():
     """Test get_language_context tool."""
-    response = run_mcp_command({
-        "jsonrpc": "2.0",
-        "id": 3,
-        "method": "tools/call",
-        "params": {
-            "name": "get_language_context",
-            "arguments": {},
-        },
-    })
+    response = run_mcp_command(
+        {
+            "jsonrpc": "2.0",
+            "id": 3,
+            "method": "tools/call",
+            "params": {
+                "name": "get_language_context",
+                "arguments": {},
+            },
+        }
+    )
     assert response["jsonrpc"] == "2.0"
     assert response["id"] == 3
     assert "result" in response
@@ -88,15 +93,17 @@ def test_mcp_get_language_context():
 
 def test_mcp_get_stdlib_all():
     """Test get_stdlib tool without module argument."""
-    response = run_mcp_command({
-        "jsonrpc": "2.0",
-        "id": 4,
-        "method": "tools/call",
-        "params": {
-            "name": "get_stdlib",
-            "arguments": {},
-        },
-    })
+    response = run_mcp_command(
+        {
+            "jsonrpc": "2.0",
+            "id": 4,
+            "method": "tools/call",
+            "params": {
+                "name": "get_stdlib",
+                "arguments": {},
+            },
+        }
+    )
     assert response["jsonrpc"] == "2.0"
     assert response["id"] == 4
     assert "result" in response
@@ -111,15 +118,17 @@ def test_mcp_get_stdlib_all():
 
 def test_mcp_get_stdlib_module():
     """Test get_stdlib tool with module argument."""
-    response = run_mcp_command({
-        "jsonrpc": "2.0",
-        "id": 5,
-        "method": "tools/call",
-        "params": {
-            "name": "get_stdlib",
-            "arguments": {"module": "string"},
-        },
-    })
+    response = run_mcp_command(
+        {
+            "jsonrpc": "2.0",
+            "id": 5,
+            "method": "tools/call",
+            "params": {
+                "name": "get_stdlib",
+                "arguments": {"module": "string"},
+            },
+        }
+    )
     assert response["jsonrpc"] == "2.0"
     assert response["id"] == 5
     assert "result" in response
@@ -133,16 +142,18 @@ def test_mcp_get_stdlib_module():
 
 def test_mcp_compile_source_valid():
     """Test compile_source tool with valid source."""
-    source = 'fn main() { return 0 }'
-    response = run_mcp_command({
-        "jsonrpc": "2.0",
-        "id": 6,
-        "method": "tools/call",
-        "params": {
-            "name": "compile_source",
-            "arguments": {"source": source},
-        },
-    })
+    source = "fn main() { return 0 }"
+    response = run_mcp_command(
+        {
+            "jsonrpc": "2.0",
+            "id": 6,
+            "method": "tools/call",
+            "params": {
+                "name": "compile_source",
+                "arguments": {"source": source},
+            },
+        }
+    )
     assert response["jsonrpc"] == "2.0"
     assert response["id"] == 6
     assert "result" in response
@@ -154,16 +165,18 @@ def test_mcp_compile_source_valid():
 
 def test_mcp_compile_source_invalid():
     """Test compile_source tool with invalid source."""
-    source = 'fn main() { let x = y; return 0 }'
-    response = run_mcp_command({
-        "jsonrpc": "2.0",
-        "id": 7,
-        "method": "tools/call",
-        "params": {
-            "name": "compile_source",
-            "arguments": {"source": source},
-        },
-    })
+    source = "fn main() { let x = y; return 0 }"
+    response = run_mcp_command(
+        {
+            "jsonrpc": "2.0",
+            "id": 7,
+            "method": "tools/call",
+            "params": {
+                "name": "compile_source",
+                "arguments": {"source": source},
+            },
+        }
+    )
     assert response["jsonrpc"] == "2.0"
     assert response["id"] == 7
     assert "result" in response
@@ -175,15 +188,17 @@ def test_mcp_compile_source_invalid():
 
 def test_mcp_explain_diagnostic():
     """Test explain_diagnostic tool."""
-    response = run_mcp_command({
-        "jsonrpc": "2.0",
-        "id": 8,
-        "method": "tools/call",
-        "params": {
-            "name": "explain_diagnostic",
-            "arguments": {"code": "SEM002"},
-        },
-    })
+    response = run_mcp_command(
+        {
+            "jsonrpc": "2.0",
+            "id": 8,
+            "method": "tools/call",
+            "params": {
+                "name": "explain_diagnostic",
+                "arguments": {"code": "SEM002"},
+            },
+        }
+    )
     assert response["jsonrpc"] == "2.0"
     assert response["id"] == 8
     assert "result" in response
@@ -199,15 +214,17 @@ def test_mcp_explain_diagnostic():
 
 def test_mcp_explain_diagnostic_unknown():
     """Test explain_diagnostic tool with unknown code."""
-    response = run_mcp_command({
-        "jsonrpc": "2.0",
-        "id": 9,
-        "method": "tools/call",
-        "params": {
-            "name": "explain_diagnostic",
-            "arguments": {"code": "UNKNOWN"},
-        },
-    })
+    response = run_mcp_command(
+        {
+            "jsonrpc": "2.0",
+            "id": 9,
+            "method": "tools/call",
+            "params": {
+                "name": "explain_diagnostic",
+                "arguments": {"code": "UNKNOWN"},
+            },
+        }
+    )
     assert response["jsonrpc"] == "2.0"
     assert response["id"] == 9
     assert "result" in response
@@ -219,15 +236,17 @@ def test_mcp_explain_diagnostic_unknown():
 
 def test_mcp_get_examples_all():
     """Test get_examples tool without category argument."""
-    response = run_mcp_command({
-        "jsonrpc": "2.0",
-        "id": 10,
-        "method": "tools/call",
-        "params": {
-            "name": "get_examples",
-            "arguments": {},
-        },
-    })
+    response = run_mcp_command(
+        {
+            "jsonrpc": "2.0",
+            "id": 10,
+            "method": "tools/call",
+            "params": {
+                "name": "get_examples",
+                "arguments": {},
+            },
+        }
+    )
     assert response["jsonrpc"] == "2.0"
     assert response["id"] == 10
     assert "result" in response
@@ -241,15 +260,17 @@ def test_mcp_get_examples_all():
 
 def test_mcp_get_examples_category():
     """Test get_examples tool with category argument."""
-    response = run_mcp_command({
-        "jsonrpc": "2.0",
-        "id": 11,
-        "method": "tools/call",
-        "params": {
-            "name": "get_examples",
-            "arguments": {"category": "hello"},
-        },
-    })
+    response = run_mcp_command(
+        {
+            "jsonrpc": "2.0",
+            "id": 11,
+            "method": "tools/call",
+            "params": {
+                "name": "get_examples",
+                "arguments": {"category": "hello"},
+            },
+        }
+    )
     assert response["jsonrpc"] == "2.0"
     assert response["id"] == 11
     assert "result" in response
@@ -263,12 +284,14 @@ def test_mcp_get_examples_category():
 
 def test_mcp_ping():
     """Test MCP ping method."""
-    response = run_mcp_command({
-        "jsonrpc": "2.0",
-        "id": 12,
-        "method": "ping",
-        "params": {},
-    })
+    response = run_mcp_command(
+        {
+            "jsonrpc": "2.0",
+            "id": 12,
+            "method": "ping",
+            "params": {},
+        }
+    )
     assert response["jsonrpc"] == "2.0"
     assert response["id"] == 12
     assert "result" in response
@@ -276,12 +299,14 @@ def test_mcp_ping():
 
 def test_mcp_unknown_method():
     """Test MCP with unknown method."""
-    response = run_mcp_command({
-        "jsonrpc": "2.0",
-        "id": 13,
-        "method": "unknown_method",
-        "params": {},
-    })
+    response = run_mcp_command(
+        {
+            "jsonrpc": "2.0",
+            "id": 13,
+            "method": "unknown_method",
+            "params": {},
+        }
+    )
     assert response["jsonrpc"] == "2.0"
     assert response["id"] == 13
     assert "error" in response
@@ -290,15 +315,17 @@ def test_mcp_unknown_method():
 
 def test_mcp_unknown_tool():
     """Test MCP with unknown tool."""
-    response = run_mcp_command({
-        "jsonrpc": "2.0",
-        "id": 14,
-        "method": "tools/call",
-        "params": {
-            "name": "unknown_tool",
-            "arguments": {},
-        },
-    })
+    response = run_mcp_command(
+        {
+            "jsonrpc": "2.0",
+            "id": 14,
+            "method": "tools/call",
+            "params": {
+                "name": "unknown_tool",
+                "arguments": {},
+            },
+        }
+    )
     assert response["jsonrpc"] == "2.0"
     assert response["id"] == 14
     assert "error" in response

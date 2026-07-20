@@ -1,7 +1,6 @@
 """JSON file persistence layer for ticket system."""
 
 import json
-import os
 from pathlib import Path
 
 DATA_DIR = Path("data")
@@ -16,7 +15,7 @@ def load(name: str) -> list[dict]:
     if not path.exists():
         return []
     try:
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, encoding="utf-8") as f:
             return json.load(f)
     except (json.JSONDecodeError, ValueError):
         return []

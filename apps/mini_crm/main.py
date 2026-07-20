@@ -7,7 +7,7 @@ Modules: Customer, Product, Invoice, User, Search, Reporting, Export, Audit
 import json
 import os
 import sys
-from typing import List, Dict, Optional, Any
+from typing import Any, Dict, List
 
 # ============================================================
 # Level 1: Storage Layer
@@ -24,7 +24,7 @@ AUDIT_PATH = os.path.join(DATA_DIR, "audit.json")
 def load_json_list(filepath: str) -> List[Dict]:
     if not os.path.exists(filepath):
         return []
-    with open(filepath, 'r') as f:
+    with open(filepath) as f:
         content = f.read()
     if not content:
         return []
@@ -32,7 +32,7 @@ def load_json_list(filepath: str) -> List[Dict]:
 
 
 def save_json_list(filepath: str, items: List[Dict]) -> int:
-    with open(filepath, 'w') as f:
+    with open(filepath, "w") as f:
         json.dump(items, f)
     return 0
 
@@ -41,8 +41,16 @@ def save_json_list(filepath: str, items: List[Dict]) -> int:
 # Level 2: Customer Module
 # ============================================================
 
-def make_customer(id: str, name: str, email: str, phone: str, company: str, 
-                  status: str = "ACTIVE", notes: str = "") -> Dict:
+
+def make_customer(
+    id: str,
+    name: str,
+    email: str,
+    phone: str,
+    company: str,
+    status: str = "ACTIVE",
+    notes: str = "",
+) -> Dict:
     return {
         "id": id,
         "name": name,
@@ -51,8 +59,8 @@ def make_customer(id: str, name: str, email: str, phone: str, company: str,
         "company": company,
         "status": status,
         "notes": notes,
-        "created": __import__('time').time(),
-        "loyalty_points": 0
+        "created": __import__("time").time(),
+        "loyalty_points": 0,
     }
 
 
@@ -70,7 +78,7 @@ def customer_list_all() -> List[Dict]:
     return load_json_list(CUSTOMERS_PATH)
 
 
-def customer_find_by_id(customer_id: str) -> Optional[Dict]:
+def customer_find_by_id(customer_id: str) -> Dict | None:
     customers = load_json_list(CUSTOMERS_PATH)
     for c in customers:
         if c.get("id") == customer_id:
@@ -78,8 +86,15 @@ def customer_find_by_id(customer_id: str) -> Optional[Dict]:
     return None
 
 
-def customer_update(customer_id: str, name: str, email: str, phone: str, 
-                  company: str, status: str, notes: str) -> str:
+def customer_update(
+    customer_id: str,
+    name: str,
+    email: str,
+    phone: str,
+    company: str,
+    status: str,
+    notes: str,
+) -> str:
     customers = load_json_list(CUSTOMERS_PATH)
     for c in customers:
         if c.get("id") == customer_id:
@@ -113,7 +128,7 @@ def customer_delete(customer_id: str) -> str:
 def customer_search_by_name(name_substr: str) -> List[Dict]:
     customers = load_json_list(CUSTOMERS_PATH)
     lower = name_substr.lower()
-    return [c for c in customers if 'name' in c and lower in c['name'].lower()]
+    return [c for c in customers if "name" in c and lower in c["name"].lower()]
 
 
 def customer_set_status(customer_id: str, status: str) -> str:
@@ -196,6 +211,7 @@ def customer_count_by_status(status_val: str) -> int:
 # Level 3: Product Module
 # ============================================================
 
+
 def make_product(id: str, name: str, category: str, price: int, inventory: int) -> Dict:
     return {
         "id": id,
@@ -203,11 +219,13 @@ def make_product(id: str, name: str, category: str, price: int, inventory: int) 
         "category": category,
         "price": price,
         "inventory": inventory,
-        "created": __import__('time').time()
+        "created": __import__("time").time(),
     }
 
 
-def product_create(id: str, name: str, category: str, price: int, inventory: int) -> str:
+def product_create(
+    id: str, name: str, category: str, price: int, inventory: int
+) -> str:
     products = load_json_list(PRODUCTS_PATH)
     if any(p.get("id") == id for p in products):
         return "Error: Product already exists"
@@ -221,7 +239,7 @@ def product_list_all() -> List[Dict]:
     return load_json_list(PRODUCTS_PATH)
 
 
-def product_find_by_id(product_id: str) -> Optional[Dict]:
+def product_find_by_id(product_id: str) -> Dict | None:
     products = load_json_list(PRODUCTS_PATH)
     for p in products:
         if p.get("id") == product_id:
@@ -229,7 +247,9 @@ def product_find_by_id(product_id: str) -> Optional[Dict]:
     return None
 
 
-def product_update(id: str, name: str, category: str, price: int, inventory: int) -> str:
+def product_update(
+    id: str, name: str, category: str, price: int, inventory: int
+) -> str:
     products = load_json_list(PRODUCTS_PATH)
     for p in products:
         if p.get("id") == id:
@@ -259,7 +279,7 @@ def product_delete(product_id: str) -> str:
 def product_search_by_name(name_substr: str) -> List[Dict]:
     products = load_json_list(PRODUCTS_PATH)
     lower = name_substr.lower()
-    return [p for p in products if 'name' in p and lower in p['name'].lower()]
+    return [p for p in products if "name" in p and lower in p["name"].lower()]
 
 
 def product_get_price(product_id: str) -> int:
@@ -292,7 +312,7 @@ def make_product_bundle(id: str, component_ids: List[str], bundle_price: int) ->
         "id": id,
         "type": "bundle",
         "components": component_ids,
-        "bundle_price": bundle_price
+        "bundle_price": bundle_price,
     }
 
 
@@ -322,12 +342,13 @@ def product_count_by_category(category: str) -> int:
 # Level 4: Invoice Module - Invoice Items
 # ============================================================
 
+
 def make_invoice_item(product_id: str, quantity: int, unit_price: int) -> Dict:
     return {
         "product_id": product_id,
         "quantity": quantity,
         "unit_price": unit_price,
-        "total": quantity * unit_price
+        "total": quantity * unit_price,
     }
 
 
@@ -335,8 +356,10 @@ def make_invoice_item(product_id: str, quantity: int, unit_price: int) -> Dict:
 # Level 5: Invoice Module - Core Invoice Operations
 # ============================================================
 
-def make_invoice(id: str, customer_id: str, items: List[Dict], 
-                 subtotal: int, tax: int, total: int) -> Dict:
+
+def make_invoice(
+    id: str, customer_id: str, items: List[Dict], subtotal: int, tax: int, total: int
+) -> Dict:
     return {
         "id": id,
         "customer_id": customer_id,
@@ -344,8 +367,8 @@ def make_invoice(id: str, customer_id: str, items: List[Dict],
         "subtotal": subtotal,
         "tax": tax,
         "total": total,
-        "created": __import__('time').time(),
-        "status": "DRAFT"
+        "created": __import__("time").time(),
+        "status": "DRAFT",
     }
 
 
@@ -359,7 +382,9 @@ def invoice_calculate_gst(subtotal: int, gst_rate: float) -> int:
 
 
 # Discount engine - two types: percentage or fixed amount
-def invoice_apply_discount(subtotal: int, discount_type: str, discount_value: int) -> int:
+def invoice_apply_discount(
+    subtotal: int, discount_type: str, discount_value: int
+) -> int:
     if discount_type == "percent":
         return int(subtotal * (100 - discount_value) / 100)
     if discount_type == "fixed":
@@ -385,7 +410,7 @@ def invoice_list_all() -> List[Dict]:
     return load_json_list(INVOICES_PATH)
 
 
-def invoice_find_by_id(invoice_id: str) -> Optional[Dict]:
+def invoice_find_by_id(invoice_id: str) -> Dict | None:
     invoices = load_json_list(INVOICES_PATH)
     for inv in invoices:
         if inv.get("id") == invoice_id:
@@ -445,14 +470,15 @@ def invoice_get_history(customer_id: str) -> List[Dict]:
 # Level 6: User Module
 # ============================================================
 
+
 def make_user(id: str, username: str, role: str, permissions: List[str]) -> Dict:
     return {
         "id": id,
         "username": username,
         "role": role.lower(),
         "permissions": permissions,
-        "created": __import__('time').time(),
-        "activity": []
+        "created": __import__("time").time(),
+        "activity": [],
     }
 
 
@@ -475,7 +501,7 @@ def user_list_all() -> List[Dict]:
     return load_json_list(USERS_PATH)
 
 
-def user_find_by_id(user_id: str) -> Optional[Dict]:
+def user_find_by_id(user_id: str) -> Dict | None:
     users = load_json_list(USERS_PATH)
     for u in users:
         if u.get("id") == user_id:
@@ -495,7 +521,7 @@ def user_add_activity(user_id: str, action: str) -> str:
     for u in users:
         if u.get("id") == user_id:
             activity = u.get("activity", [])
-            activity.append({"action": action, "timestamp": __import__('time').time()})
+            activity.append({"action": action, "timestamp": __import__("time").time()})
             u["activity"] = activity
             save_json_list(USERS_PATH, users)
             return "Activity logged"
@@ -506,13 +532,14 @@ def user_add_activity(user_id: str, action: str) -> str:
 # Level 7: Audit Module
 # ============================================================
 
+
 def audit_log(action: str, user_id: str, details: str) -> int:
     logs = load_json_list(AUDIT_PATH)
     entry = {
         "action": action,
         "user_id": user_id,
         "details": details,
-        "timestamp": __import__('time').time()
+        "timestamp": __import__("time").time(),
     }
     logs.append(entry)
     save_json_list(AUDIT_PATH, logs)
@@ -532,16 +559,18 @@ def audit_list_by_user(user_id: str) -> List[Dict]:
 # Level 8: Search Module (cross-module)
 # ============================================================
 
+
 def search_all_entities(query: str) -> Dict:
     return {
         "customers": customer_search_by_name(query),
-        "products": product_search_by_name(query)
+        "products": product_search_by_name(query),
     }
 
 
 # ============================================================
 # Level 9: Report Module
 # ============================================================
+
 
 def report_sales_summary() -> Dict:
     invoices = load_json_list(INVOICES_PATH)
@@ -551,7 +580,7 @@ def report_sales_summary() -> Dict:
     return {
         "total_revenue": total_revenue,
         "invoice_count": invoice_count,
-        "avg_invoice": avg_invoice
+        "avg_invoice": avg_invoice,
     }
 
 
@@ -560,7 +589,7 @@ def report_customer_summary() -> Dict:
     return {
         "total_customers": len(customers),
         "active": customer_count_by_status("ACTIVE"),
-        "inactive": customer_count_by_status("INACTIVE")
+        "inactive": customer_count_by_status("INACTIVE"),
     }
 
 
@@ -568,7 +597,7 @@ def report_product_summary() -> Dict:
     products = load_json_list(PRODUCTS_PATH)
     return {
         "total_products": len(products),
-        "total_inventory": sum(p.get("inventory", 0) for p in products)
+        "total_inventory": sum(p.get("inventory", 0) for p in products),
     }
 
 
@@ -576,8 +605,9 @@ def report_product_summary() -> Dict:
 # Level 10: Export Module
 # ============================================================
 
+
 def export_to_json(data: Any, filepath: str) -> int:
-    with open(filepath, 'w') as f:
+    with open(filepath, "w") as f:
         json.dump(data, f)
     return 0
 
@@ -595,7 +625,7 @@ def export_customers_csv(filepath: str) -> str:
     customers = customer_list_all()
     columns = ["id", "name", "email", "company", "status"]
     lines = export_to_csv(customers, columns)
-    with open(filepath, 'w') as f:
+    with open(filepath, "w") as f:
         f.write("\n".join(lines))
     return f"Exported {len(customers)} customers"
 
@@ -604,7 +634,7 @@ def export_products_csv(filepath: str) -> str:
     products = product_list_all()
     columns = ["id", "name", "category", "price", "inventory"]
     lines = export_to_csv(products, columns)
-    with open(filepath, 'w') as f:
+    with open(filepath, "w") as f:
         f.write("\n".join(lines))
     return f"Exported {len(products)} products"
 
@@ -613,7 +643,7 @@ def export_invoices_csv(filepath: str) -> str:
     invoices = invoice_list_all()
     columns = ["id", "customer_id", "subtotal", "tax", "total"]
     lines = export_to_csv(invoices, columns)
-    with open(filepath, 'w') as f:
+    with open(filepath, "w") as f:
         f.write("\n".join(lines))
     return f"Exported {len(invoices)} invoices"
 
@@ -622,7 +652,8 @@ def export_invoices_csv(filepath: str) -> str:
 # Level 11: Display Utilities
 # ============================================================
 
-def display_customer(c: Optional[Dict]) -> None:
+
+def display_customer(c: Dict | None) -> None:
     if c is None:
         print("Customer not found")
         return
@@ -641,6 +672,7 @@ def display_customer_list(customers: List[Dict]) -> None:
 # ============================================================
 # Level 12: CLI Dispatch
 # ============================================================
+
 
 def cmd_customer_add(args: List[str], start: int) -> str:
     if len(args) < start + 4:
@@ -798,6 +830,7 @@ def show_usage() -> int:
 # ============================================================
 # Level 13: Main Entry Point
 # ============================================================
+
 
 def main() -> int:
     args = sys.argv[1:]

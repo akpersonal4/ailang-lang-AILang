@@ -6,17 +6,16 @@ detects regressions, and generates reports."""
 
 from __future__ import annotations
 
+import argparse
 import sys
 import time
-import argparse
-from pathlib import Path
 
 from ail_platform.project import get_project_root
 from ail_platform.report_schema import ExitCode
-from tools.ail_benchmark.discovery import discover_benchmarks, discover_all_apps
-from tools.ail_benchmark.runner import run_benchmark
-from tools.ail_benchmark.compare import save_baseline, load_baseline, detect_regressions
+from tools.ail_benchmark.compare import detect_regressions, load_baseline, save_baseline
+from tools.ail_benchmark.discovery import discover_benchmarks
 from tools.ail_benchmark.reporter import generate_json_report, generate_markdown_report
+from tools.ail_benchmark.runner import run_benchmark
 
 
 def stats_to_dict(stats) -> dict:
@@ -167,9 +166,7 @@ def main() -> int:
 
     try:
         # Step 1: Discover benchmarks
-        benchmarks = discover_benchmarks(
-            root, suite=args.suite, app_name=args.app
-        )
+        benchmarks = discover_benchmarks(root, suite=args.suite, app_name=args.app)
     except ValueError as e:
         print(f"Error: {e}", file=sys.stderr)
         return ExitCode.INTERNAL_ERROR
@@ -229,8 +226,12 @@ def main() -> int:
                     "status": "fail",
                     "error": f"Internal error: {e}",
                     "runs": [],
-                    "build_stats": type("s", (), {"min": 0, "max": 0, "avg": 0, "median": 0})(),
-                    "run_stats": type("s", (), {"min": 0, "max": 0, "avg": 0, "median": 0})(),
+                    "build_stats": type(
+                        "s", (), {"min": 0, "max": 0, "avg": 0, "median": 0}
+                    )(),
+                    "run_stats": type(
+                        "s", (), {"min": 0, "max": 0, "avg": 0, "median": 0}
+                    )(),
                     "memory_kb": None,
                 },
             )()

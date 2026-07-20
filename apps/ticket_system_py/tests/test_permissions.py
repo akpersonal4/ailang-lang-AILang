@@ -1,12 +1,14 @@
 """Tests for permissions system."""
-import sys
+
 import os
+import sys
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import unittest
+
 import storage
-import user
-from user import create, set_role, has_permission, has_permission_on_ticket
+from user import create, has_permission, has_permission_on_ticket, set_role
 
 
 class TestPermissions(unittest.TestCase):
@@ -31,12 +33,25 @@ class TestPermissions(unittest.TestCase):
     def test_admin_full_permissions(self):
         admin, _, _, _ = self._setup_roles()
         for action in [
-            "create_ticket", "update_own_ticket", "update_any_ticket",
-            "assign_ticket", "resolve_ticket", "close_ticket", "reopen_ticket",
-            "add_comment", "view_ticket", "search_tickets", "view_reports",
-            "export_csv", "import_csv", "delete_ticket", "manage_users",
+            "create_ticket",
+            "update_own_ticket",
+            "update_any_ticket",
+            "assign_ticket",
+            "resolve_ticket",
+            "close_ticket",
+            "reopen_ticket",
+            "add_comment",
+            "view_ticket",
+            "search_tickets",
+            "view_reports",
+            "export_csv",
+            "import_csv",
+            "delete_ticket",
+            "manage_users",
         ]:
-            self.assertTrue(has_permission(admin["id"], action), f"Admin lacks {action}")
+            self.assertTrue(
+                has_permission(admin["id"], action), f"Admin lacks {action}"
+            )
 
     def test_manager_can_manage_tickets(self):
         _, manager, _, _ = self._setup_roles()
@@ -63,12 +78,16 @@ class TestPermissions(unittest.TestCase):
     def test_manager_can_update_any_ticket(self):
         _, manager, agent, _ = self._setup_roles()
         ticket = {"id": 1, "creator_id": agent["id"]}
-        self.assertTrue(has_permission_on_ticket(manager["id"], "update_own_ticket", ticket))
+        self.assertTrue(
+            has_permission_on_ticket(manager["id"], "update_own_ticket", ticket)
+        )
 
     def test_agent_cannot_update_other_ticket(self):
         _, _, agent, viewer = self._setup_roles()
         ticket = {"id": 1, "creator_id": viewer["id"]}
-        self.assertFalse(has_permission_on_ticket(agent["id"], "update_own_ticket", ticket))
+        self.assertFalse(
+            has_permission_on_ticket(agent["id"], "update_own_ticket", ticket)
+        )
 
 
 if __name__ == "__main__":

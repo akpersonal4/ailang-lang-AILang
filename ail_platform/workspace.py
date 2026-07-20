@@ -3,7 +3,12 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from ail_platform.manifest import ProjectManifest, find_manifest, get_tool_config, parse_manifest
+from ail_platform.manifest import (
+    ProjectManifest,
+    find_manifest,
+    get_tool_config,
+    parse_manifest,
+)
 from ail_platform.project import AppInfo, discover_apps, get_project_root
 
 
@@ -14,6 +19,7 @@ class Workspace:
     Provides a single entry point for all workspace-level queries:
     project root, discovered apps, parsed manifest, tool config.
     """
+
     root: Path
     apps: list[AppInfo] = field(default_factory=list)
     manifest: ProjectManifest | None = None

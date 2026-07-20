@@ -2,14 +2,11 @@
 
 from __future__ import annotations
 
-import json
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 from tools.ail_testgen.models import CoverageReport
-from tools.common.filesystem import get_project_root, ensure_output_dir
-from tools.common.reporting import write_json_report, write_markdown_report
 
 
 def _now() -> str:
@@ -32,8 +29,12 @@ def generate_json_report(
         "summary": {
             "apps_discovered": coverage.apps_total,
             "existing_test_files": coverage.apps_with_tests,
-            "tests_generated": sum(1 for f in generated_files if f["status"] == "generated"),
-            "tests_skipped": sum(1 for f in generated_files if f["status"] == "skipped"),
+            "tests_generated": sum(
+                1 for f in generated_files if f["status"] == "generated"
+            ),
+            "tests_skipped": sum(
+                1 for f in generated_files if f["status"] == "skipped"
+            ),
             "errors": sum(1 for f in generated_files if f["status"] == "error"),
             "coverage_pct": coverage.coverage_pct,
         },
@@ -70,8 +71,10 @@ def generate_markdown_report(
         "| Apps with tests | %d |" % coverage.apps_with_tests,
         "| Apps without tests | %d |" % coverage.apps_without_tests,
         "| Coverage | %.1f%% |" % coverage.coverage_pct,
-        "| Tests generated | %d |" % sum(1 for f in generated_files if f["status"] == "generated"),
-        "| Tests skipped | %d |" % sum(1 for f in generated_files if f["status"] == "skipped"),
+        "| Tests generated | %d |"
+        % sum(1 for f in generated_files if f["status"] == "generated"),
+        "| Tests skipped | %d |"
+        % sum(1 for f in generated_files if f["status"] == "skipped"),
         "",
         "---",
         "",
@@ -82,16 +85,26 @@ def generate_markdown_report(
     ]
 
     for f in generated_files:
-        lines.append("| `%s` | %s | %s | %d |" % (f.get("file", ""), f.get("app", ""), f.get("status", ""), f.get("test_count", 0)))
+        lines.append(
+            "| `%s` | %s | %s | %d |"
+            % (
+                f.get("file", ""),
+                f.get("app", ""),
+                f.get("status", ""),
+                f.get("test_count", 0),
+            )
+        )
 
     if coverage.untested_apps:
-        lines.extend([
-            "",
-            "---",
-            "",
-            "## Untested Apps",
-            "",
-        ])
+        lines.extend(
+            [
+                "",
+                "---",
+                "",
+                "## Untested Apps",
+                "",
+            ]
+        )
         for app in coverage.untested_apps:
             lines.append("- %s" % app)
 

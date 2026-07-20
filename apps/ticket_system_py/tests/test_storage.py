@@ -1,11 +1,23 @@
 """Tests for storage layer."""
-import sys
+
 import os
+import sys
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import unittest
 from pathlib import Path
-from storage import load, save, next_id, find_by_id, update_field, delete_by_id, clear, append
+
+from storage import (
+    append,
+    clear,
+    delete_by_id,
+    find_by_id,
+    load,
+    next_id,
+    save,
+    update_field,
+)
 
 
 class TestStorage(unittest.TestCase):

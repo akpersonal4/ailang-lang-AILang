@@ -10,7 +10,7 @@ def search_all_rec(sa_items, sa_term, sa_type, sa_idx, sa_result):
         if sa_term_lower in sa_name_lower:
             sa_entry = {
                 "type": sa_type,
-                "id": helpers_get_map_value_safe(sa_item, "id", "")
+                "id": helpers_get_map_value_safe(sa_item, "id", ""),
             }
             sa_result.append(sa_entry)
     return sa_result

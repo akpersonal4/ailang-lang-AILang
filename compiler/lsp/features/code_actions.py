@@ -5,8 +5,6 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from compiler.diagnostics import Severity
-
 
 def get_code_actions(
     doc: Any, _range: dict[str, Any], context: dict[str, Any]
@@ -37,7 +35,9 @@ def get_code_actions(
                 )
 
         # Quick fix: create missing module stub (for import errors)
-        if ("import" in message.lower() or "module not found" in message.lower()) and diag_severity == 1:
+        if (
+            "import" in message.lower() or "module not found" in message.lower()
+        ) and diag_severity == 1:
             missing = _extract_missing_module(message)
             if missing:
                 actions.append(
@@ -66,9 +66,22 @@ def get_code_actions(
 
 
 _STDLIB_MODULES = [
-    "string", "math", "list", "array", "map", "set",
-    "file", "path", "json", "csv", "time", "random",
-    "environment", "convert", "io", "system",
+    "string",
+    "math",
+    "list",
+    "array",
+    "map",
+    "set",
+    "file",
+    "path",
+    "json",
+    "csv",
+    "time",
+    "random",
+    "environment",
+    "convert",
+    "io",
+    "system",
 ]
 
 
@@ -109,7 +122,11 @@ def _make_add_import_edit(doc: Any, module_name: str) -> dict[str, Any] | None:
     insert_line = 0
     for i, line in enumerate(lines):
         stripped = line.strip()
-        if stripped.startswith("import ") or stripped == "" or stripped.startswith("//"):
+        if (
+            stripped.startswith("import ")
+            or stripped == ""
+            or stripped.startswith("//")
+        ):
             insert_line = i + 1
         else:
             break

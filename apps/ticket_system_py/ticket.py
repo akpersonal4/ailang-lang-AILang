@@ -1,13 +1,14 @@
 """Ticket model with CRUD, status transitions, search, and escalation."""
 
 import time
-from typing import Optional
 
 import storage
-from storage import load, append, update_field, delete_by_id, next_id
+from storage import append, delete_by_id, load, next_id, update_field
 
 
-def create(title: str, priority: str, category: str, description: str, creator_id: int) -> dict:
+def create(
+    title: str, priority: str, category: str, description: str, creator_id: int
+) -> dict:
     ticket = {
         "id": next_id("tickets"),
         "title": title,
@@ -25,7 +26,7 @@ def create(title: str, priority: str, category: str, description: str, creator_i
     return ticket
 
 
-def find_by_id(ticket_id: int) -> Optional[dict]:
+def find_by_id(ticket_id: int) -> dict | None:
     return storage.find_by_id("tickets", ticket_id)
 
 
@@ -56,7 +57,8 @@ def list_by_user(user_id: int) -> list[dict]:
 def search(query: str) -> list[dict]:
     tickets = load("tickets")
     return [
-        t for t in tickets
+        t
+        for t in tickets
         if query in t.get("title", "") or query in t.get("description", "")
     ]
 
@@ -101,6 +103,7 @@ def count_by_agent() -> dict:
 
 def escalate_sla() -> int:
     from audit_log import add as audit_add
+
     tickets = load("tickets")
     now = int(time.time())
     escalated = 0
@@ -123,13 +126,16 @@ def escalate_sla() -> int:
 
 def escalate_unassigned() -> int:
     from audit_log import add as audit_add
+
     tickets = load("tickets")
     now = int(time.time())
     escalated = 0
     for t in tickets:
-        if (t["priority"] == "critical"
-                and t["assignee_id"] == 0
-                and (now - t["created_at"]) > 1800):
+        if (
+            t["priority"] == "critical"
+            and t["assignee_id"] == 0
+            and (now - t["created_at"]) > 1800
+        ):
             audit_add(t["id"], 0, "unassigned_critical", "", "needs_assignment")
             escalated += 1
     return escalated

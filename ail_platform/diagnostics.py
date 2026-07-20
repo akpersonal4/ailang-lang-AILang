@@ -6,6 +6,7 @@ from enum import IntEnum
 
 class Severity(IntEnum):
     """Diagnostic severity levels, aligned with LSP DiagnosticSeverity."""
+
     ERROR = 1
     WARNING = 2
     INFO = 3
@@ -100,7 +101,10 @@ def from_compiler_diagnostic(
     return Diagnostic(
         range=DiagnosticRange(
             start=DiagnosticPosition(line=line, column=column),
-            end=DiagnosticPosition(line=line, column=column + max(len(message.splitlines()[0]) if message else 1, 1)),
+            end=DiagnosticPosition(
+                line=line,
+                column=column + max(len(message.splitlines()[0]) if message else 1, 1),
+            ),
         ),
         severity=severity,
         message=message,

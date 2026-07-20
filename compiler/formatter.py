@@ -74,8 +74,7 @@ def _parse_to_ast(source: str) -> ProgramNode:
     # missing semicolons and produces a valid CST that the AST builder
     # can process.
     real_errors = [
-        d for d in reporter.diagnostics
-        if "Expected SEMICOLON" not in d.message
+        d for d in reporter.diagnostics if "Expected SEMICOLON" not in d.message
     ]
     if real_errors:
         msgs = [d.message for d in real_errors]
@@ -86,7 +85,8 @@ def _parse_to_ast(source: str) -> ProgramNode:
         ast = builder.build(cst)
     except (ValueError, AssertionError, IndexError, AttributeError) as e:
         msgs = [
-            d.message for d in reporter.diagnostics
+            d.message
+            for d in reporter.diagnostics
             if "Expected SEMICOLON" not in d.message
         ]
         if not msgs:
@@ -300,9 +300,7 @@ class _Formatter:
         parts: list[str] = []
         for p in node.parameters:
             if p.default_value is not None:
-                parts.append(
-                    f"{p.name} = {self._format_expression(p.default_value)}"
-                )
+                parts.append(f"{p.name} = {self._format_expression(p.default_value)}")
             else:
                 parts.append(p.name)
         params = ", ".join(parts)

@@ -1,19 +1,21 @@
 """Run a single AILang test file and print output."""
-import os, sys
+
+import os
+import sys
 from pathlib import Path
 
 os.chdir(str(Path(__file__).resolve().parent.parent))
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from compiler.compilation.session import CompilationSession
 from compiler.compilation.resolution import ModuleResolver
-from compiler.diagnostics import DiagnosticReporter, DiagnosticFormatter
+from compiler.compilation.session import CompilationSession
+from compiler.diagnostics import DiagnosticFormatter, DiagnosticReporter
 from compiler.runtime import Runtime
 from compiler.runtime import builtins as runtime_builtins
 
 test_path = sys.argv[1]
 inv_dir = Path.cwd()
-runtime_builtins._program_argv = ['test.ail']
+runtime_builtins._program_argv = ["test.ail"]
 
 session = CompilationSession()
 session._root = inv_dir
@@ -43,5 +45,6 @@ try:
     runtime.execute(program_ir)
 except Exception as e:
     import traceback
+
     traceback.print_exc()
     sys.exit(1)

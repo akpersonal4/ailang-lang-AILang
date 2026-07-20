@@ -3,11 +3,10 @@
 
 from __future__ import annotations
 
-import os
-import sys
 import json
-import subprocess
 import shutil
+import subprocess
+import sys
 from pathlib import Path
 
 
@@ -62,19 +61,29 @@ def test_regression_detection_triggers() -> bool:
     }
     baseline_path = bench_dir / "fast-baseline.json"
     baseline_path.write_text(json.dumps(fast_baseline, indent=2), encoding="utf-8")
-    code, out, err = run_command([
-        sys.executable, "-m", "tools.ail_benchmark",
-        "--suite", "quick", "--repeat", "1", "--quiet",
-        "--compare", "fast-baseline", "--threshold", "10",
-    ])
+    code, out, err = run_command(
+        [
+            sys.executable,
+            "-m",
+            "tools.ail_benchmark",
+            "--suite",
+            "quick",
+            "--repeat",
+            "1",
+            "--quiet",
+            "--compare",
+            "fast-baseline",
+            "--threshold",
+            "10",
+        ]
+    )
 
     json_path = bench_dir / "BENCHMARK_REPORT.json"
     data = json.loads(json_path.read_text(encoding="utf-8"))
 
     # Should detect regression since real times >> 0.001s
     has_regression = any(
-        b.get("regression", {}).get("detected")
-        for b in data["benchmarks"]
+        b.get("regression", {}).get("detected") for b in data["benchmarks"]
     )
     summary_regressed = data["summary"].get("regressed", 0) > 0
 
@@ -85,7 +94,9 @@ def test_regression_detection_triggers() -> bool:
         print("  [PASS] PASS: Regression detected, exit 1 takes precedence over 2")
         return True
     else:
-        print(f"  [FAIL] FAIL: Regression not detected (exit: {code}, regressed: {summary_regressed})")
+        print(
+            f"  [FAIL] FAIL: Regression not detected (exit: {code}, regressed: {summary_regressed})"
+        )
         return False
 
 
@@ -97,19 +108,37 @@ def test_no_regression_with_baseline_match() -> bool:
     clean_benchmark_outputs()
 
     # First run creates baseline and results
-    code1, _, _ = run_command([
-        sys.executable, "-m", "tools.ail_benchmark",
-        "--suite", "quick", "--repeat", "1", "--quiet",
-        "--baseline", "self-baseline",
-    ])
+    code1, _, _ = run_command(
+        [
+            sys.executable,
+            "-m",
+            "tools.ail_benchmark",
+            "--suite",
+            "quick",
+            "--repeat",
+            "1",
+            "--quiet",
+            "--baseline",
+            "self-baseline",
+        ]
+    )
 
     # Use the just-saved baseline to compare
     clean_benchmark_outputs()
-    code2, out, err = run_command([
-        sys.executable, "-m", "tools.ail_benchmark",
-        "--suite", "quick", "--repeat", "1", "--quiet",
-        "--compare", "self-baseline",
-    ])
+    code2, out, err = run_command(
+        [
+            sys.executable,
+            "-m",
+            "tools.ail_benchmark",
+            "--suite",
+            "quick",
+            "--repeat",
+            "1",
+            "--quiet",
+            "--compare",
+            "self-baseline",
+        ]
+    )
 
     json_path = bench_dir / "BENCHMARK_REPORT.json"
     data = json.loads(json_path.read_text(encoding="utf-8"))
@@ -121,7 +150,7 @@ def test_no_regression_with_baseline_match() -> bool:
         print(f"  [PASS] PASS: Same baseline compared (exit: {code2})")
         return True
     else:
-        print(f"  [FAIL] FAIL: Baseline not loaded")
+        print("  [FAIL] FAIL: Baseline not loaded")
         return False
 
 
@@ -132,10 +161,18 @@ def test_exit_code_precedence() -> bool:
 
     # Test: all pass, no regression → exit 0
     clean_benchmark_outputs()
-    code0, _, _ = run_command([
-        sys.executable, "-m", "tools.ail_benchmark",
-        "--suite", "quick", "--repeat", "1", "--quiet",
-    ])
+    code0, _, _ = run_command(
+        [
+            sys.executable,
+            "-m",
+            "tools.ail_benchmark",
+            "--suite",
+            "quick",
+            "--repeat",
+            "1",
+            "--quiet",
+        ]
+    )
 
     # Test: regression → exit 2
     # (already tested above, but verify logic)
@@ -152,7 +189,7 @@ def test_exit_code_precedence() -> bool:
 def test_suite_definitions() -> bool:
     """Test: Suite definitions are consistent."""
     print("\nTEST 4: Suite definitions...")
-    import importlib
+
     # Ensure project root is on sys.path for module imports
     root = Path(__file__).resolve().parent.parent
     sys.path.insert(0, str(root))
@@ -168,7 +205,9 @@ def test_suite_definitions() -> bool:
     for suite_name, apps in SUITE_DEFINITIONS.items():
         for app in apps:
             if not (root / "apps" / app / "main.ail").exists():
-                print(f"  [FAIL] FAIL: '{app}' in {suite_name} not found at apps/{app}/main.ail")
+                print(
+                    f"  [FAIL] FAIL: '{app}' in {suite_name} not found at apps/{app}/main.ail"
+                )
                 return False
 
     # Full suite discovery should find at least quick apps

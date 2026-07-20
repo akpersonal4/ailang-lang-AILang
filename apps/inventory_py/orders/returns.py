@@ -1,8 +1,14 @@
-from core.helpers import helpers_generate_id, helpers_current_timestamp, helpers_get_map_value_safe
-from core.storage import storage_list, storage_add, storage_get_by_id, storage_update
+from core.helpers import (
+    helpers_current_timestamp,
+    helpers_generate_id,
+    helpers_get_map_value_safe,
+)
+from core.storage import storage_add, storage_get_by_id, storage_list, storage_update
 
 
-def returns_create(rtrnSoOrderId, rtrnProductId, rtrnQuantity, rtrnReason, rtrnReturnBy):
+def returns_create(
+    rtrnSoOrderId, rtrnProductId, rtrnQuantity, rtrnReason, rtrnReturnBy
+):
     rtrnId = helpers_generate_id("RET-")
     rtrnNow = helpers_current_timestamp()
     rtrnReturn = {

@@ -27,7 +27,6 @@ from compiler.diagnostics import DiagnosticReporter
 from compiler.runtime import builtins as runtime_builtins
 from compiler.runtime.interpreter import Runtime
 
-
 # =============================================================================
 # 1. App definitions
 # =============================================================================
@@ -163,8 +162,7 @@ def profile_app(
         runtime._initialize_module(module_name)
 
     main_module = next(
-        name for name in session._graph.topological_sort()
-        if name in bundle.module_irs
+        name for name in session._graph.topological_sort() if name in bundle.module_irs
     )
     program_ir = bundle.module_irs[main_module]
     runtime.execute(program_ir)
@@ -214,14 +212,16 @@ def _extract_hotspots(stats: pstats.Stats) -> list[dict[str, Any]]:
 
     hotspots_by_int = []
     for (filename, lineno, funcname), (cc, nc, tt, ct, callers) in sorted_by_int[:40]:
-        hotspots_by_int.append({
-            "function": funcname,
-            "file": filename,
-            "line": lineno,
-            "calls": cc,
-            "internal_time": round(tt, 4),
-            "cumulative_time": round(ct, 4),
-        })
+        hotspots_by_int.append(
+            {
+                "function": funcname,
+                "file": filename,
+                "line": lineno,
+                "calls": cc,
+                "internal_time": round(tt, 4),
+                "cumulative_time": round(ct, 4),
+            }
+        )
 
     return hotspots_by_int
 
@@ -329,9 +329,11 @@ def print_interpreter_breakdown(results: list[dict[str, Any]]) -> None:
         # Append cache stats if available
         cs = r.get("cache_stats", {})
         if cs.get("cache_hits", 0) > 0 or cs.get("cache_misses", 0) > 0:
-            print(f"  Cache hits: {cs['cache_hits']}, misses: {cs['cache_misses']}, "
-                  f"negative: {cs['cache_negative_hits']}, "
-                  f"hit rate: {cs['cache_hit_rate']:.1%}")
+            print(
+                f"  Cache hits: {cs['cache_hits']}, misses: {cs['cache_misses']}, "
+                f"negative: {cs['cache_negative_hits']}, "
+                f"hit rate: {cs['cache_hit_rate']:.1%}"
+            )
 
 
 def print_hotspots(results: list[dict[str, Any]], top_n: int = 15) -> None:
@@ -350,7 +352,11 @@ def print_hotspots(results: list[dict[str, Any]], top_n: int = 15) -> None:
         print(header)
         print("  " + "-" * 71)
         for i, h in enumerate(hotspots):
-            pct = h["internal_time"] / r["runtime_time"] * 100 if r["runtime_time"] > 0 else 0
+            pct = (
+                h["internal_time"] / r["runtime_time"] * 100
+                if r["runtime_time"] > 0
+                else 0
+            )
             fn_short = h["function"][:38]
             line = (
                 f"  {i+1:>4} {fn_short:<40} {h['calls']:>8} "
@@ -369,10 +375,13 @@ def main() -> None:
 
     parser = argparse.ArgumentParser(description="Python-level profiler for AILang")
     parser.add_argument(
-        "apps", nargs="*",
-        help="Apps to profile (default: all). Names: dice_roller, hangman_game, inventory_mgmt, kanban, static_analyzer"
+        "apps",
+        nargs="*",
+        help="Apps to profile (default: all). Names: dice_roller, hangman_game, inventory_mgmt, kanban, static_analyzer",
     )
-    parser.add_argument("--hotspots", type=int, default=15, help="Number of hotspots to show")
+    parser.add_argument(
+        "--hotspots", type=int, default=15, help="Number of hotspots to show"
+    )
     args = parser.parse_args()
 
     if args.apps:
@@ -390,29 +399,34 @@ def main() -> None:
         print_app_header(app)
 
         # Step 1: Compile
-        print(f"  Compiling...")
+        print("  Compiling...")
         session, compile_time = compile_app(app)
         if session is None:
-            print(f"  SKIPPED: compilation failed")
+            print("  SKIPPED: compilation failed")
             continue
         print(f"  Compile time: {compile_time:.3f}s")
 
         # Step 2: Profile runtime
-        print(f"  Profiling runtime...")
+        print("  Profiling runtime...")
         try:
             metrics = profile_app(session, app)
             results.append(metrics)
             print(f"  Runtime: {metrics['runtime_time']:.3f}s")
-            print(f"  Python calls: {metrics['total_calls']} "
-                  f"(primitive: {metrics['primitive_calls']})")
+            print(
+                f"  Python calls: {metrics['total_calls']} "
+                f"(primitive: {metrics['primitive_calls']})"
+            )
             print(f"  Peak memory: {metrics['peak_memory_mb']:.2f} MB")
             cs = metrics.get("cache_stats", {})
             if cs.get("cache_hits", 0) > 0:
-                print(f"  Cache: {cs['cache_hits']} hits, {cs['cache_misses']} misses, "
-                      f"rate: {cs['cache_hit_rate']:.1%}")
+                print(
+                    f"  Cache: {cs['cache_hits']} hits, {cs['cache_misses']} misses, "
+                    f"rate: {cs['cache_hit_rate']:.1%}"
+                )
         except Exception as e:
             print(f"  RUNTIME ERROR: {e}")
             import traceback
+
             traceback.print_exc()
             continue
 
@@ -423,19 +437,22 @@ def main() -> None:
 
     # Save raw data
     import json
+
     raw = []
     for r in results:
-        raw.append({
-            "app_name": r["app_name"],
-            "runtime_time": r["runtime_time"],
-            "total_calls": r["total_calls"],
-            "primitive_calls": r["primitive_calls"],
-            "peak_memory_bytes": r["peak_memory_bytes"],
-            "peak_memory_mb": r["peak_memory_mb"],
-            "hotspots_by_internal": r["hotspots"][:20],
-            "interpreter_calls": r["interpreter_calls"],
-            "cache_stats": r.get("cache_stats", {}),
-        })
+        raw.append(
+            {
+                "app_name": r["app_name"],
+                "runtime_time": r["runtime_time"],
+                "total_calls": r["total_calls"],
+                "primitive_calls": r["primitive_calls"],
+                "peak_memory_bytes": r["peak_memory_bytes"],
+                "peak_memory_mb": r["peak_memory_mb"],
+                "hotspots_by_internal": r["hotspots"][:20],
+                "interpreter_calls": r["interpreter_calls"],
+                "cache_stats": r.get("cache_stats", {}),
+            }
+        )
     json_path = _HERE / "python_profile_data.json"
     with open(json_path, "w") as f:
         json.dump(raw, f, indent=2)

@@ -52,7 +52,7 @@ def dashboard_compute_values_rec(dcv_products, dcv_val_map, dcv_idx, dcv_result)
         dcv_entry = {
             "product_id": dcv_prod_id,
             "product_name": dcv_name,
-            "value": dcv_value
+            "value": dcv_value,
         }
         dcv_result.append(dcv_entry)
     return dcv_result
@@ -97,7 +97,7 @@ def dashboard_summary():
         "total_movements": len(ds_movements),
         "total_sales_orders": len(ds_sales_orders),
         "total_purchase_orders": len(ds_purchase_orders),
-        "total_warehouses": len(ds_warehouses)
+        "total_warehouses": len(ds_warehouses),
     }
     return ds_result
 

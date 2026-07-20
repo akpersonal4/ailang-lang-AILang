@@ -5,7 +5,6 @@
 
 import hashlib
 import json
-import os
 import re
 import shutil
 import sys
@@ -16,7 +15,15 @@ from ail_platform.project import get_project_root, read_file_safe
 
 def find_markdown_files(root: Path) -> list[Path]:
     """Find all markdown files in the project (excluding .venv, .git, etc.)."""
-    exclude_dirs = {".venv", ".venv_test", ".git", ".mypy_cache", ".pytest_cache", ".ruff_cache", "node_modules"}
+    exclude_dirs = {
+        ".venv",
+        ".venv_test",
+        ".git",
+        ".mypy_cache",
+        ".pytest_cache",
+        ".ruff_cache",
+        "node_modules",
+    }
     markdown_files = []
     for path in root.rglob("*.md"):
         if not any(part in exclude_dirs for part in path.parts):
@@ -26,7 +33,17 @@ def find_markdown_files(root: Path) -> list[Path]:
 
 def find_all_files(root: Path) -> list[Path]:
     """Find all files in the project for repository health analysis."""
-    exclude_dirs = {".venv", ".venv_test", ".git", ".mypy_cache", ".pytest_cache", ".ruff_cache", "node_modules", "__pycache__", "ailang.egg-info"}
+    exclude_dirs = {
+        ".venv",
+        ".venv_test",
+        ".git",
+        ".mypy_cache",
+        ".pytest_cache",
+        ".ruff_cache",
+        "node_modules",
+        "__pycache__",
+        "ailang.egg-info",
+    }
     all_files = []
     for path in root.rglob("*"):
         if path.is_file() and not any(part in exclude_dirs for part in path.parts):
@@ -45,7 +62,13 @@ def extract_markdown_links(content: str) -> list[str]:
         if link_target.startswith("mailto:"):
             continue
         # Skip if target looks like a URL without http (e.g., "url")
-        if link_target and not link_target.startswith("http") and not link_target.startswith("/") and "." not in link_target and not link_target.endswith(".md"):
+        if (
+            link_target
+            and not link_target.startswith("http")
+            and not link_target.startswith("/")
+            and "." not in link_target
+            and not link_target.endswith(".md")
+        ):
             continue
         filtered.append((link_text, link_target))
     return filtered
@@ -70,11 +93,13 @@ def check_broken_internal_links(root: Path) -> list[dict]:
             # Resolve relative to the markdown file's directory
             target_path = (md_file.parent / link_target).resolve()
             if not target_path.exists():
-                broken_links.append({
-                    "file": str(md_file.relative_to(root)),
-                    "link_text": link_text,
-                    "link_target": link_target,
-                })
+                broken_links.append(
+                    {
+                        "file": str(md_file.relative_to(root)),
+                        "link_text": link_text,
+                        "link_target": link_target,
+                    }
+                )
 
     return broken_links
 
@@ -116,11 +141,13 @@ def check_duplicate_files(root: Path) -> list[dict]:
         if content:
             file_hash = hashlib.md5(content.encode()).hexdigest()
             if file_hash in file_hashes:
-                duplicates.append({
-                    "original": str(file_hashes[file_hash].relative_to(root)),
-                    "duplicate": str(file_path.relative_to(root)),
-                    "hash": file_hash,
-                })
+                duplicates.append(
+                    {
+                        "original": str(file_hashes[file_hash].relative_to(root)),
+                        "duplicate": str(file_path.relative_to(root)),
+                        "hash": file_hash,
+                    }
+                )
             else:
                 file_hashes[file_hash] = file_path
 
@@ -151,11 +178,13 @@ def check_large_generated_files(root: Path) -> list[dict]:
         try:
             size = file_path.stat().st_size
             if size > 1_000_000:  # 1MB
-                large_files.append({
-                    "path": str(file_path.relative_to(root)),
-                    "size_bytes": size,
-                    "size_mb": round(size / 1_000_000, 2),
-                })
+                large_files.append(
+                    {
+                        "path": str(file_path.relative_to(root)),
+                        "size_bytes": size,
+                        "size_mb": round(size / 1_000_000, 2),
+                    }
+                )
         except OSError:
             continue
 
@@ -215,11 +244,13 @@ def check_version_consistency(root: Path) -> list[dict]:
     canonical = versions.get("pyproject.toml", "")
     for source, ver in versions.items():
         if source != "pyproject.toml" and ver and ver != canonical:
-            inconsistencies.append({
-                "files": ["pyproject.toml", source],
-                "values": [canonical, ver],
-                "type": "version_mismatch",
-            })
+            inconsistencies.append(
+                {
+                    "files": ["pyproject.toml", source],
+                    "values": [canonical, ver],
+                    "type": "version_mismatch",
+                }
+            )
 
     return inconsistencies
 
@@ -240,7 +271,13 @@ def check_orphan_documents(root: Path) -> list[Path]:
     # Check each markdown file
     for md_file in markdown_files:
         rel_path = str(md_file.relative_to(root))
-        if rel_path not in linked_files and rel_path not in ["README.md", "AGENTS.md", "DEVELOPMENT_STATUS.md", "PROJECT_MEMORY.md", "CHANGELOG.md"]:
+        if rel_path not in linked_files and rel_path not in [
+            "README.md",
+            "AGENTS.md",
+            "DEVELOPMENT_STATUS.md",
+            "PROJECT_MEMORY.md",
+            "CHANGELOG.md",
+        ]:
             orphan_docs.append(md_file.relative_to(root))
 
     return orphan_docs
@@ -342,7 +379,12 @@ def check_ail_package() -> dict:
     """Check if the ailang Python package is installed."""
     try:
         import ailang
-        return {"installed": True, "version": getattr(ailang, "__version__", "unknown"), "ok": True}
+
+        return {
+            "installed": True,
+            "version": getattr(ailang, "__version__", "unknown"),
+            "ok": True,
+        }
     except ImportError:
         return {"installed": False, "version": None, "ok": False}
 
@@ -370,9 +412,15 @@ def generate_report() -> str:
 
     # Compute scores (simple metric: fewer issues = higher score)
     issues = (
-        len(broken_links) + len(missing_files) + len(duplicate_files) +
-        len(empty_files) + len(large_files) + len(version_issues) +
-        len(orphan_docs) + len(stdlib_missing) + len(docs_missing)
+        len(broken_links)
+        + len(missing_files)
+        + len(duplicate_files)
+        + len(empty_files)
+        + len(large_files)
+        + len(version_issues)
+        + len(orphan_docs)
+        + len(stdlib_missing)
+        + len(docs_missing)
     )
     if not python_version["ok"]:
         issues += 3
@@ -430,10 +478,12 @@ def generate_report() -> str:
             lines.append(f"- `{f['path']}` ({f['size_mb']} MB)")
         lines.append("")
 
-    lines.extend([
-        "## Errors",
-        "",
-    ])
+    lines.extend(
+        [
+            "## Errors",
+            "",
+        ]
+    )
 
     if missing_files:
         lines.append("### Missing Required Files")
@@ -449,13 +499,17 @@ def generate_report() -> str:
             lines.append(f"- ... and {len(broken_links) - 10} more broken links")
         lines.append("")
 
-    lines.extend([
-        "## Recommendations",
-        "",
-    ])
+    lines.extend(
+        [
+            "## Recommendations",
+            "",
+        ]
+    )
 
     if orphan_docs:
-        lines.append("- Consider adding references to orphan documents or archiving them")
+        lines.append(
+            "- Consider adding references to orphan documents or archiving them"
+        )
     if version_issues:
         lines.append("- Sync version numbers across project files")
     if missing_files:
@@ -469,9 +523,13 @@ def generate_report() -> str:
     if large_files:
         lines.append("- Consider splitting or archiving large generated files")
     if not python_version["ok"]:
-        lines.append(f"- Upgrade Python to {python_version['required']}+ (current: {python_version['current']})")
+        lines.append(
+            f"- Upgrade Python to {python_version['required']}+ (current: {python_version['current']})"
+        )
     if stdlib_missing:
-        lines.append("- Run `ail new <project>` to generate stdlib, or copy from existing project")
+        lines.append(
+            "- Run `ail new <project>` to generate stdlib, or copy from existing project"
+        )
     if docs_missing:
         lines.append("- Reinstall ailang: `pip install -e .` to restore embedded docs")
     if not mcp["ok"]:
@@ -481,19 +539,41 @@ def generate_report() -> str:
     if not ail_path["found"]:
         lines.append("- Install ail CLI: `pip install -e .` or check PATH")
     if not vscode["ok"]:
-        lines.append("- Install VS Code extension: `cd extensions/vscode-ailang && npm install && npm run package`")
+        lines.append(
+            "- Install VS Code extension: `cd extensions/vscode-ailang && npm install && npm run package`"
+        )
     if not ail_pkg["ok"]:
         lines.append("- Install ailang package: `pip install -e .`")
 
-    if not any([orphan_docs, version_issues, missing_files, broken_links, duplicate_files, empty_files, large_files, stdlib_missing, docs_missing, not python_version["ok"], not mcp["ok"], not lsp["ok"], not ail_path["found"], not vscode["ok"], not ail_pkg["ok"]]):
+    if not any(
+        [
+            orphan_docs,
+            version_issues,
+            missing_files,
+            broken_links,
+            duplicate_files,
+            empty_files,
+            large_files,
+            stdlib_missing,
+            docs_missing,
+            not python_version["ok"],
+            not mcp["ok"],
+            not lsp["ok"],
+            not ail_path["found"],
+            not vscode["ok"],
+            not ail_pkg["ok"],
+        ]
+    ):
         lines.append("- Repository is healthy!")
 
     lines.append("")
 
-    lines.extend([
-        "## Archive Candidates",
-        "",
-    ])
+    lines.extend(
+        [
+            "## Archive Candidates",
+            "",
+        ]
+    )
 
     if orphan_docs:
         lines.append("Documents that appear to be orphaned:")
@@ -504,11 +584,13 @@ def generate_report() -> str:
     else:
         lines.append("No archive candidates identified.")
 
-    lines.extend([
-        "",
-        "## Duplicate Candidates",
-        "",
-    ])
+    lines.extend(
+        [
+            "",
+            "## Duplicate Candidates",
+            "",
+        ]
+    )
 
     if duplicate_files:
         for d in duplicate_files:
@@ -516,11 +598,13 @@ def generate_report() -> str:
     else:
         lines.append("No duplicate files identified.")
 
-    lines.extend([
-        "",
-        "## Missing References",
-        "",
-    ])
+    lines.extend(
+        [
+            "",
+            "## Missing References",
+            "",
+        ]
+    )
 
     if missing_files:
         for m in missing_files:
@@ -528,11 +612,13 @@ def generate_report() -> str:
     else:
         lines.append("No missing required files.")
 
-    lines.extend([
-        "",
-        "## Version Consistency",
-        "",
-    ])
+    lines.extend(
+        [
+            "",
+            "## Version Consistency",
+            "",
+        ]
+    )
 
     if version_issues:
         for v in version_issues:
@@ -540,28 +626,34 @@ def generate_report() -> str:
     else:
         lines.append("All versions consistent.")
 
-    lines.extend([
-        "",
-        "## Next Steps",
-        "",
-    ])
+    lines.extend(
+        [
+            "",
+            "## Next Steps",
+            "",
+        ]
+    )
 
     if issues == 0:
         lines.append("Your environment is healthy! Try:")
         lines.append("")
         lines.append("  ail docs AGENTS         # Read the AI agent instructions")
-        lines.append("  ail context --json      # Get machine-readable language context")
+        lines.append(
+            "  ail context --json      # Get machine-readable language context"
+        )
         lines.append("  ail new myproject       # Create a new project")
     else:
         lines.append("Fix the issues above, then re-run `ail doctor` to verify.")
         lines.append("If problems persist, run `ail heal` for diagnostic guidance.")
 
-    lines.extend([
-        "",
-        "---",
-        "_This report was generated by the `ail doctor` tool._",
-        "",
-    ])
+    lines.extend(
+        [
+            "",
+            "---",
+            "_This report was generated by the `ail doctor` tool._",
+            "",
+        ]
+    )
 
     return "\n".join(lines)
 

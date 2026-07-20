@@ -1,21 +1,42 @@
 """User model with authentication and role-based permissions."""
+
 import time
+
 from . import storage
 
 PERMISSIONS = {
     "admin": [
-        "create_workflow", "delete_workflow", "list_workflows", "view_workflow",
-        "create_instance", "view_instance", "transition", "set_data",
-        "cancel_instance", "view_history", "report_workflow", "report_activity",
-        "export_import", "manage_users",
+        "create_workflow",
+        "delete_workflow",
+        "list_workflows",
+        "view_workflow",
+        "create_instance",
+        "view_instance",
+        "transition",
+        "set_data",
+        "cancel_instance",
+        "view_history",
+        "report_workflow",
+        "report_activity",
+        "export_import",
+        "manage_users",
     ],
     "operator": [
-        "list_workflows", "view_workflow", "create_instance", "view_instance",
-        "transition", "set_data", "view_history", "report_workflow",
+        "list_workflows",
+        "view_workflow",
+        "create_instance",
+        "view_instance",
+        "transition",
+        "set_data",
+        "view_history",
+        "report_workflow",
         "report_activity",
     ],
     "viewer": [
-        "list_workflows", "view_workflow", "view_instance", "view_history",
+        "list_workflows",
+        "view_workflow",
+        "view_instance",
+        "view_history",
     ],
 }
 

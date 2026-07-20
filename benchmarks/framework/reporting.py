@@ -11,10 +11,8 @@ from __future__ import annotations
 
 import itertools
 import json
-import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
 
 from benchmarks.framework.metrics import BenchmarkResult
 
@@ -30,7 +28,7 @@ def generate_run_id() -> str:
     uniqueness within a single process across all platforms.
     """
     seq = next(_run_id_counter)
-    ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+    ts = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
     return f"run_{ts}_{seq:06d}"
 
 
@@ -124,7 +122,9 @@ def _build_markdown(result: BenchmarkResult) -> list[str]:
     lines.append("")
     lines.append("| Metric | Value |")
     lines.append("|--------|-------|")
-    lines.append(f"| Execution Time | {result.engineering.execution_time_seconds:.3f}s |")
+    lines.append(
+        f"| Execution Time | {result.engineering.execution_time_seconds:.3f}s |"
+    )
     lines.append(f"| Error Count | {result.engineering.error_count} |")
     lines.append(f"| Repeatability Hash | `{result.engineering.repeatability_hash}` |")
     lines.append("")
@@ -162,7 +162,7 @@ def write_summary(
 
     data = {
         "total_runs": len(results),
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
         "runs": [r.to_dict() for r in results],
     }
     path.write_text(

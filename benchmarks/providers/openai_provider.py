@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import os
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from benchmarks.providers.base import (
     AIProvider,
@@ -77,7 +77,7 @@ class OpenAIProvider(AIProvider):
         result = ProviderResult(
             provider_name=self.provider_name,
             model=self._model,
-            timestamp=datetime.now(timezone.utc).isoformat(),
+            timestamp=datetime.now(UTC).isoformat(),
             prompt_characters=len(prompt),
             prompt_tokens_estimated=self.count_tokens(prompt),
         )

@@ -1,20 +1,32 @@
 """Integration tests for ticket system."""
-import sys
+
 import os
+import sys
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import unittest
-import storage
-import user
-import ticket
-import comment
-import audit_log
-import csv_ops
-from user import create, set_role
-from ticket import create as create_ticket, set_status, assign, count_by_status, count_by_priority
-from comment import create as create_comment, count_by_ticket
-from audit_log import list_by_ticket, list_all as audit_list_all, add as audit_add
 from pathlib import Path
+
+import comment
+import csv_ops
+import storage
+import ticket
+from audit_log import add as audit_add
+from audit_log import list_all as audit_list_all
+from audit_log import list_by_ticket
+from comment import count_by_ticket
+from comment import create as create_comment
+from ticket import (
+    assign,
+    count_by_priority,
+    count_by_status,
+    set_status,
+)
+from ticket import (
+    create as create_ticket,
+)
+from user import create, set_role
 
 
 class TestIntegration(unittest.TestCase):
@@ -102,6 +114,7 @@ class TestIntegration(unittest.TestCase):
         set_role(viewer["id"], "viewer")
 
         from user import has_permission
+
         self.assertTrue(has_permission(admin["id"], "create_ticket"))
         self.assertFalse(has_permission(viewer["id"], "create_ticket"))
         self.assertTrue(has_permission(viewer["id"], "view_ticket"))

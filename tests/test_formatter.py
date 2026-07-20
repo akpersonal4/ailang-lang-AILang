@@ -275,7 +275,7 @@ def test_invalid_syntax_raises() -> None:
 
 def test_error_message_no_semicolon_noise() -> None:
     """Regression: error message must not contain SEMICOLON noise.
-    
+
     When there's a real syntax error, the error message should report
     only the real errors, not "Expected SEMICOLON" diagnostics from
     lines after the error.
@@ -286,14 +286,14 @@ def test_error_message_no_semicolon_noise() -> None:
         assert False, "Should have raised ValueError"
     except ValueError as e:
         msg = str(e)
-        assert "Expected SEMICOLON" not in msg, (
-            f"Error message contains SEMICOLON noise: {msg}"
-        )
+        assert (
+            "Expected SEMICOLON" not in msg
+        ), f"Error message contains SEMICOLON noise: {msg}"
 
 
 def test_error_message_includes_real_error() -> None:
     """Regression: error message must include the real error.
-    
+
     When the AST builder detects a problem (e.g. missing initializer),
     the error message should include that problem, not just SEMICOLON
     diagnostics.
@@ -305,12 +305,12 @@ def test_error_message_includes_real_error() -> None:
     except ValueError as e:
         msg = str(e)
         # Must include the actual error, not just SEMICOLON messages
-        assert "Expected SEMICOLON" not in msg, (
-            f"Error message contains SEMICOLON noise: {msg}"
-        )
-        assert "initializer" in msg or "expression" in msg, (
-            f"Error message missing real error: {msg}"
-        )
+        assert (
+            "Expected SEMICOLON" not in msg
+        ), f"Error message contains SEMICOLON noise: {msg}"
+        assert (
+            "initializer" in msg or "expression" in msg
+        ), f"Error message missing real error: {msg}"
 
 
 # =============================================================================
@@ -399,7 +399,7 @@ def test_multiple_comments_between_functions() -> None:
 
 def test_else_if_chain() -> None:
     """Long else-if chain should format correctly."""
-    source = "fn grade(s){if(s>=90){return\"A\";}else if(s>=80){return\"B\";}else if(s>=70){return\"C\";}else{return\"F\";}}"
+    source = 'fn grade(s){if(s>=90){return"A";}else if(s>=80){return"B";}else if(s>=70){return"C";}else{return"F";}}'
     expected = (
         "fn grade(s) {\n"
         "    if (s >= 90) {\n"
@@ -419,7 +419,9 @@ def test_else_if_chain() -> None:
 def test_member_access_with_string_arg() -> None:
     """Member access with string argument should format correctly."""
     source = 'fn main(){let s=string.length("hello");print(s);}'
-    expected = "fn main() {\n" '    let s = string.length("hello");\n' "    print(s);\n" "}\n"
+    expected = (
+        "fn main() {\n" '    let s = string.length("hello");\n' "    print(s);\n" "}\n"
+    )
     assert format_source(source) == expected
 
 

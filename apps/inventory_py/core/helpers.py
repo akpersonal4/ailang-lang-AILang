@@ -1,5 +1,4 @@
 import time
-import string as str_mod
 
 _HELPERS_GLOBAL_SEQ = 0
 

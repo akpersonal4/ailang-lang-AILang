@@ -2,14 +2,9 @@
 
 from __future__ import annotations
 
-import tempfile
-import time
 from pathlib import Path
 
-import pytest
-
 from compiler.watch import FileCache, FileCacheEntry, IncrementalCompiler, file_hash
-
 
 # =============================================================================
 # File hash tests
@@ -62,9 +57,15 @@ class TestFileCache:
         fp.write_text("fn main() { return 0 }", encoding="utf-8")
         cache = FileCache()
         h1 = file_hash(str(fp))
-        cache.update(str(fp), FileCacheEntry(
-            file_path=str(fp), file_hash=h1, compile_time_ms=0, ok=True,
-        ))
+        cache.update(
+            str(fp),
+            FileCacheEntry(
+                file_path=str(fp),
+                file_hash=h1,
+                compile_time_ms=0,
+                ok=True,
+            ),
+        )
         assert cache.has_changed(str(fp), h1) is False
         fp.write_text("fn main() { return 1 }", encoding="utf-8")
         h2 = file_hash(str(fp))
@@ -74,9 +75,15 @@ class TestFileCache:
         fp = tmp_path / "test.ail"
         cache = FileCache()
         h = file_hash(str(fp)) if fp.exists() else "dummy"
-        cache.update(str(fp), FileCacheEntry(
-            file_path=str(fp), file_hash=h, compile_time_ms=0, ok=True,
-        ))
+        cache.update(
+            str(fp),
+            FileCacheEntry(
+                file_path=str(fp),
+                file_hash=h,
+                compile_time_ms=0,
+                ok=True,
+            ),
+        )
         assert cache.get_hash(str(fp)) is not None
         cache.remove(str(fp))
         assert cache.get_hash(str(fp)) is None

@@ -1,15 +1,13 @@
 # DX Tool #001 Acceptance Testing
 # Comprehensive test suite for ail context tool
 
+import hashlib
 import os
-import sys
 import subprocess
+import sys
 import time
 import tracemalloc
-import hashlib
 from pathlib import Path
-import tempfile
-import shutil
 
 
 def run_command(cmd: list[str]) -> tuple[int, str, str]:
@@ -40,7 +38,9 @@ def test_tool_runs_successfully() -> bool:
 def test_output_file_created() -> bool:
     """Test: generated/PROJECT_CONTEXT.md is created."""
     print("\nTEST 2: Output file created...")
-    output_path = Path(__file__).resolve().parent.parent / "generated" / "PROJECT_CONTEXT.md"
+    output_path = (
+        Path(__file__).resolve().parent.parent / "generated" / "PROJECT_CONTEXT.md"
+    )
     if output_path.exists():
         print(f"  ✓ PASS: {output_path} exists")
         return True
@@ -65,7 +65,7 @@ def test_deterministic_output() -> bool:
         print(f"  ✓ PASS: Hashes match ({hash1[:16]}...)")
         return True
     else:
-        print(f"  ✗ FAIL: Hashes differ")
+        print("  ✗ FAIL: Hashes differ")
         print(f"    Run 1: {hash1}")
         print(f"    Run 2: {hash2}")
         return False
@@ -79,7 +79,7 @@ def test_missing_source_files() -> bool:
     root = Path(__file__).resolve().parent.parent
     docs_backup = root / "docs_backup"
     generated_backup = root / "generated_backup"
-    
+
     try:
         # Check if tool still works without docs (if it reads them)
         # Since the tool generates static content, we verify it runs
@@ -88,7 +88,7 @@ def test_missing_source_files() -> bool:
             print("  ✓ PASS: Tool runs without external file dependencies")
             return True
         else:
-            print(f"  ✗ FAIL: Tool crashed")
+            print("  ✗ FAIL: Tool crashed")
             return False
     except Exception as e:
         print(f"  ✗ FAIL: Exception {e}")
@@ -147,30 +147,32 @@ def test_absolute_path() -> bool:
 def test_performance() -> tuple[bool, float, float, int]:
     """Test: Measure generation time, memory usage, output size."""
     print("\nTEST 8: Performance measurement...")
-    
+
     # Memory tracking
     tracemalloc.start()
     start_time = time.perf_counter()
-    
+
     code, out, err = run_command([sys.executable, "-m", "tools.ail_context"])
-    
+
     elapsed = time.perf_counter() - start_time
     current, peak = tracemalloc.get_traced_memory()
     tracemalloc.stop()
-    
+
     # Output size
-    output_path = Path(__file__).resolve().parent.parent / "generated" / "PROJECT_CONTEXT.md"
+    output_path = (
+        Path(__file__).resolve().parent.parent / "generated" / "PROJECT_CONTEXT.md"
+    )
     output_size = output_path.stat().st_size if output_path.exists() else 0
-    
+
     print(f"  Generation time: {elapsed:.4f}s")
     print(f"  Peak memory: {peak / 1024:.2f} KB")
     print(f"  Output size: {output_size} bytes")
-    
+
     # Reasonable thresholds
     time_ok = elapsed < 5.0
     memory_ok = peak < 50 * 1024 * 1024  # 50 MB
     size_ok = 1000 < output_size < 50000  # Reasonable markdown size
-    
+
     if time_ok and memory_ok and size_ok:
         print("  ✓ PASS: Performance within thresholds")
         return True, elapsed, peak, output_size
@@ -182,35 +184,37 @@ def test_performance() -> tuple[bool, float, float, int]:
 def validate_content() -> bool:
     """Test: Content validation checks."""
     print("\nTEST 9: Content validation...")
-    output_path = Path(__file__).resolve().parent.parent / "generated" / "PROJECT_CONTEXT.md"
+    output_path = (
+        Path(__file__).resolve().parent.parent / "generated" / "PROJECT_CONTEXT.md"
+    )
     content = output_path.read_text(encoding="utf-8")
-    
+
     checks = []
-    
+
     # Version check
     if "1.0.3" in content:
         checks.append("✓ Version 1.0.3 present")
     else:
         checks.append("✗ Version 1.0.3 MISSING")
-    
+
     # Language rules section
     if "Language Rules" in content:
         checks.append("✓ Language Rules section present")
     else:
         checks.append("✗ Language Rules section MISSING")
-    
+
     # Workflow section
     if "Workflow" in content:
         checks.append("✓ Workflow section present")
     else:
         checks.append("✗ Workflow section MISSING")
-    
+
     # Diagnostics section
     if "Diagnostics" in content:
         checks.append("✓ Diagnostics section present")
     else:
         checks.append("✗ Diagnostics section MISSING")
-    
+
     # No duplicated sections
     lines = content.split("\n")
     section_headers = [l for l in lines if l.startswith("## ")]
@@ -218,17 +222,17 @@ def validate_content() -> bool:
         checks.append("✓ No duplicated sections")
     else:
         checks.append("✗ Duplicated sections found")
-    
+
     # Markdown formatting valid
     markdown_ok = content.count("```") % 2 == 0  # Code blocks balanced
     if markdown_ok:
         checks.append("✓ Markdown formatting valid")
     else:
         checks.append("✗ Markdown formatting INVALID")
-    
+
     for check in checks:
         print(f"  {check}")
-    
+
     return all(c.startswith("✓") for c in checks)
 
 
@@ -237,7 +241,7 @@ def main() -> int:
     print("=" * 60)
     print("DX TOOL #001 ACCEPTANCE TEST SUITE")
     print("=" * 60)
-    
+
     results = {
         "Tool runs successfully": test_tool_runs_successfully(),
         "Output file created": test_output_file_created(),
@@ -247,24 +251,24 @@ def main() -> int:
         "Relative path works": test_relative_path(),
         "Absolute path works": test_absolute_path(),
     }
-    
+
     perf_ok, elapsed, peak, size = test_performance()
     results["Performance OK"] = perf_ok
-    
+
     results["Content validation"] = validate_content()
-    
+
     print("\n" + "=" * 60)
     print("SUMMARY")
     print("=" * 60)
-    
+
     for name, passed in results.items():
         status = "PASS" if passed else "FAIL"
         symbol = "✓" if passed else "✗"
         print(f"  {symbol} {name}: {status}")
-    
+
     all_passed = all(results.values())
     print("\n" + ("ALL TESTS PASSED" if all_passed else "SOME TESTS FAILED"))
-    
+
     return 0 if all_passed else 1
 
 

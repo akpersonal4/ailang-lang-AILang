@@ -11,14 +11,13 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable
 
-from benchmarks.framework.dataset import Dataset, scan_project
+from benchmarks.framework.dataset import scan_project
 from benchmarks.framework.environment import snapshot
 from benchmarks.framework.metrics import (
     BenchmarkResult,
-    EngineeringMetrics,
     RepositoryMetrics,
 )
-from benchmarks.framework.reporting import generate_run_id, write_json, write_markdown
+from benchmarks.framework.reporting import write_json, write_markdown
 
 BenchmarkFunc = Callable[..., BenchmarkResult]
 
@@ -26,6 +25,7 @@ BenchmarkFunc = Callable[..., BenchmarkResult]
 @dataclass
 class RunConfiguration:
     """Configuration for a single benchmark run."""
+
     benchmark_name: str
     benchmark_version: str
     dataset_path: Path
@@ -82,9 +82,11 @@ def run_benchmark(
         write_markdown(result, config.output_dir)
 
     if not config.quiet:
-        print(f"[BENCHMARK] {config.benchmark_name} — "
-              f"{result.engineering.execution_time_seconds:.3f}s — "
-              f"errors: {result.engineering.error_count}")
+        print(
+            f"[BENCHMARK] {config.benchmark_name} — "
+            f"{result.engineering.execution_time_seconds:.3f}s — "
+            f"errors: {result.engineering.error_count}"
+        )
 
     return result
 

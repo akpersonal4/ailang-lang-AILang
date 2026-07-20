@@ -71,9 +71,7 @@ class IRValidator:
                 "FunctionIR parameters must be a tuple (may be empty)"
             )
         if not isinstance(node.default_parameters, tuple):
-            raise IRValidationError(
-                "FunctionIR default_parameters must be a tuple"
-            )
+            raise IRValidationError("FunctionIR default_parameters must be a tuple")
         for name, expr in node.default_parameters:
             if not isinstance(name, str):
                 raise IRValidationError(

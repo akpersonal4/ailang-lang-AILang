@@ -1,8 +1,10 @@
 from core.helpers import (
-    helpers_get_map_value_safe, helpers_generate_id,
-    helpers_current_timestamp, helpers_find_in_list
+    helpers_current_timestamp,
+    helpers_find_in_list,
+    helpers_generate_id,
+    helpers_get_map_value_safe,
 )
-from core.storage import storage_list, storage_add, storage_update
+from core.storage import storage_add, storage_list, storage_update
 
 
 def reorder_list_needed_rec(rlnr_items, rlnr_results, rlnr_idx):
@@ -38,7 +40,7 @@ def reorder_set_level(rsl_product_id, rsl_min_level, rsl_max_level, rsl_reorder_
         "min_level": rsl_min_level,
         "max_level": rsl_max_level,
         "reorder_qty": rsl_reorder_qty,
-        "updated_at": helpers_current_timestamp()
+        "updated_at": helpers_current_timestamp(),
     }
     return storage_update("reorder_levels", rsl_existing_id, rsl_changes)
 

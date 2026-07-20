@@ -15,13 +15,12 @@ Usage:
 from __future__ import annotations
 
 import difflib
-import hashlib
 import json
 import os
 import shutil
 import sys
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import cast
 
@@ -38,10 +37,19 @@ from compiler.diagnostics import DiagnosticReporter
 from compiler.lexer import Lexer, LexicalError
 from compiler.parser import Parser
 
-_SKIP_DIRS = frozenset({
-    ".venv", ".venv_test", ".git", ".mypy_cache", ".pytest_cache",
-    ".ruff_cache", "node_modules", "__pycache__", ".ail",
-})
+_SKIP_DIRS = frozenset(
+    {
+        ".venv",
+        ".venv_test",
+        ".git",
+        ".mypy_cache",
+        ".pytest_cache",
+        ".ruff_cache",
+        "node_modules",
+        "__pycache__",
+        ".ail",
+    }
+)
 
 
 @dataclass
@@ -87,7 +95,9 @@ class RenameTool:
     # Scanning
     # ------------------------------------------------------------------
 
-    def scan(self, old_name: str, include_strings: bool = False) -> list[RenameReference]:
+    def scan(
+        self, old_name: str, include_strings: bool = False
+    ) -> list[RenameReference]:
         """Scan all .ail files for references to *old_name*.
 
         Returns the list of references found (also stored internally).
@@ -137,12 +147,26 @@ class RenameTool:
     ) -> None:
         """Recursively walk the AST collecting identifier references."""
         if isinstance(node, IdentifierNode):
-            if node.name == old_name and node.start_span is not None and node.end_span is not None:
-                refs.append(RenameReference(file_path, node.start_span, node.end_span, "identifier"))
+            if (
+                node.name == old_name
+                and node.start_span is not None
+                and node.end_span is not None
+            ):
+                refs.append(
+                    RenameReference(
+                        file_path, node.start_span, node.end_span, "identifier"
+                    )
+                )
 
         if include_strings and isinstance(node, StringLiteralNode):
-            if node.value == old_name and node.start_span is not None and node.end_span is not None:
-                refs.append(RenameReference(file_path, node.start_span, node.end_span, "string"))
+            if (
+                node.value == old_name
+                and node.start_span is not None
+                and node.end_span is not None
+            ):
+                refs.append(
+                    RenameReference(file_path, node.start_span, node.end_span, "string")
+                )
 
         for f_name in node.__dataclass_fields__:
             if f_name in ("start_span", "end_span"):
@@ -153,7 +177,9 @@ class RenameTool:
             elif isinstance(value, (tuple, list)):
                 for item in value:
                     if isinstance(item, ASTNode):
-                        self._walk_node(item, old_name, file_path, include_strings, refs)
+                        self._walk_node(
+                            item, old_name, file_path, include_strings, refs
+                        )
 
     def _scan_imports(
         self,
@@ -173,9 +199,11 @@ class RenameTool:
                 if segment == old_name:
                     offset = self._find_import_segment_offset(text, child, idx)
                     if offset is not None:
-                        refs.append(RenameReference(
-                            file_path, offset, offset + len(segment), "import"
-                        ))
+                        refs.append(
+                            RenameReference(
+                                file_path, offset, offset + len(segment), "import"
+                            )
+                        )
 
     @staticmethod
     def _find_import_segment_offset(
@@ -184,7 +212,7 @@ class RenameTool:
         """Find the character offset of an import path segment in source text."""
         if import_node.start_span is None:
             return None
-        region = text[import_node.start_span:import_node.end_span]
+        region = text[import_node.start_span : import_node.end_span]
         kw_idx = region.find("import ")
         if kw_idx == -1:
             return None
@@ -201,7 +229,9 @@ class RenameTool:
         # Compute offset of the segment within the path
         before_dots = sum(len(s) for s in segments[:segment_index])
         dots_before = max(0, segment_index)  # one dot between each segment
-        segment_start_offset = import_node.start_span + path_start + before_dots + dots_before
+        segment_start_offset = (
+            import_node.start_span + path_start + before_dots + dots_before
+        )
         return segment_start_offset
 
     # ------------------------------------------------------------------
@@ -221,7 +251,7 @@ class RenameTool:
 
         for file_path, refs in file_refs.items():
             try:
-                with open(file_path, "r", encoding="utf-8") as f:
+                with open(file_path, encoding="utf-8") as f:
                     original = f.read()
             except Exception:
                 continue
@@ -229,9 +259,13 @@ class RenameTool:
             sorted_refs = sorted(refs, key=lambda r: -r.start_offset)
             new_text = original
             for ref in sorted_refs:
-                actual = new_text[ref.start_offset:ref.end_offset]
+                actual = new_text[ref.start_offset : ref.end_offset]
                 if actual == old_name:
-                    new_text = new_text[:ref.start_offset] + new_name + new_text[ref.end_offset:]
+                    new_text = (
+                        new_text[: ref.start_offset]
+                        + new_name
+                        + new_text[ref.end_offset :]
+                    )
 
             if new_text != original:
                 changes[file_path] = FileChange(file_path, original, new_text)
@@ -252,18 +286,23 @@ class RenameTool:
         for file_path, change in sorted(changes.items()):
             orig_lines = change.original_content.splitlines(keepends=True)
             new_lines = change.new_content.splitlines(keepends=True)
-            diff = list(difflib.unified_diff(
-                orig_lines, new_lines,
-                fromfile=f"a/{file_path}",
-                tofile=f"b/{file_path}",
-            ))
+            diff = list(
+                difflib.unified_diff(
+                    orig_lines,
+                    new_lines,
+                    fromfile=f"a/{file_path}",
+                    tofile=f"b/{file_path}",
+                )
+            )
             sys.stdout.writelines(diff)
 
     # ------------------------------------------------------------------
     # Application with rollback
     # ------------------------------------------------------------------
 
-    def apply(self, changes: dict[str, FileChange], rollback_dir: str | None = None) -> str | None:
+    def apply(
+        self, changes: dict[str, FileChange], rollback_dir: str | None = None
+    ) -> str | None:
         """Apply changes atomically with rollback support.
 
         Every modified file gets a ``.orig`` backup in the rollback bundle.

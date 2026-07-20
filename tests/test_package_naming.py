@@ -10,13 +10,9 @@ Validates that:
 
 from __future__ import annotations
 
-import sys
 from pathlib import Path
 
-import pytest
-
 from tools.ail_package_manager.manifest import validate_package_name
-
 
 # =============================================================================
 # Package naming validation
@@ -78,9 +74,9 @@ class TestAilNewAilToml:
 
     def test_new_creates_ail_toml(self, tmp_path: Path) -> None:
         """ail new should create ail.toml with snake_case name."""
-        from compiler.cli.main import cmd_new
-
         import os
+
+        from compiler.cli.main import cmd_new
 
         old_cwd = os.getcwd()
         try:
@@ -99,9 +95,9 @@ class TestAilNewAilToml:
 
     def test_new_creates_ail_lock(self, tmp_path: Path) -> None:
         """ail new should create ail.lock."""
-        from compiler.cli.main import cmd_new
-
         import os
+
+        from compiler.cli.main import cmd_new
 
         old_cwd = os.getcwd()
         try:
@@ -116,9 +112,9 @@ class TestAilNewAilToml:
 
     def test_new_hyphen_name_normalizes_to_underscore(self, tmp_path: Path) -> None:
         """ail new with hyphens should use underscores in ail.toml."""
-        from compiler.cli.main import cmd_new
-
         import os
+
+        from compiler.cli.main import cmd_new
 
         old_cwd = os.getcwd()
         try:
@@ -136,9 +132,9 @@ class TestAilNewAilToml:
 
     def test_new_empty_mode_creates_ail_toml(self, tmp_path: Path) -> None:
         """ail new --empty should also create ail.toml."""
-        from compiler.cli.main import cmd_new
-
         import os
+
+        from compiler.cli.main import cmd_new
 
         old_cwd = os.getcwd()
         try:

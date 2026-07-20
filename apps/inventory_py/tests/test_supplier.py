@@ -1,9 +1,25 @@
 from core.helpers import helpers_get_map_value_safe
-from models.supplier import supplier_create, supplier_get_by_id, supplier_update, supplier_search, supplier_top_rated, supplier_get_by_payment_terms
+from models.supplier import (
+    supplier_create,
+    supplier_get_by_id,
+    supplier_get_by_payment_terms,
+    supplier_search,
+    supplier_top_rated,
+    supplier_update,
+)
 
 
 def test_supplier_create():
-    ts_result = supplier_create("TestSupply Co", "John Contact", "john@test.com", "555-0100", "123 Supply St", "net30", 14, 4)
+    ts_result = supplier_create(
+        "TestSupply Co",
+        "John Contact",
+        "john@test.com",
+        "555-0100",
+        "123 Supply St",
+        "net30",
+        14,
+        4,
+    )
     if ts_result == False:
         print("FAIL: supplier_create returned false")
         return False
@@ -41,7 +57,16 @@ def test_supplier_get_by_id_missing():
 
 
 def test_supplier_get_by_id():
-    ts_created = supplier_create("GetTest Supply", "Alice Get", "alice@get.com", "555-0200", "456 Get Ave", "net60", 30, 5)
+    ts_created = supplier_create(
+        "GetTest Supply",
+        "Alice Get",
+        "alice@get.com",
+        "555-0200",
+        "456 Get Ave",
+        "net60",
+        30,
+        5,
+    )
     ts_id = helpers_get_map_value_safe(ts_created, "id", "")
     ts_found = supplier_get_by_id(ts_id)
     if ts_found == False:
@@ -56,7 +81,16 @@ def test_supplier_get_by_id():
 
 
 def test_supplier_update():
-    ts_created = supplier_create("UpdateTest Supply", "Bob Update", "bob@update.com", "555-0300", "789 Update Blvd", "net30", 7, 3)
+    ts_created = supplier_create(
+        "UpdateTest Supply",
+        "Bob Update",
+        "bob@update.com",
+        "555-0300",
+        "789 Update Blvd",
+        "net30",
+        7,
+        3,
+    )
     ts_id = helpers_get_map_value_safe(ts_created, "id", "")
     ts_changes = {"rating": 5, "payment_terms": "net15"}
     ts_update_result = supplier_update(ts_id, ts_changes)
@@ -77,7 +111,16 @@ def test_supplier_update():
 
 
 def test_supplier_search():
-    supplier_create("SearchTest Alpha", "Sam Search", "sam@search.com", "555-0400", "101 Search Ln", "net30", 14, 4)
+    supplier_create(
+        "SearchTest Alpha",
+        "Sam Search",
+        "sam@search.com",
+        "555-0400",
+        "101 Search Ln",
+        "net30",
+        14,
+        4,
+    )
     ts_results = supplier_search("SearchTest")
     if ts_results == False:
         print("FAIL: supplier_search returned false")
@@ -96,8 +139,19 @@ def test_supplier_search():
 
 
 def test_supplier_top_rated():
-    supplier_create("TopRated Low", "Low", "low@test.com", "555-0500", "1 Low Rd", "net30", 7, 2)
-    supplier_create("TopRated High", "High", "high@test.com", "555-0600", "2 High St", "net60", 14, 5)
+    supplier_create(
+        "TopRated Low", "Low", "low@test.com", "555-0500", "1 Low Rd", "net30", 7, 2
+    )
+    supplier_create(
+        "TopRated High",
+        "High",
+        "high@test.com",
+        "555-0600",
+        "2 High St",
+        "net60",
+        14,
+        5,
+    )
     ts_results = supplier_top_rated(4)
     if ts_results == False:
         print("FAIL: supplier_top_rated returned false")
@@ -120,15 +174,36 @@ def test_supplier_top_rated():
 
 
 def test_supplier_get_by_payment_terms():
-    supplier_create("PaymentTest Net60 A", "Pay A", "paya@test.com", "555-0700", "10 Pay Rd", "net60", 30, 3)
-    supplier_create("PaymentTest Net60 B", "Pay B", "payb@test.com", "555-0800", "20 Pay Ln", "net60", 45, 4)
+    supplier_create(
+        "PaymentTest Net60 A",
+        "Pay A",
+        "paya@test.com",
+        "555-0700",
+        "10 Pay Rd",
+        "net60",
+        30,
+        3,
+    )
+    supplier_create(
+        "PaymentTest Net60 B",
+        "Pay B",
+        "payb@test.com",
+        "555-0800",
+        "20 Pay Ln",
+        "net60",
+        45,
+        4,
+    )
     ts_results = supplier_get_by_payment_terms("net60")
     if ts_results == False:
         print("FAIL: supplier_get_by_payment_terms returned false")
         return False
     ts_len = len(ts_results)
     if ts_len < 2:
-        print("FAIL: supplier_get_by_payment_terms - expected at least 2, got " + str(ts_len))
+        print(
+            "FAIL: supplier_get_by_payment_terms - expected at least 2, got "
+            + str(ts_len)
+        )
         return False
     print("PASS: supplier_get_by_payment_terms (" + str(ts_len) + " items)")
     return True

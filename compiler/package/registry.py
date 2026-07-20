@@ -10,8 +10,8 @@ import io
 import json
 import os
 import tarfile
-import urllib.request
 import urllib.error
+import urllib.request
 from pathlib import Path
 from typing import Any
 
@@ -36,6 +36,7 @@ def load_registry_url(project_root: Path) -> str:
             if raw.startswith(b"\xef\xbb\xbf"):
                 raw = raw[3:]
             import tomllib
+
             data = tomllib.loads(raw.decode("utf-8"))
         except Exception:
             data = {}
@@ -58,6 +59,7 @@ def _build_package_metadata(project_root: Path) -> dict[str, Any]:
         raw = raw[3:]
     try:
         import tomllib
+
         data = tomllib.loads(raw.decode("utf-8"))
     except Exception as e:
         raise RegistryError(f"Failed to parse ail.toml: {e}")
@@ -87,9 +89,7 @@ def _build_package_metadata(project_root: Path) -> dict[str, Any]:
         "version": version,
         "description": str(project.get("description", "")),
         "entry": str(project.get("entry", "main.ail")),
-        "language_version": str(
-            data.get("language", {}).get("version", "0.3")
-        ),
+        "language_version": str(data.get("language", {}).get("version", "0.3")),
         "dependencies": dependencies,
     }
 
@@ -109,10 +109,7 @@ def pack_project(project_root: Path) -> tuple[bytes, str]:
                 continue
             rel = f.relative_to(project_root)
             parts = rel.parts
-            if any(
-                skip in parts
-                for skip in (".ail", "__pycache__", ".git", ".venv")
-            ):
+            if any(skip in parts for skip in (".ail", "__pycache__", ".git", ".venv")):
                 continue
             if f.suffix not in (".ail", ".json", ".toml", ".md"):
                 continue
@@ -167,9 +164,7 @@ def publish_remote(project_root: Path, registry_url: str) -> None:
     metadata["checksum"] = checksum
 
     # PUT metadata
-    meta_url = _registry_urljoin(
-        registry_url, "api", "packages", name, version
-    )
+    meta_url = _registry_urljoin(registry_url, "api", "packages", name, version)
     req = urllib.request.Request(
         meta_url,
         data=json.dumps(metadata).encode("utf-8"),
@@ -180,13 +175,10 @@ def publish_remote(project_root: Path, registry_url: str) -> None:
         urllib.request.urlopen(req)
     except urllib.error.HTTPError as e:
         raise RegistryError(
-            f"Registry rejected metadata for {name} v{version}: "
-            f"{e.code} {e.reason}"
+            f"Registry rejected metadata for {name} v{version}: " f"{e.code} {e.reason}"
         )
     except urllib.error.URLError as e:
-        raise RegistryError(
-            f"Could not reach registry {registry_url}: {e.reason}"
-        )
+        raise RegistryError(f"Could not reach registry {registry_url}: {e.reason}")
 
     # PUT archive
     archive_url = _registry_urljoin(
@@ -202,13 +194,10 @@ def publish_remote(project_root: Path, registry_url: str) -> None:
         urllib.request.urlopen(req)
     except urllib.error.HTTPError as e:
         raise RegistryError(
-            f"Registry rejected archive for {name} v{version}: "
-            f"{e.code} {e.reason}"
+            f"Registry rejected archive for {name} v{version}: " f"{e.code} {e.reason}"
         )
     except urllib.error.URLError as e:
-        raise RegistryError(
-            f"Could not reach registry {registry_url}: {e.reason}"
-        )
+        raise RegistryError(f"Could not reach registry {registry_url}: {e.reason}")
 
     print(f"  Published {name} v{version} to {registry_url}")
 
@@ -233,8 +222,7 @@ def download_local_package(
     if version not in versions:
         avail = ", ".join(sorted(versions.keys(), key=_semver_key))
         raise RegistryError(
-            f"Package '{name}' v{version} not found. "
-            f"Available: {avail}"
+            f"Package '{name}' v{version} not found. " f"Available: {avail}"
         )
 
     expected = versions[version].get("checksum", "")

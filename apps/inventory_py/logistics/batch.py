@@ -1,8 +1,9 @@
 from core.helpers import (
-    helpers_get_map_value_safe, helpers_generate_id,
-    helpers_current_timestamp
+    helpers_current_timestamp,
+    helpers_generate_id,
+    helpers_get_map_value_safe,
 )
-from core.storage import storage_list, storage_add, storage_update, storage_get_by_id
+from core.storage import storage_add, storage_get_by_id, storage_list, storage_update
 
 
 def batch_date_to_int(bdt_date_str):
@@ -31,7 +32,9 @@ def batch_get_expiring_before_rec(gebr_items, gebr_expiry_int, gebr_idx, gebr_ac
     return gebr_acc
 
 
-def batch_get_active_by_product_rec(gabpr_items, gabpr_product_id, gabpr_idx, gabpr_acc):
+def batch_get_active_by_product_rec(
+    gabpr_items, gabpr_product_id, gabpr_idx, gabpr_acc
+):
     for gabpr_item in gabpr_items:
         gabpr_item_product_id = helpers_get_map_value_safe(gabpr_item, "product_id", "")
         gabpr_item_qty = helpers_get_map_value_safe(gabpr_item, "quantity", 0)
@@ -40,7 +43,9 @@ def batch_get_active_by_product_rec(gabpr_items, gabpr_product_id, gabpr_idx, ga
     return gabpr_acc
 
 
-def batch_create(bt_product_id, bt_batch_number, bt_quantity, bt_expiry_date, bt_received_date):
+def batch_create(
+    bt_product_id, bt_batch_number, bt_quantity, bt_expiry_date, bt_received_date
+):
     bt_batch = {}
     bt_id = helpers_generate_id("BAT-")
     bt_now = helpers_current_timestamp()

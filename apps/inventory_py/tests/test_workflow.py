@@ -1,5 +1,15 @@
+from business.workflow import (
+    workflow_approve_director,
+    workflow_approve_manager,
+    workflow_close,
+    workflow_create,
+    workflow_fulfill,
+    workflow_get_by_id,
+    workflow_get_by_order,
+    workflow_get_stage,
+    workflow_reject,
+)
 from core.helpers import helpers_get_map_value_safe
-from business.workflow import workflow_create, workflow_get_by_id, workflow_get_by_order, workflow_approve_manager, workflow_approve_director, workflow_fulfill, workflow_close, workflow_reject, workflow_get_stage
 
 
 def test_wf_create_and_get():

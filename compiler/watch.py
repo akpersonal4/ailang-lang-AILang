@@ -8,24 +8,34 @@ system monitoring via ``watchdog``.
 from __future__ import annotations
 
 import hashlib
-import os
 import sys
 import threading
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import cast
 
 from compiler.compilation import CompilationSession
-from compiler.diagnostics import Diagnostic, DiagnosticFormatter, DiagnosticReporter, ErrorCode, Severity
-from compiler.lexer import Lexer, LexicalError
-from compiler.parser import Parser
-from compiler.source import Source
+from compiler.diagnostics import (
+    Diagnostic,
+    DiagnosticFormatter,
+    DiagnosticReporter,
+    ErrorCode,
+    Severity,
+)
 
-_SKIP_DIRS = frozenset({
-    ".venv", ".venv_test", ".git", ".mypy_cache", ".pytest_cache",
-    ".ruff_cache", "node_modules", "__pycache__", ".ail",
-})
+_SKIP_DIRS = frozenset(
+    {
+        ".venv",
+        ".venv_test",
+        ".git",
+        ".mypy_cache",
+        ".pytest_cache",
+        ".ruff_cache",
+        "node_modules",
+        "__pycache__",
+        ".ail",
+    }
+)
 
 
 # =============================================================================
@@ -121,7 +131,9 @@ class IncrementalCompiler:
             session.discover(self.entry_path, reporter)
         except Exception as exc:
             diag = Diagnostic(
-                Severity.ERROR, ErrorCode("CMP001", str(exc)), str(exc),
+                Severity.ERROR,
+                ErrorCode("CMP001", str(exc)),
+                str(exc),
             )
             print(DiagnosticFormatter().format(diag), file=sys.stderr)
             return False
@@ -185,15 +197,25 @@ class IncrementalCompiler:
                 if mod_name in session._sources:
                     src_path = str(session._sources[mod_name].path)
                     h = file_hash(src_path)
-                    self._cache.update(src_path, FileCacheEntry(
-                        file_path=src_path, file_hash=h,
-                        compile_time_ms=elapsed_ms, ok=True,
-                    ))
+                    self._cache.update(
+                        src_path,
+                        FileCacheEntry(
+                            file_path=src_path,
+                            file_hash=h,
+                            compile_time_ms=elapsed_ms,
+                            ok=True,
+                        ),
+                    )
         else:
-            self._cache.update(str(fp), FileCacheEntry(
-                file_path=str(fp), file_hash=new_hash,
-                compile_time_ms=elapsed_ms, ok=False,
-            ))
+            self._cache.update(
+                str(fp),
+                FileCacheEntry(
+                    file_path=str(fp),
+                    file_hash=new_hash,
+                    compile_time_ms=elapsed_ms,
+                    ok=False,
+                ),
+            )
 
         # Print diagnostics
         for diag in reporter.diagnostics:
@@ -363,17 +385,22 @@ def run_watch(
         else:
             if ok:
                 ail_count = len(_collect_ail_files(project_root))
-                print(f"[{time.strftime('%H:%M:%S')}] Initial build: {ail_count} files, 0 errors")
+                print(
+                    f"[{time.strftime('%H:%M:%S')}] Initial build: {ail_count} files, 0 errors"
+                )
             else:
-                print(f"[{time.strftime('%H:%M:%S')}] Initial build failed", file=sys.stderr)
+                print(
+                    f"[{time.strftime('%H:%M:%S')}] Initial build failed",
+                    file=sys.stderr,
+                )
 
     if poll:
         watcher = PollingWatcher(compiler, poll_interval)
         watcher.start()
     else:
         try:
-            from watchdog.observers import Observer
             from watchdog.events import FileSystemEventHandler
+            from watchdog.observers import Observer
 
             class _Handler(FileSystemEventHandler):
                 def __init__(self, handler: _AilFileHandler) -> None:
@@ -397,7 +424,9 @@ def run_watch(
 
             if not json_mode:
                 ail_count = len(_collect_ail_files(project_root))
-                print(f"[{time.strftime('%H:%M:%S')}] ail watch — watching {ail_count} files")
+                print(
+                    f"[{time.strftime('%H:%M:%S')}] ail watch — watching {ail_count} files"
+                )
 
             try:
                 while True:
@@ -406,7 +435,9 @@ def run_watch(
                 observer.stop()
             observer.join()
         except ImportError:
-            print("watchdog not installed; falling back to polling mode", file=sys.stderr)
+            print(
+                "watchdog not installed; falling back to polling mode", file=sys.stderr
+            )
             watcher = PollingWatcher(compiler, poll_interval)
             watcher.start()
             try:

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from compiler.lexer import Token, TokenKind
+from compiler.lexer import TokenKind
 from compiler.parser.declarations import (
     parse_function_declaration,
     parse_variable_declaration,

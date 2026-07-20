@@ -2,13 +2,10 @@
 
 from __future__ import annotations
 
-import hashlib
-import subprocess
-import sys
 from pathlib import Path
 
-from tools.ail_testgen.models import TestCase, TestCategory, AUTO_HEADER
-from tools.common.filesystem import get_project_root, ensure_output_dir
+from tools.ail_testgen.models import AUTO_HEADER, TestCase, TestCategory
+from tools.common.filesystem import ensure_output_dir, get_project_root
 from tools.common.hashing import hash_file
 
 
@@ -55,15 +52,23 @@ def _generate_pytest_source(root: Path, cases: list[TestCase]) -> str:
         lines.append('    """%s"""' % desc)
 
         if case.category == TestCategory.BUILD:
-            lines.append('    result = subprocess.run(')
-            lines.append('        [sys.executable, "-m", "compiler", "build", _app_path()],')
+            lines.append("    result = subprocess.run(")
+            lines.append(
+                '        [sys.executable, "-m", "compiler", "build", _app_path()],'
+            )
             lines.append("        capture_output=True, text=True,")
             lines.append("    )")
-            lines.append('    assert result.returncode == %d, "Build failed: %%s" %% result.stderr' % case.expected_exit_code)
+            lines.append(
+                '    assert result.returncode == %d, "Build failed: %%s" %% result.stderr'
+                % case.expected_exit_code
+            )
 
         elif case.category == TestCategory.RUN:
             lines.append("    code, out, err = _run_ail()")
-            lines.append('    assert code == %d, "Run failed: %%s" %% err' % case.expected_exit_code)
+            lines.append(
+                '    assert code == %d, "Run failed: %%s" %% err'
+                % case.expected_exit_code
+            )
             lines.append('    assert len(out) > 0, "Expected non-empty output"')
 
     lines.append("")
@@ -94,24 +99,28 @@ def generate_all(
         output_path = output_dir / ("test_app_%s_generated.py" % app_name)
 
         if output_path.exists() and not force:
-            results.append({
-                "file": str(output_path.relative_to(root)),
-                "app": app_name,
-                "status": "skipped",
-                "reason": "already exists (use --force to overwrite)",
-                "test_count": len(app_cases),
-            })
+            results.append(
+                {
+                    "file": str(output_path.relative_to(root)),
+                    "app": app_name,
+                    "status": "skipped",
+                    "reason": "already exists (use --force to overwrite)",
+                    "test_count": len(app_cases),
+                }
+            )
             continue
 
         source = _generate_pytest_source(root, app_cases)
         output_path.write_text(source, encoding="utf-8")
         digest = hash_file(output_path)
-        results.append({
-            "file": str(output_path.relative_to(root)),
-            "app": app_name,
-            "status": "generated",
-            "hash": digest,
-            "test_count": len(app_cases),
-        })
+        results.append(
+            {
+                "file": str(output_path.relative_to(root)),
+                "app": app_name,
+                "status": "generated",
+                "hash": digest,
+                "test_count": len(app_cases),
+            }
+        )
 
     return results

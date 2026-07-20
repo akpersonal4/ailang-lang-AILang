@@ -1,10 +1,10 @@
 from core.helpers import (
-    helpers_generate_id,
     helpers_current_timestamp,
+    helpers_generate_id,
     helpers_get_map_value_safe,
     helpers_unix_timestamp,
 )
-from core.storage import storage_add, storage_list, storage_delete
+from core.storage import storage_add, storage_delete, storage_list
 
 STOCK_AGING_DAY_30 = 2592000
 STOCK_AGING_DAY_60 = 5184000
@@ -29,7 +29,9 @@ def stock_aging_get_batches(product_id, warehouse_id):
     results = []
     for item in all_items:
         match_prod = helpers_get_map_value_safe(item, "product_id", "") == product_id
-        match_ware = helpers_get_map_value_safe(item, "warehouse_id", "") == warehouse_id
+        match_ware = (
+            helpers_get_map_value_safe(item, "warehouse_id", "") == warehouse_id
+        )
         if match_prod and match_ware:
             results.append(item)
     return results

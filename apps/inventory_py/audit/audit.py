@@ -1,5 +1,5 @@
-from core.helpers import helpers_generate_id, helpers_current_timestamp
-from core.storage import storage_list, storage_add
+from core.helpers import helpers_current_timestamp, helpers_generate_id
+from core.storage import storage_add, storage_list
 
 
 def audit_log_create(entity, entity_id, action, user, details):
@@ -34,7 +34,10 @@ def audit_list():
 
 def audit_filter_rec(al_items, al_entity_type, al_entity_id, al_idx, al_acc):
     for al_item in al_items:
-        if al_item.get("entity_type") == al_entity_type and al_item.get("entity_id") == al_entity_id:
+        if (
+            al_item.get("entity_type") == al_entity_type
+            and al_item.get("entity_id") == al_entity_id
+        ):
             al_acc.append(al_item)
     return al_acc
 

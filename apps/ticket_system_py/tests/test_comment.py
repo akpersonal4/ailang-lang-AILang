@@ -1,11 +1,14 @@
 """Tests for comment model."""
-import sys
+
 import os
+import sys
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import unittest
+
 import storage
-from comment import create, list_by_ticket, count_by_ticket
+from comment import count_by_ticket, create, list_by_ticket
 
 
 class TestComment(unittest.TestCase):

@@ -2,11 +2,9 @@
 
 from __future__ import annotations
 
-import subprocess
 import sys
 from pathlib import Path
 
-from tools.ail_testgen.models import TestCase
 from tools.common.process import run_subprocess
 
 

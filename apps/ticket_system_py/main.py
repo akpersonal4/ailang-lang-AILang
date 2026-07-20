@@ -4,12 +4,12 @@ import json
 import sys
 from pathlib import Path
 
-import storage
-import user
-import ticket
-import comment
 import audit_log
+import comment
 import csv_ops
+import storage
+import ticket
+import user
 
 SESSION_FILE = Path("data/session.json")
 
@@ -17,7 +17,7 @@ SESSION_FILE = Path("data/session.json")
 def session_load() -> dict:
     if not SESSION_FILE.exists():
         return {}
-    with open(SESSION_FILE, "r") as f:
+    with open(SESSION_FILE) as f:
         return json.load(f)
 
 
@@ -320,6 +320,7 @@ def cmd_report_daily(args):
     if uid == 0:
         return
     import time
+
     now = int(time.time())
     seven_days = 604800
     tickets = ticket.list_all()

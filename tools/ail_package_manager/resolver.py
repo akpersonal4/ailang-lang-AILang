@@ -9,25 +9,22 @@ from tools.ail_package_manager.lock import (
     deps_hash_matches,
     read_lock_packages,
 )
-from tools.ail_package_manager.manifest import find_manifest, parse_manifest
 from tools.ail_package_manager.models import (
     DependencySpec,
-    LockFilePackage,
     ProjectManifest,
     ResolvedDependency,
 )
 from tools.ail_package_manager.registry import (
+    RegistryError,
     fetch_package_metadata,
     load_registry_url,
-    RegistryError,
 )
 
 
-def _fetch_local_package_meta(
-    name: str, registry_dir: Path
-) -> dict:
+def _fetch_local_package_meta(name: str, registry_dir: Path) -> dict:
     """Fetch package metadata from a local directory registry."""
     import json
+
     meta_path = registry_dir / "packages" / name / "metadata.json"
     if not meta_path.exists():
         raise RegistryError(f"Package '{name}' not found in local registry")
@@ -51,13 +48,9 @@ def resolve(
     (dependencies before dependents).
     """
     if use_lock and deps_hash_matches(manifest_path, lock_path):
-        return _resolve_from_lock(
-            project_root, lock_path, manifest_path, cache_dir
-        )
+        return _resolve_from_lock(project_root, lock_path, manifest_path, cache_dir)
 
-    return _resolve_fresh(
-        project_root, manifest, manifest_path, cache_dir
-    )
+    return _resolve_fresh(project_root, manifest, manifest_path, cache_dir)
 
 
 def _resolve_from_lock(
@@ -158,12 +151,22 @@ def _resolve_deps(
 
         if dep_spec.path:
             _resolve_local_dep(
-                dep_spec, project_root, cache_dir, resolved, visited, chain,
+                dep_spec,
+                project_root,
+                cache_dir,
+                resolved,
+                visited,
+                chain,
                 constraints,
             )
         elif dep_spec.git:
             _resolve_git_dep(
-                dep_spec, cache_dir, resolved, visited, chain, constraints,
+                dep_spec,
+                cache_dir,
+                resolved,
+                visited,
+                chain,
+                constraints,
             )
         else:
             # Registry dependency
@@ -180,9 +183,7 @@ def _resolve_deps(
 
             try:
                 if local_registry_dir is not None:
-                    from tools.ail_package_manager.registry import (
-                        download_from_local_registry as _dl_local,
-                    )
+
                     meta = _fetch_local_package_meta(dep_name, local_registry_dir)
                 else:
                     meta = fetch_package_metadata(dep_name, registry_url)
@@ -311,7 +312,9 @@ def _resolve_git_dep(
 def _semver_key(version: str) -> tuple[int, int, int]:
     """Convert a semver string to a sortable tuple."""
     parts = version.split(".")
-    return tuple(int(p) if p.isdigit() else 0 for p in parts[:3]) + (0,) * (3 - len(parts))
+    return tuple(int(p) if p.isdigit() else 0 for p in parts[:3]) + (0,) * (
+        3 - len(parts)
+    )
 
 
 def _topological_sort(

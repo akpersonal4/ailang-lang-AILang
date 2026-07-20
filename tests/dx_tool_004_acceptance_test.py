@@ -3,13 +3,12 @@
 
 from __future__ import annotations
 
-import os
-import sys
+import hashlib
 import json
-import time
 import shutil
 import subprocess
-import hashlib
+import sys
+import time
 import tracemalloc
 from pathlib import Path
 
@@ -36,10 +35,18 @@ def clean_benchmark_outputs():
 def test_tool_runs_successfully() -> bool:
     """Test: python -m tools.ail_benchmark runs successfully."""
     print("TEST 1: Tool runs successfully (canonical suite)...")
-    code, out, err = run_command([
-        sys.executable, "-m", "tools.ail_benchmark",
-        "--suite", "canonical", "--repeat", "1", "--quiet",
-    ])
+    code, out, err = run_command(
+        [
+            sys.executable,
+            "-m",
+            "tools.ail_benchmark",
+            "--suite",
+            "canonical",
+            "--repeat",
+            "1",
+            "--quiet",
+        ]
+    )
     if code == 0:
         print("  [PASS] PASS: Tool exits with code 0")
         return True
@@ -60,7 +67,7 @@ def test_output_files_created() -> bool:
     json_ok = json_path.exists()
 
     if md_ok and json_ok:
-        print(f"  [PASS] PASS: Both output files exist")
+        print("  [PASS] PASS: Both output files exist")
         return True
     else:
         if not md_ok:
@@ -83,10 +90,18 @@ def test_deterministic_output() -> bool:
     data1 = json.loads(json_path.read_text(encoding="utf-8"))
 
     clean_benchmark_outputs()
-    run_command([
-        sys.executable, "-m", "tools.ail_benchmark",
-        "--suite", "canonical", "--repeat", "1", "--quiet",
-    ])
+    run_command(
+        [
+            sys.executable,
+            "-m",
+            "tools.ail_benchmark",
+            "--suite",
+            "canonical",
+            "--repeat",
+            "1",
+            "--quiet",
+        ]
+    )
     data2 = json.loads(json_path.read_text(encoding="utf-8"))
 
     # Compare structural determinism
@@ -97,7 +112,7 @@ def test_deterministic_output() -> bool:
         print(f"  [PASS] PASS: Same {len(names1)} benchmarks in both runs")
         return True
     else:
-        print(f"  [FAIL] FAIL: Benchmark names differ")
+        print("  [FAIL] FAIL: Benchmark names differ")
         print(f"    Run 1: {names1}")
         print(f"    Run 2: {names2}")
         return False
@@ -123,7 +138,14 @@ def test_json_structure() -> bool:
         return False
 
     # Summary keys
-    required_summary = ["total", "passed", "failed", "regressed", "skipped", "total_time_seconds"]
+    required_summary = [
+        "total",
+        "passed",
+        "failed",
+        "regressed",
+        "skipped",
+        "total_time_seconds",
+    ]
     missing = [k for k in required_summary if k not in data.get("summary", {})]
     if missing:
         print(f"  [FAIL] FAIL: Missing summary keys: {missing}")
@@ -138,17 +160,21 @@ def test_json_structure() -> bool:
 
     # Benchmark entry structure
     if not isinstance(data["benchmarks"], list) or len(data["benchmarks"]) == 0:
-        print(f"  [FAIL] FAIL: benchmarks must be non-empty list")
+        print("  [FAIL] FAIL: benchmarks must be non-empty list")
         return False
 
     required_bench = ["name", "path", "suite", "status", "stats", "regression"]
     for b in data["benchmarks"]:
         missing = [k for k in required_bench if k not in b]
         if missing:
-            print(f"  [FAIL] FAIL: Benchmark '{b.get('name', '?')}' missing keys: {missing}")
+            print(
+                f"  [FAIL] FAIL: Benchmark '{b.get('name', '?')}' missing keys: {missing}"
+            )
             return False
 
-    print(f"  [PASS] PASS: JSON has correct structure with {len(data['benchmarks'])} benchmark(s)")
+    print(
+        f"  [PASS] PASS: JSON has correct structure with {len(data['benchmarks'])} benchmark(s)"
+    )
     return True
 
 
@@ -156,19 +182,29 @@ def test_quick_suite() -> bool:
     """Test: Quick suite returns exactly 2 benchmarks."""
     print("\nTEST 5: Quick suite...")
     clean_benchmark_outputs()
-    code, out, err = run_command([
-        sys.executable, "-m", "tools.ail_benchmark",
-        "--suite", "quick", "--repeat", "1", "--quiet",
-    ])
+    code, out, err = run_command(
+        [
+            sys.executable,
+            "-m",
+            "tools.ail_benchmark",
+            "--suite",
+            "quick",
+            "--repeat",
+            "1",
+            "--quiet",
+        ]
+    )
     root = Path(__file__).resolve().parent.parent
     json_path = root / "generated" / "benchmarks" / "BENCHMARK_REPORT.json"
     data = json.loads(json_path.read_text(encoding="utf-8"))
 
     if data["summary"]["total"] == 2 and code == 0:
-        print(f"  [PASS] PASS: Quick suite has 2 benchmarks")
+        print("  [PASS] PASS: Quick suite has 2 benchmarks")
         return True
     else:
-        print(f"  [FAIL] FAIL: Expected 2 benchmarks, got {data['summary']['total']} (exit: {code})")
+        print(
+            f"  [FAIL] FAIL: Expected 2 benchmarks, got {data['summary']['total']} (exit: {code})"
+        )
         return False
 
 
@@ -176,16 +212,28 @@ def test_single_app() -> bool:
     """Test: --app flag runs a single benchmark."""
     print("\nTEST 6: Single app via --app flag...")
     clean_benchmark_outputs()
-    code, out, err = run_command([
-        sys.executable, "-m", "tools.ail_benchmark",
-        "--app", "dice_roller", "--repeat", "1", "--quiet",
-    ])
+    code, out, err = run_command(
+        [
+            sys.executable,
+            "-m",
+            "tools.ail_benchmark",
+            "--app",
+            "dice_roller",
+            "--repeat",
+            "1",
+            "--quiet",
+        ]
+    )
     root = Path(__file__).resolve().parent.parent
     json_path = root / "generated" / "benchmarks" / "BENCHMARK_REPORT.json"
     data = json.loads(json_path.read_text(encoding="utf-8"))
 
-    if data["summary"]["total"] == 1 and data["benchmarks"][0]["name"] == "dice_roller" and code == 0:
-        print(f"  [PASS] PASS: Single app 'dice_roller' executed")
+    if (
+        data["summary"]["total"] == 1
+        and data["benchmarks"][0]["name"] == "dice_roller"
+        and code == 0
+    ):
+        print("  [PASS] PASS: Single app 'dice_roller' executed")
         return True
     else:
         print(f"  [FAIL] FAIL: Expected 1 benchmark, got {data['summary']['total']}")
@@ -199,11 +247,20 @@ def test_baseline_save_and_compare() -> bool:
     root = Path(__file__).resolve().parent.parent
 
     # Save baseline
-    code1, _, _ = run_command([
-        sys.executable, "-m", "tools.ail_benchmark",
-        "--suite", "quick", "--repeat", "1", "--quiet",
-        "--baseline", "test-baseline",
-    ])
+    code1, _, _ = run_command(
+        [
+            sys.executable,
+            "-m",
+            "tools.ail_benchmark",
+            "--suite",
+            "quick",
+            "--repeat",
+            "1",
+            "--quiet",
+            "--baseline",
+            "test-baseline",
+        ]
+    )
     baseline_path = root / "generated" / "benchmarks" / "test-baseline.json"
     if code1 != 0 or not baseline_path.exists():
         print(f"  [FAIL] FAIL: Baseline not saved (exit: {code1})")
@@ -211,11 +268,20 @@ def test_baseline_save_and_compare() -> bool:
 
     # Compare against baseline
     clean_benchmark_outputs()
-    code2, out, err = run_command([
-        sys.executable, "-m", "tools.ail_benchmark",
-        "--suite", "quick", "--repeat", "1", "--quiet",
-        "--compare", "test-baseline",
-    ])
+    code2, out, err = run_command(
+        [
+            sys.executable,
+            "-m",
+            "tools.ail_benchmark",
+            "--suite",
+            "quick",
+            "--repeat",
+            "1",
+            "--quiet",
+            "--compare",
+            "test-baseline",
+        ]
+    )
     json_path = root / "generated" / "benchmarks" / "BENCHMARK_REPORT.json"
     data = json.loads(json_path.read_text(encoding="utf-8"))
 
@@ -224,7 +290,9 @@ def test_baseline_save_and_compare() -> bool:
         print(f"  [PASS] PASS: Baseline saved and compared (exit: {code2})")
         return True
     else:
-        print(f"  [FAIL] FAIL: Compare failed (exit: {code2}, baseline ref: {data.get('baseline')})")
+        print(
+            f"  [FAIL] FAIL: Compare failed (exit: {code2}, baseline ref: {data.get('baseline')})"
+        )
         return False
 
 
@@ -232,11 +300,19 @@ def test_memory_mode() -> bool:
     """Test: --memory flag adds memory measurement."""
     print("\nTEST 8: Memory measurement mode...")
     clean_benchmark_outputs()
-    code, out, err = run_command([
-        sys.executable, "-m", "tools.ail_benchmark",
-        "--suite", "quick", "--repeat", "1", "--quiet",
-        "--memory",
-    ])
+    code, out, err = run_command(
+        [
+            sys.executable,
+            "-m",
+            "tools.ail_benchmark",
+            "--suite",
+            "quick",
+            "--repeat",
+            "1",
+            "--quiet",
+            "--memory",
+        ]
+    )
     root = Path(__file__).resolve().parent.parent
     json_path = root / "generated" / "benchmarks" / "BENCHMARK_REPORT.json"
     data = json.loads(json_path.read_text(encoding="utf-8"))
@@ -245,10 +321,12 @@ def test_memory_mode() -> bool:
     has_memory_data = any(b.get("memory_kb") is not None for b in data["benchmarks"])
 
     if has_memory and has_memory_data:
-        print(f"  [PASS] PASS: Memory mode enabled with data")
+        print("  [PASS] PASS: Memory mode enabled with data")
         return True
     else:
-        print(f"  [FAIL] FAIL: Memory mode not working (config: {has_memory}, data: {has_memory_data})")
+        print(
+            f"  [FAIL] FAIL: Memory mode not working (config: {has_memory}, data: {has_memory_data})"
+        )
         return False
 
 
@@ -256,11 +334,20 @@ def test_threshold_argument() -> bool:
     """Test: --threshold argument is accepted."""
     print("\nTEST 9: Threshold argument...")
     clean_benchmark_outputs()
-    code, out, err = run_command([
-        sys.executable, "-m", "tools.ail_benchmark",
-        "--suite", "quick", "--repeat", "1", "--quiet",
-        "--threshold", "10",
-    ])
+    code, out, err = run_command(
+        [
+            sys.executable,
+            "-m",
+            "tools.ail_benchmark",
+            "--suite",
+            "quick",
+            "--repeat",
+            "1",
+            "--quiet",
+            "--threshold",
+            "10",
+        ]
+    )
     root = Path(__file__).resolve().parent.parent
     json_path = root / "generated" / "benchmarks" / "BENCHMARK_REPORT.json"
     data = json.loads(json_path.read_text(encoding="utf-8"))
@@ -269,7 +356,9 @@ def test_threshold_argument() -> bool:
         print(f"  [PASS] PASS: Threshold argument accepted: {data['threshold_pct']}%")
         return True
     else:
-        print(f"  [FAIL] FAIL: Threshold not applied (got {data['threshold_pct']}, exit {code})")
+        print(
+            f"  [FAIL] FAIL: Threshold not applied (got {data['threshold_pct']}, exit {code})"
+        )
         return False
 
 
@@ -281,10 +370,18 @@ def test_performance() -> tuple[bool, float, int]:
     tracemalloc.start()
     start_time = time.perf_counter()
 
-    code, out, err = run_command([
-        sys.executable, "-m", "tools.ail_benchmark",
-        "--suite", "quick", "--repeat", "1", "--quiet",
-    ])
+    code, out, err = run_command(
+        [
+            sys.executable,
+            "-m",
+            "tools.ail_benchmark",
+            "--suite",
+            "quick",
+            "--repeat",
+            "1",
+            "--quiet",
+        ]
+    )
 
     elapsed = time.perf_counter() - start_time
     current, peak = tracemalloc.get_traced_memory()
@@ -308,10 +405,18 @@ def test_repeat_count() -> bool:
     """Test: --repeat argument controls repetition count."""
     print("\nTEST 11: Repeat count...")
     clean_benchmark_outputs()
-    code, out, err = run_command([
-        sys.executable, "-m", "tools.ail_benchmark",
-        "--suite", "quick", "--repeat", "2", "--quiet",
-    ])
+    code, out, err = run_command(
+        [
+            sys.executable,
+            "-m",
+            "tools.ail_benchmark",
+            "--suite",
+            "quick",
+            "--repeat",
+            "2",
+            "--quiet",
+        ]
+    )
     root = Path(__file__).resolve().parent.parent
     json_path = root / "generated" / "benchmarks" / "BENCHMARK_REPORT.json"
     data = json.loads(json_path.read_text(encoding="utf-8"))
@@ -322,7 +427,9 @@ def test_repeat_count() -> bool:
         print(f"  [PASS] PASS: Repeat count is {data['config']['repeat']}")
         return True
     else:
-        print(f"  [FAIL] FAIL: Expected repeat=2, got config={data['config']['repeat']}, runs={runs_count}")
+        print(
+            f"  [FAIL] FAIL: Expected repeat=2, got config={data['config']['repeat']}, runs={runs_count}"
+        )
         return False
 
 

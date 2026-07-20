@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from tools.ail_testgen.models import AppInfo, TestCase, TestCategory, CoverageReport
+from tools.ail_testgen.models import AppInfo, CoverageReport, TestCase, TestCategory
 
 
 def analyze_coverage(
@@ -35,20 +35,24 @@ def find_missing_tests(
     missing = [a for a in apps if a.name not in tested_names]
     cases: list[TestCase] = []
     for app in missing:
-        cases.append(TestCase(
-            app_name=app.name,
-            source_file=app.source_file,
-            category=TestCategory.BUILD,
-            test_name="test_build",
-            description="Verify the file compiles successfully.",
-        ))
-        cases.append(TestCase(
-            app_name=app.name,
-            source_file=app.source_file,
-            category=TestCategory.RUN,
-            test_name="test_run",
-            description="Verify the file runs with default arguments.",
-        ))
+        cases.append(
+            TestCase(
+                app_name=app.name,
+                source_file=app.source_file,
+                category=TestCategory.BUILD,
+                test_name="test_build",
+                description="Verify the file compiles successfully.",
+            )
+        )
+        cases.append(
+            TestCase(
+                app_name=app.name,
+                source_file=app.source_file,
+                category=TestCategory.RUN,
+                test_name="test_run",
+                description="Verify the file runs with default arguments.",
+            )
+        )
     return cases
 
 
@@ -58,9 +62,9 @@ def _find_tested_app_names(existing_tests: list[Path]) -> set[str]:
     for path in existing_tests:
         stem = path.stem
         if stem.startswith("test_app_"):
-            names.add(stem[len("test_app_"):])
+            names.add(stem[len("test_app_") :])
         elif stem.startswith("test_"):
-            name = stem[len("test_"):]
+            name = stem[len("test_") :]
             name = name.replace("_generated", "")
             names.add(name)
     return names

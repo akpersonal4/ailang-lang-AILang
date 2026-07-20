@@ -3,14 +3,15 @@
 It seeds the demo data, runs the report, measures elapsed time,
 and prints a SHA‑256 hash of the report output.
 """
-import sys
-import time
+
 import hashlib
-from io import StringIO
+import time
 from contextlib import redirect_stdout
+from io import StringIO
 
 # Import the same entry points as the AILang main.
-from main import main_seed, main_report
+from main import main_report, main_seed
+
 
 def run_benchmark():
     # Warm‑up is performed by the external runner script.
@@ -24,7 +25,7 @@ def run_benchmark():
     elapsed = time.time() - start
     output = buf.getvalue()
     # Compute SHA‑256 of the full report text
-    digest = hashlib.sha256(output.encode('utf-8')).hexdigest()
+    digest = hashlib.sha256(output.encode("utf-8")).hexdigest()
     # Emit in a simple parsable format
     print(f"TIME:{elapsed:.6f}")
     print(f"SHA256:{digest}")
@@ -32,6 +33,7 @@ def run_benchmark():
     # (comment out if not desired)
     # print("---REPORT---")
     # print(output)
+
 
 if __name__ == "__main__":
     run_benchmark()

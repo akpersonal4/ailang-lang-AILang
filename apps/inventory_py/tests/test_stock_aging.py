@@ -1,5 +1,10 @@
-from inventory.stock_aging import stock_aging_record, stock_aging_get_batches, stock_aging_summary, stock_aging_remove_batch
 from core.helpers import helpers_get_map_value_safe, helpers_unix_timestamp
+from inventory.stock_aging import (
+    stock_aging_get_batches,
+    stock_aging_record,
+    stock_aging_remove_batch,
+    stock_aging_summary,
+)
 
 
 def test_stock_aging_record_and_get_batches():
@@ -40,7 +45,9 @@ def test_stock_aging_summary():
         return False
     tsas61_90 = helpers_get_map_value_safe(tsasSummary, "61_90_days", -1)
     if tsas61_90 <= 0:
-        print("FAIL: stock_aging_summary - expected positive 61_90_days for old batch (7000000s = ~81 days)")
+        print(
+            "FAIL: stock_aging_summary - expected positive 61_90_days for old batch (7000000s = ~81 days)"
+        )
         return False
     print("PASS: stock_aging_summary")
     return True

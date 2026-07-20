@@ -23,6 +23,7 @@ import time
 from unittest.mock import patch
 
 from compiler.lsp.documents import Document
+from compiler.lsp.features.code_actions import get_code_actions
 from compiler.lsp.features.completion import get_completions
 from compiler.lsp.features.definition import get_definition
 from compiler.lsp.features.diagnostics import get_diagnostics
@@ -31,7 +32,6 @@ from compiler.lsp.features.references import get_references
 from compiler.lsp.features.rename import get_rename_edits
 from compiler.lsp.features.signature_help import get_signature_help
 from compiler.lsp.features.symbols import get_document_symbols
-from compiler.lsp.features.code_actions import get_code_actions
 from compiler.lsp.server import LspServer
 
 # =============================================================================
@@ -1363,7 +1363,10 @@ class TestLspServerFeatureDispatch:
     def test_code_action_returns_list(self):
         doc = Document(TEST_URI, _ERROR_PROGRAM_SEMANTIC)
         doc.compile()
-        _range = {"start": {"line": 0, "character": 0}, "end": {"line": 2, "character": 0}}
+        _range = {
+            "start": {"line": 0, "character": 0},
+            "end": {"line": 2, "character": 0},
+        }
         context = {"diagnostics": []}
         actions = get_code_actions(doc, _range, context)
         assert isinstance(actions, list)
@@ -1371,8 +1374,19 @@ class TestLspServerFeatureDispatch:
     def test_code_action_on_import_error(self):
         doc = Document(TEST_URI, _ERROR_PROGRAM_IMPORT)
         doc.compile()
-        _range = {"start": {"line": 0, "character": 0}, "end": {"line": 1, "character": 0}}
-        context = {"diagnostics": [{"message": "Module not found: nonexistent", "severity": 1, "range": _range}]}
+        _range = {
+            "start": {"line": 0, "character": 0},
+            "end": {"line": 1, "character": 0},
+        }
+        context = {
+            "diagnostics": [
+                {
+                    "message": "Module not found: nonexistent",
+                    "severity": 1,
+                    "range": _range,
+                }
+            ]
+        }
         actions = get_code_actions(doc, _range, context)
         assert len(actions) > 0
         titles = [a["title"] for a in actions]

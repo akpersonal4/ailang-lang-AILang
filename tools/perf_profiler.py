@@ -8,11 +8,10 @@ No runtime behaviour is modified — only observed.
 from __future__ import annotations
 
 import sys
-import time
 import tempfile
-import os
-from pathlib import Path
+import time
 from collections import defaultdict
+from pathlib import Path
 from typing import Any
 
 # Ensure the project root is on sys.path
@@ -23,16 +22,16 @@ sys.path.insert(0, str(_PROJECT_ROOT))
 from compiler.compilation import CompilationSession
 from compiler.diagnostics import DiagnosticReporter
 from compiler.ir.nodes import (
-    ProgramIR, FunctionIR, BlockIR,
-    VariableDeclarationIR, AssignmentIR, IfIR, ReturnIR,
-    ExpressionStatementIR, BinaryOperationIR, UnaryOperationIR,
-    CallIR, LiteralIR, VariableReferenceIR, MemberAccessIR,
+    BlockIR,
+    CallIR,
+    FunctionIR,
 )
-from compiler.runtime.interpreter import Runtime, ReturnSignal
+from compiler.runtime.interpreter import Runtime
 
 # =========================================================================
 # 1. Instrumented Runtime (observer only, no behaviour change)
 # =========================================================================
+
 
 class ProfiledRuntime(Runtime):
     """Runtime that counts every interpreter operation without modifying behaviour."""
@@ -45,8 +44,8 @@ class ProfiledRuntime(Runtime):
         self.probe: dict[str, int] = defaultdict(int)
         self.current_depth: int = 0
         self.max_depth: int = 0
-        self.depth_sum: int = 0      # sum of depths at call_entry (for avg)
-        self.depth_n: int = 0         # number of depth samples
+        self.depth_sum: int = 0  # sum of depths at call_entry (for avg)
+        self.depth_n: int = 0  # number of depth samples
 
     # ---- function calls ----
 
@@ -92,6 +91,7 @@ class ProfiledRuntime(Runtime):
 # 2. Test program generator
 # =========================================================================
 
+
 def generate_test_program(target_lines: int) -> str:
     """Generate a valid AILang program with approximately *target_lines* lines.
 
@@ -108,47 +108,47 @@ def generate_test_program(target_lines: int) -> str:
     # Pad with extra let decls in main to reach target
     extra_decls = max(target_lines - overhead - actual_fn_lines, 0)
 
-    lines: list[str] = ['import string;', 'import convert;', '']
+    lines: list[str] = ["import string;", "import convert;", ""]
 
     for i in range(n_fns):
-        lines.append(f'fn fn_{i}(x) {{')
-        lines.append(f'    let y = x + {i};')
-        lines.append(f'    let z = string.uppercase("a");')
-        lines.append(f'    return y;')
-        lines.append(f'}}')
-        lines.append('')
+        lines.append(f"fn fn_{i}(x) {{")
+        lines.append(f"    let y = x + {i};")
+        lines.append('    let z = string.uppercase("a");')
+        lines.append("    return y;")
+        lines.append("}")
+        lines.append("")
 
     # main function
-    lines.append('fn main() {')
+    lines.append("fn main() {")
     # call some functions
     calls = min(n_fns, 20)
-    result_var = 'r'
+    result_var = "r"
     for i in range(calls):
         if i == 0:
-            lines.append(f'    let r = fn_{i}({i});')
+            lines.append(f"    let r = fn_{i}({i});")
         else:
-            lines.append(f'    r = fn_{i}(r);')
+            lines.append(f"    r = fn_{i}(r);")
     for i in range(calls, n_fns):
-        lines.append(f'    let t{i} = fn_{i}(0);')
+        lines.append(f"    let t{i} = fn_{i}(0);")
     # extra padding
     for i in range(extra_decls):
-        lines.append(f'    let pad{i} = {i};')
-    lines.append('    return 0;')
-    lines.append('}')
+        lines.append(f"    let pad{i} = {i};")
+    lines.append("    return 0;")
+    lines.append("}")
 
-    return '\n'.join(lines)
+    return "\n".join(lines)
 
 
 # =========================================================================
 # 3. Compile + run helper
 # =========================================================================
 
+
 def compile_and_profile_analyzer(
     analyzer_path: Path,
     test_file_source: str,
 ) -> ProfiledRuntime:
     """Compile the analyzer together with a test file, then execute and profile."""
-    import tempfile
 
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp = Path(tmpdir)
@@ -178,6 +178,7 @@ def compile_and_profile_analyzer(
 
         # Inject test file path into environment args
         import compiler.runtime.builtins as builtins_mod
+
         builtins_mod._program_argv = [str(test_file_path)]
 
         # --- Runtime execution starts here ---
@@ -188,9 +189,7 @@ def compile_and_profile_analyzer(
             runtime._initialize_module(module_name)
 
         # Execute the analyzer's main function
-        entry_module = next(
-            name for name in bundle.module_irs if name.endswith("main")
-        )
+        entry_module = next(name for name in bundle.module_irs if name.endswith("main"))
         runtime.execute(bundle.module_irs[entry_module])
 
         runtime_elapsed = time.perf_counter() - runtime_start
@@ -203,7 +202,16 @@ def compile_and_profile_analyzer(
 # 4. Reporting helpers
 # =========================================================================
 
-def collect_metrics(probe: dict[str, int], max_depth: int, depth_sum: int, depth_n: int, elapsed: float, runtime_elapsed: float, lines: int) -> dict:
+
+def collect_metrics(
+    probe: dict[str, int],
+    max_depth: int,
+    depth_sum: int,
+    depth_n: int,
+    elapsed: float,
+    runtime_elapsed: float,
+    lines: int,
+) -> dict:
     """Extract structured metrics from raw probe data."""
     # Aggregate by category
     exec_node_total = sum(v for k, v in probe.items() if k.startswith("exec_node:"))
@@ -298,7 +306,9 @@ def print_metrics_table(results: list[dict]) -> None:
     print("=" * 100)
     print("  SCALING PROFILE SUMMARY")
     print("=" * 100)
-    header = f"{'Lines':>6} {'RunTime':>8} {'FnCalls':>10} {'MaxDepth':>9} {'AvgDepth':>9} "
+    header = (
+        f"{'Lines':>6} {'RunTime':>8} {'FnCalls':>10} {'MaxDepth':>9} {'AvgDepth':>9} "
+    )
     header += f"{'ExecNode':>10} {'EvalExpr':>9} {'Resolve':>9} "
     header += f"{'str.substr':>10} {'list.get':>9} {'map.get/has':>11}"
     print(header)
@@ -359,7 +369,7 @@ def print_hotspot_breakdown(results: list[dict]) -> None:
 
     # Time attribution (crude: each operation has equal cost)
     ops_per_sec = total / r["runtime_sec"]
-    print(f"  Crude time attribution (assuming equal cost per operation):")
+    print("  Crude time attribution (assuming equal cost per operation):")
     print(f"  {'Operation':<45} {'Count':>10} {'Est. Time(s)':>13} {'%':>7}")
     print("  " + "-" * 77)
     for i, (op, count) in enumerate(sorted_items[:10]):
@@ -372,8 +382,10 @@ def print_hotspot_breakdown(results: list[dict]) -> None:
 # 5. Main
 # =========================================================================
 
+
 def main() -> None:
     import sys
+
     if len(sys.argv) > 1:
         SIZES = [int(s) for s in sys.argv[1:]]
     else:
@@ -392,26 +404,35 @@ def main() -> None:
         actual_lines = source.count("\n") + 1
         print(f"    Generated {actual_lines} lines (target {size})")
 
-        print(f"    Compiling and profiling...")
+        print("    Compiling and profiling...")
         start = time.perf_counter()
         try:
             runtime = compile_and_profile_analyzer(analyzer_path, source)
             elapsed = time.perf_counter() - start
 
             metrics = collect_metrics(
-                runtime.probe, runtime.max_depth,
-                runtime.depth_sum, runtime.depth_n,
-                elapsed, runtime._runtime_elapsed, actual_lines,
+                runtime.probe,
+                runtime.max_depth,
+                runtime.depth_sum,
+                runtime.depth_n,
+                elapsed,
+                runtime._runtime_elapsed,
+                actual_lines,
             )
             results.append(metrics)
 
-            print(f"    Done in {elapsed:.3f}s total, runtime: {runtime._runtime_elapsed:.3f}s")
-            print(f"    AILang fn calls: {metrics['fn_calls']}, "
-                  f"max depth: {metrics['max_depth']}, "
-                  f"exec nodes: {metrics['exec_node_total']}")
+            print(
+                f"    Done in {elapsed:.3f}s total, runtime: {runtime._runtime_elapsed:.3f}s"
+            )
+            print(
+                f"    AILang fn calls: {metrics['fn_calls']}, "
+                f"max depth: {metrics['max_depth']}, "
+                f"exec nodes: {metrics['exec_node_total']}"
+            )
 
             # Save partial results after each run
             import json
+
             partial_path = _HERE / f"profile_{actual_lines}.json"
             with open(partial_path, "w") as fp:
                 json.dump(metrics, fp, indent=2, default=str)
@@ -420,6 +441,7 @@ def main() -> None:
         except Exception as e:
             print(f"    FAILED: {e}")
             import traceback
+
             traceback.print_exc()
             # Write the generated source for debugging
             debug_path = _HERE / f"debug_{size}.ail"
@@ -434,6 +456,7 @@ def main() -> None:
 
     # Write raw data to JSON for further analysis
     import json
+
     report = {
         "sizes_tested": SIZES,
         "results": results,

@@ -1,6 +1,6 @@
+from audit.audit_trail import audit_trail_recent, audit_trail_summary_by_action
 from core.helpers import helpers_get_map_value_safe
 from core.storage import storage_list
-from audit.audit_trail import audit_trail_summary_by_action, audit_trail_recent
 
 
 def ai_format_entry(aife_item):
@@ -9,7 +9,17 @@ def ai_format_entry(aife_item):
     aife_entity_id = helpers_get_map_value_safe(aife_item, "entity_id", "")
     aife_user = helpers_get_map_value_safe(aife_item, "created_by", "")
     aife_time = helpers_get_map_value_safe(aife_item, "created_at", "")
-    return aife_time + " | " + aife_user + " | " + aife_action + " | " + aife_entity + " | " + aife_entity_id
+    return (
+        aife_time
+        + " | "
+        + aife_user
+        + " | "
+        + aife_action
+        + " | "
+        + aife_entity
+        + " | "
+        + aife_entity_id
+    )
 
 
 def ai_summary_rec(aisr_items, aisr_idx, aisr_acc):

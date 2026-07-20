@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from unittest.mock import MagicMock
 
 from benchmarks.providers.base import AIProvider, ProviderResult
 
@@ -17,7 +16,7 @@ class TestCalibrationExecution:
     """Verify calibration execution logic."""
 
     def test_calibration_runs_against_providers(self, tmp_path: Path):
-        from benchmarks.calibration.run import run_calibration, CALIBRATION_PROMPTS
+        from benchmarks.calibration.run import CALIBRATION_PROMPTS, run_calibration
 
         class FakeProvider(AIProvider):
             @property
@@ -45,7 +44,9 @@ class TestCalibrationExecution:
                 return len(text) // 4
 
         providers = [FakeProvider()]
-        report = run_calibration(providers=providers, output_dir=str(tmp_path), quiet=True)
+        report = run_calibration(
+            providers=providers, output_dir=str(tmp_path), quiet=True
+        )
 
         assert len(report.runs) == len(CALIBRATION_PROMPTS)
         assert len(report.errors) == 0
@@ -87,7 +88,7 @@ class TestCalibrationExecution:
         assert "No providers" in report.errors[0]
 
     def test_calibration_report_serializable(self, tmp_path: Path):
-        from benchmarks.calibration.run import run_calibration, CALIBRATION_PROMPTS
+        from benchmarks.calibration.run import CALIBRATION_PROMPTS, run_calibration
 
         class FakeProvider(AIProvider):
             @property
@@ -109,7 +110,9 @@ class TestCalibrationExecution:
                 return 0
 
         providers = [FakeProvider()]
-        report = run_calibration(providers=providers, output_dir=str(tmp_path), quiet=True)
+        report = run_calibration(
+            providers=providers, output_dir=str(tmp_path), quiet=True
+        )
 
         json_str = json.dumps(report.to_dict(), indent=2, default=str)
         restored = json.loads(json_str)

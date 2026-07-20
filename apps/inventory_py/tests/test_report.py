@@ -1,6 +1,14 @@
-from core.helpers import helpers_get_map_value_safe, helpers_current_timestamp, helpers_find_in_list
+from business.report import (
+    profit_report_summary,
+    sales_report_all,
+    stock_report_all_products,
+)
+from core.helpers import (
+    helpers_current_timestamp,
+    helpers_find_in_list,
+    helpers_get_map_value_safe,
+)
 from core.storage import storage_add, storage_list
-from business.report import stock_report_all_products, sales_report_all, profit_report_summary
 
 
 def tr_create_customer():
@@ -11,7 +19,7 @@ def tr_create_customer():
         "phone": "555-REP",
         "active": True,
         "created_at": helpers_current_timestamp(),
-        "updated_at": helpers_current_timestamp()
+        "updated_at": helpers_current_timestamp(),
     }
     storage_add("customers", trcCustomer)
     trcLoaded = helpers_find_in_list(storage_list("customers"), "id", "TREP-CUS-001")
@@ -31,7 +39,7 @@ def tr_create_product():
         "unit": "pcs",
         "active": True,
         "created_at": helpers_current_timestamp(),
-        "updated_at": ""
+        "updated_at": "",
     }
     storage_add("products", trpProduct)
     trpLoaded = helpers_find_in_list(storage_list("products"), "id", "TREP-PRD-001")
@@ -49,7 +57,7 @@ def tr_create_movement():
         "reference_type": "manual",
         "reference_id": "",
         "notes": "Test movement",
-        "created_at": helpers_current_timestamp()
+        "created_at": helpers_current_timestamp(),
     }
     storage_add("movements", trmMovement)
     trmLoaded = helpers_find_in_list(storage_list("movements"), "id", "TREP-MOV-001")
@@ -66,7 +74,7 @@ def tr_create_sales_order():
         "total": 500,
         "notes": "Test sales order",
         "created_at": helpers_current_timestamp(),
-        "updated_at": helpers_current_timestamp()
+        "updated_at": helpers_current_timestamp(),
     }
     storage_add("sales_orders", trsoOrder)
     return True
@@ -80,7 +88,7 @@ def tr_create_purchase_order():
         "total": 300,
         "notes": "Test purchase order",
         "created_at": helpers_current_timestamp(),
-        "updated_at": helpers_current_timestamp()
+        "updated_at": helpers_current_timestamp(),
     }
     storage_add("purchase_orders", trpoOrder)
     return True
@@ -115,7 +123,13 @@ def tr_test_profit_report():
     if trprSalesTotal == 0 and trprPurchaseTotal == 0:
         print("FAIL: profit_report_summary returned empty data")
         return False
-    print("PASS: profit_report_summary (sales: " + str(trprSalesTotal) + ", purchases: " + str(trprPurchaseTotal) + ")")
+    print(
+        "PASS: profit_report_summary (sales: "
+        + str(trprSalesTotal)
+        + ", purchases: "
+        + str(trprPurchaseTotal)
+        + ")"
+    )
     return True
 
 

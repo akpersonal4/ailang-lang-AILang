@@ -11,7 +11,7 @@ import tempfile
 from contextlib import redirect_stdout
 from io import StringIO
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 from compiler.ast.builder import ASTBuilder
 from compiler.ast.nodes import ProgramNode
@@ -21,10 +21,10 @@ from compiler.ir import IRBuilder
 from compiler.ir.nodes import ProgramIR
 from compiler.lexer import Lexer
 from compiler.parser.parser import Parser
+from compiler.runtime.interpreter import Runtime
 from compiler.semantic.analyzer import SemanticAnalyzer
 from compiler.semantic.symbol_table import SymbolTable
 from compiler.types.checker import TypeChecker
-from compiler.runtime.interpreter import Runtime
 
 
 def _build_ir(source: str) -> ProgramIR:
@@ -63,9 +63,7 @@ def _run(source: str) -> Any:
         for module_name in session._graph.topological_sort():
             runtime._initialize_module(module_name)
 
-        entry_module = next(
-            name for name in bundle.module_irs if name.endswith("main")
-        )
+        entry_module = next(name for name in bundle.module_irs if name.endswith("main"))
         return runtime.execute(bundle.module_irs[entry_module])
 
 
@@ -95,14 +93,13 @@ def _run_with_runtime(source: str) -> tuple[Any, Runtime]:
         for module_name in session._graph.topological_sort():
             runtime._initialize_module(module_name)
 
-        entry_module = next(
-            name for name in bundle.module_irs if name.endswith("main")
-        )
+        entry_module = next(name for name in bundle.module_irs if name.endswith("main"))
         result = runtime.execute(bundle.module_irs[entry_module])
         return result, runtime
 
 
 # ── 2.1 Basic Resolution (10 tests) ──────────────────────────────────────
+
 
 def test_resolve_local_variable() -> None:
     assert _run("fn main() { let x = 1; return x; }") == 1
@@ -149,7 +146,7 @@ def test_builtin_resolution() -> None:
 
 
 def test_module_member_resolution() -> None:
-    assert _run("import string; fn main() { return string.length(\"abc\"); }") == 3
+    assert _run('import string; fn main() { return string.length("abc"); }') == 3
 
 
 def test_repeated_resolution_of_same_name() -> None:
@@ -157,6 +154,7 @@ def test_repeated_resolution_of_same_name() -> None:
 
 
 # ── 2.2 Shadowing (15 tests) ────────────────────────────────────────────
+
 
 def test_simple_shadow() -> None:
     assert _run("let x = 1; fn main() { let x = 2; return x; }") == 2
@@ -281,6 +279,7 @@ def test_shadow_builtin_name() -> None:
 
 # ── 2.3 Recursion (10 tests) ────────────────────────────────────────────
 
+
 def test_simple_recursion() -> None:
     source = "fn f(n) { if n == 0 { return 0; } return 1 + f(n - 1); } fn main() { return f(5); }"
     assert _run(source) == 5
@@ -342,6 +341,7 @@ fn main() { let _ = f(3); return f(5); }
 
 
 # ── 2.4 Reassignment / Mutation (15 tests) ──────────────────────────────
+
 
 def test_simple_reassignment() -> None:
     assert _run("fn main() { let x = 1; x = 2; return x; }") == 2
@@ -432,12 +432,13 @@ fn main() { f(3); return acc; }
 
 # ── 2.5 Module Variables (10 tests) ─────────────────────────────────────
 
+
 def test_import_and_use_module_function() -> None:
-    assert _run("import string; fn main() { return string.length(\"abc\"); }") == 3
+    assert _run('import string; fn main() { return string.length("abc"); }') == 3
 
 
 def test_module_function_multiple_times() -> None:
-    source = "import string; fn main() { let a = string.length(\"abc\"); let b = string.length(\"xy\"); return a + b; }"
+    source = 'import string; fn main() { let a = string.length("abc"); let b = string.length("xy"); return a + b; }'
     assert _run(source) == 5
 
 
@@ -451,7 +452,7 @@ fn main() { return count(string.length("abc")); }
 
 
 def test_module_calls_another_module() -> None:
-    source = "import string; import math; fn main() { return math.add(string.length(\"abc\"), 2); }"
+    source = 'import string; import math; fn main() { return math.add(string.length("abc"), 2); }'
     assert _run(source) == 5
 
 
@@ -461,47 +462,48 @@ def test_module_variable_shadowed_by_local() -> None:
 
 
 def test_module_qualified_name_resolution() -> None:
-    assert _run("import string; fn main() { return string.length(\"abc\"); }") == 3
+    assert _run('import string; fn main() { return string.length("abc"); }') == 3
 
 
 def test_module_function_called_with_local_var() -> None:
-    source = "import string; fn main() { let s = \"hello\"; return string.length(s); }"
+    source = 'import string; fn main() { let s = "hello"; return string.length(s); }'
     assert _run(source) == 5
 
 
 def test_module_function_in_expression() -> None:
-    source = "import string; fn main() { let s = string.uppercase(\"abc\"); return s; }"
+    source = 'import string; fn main() { let s = string.uppercase("abc"); return s; }'
     assert _run(source) == "ABC"
 
 
 def test_roundtrip_through_module() -> None:
-    source = "import string; fn main() { let s = string.uppercase(string.trim(\"  hello  \")); return s; }"
+    source = 'import string; fn main() { let s = string.uppercase(string.trim("  hello  ")); return s; }'
     assert _run(source) == "HELLO"
 
 
 def test_module_function_in_condition() -> None:
-    source = "import string; fn main() { if string.length(\"abc\") == 3 { return 1; } return 0; }"
+    source = 'import string; fn main() { if string.length("abc") == 3 { return 1; } return 0; }'
     assert _run(source) == 1
 
 
 # ── 2.6 Imported Symbols (8 tests) ──────────────────────────────────────
 
+
 def test_import_stdlib_function() -> None:
-    assert _run("import string; fn main() { return string.length(\"abc\"); }") == 3
+    assert _run('import string; fn main() { return string.length("abc"); }') == 3
 
 
 def test_multiple_imports() -> None:
-    source = "import string; import math; fn main() { return math.add(string.length(\"abc\"), 2); }"
+    source = 'import string; import math; fn main() { return math.add(string.length("abc"), 2); }'
     assert _run(source) == 5
 
 
 def test_import_same_module_twice() -> None:
-    source = "import string; import string; fn main() { return string.length(\"abc\"); }"
+    source = 'import string; import string; fn main() { return string.length("abc"); }'
     assert _run(source) == 3
 
 
 def test_imported_function_called_repeatedly() -> None:
-    source = "import string; fn main() { return string.length(\"abc\") + string.length(\"xy\"); }"
+    source = 'import string; fn main() { return string.length("abc") + string.length("xy"); }'
     assert _run(source) == 5
 
 
@@ -515,12 +517,12 @@ fn main() { return count_chars(string.length("abc")); }
 
 
 def test_combined_import_and_local_resolution() -> None:
-    source = "import string; fn main() { let x = 1; return string.length(\"a\") + x; }"
+    source = 'import string; fn main() { let x = 1; return string.length("a") + x; }'
     assert _run(source) == 2
 
 
 def test_import_resolves_to_module_environment() -> None:
-    source = "import string; fn main() { return string.length(\"abc\"); }"
+    source = 'import string; fn main() { return string.length("abc"); }'
     assert _run(source) == 3
 
 
@@ -531,9 +533,12 @@ def test_import_math_stdlib() -> None:
 
 # ── 2.7 Edge Cases (10 tests) ───────────────────────────────────────────
 
+
 def test_name_error_undefined_variable() -> None:
     import pytest
+
     from compiler.runtime.environment import Environment
+
     env = Environment()
     with pytest.raises(NameError):
         env.resolve("undefined_var")
@@ -541,7 +546,9 @@ def test_name_error_undefined_variable() -> None:
 
 def test_name_error_after_successful_resolves() -> None:
     import pytest
+
     from compiler.runtime.environment import Environment
+
     parent = Environment()
     parent.define("x", 1)
     child = Environment(parent)
@@ -563,6 +570,7 @@ def test_function_with_many_parameters() -> None:
 
 def test_assignment_to_undefined_variable_creates_binding() -> None:
     from compiler.runtime.environment import Environment
+
     env = Environment()
     env.assign("x", 1)
     assert env.resolve("x") == 1
@@ -570,14 +578,16 @@ def test_assignment_to_undefined_variable_creates_binding() -> None:
 
 def test_variable_defined_in_sibling_block() -> None:
     import pytest
+
     from compiler.runtime.environment import Environment
+
     env = Environment()
     with pytest.raises(NameError):
         env.resolve("x")
 
 
 def test_dotted_name_resolution() -> None:
-    assert _run("import string; fn main() { return string.length(\"abc\"); }") == 3
+    assert _run('import string; fn main() { return string.length("abc"); }') == 3
 
 
 def test_resolve_with_string_concat() -> None:
@@ -600,8 +610,10 @@ fn main() { return f(3, 4); }
 
 # ── 2.8 Cache-Specific Behavior (10 tests) ──────────────────────────────
 
+
 def test_cache_populated_after_first_resolve() -> None:
     from compiler.runtime.environment import Environment
+
     env = Environment()
     env.define("x", 10)
     env.resolve("x")
@@ -612,6 +624,7 @@ def test_cache_populated_after_first_resolve() -> None:
 
 def test_cache_miss_then_hit() -> None:
     from compiler.runtime.environment import Environment
+
     parent = Environment()
     parent.define("x", 10)
     child = Environment(parent)
@@ -625,6 +638,7 @@ def test_cache_miss_then_hit() -> None:
 
 def test_different_environments_have_different_caches() -> None:
     from compiler.runtime.environment import Environment
+
     parent = Environment()
     child = Environment(parent)
     parent.define("x", 1)
@@ -639,6 +653,7 @@ def test_different_environments_have_different_caches() -> None:
 
 def test_cache_empty_on_new_environment() -> None:
     from compiler.runtime.environment import Environment
+
     env = Environment()
     info = env.get_cache_info()
     assert info["cache_size"] == 0
@@ -647,7 +662,9 @@ def test_cache_empty_on_new_environment() -> None:
 
 def test_no_negative_cache_after_name_error() -> None:
     import pytest
+
     from compiler.runtime.environment import Environment
+
     env = Environment()
     env.define("x", 1)
     with pytest.raises(NameError):
@@ -672,6 +689,7 @@ def test_cache_hit_after_recursive_call_returns() -> None:
 
 def test_multiple_names_in_cache() -> None:
     from compiler.runtime.environment import Environment
+
     env = Environment()
     env.define("a", 1)
     env.define("b", 2)
@@ -689,13 +707,16 @@ def test_cache_hit_rate_high_for_repeated_access() -> None:
 
 
 def test_cache_cleared_when_frame_popped() -> None:
-    _, runtime = _run_with_runtime("fn f() { let x = 1; return x; } fn main() { f(); return 0; }")
+    _, runtime = _run_with_runtime(
+        "fn f() { let x = 1; return x; } fn main() { f(); return 0; }"
+    )
     infos = runtime.get_cache_info()
     frame_infos = [i for i in infos if i["scope"] != "global"]
     assert len(frame_infos) == 0
 
 
 # ── 2.9 Stress Tests (12 tests) ─────────────────────────────────────────
+
 
 def test_1000_recursive_calls_with_local_variables() -> None:
     source = "fn f(n) { let x = n; if n == 0 { return 0; } return x + f(n - 1); } fn main() { return f(1000); }"
@@ -740,13 +761,18 @@ fn main() { return f(100); }
 def test_chain_of_20_function_calls() -> None:
     parts = []
     for i in range(1, 21):
-        parts.append(f"fn f{i}() {{ let x = {i}; return x + f{i-1}(); }}" if i > 1 else f"fn f1() {{ let x = 1; return x; }}")
+        parts.append(
+            f"fn f{i}() {{ let x = {i}; return x + f{i-1}(); }}"
+            if i > 1
+            else "fn f1() { let x = 1; return x; }"
+        )
     source = "; ".join(parts) + "; fn main() { return f20(); }"
     assert _run(source) == 210
 
 
 def test_same_name_resolved_in_many_environments() -> None:
     from compiler.runtime.environment import Environment
+
     env1 = Environment()
     env2 = Environment()
     env1.define("x", 10)
@@ -760,7 +786,7 @@ def test_same_name_resolved_in_many_environments() -> None:
 
 
 def test_repeated_module_access() -> None:
-    source = "import string; fn main() { let a = string.length(\"a\"); let b = string.length(\"ab\"); return string.length(\"abc\"); }"
+    source = 'import string; fn main() { let a = string.length("a"); let b = string.length("ab"); return string.length("abc"); }'
     assert _run(source) == 3
 
 
@@ -783,6 +809,7 @@ fn main() { return deep(500); }
 
 def test_end_to_end_benchmark_output() -> None:
     import subprocess
+
     root = os.path.join(os.path.dirname(__file__), "..")
     apps = ["dice_roller.ail", "hangman_game.ail", "inventory_mgmt.ail", "kanban.ail"]
     for app in apps:
@@ -790,12 +817,15 @@ def test_end_to_end_benchmark_output() -> None:
         if os.path.exists(app_path):
             result = subprocess.run(
                 ["python", "-m", "compiler.cli", "run", app_path],
-                capture_output=True, text=True, timeout=30,
+                capture_output=True,
+                text=True,
+                timeout=30,
             )
             assert result.returncode == 0, f"{app} failed: {result.stderr}"
 
 
 # ── 3. Cache Correctness Invariants ─────────────────────────────────────
+
 
 def test_invariant_cache_stores_binding_location_not_value() -> None:
     f = StringIO()
@@ -822,7 +852,7 @@ def test_invariant_recursive_frames_resolve_own_binding() -> None:
 
 
 def test_invariant_module_lookup_cached_independently() -> None:
-    source = "import string; fn main() { print(string.length(\"abc\")); print(string.length(\"xyz\")); }"
+    source = 'import string; fn main() { print(string.length("abc")); print(string.length("xyz")); }'
     f = StringIO()
     with redirect_stdout(f):
         _run(source)
@@ -832,7 +862,9 @@ def test_invariant_module_lookup_cached_independently() -> None:
 
 def test_invariant_no_negative_cache_for_failed_lookups() -> None:
     import pytest
+
     from compiler.runtime.environment import Environment
+
     env = Environment()
     env.define("x", 1)
     with pytest.raises(NameError):
@@ -843,7 +875,9 @@ def test_invariant_no_negative_cache_for_failed_lookups() -> None:
 
 def test_invariant_no_negative_cache_in_child_env() -> None:
     import pytest
+
     from compiler.runtime.environment import Environment
+
     parent = Environment()
     child = Environment(parent)
     with pytest.raises(NameError):

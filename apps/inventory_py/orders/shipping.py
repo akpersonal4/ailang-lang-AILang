@@ -1,8 +1,14 @@
-from core.helpers import helpers_generate_id, helpers_current_timestamp, helpers_get_map_value_safe
-from core.storage import storage_list, storage_add, storage_get_by_id, storage_update
+from core.helpers import (
+    helpers_current_timestamp,
+    helpers_generate_id,
+    helpers_get_map_value_safe,
+)
+from core.storage import storage_add, storage_get_by_id, storage_list, storage_update
 
 
-def shipping_create(shcrOrderId, shcrCarrier, shcrTrackingNumber, shcrShipAddress, shcrShippedBy):
+def shipping_create(
+    shcrOrderId, shcrCarrier, shcrTrackingNumber, shcrShipAddress, shcrShippedBy
+):
     shcrId = helpers_generate_id("SHP-")
     shcrNow = helpers_current_timestamp()
     shcrShipment = {

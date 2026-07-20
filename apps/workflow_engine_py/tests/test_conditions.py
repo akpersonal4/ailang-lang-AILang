@@ -1,9 +1,12 @@
 """Tests for conditions module."""
+
 import os
 import sys
 import unittest
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+sys.path.insert(
+    0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+)
 
 from apps.workflow_engine_py import conditions
 
@@ -39,12 +42,16 @@ class TestConditions(unittest.TestCase):
 
     def test_check_all_pass(self):
         instance = {"data": {"amount": "500", "name": "John"}}
-        result = conditions.check(["data_has_key:amount", "data_not_empty:name"], instance)
+        result = conditions.check(
+            ["data_has_key:amount", "data_not_empty:name"], instance
+        )
         self.assertTrue(result)
 
     def test_check_one_fails(self):
         instance = {"data": {"amount": "500"}}
-        result = conditions.check(["data_has_key:amount", "data_has_key:name"], instance)
+        result = conditions.check(
+            ["data_has_key:amount", "data_has_key:name"], instance
+        )
         self.assertFalse(result)
 
     def test_check_empty_conditions(self):

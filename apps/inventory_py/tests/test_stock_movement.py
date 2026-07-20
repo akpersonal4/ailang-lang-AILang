@@ -1,6 +1,12 @@
-from inventory.stock_movement import movement_create, movement_list, movement_get_quantity_on_hand, movement_list_by_product, movement_list_by_type, movement_check_alert_threshold
 from core.helpers import helpers_get_map_value_safe
 from core.storage import storage_add
+from inventory.stock_movement import (
+    movement_check_alert_threshold,
+    movement_create,
+    movement_get_quantity_on_hand,
+    movement_list_by_product,
+    movement_list_by_type,
+)
 
 
 def test_sm_create_and_list_by_product():
@@ -8,7 +14,9 @@ def test_sm_create_and_list_by_product():
     storage_add("categories", smCat)
     smProd = {"id": "SM-TEST-PROD", "name": "Test Prod"}
     storage_add("products", smProd)
-    smMov = movement_create("SM-TEST-PROD", "inbound", 100, "manual", "REF-001", "Test inbound")
+    smMov = movement_create(
+        "SM-TEST-PROD", "inbound", 100, "manual", "REF-001", "Test inbound"
+    )
     if smMov is False:
         print("FAIL: movement_create returned false")
         return False
@@ -42,8 +50,12 @@ def test_sm_get_quantity_on_hand():
 def test_sm_list_by_type():
     smtProd = {"id": "SM-PROD-TYPE", "name": "Type Test Prod"}
     storage_add("products", smtProd)
-    movement_create("SM-PROD-TYPE", "adjustment", 10, "manual", "REF-T1", "Adjustment 1")
-    movement_create("SM-PROD-TYPE", "adjustment", 20, "manual", "REF-T2", "Adjustment 2")
+    movement_create(
+        "SM-PROD-TYPE", "adjustment", 10, "manual", "REF-T1", "Adjustment 1"
+    )
+    movement_create(
+        "SM-PROD-TYPE", "adjustment", 20, "manual", "REF-T2", "Adjustment 2"
+    )
     smtList = movement_list_by_type("adjustment")
     smtLen = len(smtList)
     if smtLen < 2:

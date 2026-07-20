@@ -1,6 +1,11 @@
-from inventory.transfer_integration import ti_create_transfer, ti_get_by_id, ti_list_by_warehouse, ti_summary
-from core.storage import storage_add
 from core.helpers import helpers_get_map_value_safe
+from core.storage import storage_add
+from inventory.transfer_integration import (
+    ti_create_transfer,
+    ti_get_by_id,
+    ti_list_by_warehouse,
+    ti_summary,
+)
 
 
 def test_ti_create_and_get():

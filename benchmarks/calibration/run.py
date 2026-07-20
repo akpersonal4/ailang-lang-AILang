@@ -11,16 +11,14 @@ from __future__ import annotations
 
 import json
 import sys
-import time
-from dataclasses import dataclass, field, asdict
-from datetime import datetime, timezone
+from dataclasses import dataclass, field
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from benchmarks.framework.environment import snapshot, get_project_root
+from benchmarks.framework.environment import snapshot
 from benchmarks.framework.reporting import generate_run_id
 from benchmarks.providers import AIProvider, ProviderResult, create_provider
-
 
 # ── Calibration Prompts ───────────────────────────────────────────────
 
@@ -33,15 +31,13 @@ CALIBRATION_PROMPTS: list[dict[str, str]] = [
         "name": "code_understanding",
         "prompt": (
             "Read this code and explain what it does in one sentence:\n\n"
-            'fn add(a, b) { return a + b; }\n'
-            'fn main() { return add(3, 4); }\n'
+            "fn add(a, b) { return a + b; }\n"
+            "fn main() { return add(3, 4); }\n"
         ),
     },
     {
         "name": "token_counting",
-        "prompt": (
-            "Count to 5. Respond with exactly: 1 2 3 4 5"
-        ),
+        "prompt": ("Count to 5. Respond with exactly: 1 2 3 4 5"),
     },
 ]
 
@@ -52,6 +48,7 @@ CALIBRATION_PROMPTS: list[dict[str, str]] = [
 @dataclass
 class CalibrationRun:
     """Result from a single calibration prompt against one provider."""
+
     prompt_name: str
     provider_name: str
     model: str
@@ -73,6 +70,7 @@ class CalibrationRun:
 @dataclass
 class CalibrationReport:
     """Complete calibration report for one execution."""
+
     calibration_version: str
     run_id: str
     timestamp: str
@@ -235,7 +233,7 @@ def run_calibration(
                 error_result = ProviderResult(
                     provider_name=provider.provider_name,
                     model=provider.model,
-                    timestamp=datetime.now(timezone.utc).isoformat(),
+                    timestamp=datetime.now(UTC).isoformat(),
                     completion_status="error",
                     failure_reason=str(e),
                 )
@@ -249,9 +247,7 @@ def run_calibration(
                         timestamp=error_result.timestamp,
                     )
                 )
-                report.errors.append(
-                    f"[{provider.provider_name}] {name}: {e}"
-                )
+                report.errors.append(f"[{provider.provider_name}] {name}: {e}")
                 if not quiet:
                     print(f"ERROR: {e}")
 
@@ -283,20 +279,21 @@ def main(argv: list[str] | None = None) -> int:
     """
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description="AILang AI Provider Calibration"
-    )
+    parser = argparse.ArgumentParser(description="AILang AI Provider Calibration")
     parser.add_argument(
-        "--config", "-c",
+        "--config",
+        "-c",
         help="Path to provider configuration JSON",
     )
     parser.add_argument(
-        "--output", "-o",
+        "--output",
+        "-o",
         default=None,
         help="Output directory for calibration report",
     )
     parser.add_argument(
-        "--quiet", "-q",
+        "--quiet",
+        "-q",
         action="store_true",
         help="Suppress output",
     )
@@ -322,8 +319,10 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     if not args.quiet:
-        print(f"\nCalibration complete: {len(report.runs)} runs, "
-              f"{len(report.errors)} errors.")
+        print(
+            f"\nCalibration complete: {len(report.runs)} runs, "
+            f"{len(report.errors)} errors."
+        )
     return 0
 
 

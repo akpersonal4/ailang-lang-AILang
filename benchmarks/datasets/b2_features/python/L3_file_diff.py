@@ -1,11 +1,11 @@
-import os
-
 SOURCE_TEXT = "apple\nbanana\ncherry\ndate\nfig\ngrape"
 REPLICA_TEXT = "apple\ncherry\ndate\nelderberry\nfig\nhoneydew"
+
 
 def read_lines(filepath):
     with open(filepath) as f:
         return [line.strip() for line in f if line.strip()]
+
 
 def binary_search(sorted_list, target):
     left, right = 0, len(sorted_list) - 1
@@ -19,11 +19,14 @@ def binary_search(sorted_list, target):
             left = mid + 1
     return -1
 
+
 def find_unique(a, b):
     return [line for line in a if binary_search(b, line) < 0]
 
+
 def find_common(a, b):
     return [line for line in a if binary_search(b, line) >= 0]
+
 
 def main():
     with open("benchmarks/datasets/b2_features/ailang/source.txt", "w") as f:
@@ -44,6 +47,7 @@ def main():
     for line in find_common(source, replica):
         print(f"- {line}")
     return 0
+
 
 if __name__ == "__main__":
     main()

@@ -1,12 +1,14 @@
 """Tests for history module."""
+
 import os
 import sys
 import unittest
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+sys.path.insert(
+    0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+)
 
-from apps.workflow_engine_py import storage
-from apps.workflow_engine_py import history
+from apps.workflow_engine_py import history, storage
 
 
 class TestHistory(unittest.TestCase):

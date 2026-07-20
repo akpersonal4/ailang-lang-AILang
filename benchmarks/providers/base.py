@@ -6,12 +6,9 @@ interacts only through this interface, never with provider-specific APIs.
 
 from __future__ import annotations
 
-import time
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from dataclasses import dataclass
 from typing import Any
-
 
 # ── Provider Result ───────────────────────────────────────────────────
 
@@ -166,7 +163,9 @@ def estimate_tokens_heuristic(text: str) -> int:
 # ── Token Pricing (approximate, for cost estimation) ──────────────────
 
 
-def _estimate_openai_cost(model: str, prompt_tokens: int, completion_tokens: int) -> float:
+def _estimate_openai_cost(
+    model: str, prompt_tokens: int, completion_tokens: int
+) -> float:
     """Estimate USD cost for an OpenAI API call.
 
     Uses published pricing as of 2026-07. This is approximate —

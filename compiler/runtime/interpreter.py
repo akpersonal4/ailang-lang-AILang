@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import sys
-from typing import Any, Dict
+from typing import Any
 
 from compiler.ir.nodes import (
     AssignmentIR,
@@ -131,7 +131,7 @@ class Runtime:
         )
         for name, value in zip(function.parameters, args):
             frame.define(name, value)
-        for name in function.parameters[len(args):]:
+        for name in function.parameters[len(args) :]:
             if name in defaults:
                 frame.define(name, defaults[name])
         self._frame_stack.append(frame)
@@ -272,7 +272,9 @@ class Runtime:
         # Register import aliases for this module in both the alias dict
         # and the global environment so they're accessible during execution
         if self._module_bundle is not None:
-            aliases = getattr(self._module_bundle, 'import_aliases', {}).get(module_name, {})
+            aliases = getattr(self._module_bundle, "import_aliases", {}).get(
+                module_name, {}
+            )
             for alias, real_module in aliases.items():
                 self._aliases[alias] = real_module
                 # Also define the alias as a module reference in global env

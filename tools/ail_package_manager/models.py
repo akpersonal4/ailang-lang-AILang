@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional
 
 
 @dataclass
@@ -27,11 +26,11 @@ class ProjectManifest:
 class DependencySpec:
     name: str
     version_req: str = "*"
-    path: Optional[str] = None
-    git: Optional[str] = None
-    tag: Optional[str] = None
-    branch: Optional[str] = None
-    rev: Optional[str] = None
+    path: str | None = None
+    git: str | None = None
+    tag: str | None = None
+    branch: str | None = None
+    rev: str | None = None
     dev: bool = False
 
 
@@ -42,9 +41,9 @@ class LockFilePackage:
     source: str
     checksum: str = ""
     dependencies: list[str] = field(default_factory=list)
-    path: Optional[str] = None
-    git: Optional[str] = None
-    tag: Optional[str] = None
+    path: str | None = None
+    git: str | None = None
+    tag: str | None = None
 
 
 @dataclass
@@ -59,9 +58,9 @@ class ResolvedDependency:
     name: str
     version: str
     source: str
-    path: Optional[Path] = None
-    git: Optional[str] = None
-    tag: Optional[str] = None
+    path: Path | None = None
+    git: str | None = None
+    tag: str | None = None
     checksum: str = ""
     dependencies: list[str] = field(default_factory=list)
     transitive_of: list[str] = field(default_factory=list)

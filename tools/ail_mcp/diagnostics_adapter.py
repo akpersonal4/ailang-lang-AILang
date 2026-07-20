@@ -32,7 +32,7 @@ DIAGNOSTICS = {
         "title": "Invalid Escape Sequence",
         "description": "The string contains an escape sequence that is not supported.",
         "cause": "Using unsupported escape sequences like \\x, \\u, or \\0.",
-        "fix": "Use only supported escape sequences: \\n, \\t, \\r, \\\\, \\\"",
+        "fix": 'Use only supported escape sequences: \\n, \\t, \\r, \\\\, \\"',
         "example": {
             "bad": 'fn main() { let x = "\\x41"; return 0 }',
             "good": 'fn main() { let x = "\\n"; return 0 }',
@@ -114,7 +114,7 @@ DIAGNOSTICS = {
         "cause": "Arithmetic operation that produces an invalid result type.",
         "fix": "Ensure the operation produces a numeric result.",
         "example": {
-            "bad": 'fn main() { let x = true + 1; return 0 }',
+            "bad": "fn main() { let x = true + 1; return 0 }",
             "good": "fn main() { let x = 1 + 1; return 0 }",
         },
     },
@@ -144,7 +144,7 @@ DIAGNOSTICS = {
         "cause": "Returning a value of incompatible type.",
         "fix": "Ensure the return value matches the function's declared return type.",
         "example": {
-            "bad": "fn y() { return \"hello\" }\nfn main() { let x = y(); return 0 }",
+            "bad": 'fn y() { return "hello" }\nfn main() { let x = y(); return 0 }',
             "good": "fn y() { return 42 }\nfn main() { let x = y(); return 0 }",
         },
     },

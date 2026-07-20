@@ -7,7 +7,6 @@ during IR construction. All tests require ``--experimental-loops``.
 
 from __future__ import annotations
 
-import os
 import tempfile
 from pathlib import Path
 
@@ -15,8 +14,6 @@ import pytest
 
 from compiler.compilation import CompilationSession
 from compiler.diagnostics import DiagnosticReporter
-from compiler.parser import Parser
-from compiler.lexer import Lexer
 from compiler.runtime.interpreter import Runtime
 
 
@@ -240,7 +237,9 @@ fn main() {
         session.discover(main_file, reporter)
 
         session.analyze(reporter)
-        assert reporter.error_count > 0, "Expected errors when --experimental-loops is off"
+        assert (
+            reporter.error_count > 0
+        ), "Expected errors when --experimental-loops is off"
 
 
 def test_for_print_elements() -> None:

@@ -75,7 +75,9 @@ def node_range(node: Any, text: str) -> LspRange | None:
     )
 
 
-def find_definition_target(ast: Any, name: str) -> IdentifierNode | ParameterNode | None:
+def find_definition_target(
+    ast: Any, name: str
+) -> IdentifierNode | ParameterNode | None:
     """Search the AST for the declaration site of a named symbol."""
     for child in walk_ast(ast):
         if isinstance(child, VariableDeclarationNode) and child.name.name == name:

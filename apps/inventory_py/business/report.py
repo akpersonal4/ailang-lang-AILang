@@ -1,8 +1,8 @@
 from core.helpers import helpers_get_map_value_safe
 from core.storage import storage_list
 
-
 # --- Stock Report ---
+
 
 def stock_report_calc_rec(sr_movements, sr_product_id, sr_idx, sr_total):
     for sr_item in sr_movements:
@@ -42,6 +42,7 @@ def stock_report_all_products():
 
 
 # --- Sales Report ---
+
 
 def sales_report_all():
     return storage_list("sales_orders")
@@ -92,6 +93,7 @@ def sales_report_items():
 
 # --- Profit Report ---
 
+
 def profit_report_sales_sum_rec(ps_items, ps_idx, ps_sum):
     for ps_item in ps_items:
         if "total" in ps_item:
@@ -115,6 +117,6 @@ def profit_report_summary():
         "sales_total": pr_sales_total,
         "sales_count": len(pr_sales),
         "purchase_total": pr_purchase_total,
-        "purchase_count": len(pr_purchases)
+        "purchase_count": len(pr_purchases),
     }
     return pr_result

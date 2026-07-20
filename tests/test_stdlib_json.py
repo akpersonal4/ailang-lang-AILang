@@ -5,8 +5,6 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 
-import pytest
-
 from compiler.compilation import CompilationSession
 from compiler.diagnostics import DiagnosticReporter
 from compiler.runtime.interpreter import Runtime

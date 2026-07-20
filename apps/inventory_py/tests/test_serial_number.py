@@ -1,5 +1,12 @@
-from logistics.serial_number import serial_register, serial_get_by_id, serial_find_by_serial, serial_list_by_product, serial_update_status, serial_list_available
 from core.helpers import helpers_get_map_value_safe
+from logistics.serial_number import (
+    serial_find_by_serial,
+    serial_get_by_id,
+    serial_list_available,
+    serial_list_by_product,
+    serial_register,
+    serial_update_status,
+)
 
 
 def test_serial_register():
@@ -40,7 +47,9 @@ def test_serial_find_by_serial():
         return False
     tsfbsSerialNum = helpers_get_map_value_safe(tsfbsFound, "serial_number", "")
     if tsfbsSerialNum != "SN-FIND-001":
-        print("FAIL: serial_find_by_serial - expected SN-FIND-001, got " + tsfbsSerialNum)
+        print(
+            "FAIL: serial_find_by_serial - expected SN-FIND-001, got " + tsfbsSerialNum
+        )
         return False
     print("PASS: serial_find_by_serial")
     return True
@@ -52,7 +61,9 @@ def test_serial_list_by_product():
     tslbpResults = serial_list_by_product("PRD-LIST-002")
     tslbpLen = len(tslbpResults)
     if tslbpLen < 2:
-        print("FAIL: serial_list_by_product - expected at least 2, got " + str(tslbpLen))
+        print(
+            "FAIL: serial_list_by_product - expected at least 2, got " + str(tslbpLen)
+        )
         return False
     print("PASS: serial_list_by_product (" + str(tslbpLen) + " items)")
     return True

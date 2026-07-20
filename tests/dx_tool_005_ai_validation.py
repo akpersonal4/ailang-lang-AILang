@@ -3,9 +3,8 @@
 
 from __future__ import annotations
 
-import sys
 import subprocess
-import hashlib
+import sys
 from pathlib import Path
 
 
@@ -17,10 +16,15 @@ def run_command(cmd: list[str]) -> tuple[int, str, str]:
 def test_basic_generation() -> bool:
     """Test: basic generation mode works for AI use."""
     print("TEST 1: Basic generation mode...")
-    code, out, err = run_command([
-        sys.executable, "-m", "tools.ail_testgen",
-        "--force", "--quiet",
-    ])
+    code, out, err = run_command(
+        [
+            sys.executable,
+            "-m",
+            "tools.ail_testgen",
+            "--force",
+            "--quiet",
+        ]
+    )
     if code == 0:
         print("  [PASS] Exit code 0")
         return True
@@ -32,10 +36,14 @@ def test_basic_generation() -> bool:
 def test_help_output() -> bool:
     """Test: --help provides useful usage information."""
     print("\nTEST 2: --help output...")
-    code, out, err = run_command([
-        sys.executable, "-m", "tools.ail_testgen",
-        "--help",
-    ])
+    code, out, err = run_command(
+        [
+            sys.executable,
+            "-m",
+            "tools.ail_testgen",
+            "--help",
+        ]
+    )
     checks = [
         "usage" in out,
         "dry-run" in out,
@@ -63,10 +71,16 @@ def test_report_only() -> bool:
     # Note initial file count
     initial_files = len(list(gen_dir.glob("*.py"))) if gen_dir.exists() else 0
 
-    code, out, err = run_command([
-        sys.executable, "-m", "tools.ail_testgen",
-        "--report-only", "--dry-run", "--quiet",
-    ])
+    code, out, err = run_command(
+        [
+            sys.executable,
+            "-m",
+            "tools.ail_testgen",
+            "--report-only",
+            "--dry-run",
+            "--quiet",
+        ]
+    )
 
     if code == 0:
         print("  [PASS] --report-only exits with code 0")
@@ -79,10 +93,14 @@ def test_report_only() -> bool:
 def test_exit_codes() -> bool:
     """Test: known exit codes (0=success)."""
     print("\nTEST 4: Exit code mapping...")
-    code, out, err = run_command([
-        sys.executable, "-m", "tools.ail_testgen",
-        "--quiet",
-    ])
+    code, out, err = run_command(
+        [
+            sys.executable,
+            "-m",
+            "tools.ail_testgen",
+            "--quiet",
+        ]
+    )
     if code == 0:
         print("  [PASS] Normal run exits 0")
         return True

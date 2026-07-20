@@ -1,4 +1,5 @@
 """Ticket System Test Runner - compiles and executes AILang test files."""
+
 import os
 import sys
 from pathlib import Path
@@ -6,16 +7,16 @@ from pathlib import Path
 os.chdir(str(Path(__file__).resolve().parent.parent))
 sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 
-from compiler.compilation.session import CompilationSession
 from compiler.compilation.resolution import ModuleResolver
-from compiler.diagnostics import DiagnosticReporter, DiagnosticFormatter
+from compiler.compilation.session import CompilationSession
+from compiler.diagnostics import DiagnosticFormatter, DiagnosticReporter
 from compiler.runtime import Runtime
 from compiler.runtime import builtins as runtime_builtins
 
 ticket_dir = Path.cwd()
-TESTS_DIR = ticket_dir / 'tests'
+TESTS_DIR = ticket_dir / "tests"
 
-data_dir = ticket_dir.parent.parent / 'data'
+data_dir = ticket_dir.parent.parent / "data"
 if data_dir.exists():
     for f in data_dir.iterdir():
         f.unlink()
@@ -25,7 +26,7 @@ else:
 
 def run_file(file_path: str, cli_args: list[str] | None = None) -> tuple[bool, str]:
     if cli_args is None:
-        cli_args = ['test.ail']
+        cli_args = ["test.ail"]
     runtime_builtins._program_argv = cli_args
 
     session = CompilationSession()
@@ -38,9 +39,9 @@ def run_file(file_path: str, cli_args: list[str] | None = None) -> tuple[bool, s
 
     if reporter.error_count > 0:
         formatter = DiagnosticFormatter()
-        output = ''
+        output = ""
         for diag in reporter.diagnostics:
-            output += formatter.format(diag) + '\n'
+            output += formatter.format(diag) + "\n"
         return False, output
 
     bundle = session.build_ir()
@@ -51,6 +52,7 @@ def run_file(file_path: str, cli_args: list[str] | None = None) -> tuple[bool, s
 
     try:
         import io
+
         old_stdout = sys.stdout
         sys.stdout = io.StringIO()
 
@@ -70,41 +72,43 @@ def run_file(file_path: str, cli_args: list[str] | None = None) -> tuple[bool, s
     except Exception as e:
         sys.stdout = old_stdout
         import traceback
+
         return False, f"{type(e).__name__}: {e}\n{traceback.format_exc()}"
 
     return True, captured
 
 
 import glob as globmod
-test_files = sorted(globmod.glob(str(TESTS_DIR / 'test_*.ail')))
+
+test_files = sorted(globmod.glob(str(TESTS_DIR / "test_*.ail")))
 test_files = [Path(f) for f in test_files]
 
 if not test_files:
     print("No test_*.ail files found")
     sys.exit(1)
 
-results = {'pass': 0, 'fail': 0, 'error': []}
+results = {"pass": 0, "fail": 0, "error": []}
 for tf in test_files:
     name = tf.stem
     print(f"\n=== TEST: {name} ===")
-    passed, output = run_file(str(tf), ['test.ail'])
+    passed, output = run_file(str(tf), ["test.ail"])
     if passed:
-        print(output, end='')
+        print(output, end="")
         if "FAIL" in output:
-            results['fail'] += 1
-            results['error'].append(name)
+            results["fail"] += 1
+            results["error"].append(name)
         else:
             print("PASS")
-            results['pass'] += 1
+            results["pass"] += 1
     else:
-        print(f"FAIL (compile/runtime error)")
-        print(output[:2000], end='')
-        results['fail'] += 1
-        results['error'].append(name)
+        print("FAIL (compile/runtime error)")
+        print(output[:2000], end="")
+        results["fail"] += 1
+        results["error"].append(name)
 
 print(f"\n{'='*50}")
 print(f"RESULTS: {results['pass']} passed, {results['fail']} failed")
-if results['fail'] > 0:
+if results["fail"] > 0:
     print(f"Failed: {', '.join(results['error'])}")
     sys.exit(1)
 else:

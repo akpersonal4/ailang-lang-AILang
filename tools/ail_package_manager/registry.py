@@ -20,10 +20,10 @@ import hashlib
 import io
 import json
 import tarfile
-import urllib.request
 import urllib.error
+import urllib.request
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from tools.ail_package_manager.manifest import parse_manifest
 
@@ -50,6 +50,7 @@ def load_registry_url(project_root: Path) -> str:
         if raw.startswith(b"\xef\xbb\xbf"):
             raw = raw[3:]
         import tomllib
+
         data = tomllib.loads(raw.decode("utf-8"))
     except Exception:
         return "https://registry.ailang.dev"
@@ -62,6 +63,7 @@ def load_registry_url(project_root: Path) -> str:
 
     # Fallback to env var
     import os
+
     return os.environ.get("AIL_REGISTRY", "https://registry.ailang.dev")
 
 
@@ -135,9 +137,7 @@ def _build_package_metadata(project_root: Path) -> dict[str, Any]:
     }
 
 
-def publish_local(
-    project_root: Path, registry_dir: Path
-) -> None:
+def publish_local(project_root: Path, registry_dir: Path) -> None:
     """Publish a package to a local directory registry."""
     project_root = project_root.resolve()
     registry_dir = registry_dir.resolve()
@@ -160,9 +160,7 @@ def publish_local(
     existing["name"] = name
     existing["versions"] = versions
 
-    metadata_path.write_text(
-        json.dumps(existing, indent=2), encoding="utf-8"
-    )
+    metadata_path.write_text(json.dumps(existing, indent=2), encoding="utf-8")
 
     # Write archive
     archive_bytes, checksum = pack_project(project_root)
@@ -171,9 +169,7 @@ def publish_local(
 
     # Update checksum in metadata
     versions[version]["checksum"] = checksum
-    metadata_path.write_text(
-        json.dumps(existing, indent=2), encoding="utf-8"
-    )
+    metadata_path.write_text(json.dumps(existing, indent=2), encoding="utf-8")
 
     print(f"  Published {name} v{version} to {registry_dir}")
     print(f"  Archive: {archive_path}")
@@ -203,9 +199,7 @@ def publish_remote(project_root: Path, registry_url: str) -> None:
             f"Registry rejected metadata for {name} v{version}: {e.code} {e.reason}"
         )
     except urllib.error.URLError as e:
-        raise RegistryError(
-            f"Could not reach registry {registry_url}: {e.reason}"
-        )
+        raise RegistryError(f"Could not reach registry {registry_url}: {e.reason}")
 
     # POST archive
     archive_url = _registry_urljoin(
@@ -224,16 +218,12 @@ def publish_remote(project_root: Path, registry_url: str) -> None:
             f"Registry rejected archive for {name} v{version}: {e.code} {e.reason}"
         )
     except urllib.error.URLError as e:
-        raise RegistryError(
-            f"Could not reach registry {registry_url}: {e.reason}"
-        )
+        raise RegistryError(f"Could not reach registry {registry_url}: {e.reason}")
 
     print(f"  Published {name} v{version} to {registry_url}")
 
 
-def fetch_package_metadata(
-    name: str, registry_url: str
-) -> dict[str, Any]:
+def fetch_package_metadata(name: str, registry_url: str) -> dict[str, Any]:
     """Fetch package metadata from the registry."""
     meta_url = _registry_urljoin(registry_url, "api", "packages", name)
     try:
@@ -242,13 +232,9 @@ def fetch_package_metadata(
     except urllib.error.HTTPError as e:
         if e.code == 404:
             raise RegistryError(f"Package '{name}' not found in registry")
-        raise RegistryError(
-            f"Registry error fetching {name}: {e.code} {e.reason}"
-        )
+        raise RegistryError(f"Registry error fetching {name}: {e.code} {e.reason}")
     except urllib.error.URLError as e:
-        raise RegistryError(
-            f"Could not reach registry {registry_url}: {e.reason}"
-        )
+        raise RegistryError(f"Could not reach registry {registry_url}: {e.reason}")
 
 
 def download_package_archive(
@@ -258,24 +244,18 @@ def download_package_archive(
 
     Returns the checksum from the registry for verification.
     """
-    meta_url = _registry_urljoin(
-        registry_url, "api", "packages", name, version
-    )
+    meta_url = _registry_urljoin(registry_url, "api", "packages", name, version)
     try:
         resp = urllib.request.urlopen(meta_url)
         metadata = json.loads(resp.read().decode("utf-8"))
     except urllib.error.HTTPError as e:
         if e.code == 404:
-            raise RegistryError(
-                f"Package '{name}' v{version} not found in registry"
-            )
+            raise RegistryError(f"Package '{name}' v{version} not found in registry")
         raise RegistryError(
             f"Registry error fetching {name} v{version}: {e.code} {e.reason}"
         )
     except urllib.error.URLError as e:
-        raise RegistryError(
-            f"Could not reach registry {registry_url}: {e.reason}"
-        )
+        raise RegistryError(f"Could not reach registry {registry_url}: {e.reason}")
 
     expected_checksum = metadata.get("checksum", "")
 
@@ -290,9 +270,7 @@ def download_package_archive(
             f"Registry error downloading {name} v{version}: {e.code} {e.reason}"
         )
     except urllib.error.URLError as e:
-        raise RegistryError(
-            f"Could not reach registry {registry_url}: {e.reason}"
-        )
+        raise RegistryError(f"Could not reach registry {registry_url}: {e.reason}")
 
     # Verify checksum
     if expected_checksum:
@@ -305,6 +283,7 @@ def download_package_archive(
 
     # Extract
     import io as _io
+
     buf = _io.BytesIO(archive_bytes)
     with tarfile.open(fileobj=buf, mode="r:gz") as tar:
         tar.extractall(path=str(dest_dir))
@@ -352,6 +331,7 @@ def download_from_local_registry(
 
     # Extract
     import io as _io
+
     buf = _io.BytesIO(archive_bytes)
     with tarfile.open(fileobj=buf, mode="r:gz") as tar:
         tar.extractall(path=str(dest_dir))

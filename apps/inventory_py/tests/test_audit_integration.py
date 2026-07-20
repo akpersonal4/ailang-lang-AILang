@@ -1,5 +1,9 @@
 from audit.audit import audit_log
-from audit.audit_integration import audit_integration_full_report, audit_integration_summary_by_entity, audit_integration_recent_activity
+from audit.audit_integration import (
+    audit_integration_full_report,
+    audit_integration_recent_activity,
+    audit_integration_summary_by_entity,
+)
 from core.helpers import helpers_get_map_value_safe
 
 
@@ -40,7 +44,13 @@ def test_ai_summary_by_entity():
     if taise_product_count < 1:
         print("FAIL: expected product >= 1, got " + str(taise_product_count))
         return False
-    print("PASS: ai_summary_by_entity (customer=" + str(taise_customer_count) + ", product=" + str(taise_product_count) + ")")
+    print(
+        "PASS: ai_summary_by_entity (customer="
+        + str(taise_customer_count)
+        + ", product="
+        + str(taise_product_count)
+        + ")"
+    )
     return True
 
 

@@ -8,16 +8,14 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
-from typing import Optional
 
 try:
     import tomllib
 except ImportError:
     import tomli as tomllib  # type: ignore[no-redef]
 
-from ail_platform.manifest import find_manifest
+from ail_platform.manifest import find_manifest as find_manifest  # noqa: F401  — re-exported for package modules
 from tools.ail_package_manager.models import DependencySpec, ProjectManifest
-
 
 _NAME_RE = re.compile(r"^[a-z][a-z0-9_]*$")
 _NAME_RE_KEBAB = re.compile(r"^[a-z][a-z0-9-]*[a-z0-9]$")
@@ -25,7 +23,7 @@ _MAX_NAME_LENGTH = 64
 _SEMVER_RE = re.compile(r"^\d+\.\d+\.\d+$")
 
 
-def validate_package_name(name: str) -> Optional[str]:
+def validate_package_name(name: str) -> str | None:
     """Validate a package name. Return error message or None.
 
     Accepts snake_case identifiers (must start with lowercase letter,
@@ -38,9 +36,7 @@ def validate_package_name(name: str) -> Optional[str]:
         if _NAME_RE_KEBAB.match(name):
             print(
                 f"Warning: package name '{name}' uses kebab-case which is deprecated. "
-                "Use snake_case instead (e.g. '{0}'.).".format(
-                    name.replace("-", "_")
-                )
+                "Use snake_case instead (e.g. '{0}'.).".format(name.replace("-", "_"))
             )
             return None
         return (
@@ -51,7 +47,7 @@ def validate_package_name(name: str) -> Optional[str]:
     return None
 
 
-def validate_version(version: str) -> Optional[str]:
+def validate_version(version: str) -> str | None:
     """Validate a semver version string. Return error message or None."""
     if not _SEMVER_RE.match(version):
         return f"Invalid version: '{version}'. Must be MAJOR.MINOR.PATCH (e.g. 1.0.0)"
@@ -75,9 +71,7 @@ def _parse_dep_value(name: str, value) -> DependencySpec:
         return DependencySpec(name=name, version_req=value)
     if isinstance(value, dict):
         if "path" in value:
-            return DependencySpec(
-                name=name, path=str(value["path"]), version_req="*"
-            )
+            return DependencySpec(name=name, path=str(value["path"]), version_req="*")
         git_url = value.get("git", "")
         return DependencySpec(
             name=name,
@@ -87,9 +81,7 @@ def _parse_dep_value(name: str, value) -> DependencySpec:
             branch=str(value["branch"]) if "branch" in value else None,
             rev=str(value["rev"]) if "rev" in value else None,
         )
-    raise ValueError(
-        f"Invalid dependency value for '{name}': expected string or table"
-    )
+    raise ValueError(f"Invalid dependency value for '{name}': expected string or table")
 
 
 def parse_manifest(path: Path) -> ProjectManifest:
@@ -133,12 +125,8 @@ def parse_manifest(path: Path) -> ProjectManifest:
     description = (
         str(project.get("description", "")) if isinstance(project, dict) else ""
     )
-    authors = (
-        list(project.get("authors", [])) if isinstance(project, dict) else []
-    )
-    license_val = (
-        str(project.get("license", "")) if isinstance(project, dict) else ""
-    )
+    authors = list(project.get("authors", [])) if isinstance(project, dict) else []
+    license_val = str(project.get("license", "")) if isinstance(project, dict) else ""
     entry = (
         str(project.get("entry", "main.ail"))
         if isinstance(project, dict)

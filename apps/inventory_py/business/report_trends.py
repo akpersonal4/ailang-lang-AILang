@@ -2,7 +2,9 @@ from core.helpers import helpers_get_map_value_safe
 from core.storage import storage_list
 
 
-def trend_find_max_idx_rec(tfmr_items, tfmr_value_key, tfmr_idx, tfmr_best_idx, tfmr_best_val):
+def trend_find_max_idx_rec(
+    tfmr_items, tfmr_value_key, tfmr_idx, tfmr_best_idx, tfmr_best_val
+):
     for i in range(len(tfmr_items)):
         tfmr_item = tfmr_items[i]
         tfmr_val = helpers_get_map_value_safe(tfmr_item, tfmr_value_key, 0)
@@ -48,10 +50,7 @@ def trend_group_sales_rec(tgs_items, tgs_idx, tgs_acc):
             tgs_existing = tgs_acc[tgs_prod_id]
             tgs_existing["total_qty"] += tgs_qty
         else:
-            tgs_new_entry = {
-                "product_id": tgs_prod_id,
-                "total_qty": tgs_qty
-            }
+            tgs_new_entry = {"product_id": tgs_prod_id, "total_qty": tgs_qty}
             tgs_acc[tgs_prod_id] = tgs_new_entry
     return tgs_acc
 
@@ -82,17 +81,21 @@ def trend_monthly_to_list_rec(tmtlr_keys, tmtlr_acc, tmtlr_result, tmtlr_idx):
     for tmtlr_key in tmtlr_keys:
         if tmtlr_key in tmtlr_acc:
             tmtlr_entry = tmtlr_acc[tmtlr_key]
-            tmtlr_result.append({
-                "month": tmtlr_key,
-                "count": helpers_get_map_value_safe(tmtlr_entry, "count", 0),
-                "total": helpers_get_map_value_safe(tmtlr_entry, "total", 0)
-            })
+            tmtlr_result.append(
+                {
+                    "month": tmtlr_key,
+                    "count": helpers_get_map_value_safe(tmtlr_entry, "count", 0),
+                    "total": helpers_get_map_value_safe(tmtlr_entry, "total", 0),
+                }
+            )
     return tmtlr_result
 
 
 def trend_category_group_rec(tcgr_items, tcgr_idx, tcgr_acc):
     for tcgr_item in tcgr_items:
-        tcgr_cat_id = helpers_get_map_value_safe(tcgr_item, "category_id", "uncategorized")
+        tcgr_cat_id = helpers_get_map_value_safe(
+            tcgr_item, "category_id", "uncategorized"
+        )
         if tcgr_cat_id in tcgr_acc:
             tcgr_acc[tcgr_cat_id] += 1
         else:
@@ -102,10 +105,12 @@ def trend_category_group_rec(tcgr_items, tcgr_idx, tcgr_acc):
 
 def trend_category_to_list_rec(tctl_keys, tctl_acc, tctl_result, tctl_idx):
     for tctl_key in tctl_keys:
-        tctl_result.append({
-            "category_id": tctl_key,
-            "count": helpers_get_map_value_safe(tctl_acc, tctl_key, 0)
-        })
+        tctl_result.append(
+            {
+                "category_id": tctl_key,
+                "count": helpers_get_map_value_safe(tctl_acc, tctl_key, 0),
+            }
+        )
     return tctl_result
 
 

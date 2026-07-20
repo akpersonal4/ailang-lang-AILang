@@ -1,6 +1,4 @@
 import time as _time
-from core.storage import storage_list as _storage_list
-
 
 HELPERS_GLOBAL_SEQ = [0]
 
@@ -28,7 +26,11 @@ def helpers_unix_timestamp():
 
 def helpers_generate_id(prefix):
     HELPERS_GLOBAL_SEQ[0] += 1
-    return prefix + str(helpers_unix_timestamp()) + helpers_pad_number(HELPERS_GLOBAL_SEQ[0], 4)
+    return (
+        prefix
+        + str(helpers_unix_timestamp())
+        + helpers_pad_number(HELPERS_GLOBAL_SEQ[0], 4)
+    )
 
 
 def helpers_safe_string(val):

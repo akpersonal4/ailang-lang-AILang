@@ -1,22 +1,30 @@
 # Test Suite — Static Analyzer Enhancement
 
-import os
-import sys
 import subprocess
-import tempfile
+import sys
 from pathlib import Path
 
 
 def run_command(cmd: list[str]) -> tuple[int, str, str]:
     """Run a command and return exit code, stdout, stderr."""
-    result = subprocess.run(cmd, capture_output=True, text=True, cwd=Path(__file__).resolve().parent.parent)
+    result = subprocess.run(
+        cmd, capture_output=True, text=True, cwd=Path(__file__).resolve().parent.parent
+    )
     return result.returncode, result.stdout, result.stderr
 
 
 def test_analyzer_builds() -> bool:
     """Test: The static analyzer builds successfully."""
     print("TEST 1: Analyzer builds...")
-    code, out, err = run_command([sys.executable, "-m", "compiler", "apps/static_analyzer/main.ail", "examples/hello_world/main.ail"])
+    code, out, err = run_command(
+        [
+            sys.executable,
+            "-m",
+            "compiler",
+            "apps/static_analyzer/main.ail",
+            "examples/hello_world/main.ail",
+        ]
+    )
     if code == 0:
         print("  ✓ PASS: Analyzer builds successfully")
         return True
@@ -29,43 +37,75 @@ def test_analyzer_builds() -> bool:
 def test_analyzer_runs() -> bool:
     """Test: The static analyzer runs on itself."""
     print("\nTEST 2: Analyzer runs on its own source...")
-    code, out, err = run_command([sys.executable, "-m", "compiler", "apps/static_analyzer/main.ail", "apps/static_analyzer/main.ail"])
+    code, out, err = run_command(
+        [
+            sys.executable,
+            "-m",
+            "compiler",
+            "apps/static_analyzer/main.ail",
+            "apps/static_analyzer/main.ail",
+        ]
+    )
     if code == 0 and "Function Analysis" in out:
         print("  ✓ PASS: Analyzer produces expected output")
         return True
     else:
-        print(f"  ✗ FAIL: Unexpected output")
+        print("  ✗ FAIL: Unexpected output")
         return False
 
 
 def test_unreachable_detection() -> bool:
     """Test: Unreachable functions are detected in output."""
     print("\nTEST 3: Unreachable function detection...")
-    code, out, err = run_command([sys.executable, "-m", "compiler", "apps/static_analyzer/main.ail", "apps/static_analyzer/main.ail"])
+    code, out, err = run_command(
+        [
+            sys.executable,
+            "-m",
+            "compiler",
+            "apps/static_analyzer/main.ail",
+            "apps/static_analyzer/main.ail",
+        ]
+    )
     if "Reachability Analysis" in out:
         print("  ✓ PASS: Reachability section present in output")
         return True
     else:
-        print(f"  ✗ FAIL: Reachability section missing")
+        print("  ✗ FAIL: Reachability section missing")
         return False
 
 
 def test_documentation_detection() -> bool:
     """Test: Documentation analysis is present in output."""
     print("\nTEST 4: Documentation detection...")
-    code, out, err = run_command([sys.executable, "-m", "compiler", "apps/static_analyzer/main.ail", "apps/static_analyzer/main.ail"])
+    code, out, err = run_command(
+        [
+            sys.executable,
+            "-m",
+            "compiler",
+            "apps/static_analyzer/main.ail",
+            "apps/static_analyzer/main.ail",
+        ]
+    )
     if "Documentation Analysis" in out:
         print("  ✓ PASS: Documentation section present in output")
         return True
     else:
-        print(f"  ✗ FAIL: Documentation section missing")
+        print("  ✗ FAIL: Documentation section missing")
         return False
 
 
 def test_existing_functionality_preserved() -> bool:
     """Test: Existing analyzer functionality still works."""
     print("\nTEST 5: Existing functionality preserved...")
-    code, out, err = run_command([sys.executable, "-m", "compiler", "apps/static_analyzer/main.ail", "apps/static_analyzer/main.ail"])
+    code, out, err = run_command(
+        [
+            sys.executable,
+            "-m",
+            "compiler",
+            "apps/static_analyzer/main.ail",
+            "apps/static_analyzer/main.ail",
+        ]
+    )
     required_sections = [
         "Source Statistics",
         "Function Analysis",
@@ -87,12 +127,20 @@ def test_existing_functionality_preserved() -> bool:
 def test_complexity_metrics() -> bool:
     """Test: Complexity metrics are computed."""
     print("\nTEST 6: Complexity metrics...")
-    code, out, err = run_command([sys.executable, "-m", "compiler", "apps/static_analyzer/main.ail", "apps/static_analyzer/main.ail"])
+    code, out, err = run_command(
+        [
+            sys.executable,
+            "-m",
+            "compiler",
+            "apps/static_analyzer/main.ail",
+            "apps/static_analyzer/main.ail",
+        ]
+    )
     if "Max call depth:" in out:
         print("  ✓ PASS: Complexity metrics present")
         return True
     else:
-        print(f"  ✗ FAIL: Complexity metrics missing")
+        print("  ✗ FAIL: Complexity metrics missing")
         return False
 
 

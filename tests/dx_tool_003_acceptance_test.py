@@ -1,13 +1,12 @@
 # DX Tool #003 Acceptance Testing
 # Comprehensive test suite for ail static_analyzer tool
 
-import os
-import sys
-import subprocess
-import time
-import tracemalloc
 import hashlib
 import json
+import subprocess
+import sys
+import time
+import tracemalloc
 from pathlib import Path
 
 
@@ -25,7 +24,14 @@ def hash_file(path: Path) -> str:
 def test_tool_runs_successfully() -> bool:
     """Test: python -m tools.ail_static_analyzer runs successfully."""
     print("TEST 1: Tool runs successfully...")
-    code, out, err = run_command([sys.executable, "-m", "tools.ail_static_analyzer", "apps/static_analyzer/main.ail"])
+    code, out, err = run_command(
+        [
+            sys.executable,
+            "-m",
+            "tools.ail_static_analyzer",
+            "apps/static_analyzer/main.ail",
+        ]
+    )
     if code == 0:
         print("  ✓ PASS: Tool exits with code 0")
         return True
@@ -43,7 +49,7 @@ def test_output_files_created() -> bool:
     json_path = root / "generated" / "STATIC_ANALYZER_REPORT.json"
 
     if md_path.exists() and json_path.exists():
-        print(f"  ✓ PASS: Both output files exist")
+        print("  ✓ PASS: Both output files exist")
         return True
     else:
         if not md_path.exists():
@@ -60,14 +66,21 @@ def test_deterministic_output() -> bool:
     json_path = root / "generated" / "STATIC_ANALYZER_REPORT.json"
 
     hash1 = hash_file(json_path)
-    run_command([sys.executable, "-m", "tools.ail_static_analyzer", "apps/static_analyzer/main.ail"])
+    run_command(
+        [
+            sys.executable,
+            "-m",
+            "tools.ail_static_analyzer",
+            "apps/static_analyzer/main.ail",
+        ]
+    )
     hash2 = hash_file(json_path)
 
     if hash1 == hash2:
         print(f"  ✓ PASS: Hashes match ({hash1[:16]}...)")
         return True
     else:
-        print(f"  ✗ FAIL: Hashes differ")
+        print("  ✗ FAIL: Hashes differ")
         return False
 
 
@@ -84,14 +97,20 @@ def test_json_structure() -> bool:
         return False
 
     if not isinstance(data, list):
-        print(f"  ✗ FAIL: JSON should be a list")
+        print("  ✗ FAIL: JSON should be a list")
         return False
 
     if len(data) == 0:
-        print(f"  ✗ FAIL: JSON list is empty")
+        print("  ✗ FAIL: JSON list is empty")
         return False
 
-    required_keys = ["path", "total_lines", "functions", "unreachable_functions", "undocumented_functions"]
+    required_keys = [
+        "path",
+        "total_lines",
+        "functions",
+        "unreachable_functions",
+        "undocumented_functions",
+    ]
     missing = [k for k in required_keys if k not in data[0]]
     if missing:
         print(f"  ✗ FAIL: Missing keys: {missing}")
@@ -104,7 +123,9 @@ def test_json_structure() -> bool:
 def test_directory_analysis() -> bool:
     """Test: Tool can analyze a directory."""
     print("\nTEST 5: Directory analysis...")
-    code, out, err = run_command([sys.executable, "-m", "tools.ail_static_analyzer", "apps"])
+    code, out, err = run_command(
+        [sys.executable, "-m", "tools.ail_static_analyzer", "apps"]
+    )
     file_count = out.count("Analyzed:")
     if file_count > 0:
         print(f"  ✓ PASS: Analyzed {file_count} file(s) (exit: {code})")
@@ -121,7 +142,9 @@ def test_performance() -> tuple[bool, float, int, int]:
     tracemalloc.start()
     start_time = time.perf_counter()
 
-    code, out, err = run_command([sys.executable, "-m", "tools.ail_static_analyzer", "apps/static_analyzer"])
+    code, out, err = run_command(
+        [sys.executable, "-m", "tools.ail_static_analyzer", "apps/static_analyzer"]
+    )
 
     elapsed = time.perf_counter() - start_time
     current, peak = tracemalloc.get_traced_memory()
@@ -144,19 +167,26 @@ def test_performance() -> tuple[bool, float, int, int]:
 def test_thresholds() -> bool:
     """Test: Threshold arguments work."""
     print("\nTEST 7: Threshold arguments...")
-    code, out, err = run_command([
-        sys.executable, "-m", "tools.ail_static_analyzer",
-        "apps/static_analyzer/main.ail",
-        "--max-depth", "20",
-        "--large-file-threshold", "5000",
-        "--many-functions-threshold", "200"
-    ])
+    code, out, err = run_command(
+        [
+            sys.executable,
+            "-m",
+            "tools.ail_static_analyzer",
+            "apps/static_analyzer/main.ail",
+            "--max-depth",
+            "20",
+            "--large-file-threshold",
+            "5000",
+            "--many-functions-threshold",
+            "200",
+        ]
+    )
 
     if code == 0:
         print("  ✓ PASS: Thresholds accepted")
         return True
     else:
-        print(f"  ✗ FAIL: Threshold arguments failed")
+        print("  ✗ FAIL: Threshold arguments failed")
         return False
 
 
@@ -164,19 +194,39 @@ def test_output_modes() -> bool:
     """Test: --json-only and --markdown-only work."""
     print("\nTEST 8: Output mode arguments...")
     root = Path(__file__).resolve().parent.parent
-    orig_md = (root / "generated" / "STATIC_ANALYZER_REPORT.md").read_text(encoding="utf-8") if (root / "generated" / "STATIC_ANALYZER_REPORT.md").exists() else ""
+    orig_md = (
+        (root / "generated" / "STATIC_ANALYZER_REPORT.md").read_text(encoding="utf-8")
+        if (root / "generated" / "STATIC_ANALYZER_REPORT.md").exists()
+        else ""
+    )
 
     # Test json-only
-    code1, _, _ = run_command([sys.executable, "-m", "tools.ail_static_analyzer", "apps/static_analyzer/main.ail", "--json-only"])
+    code1, _, _ = run_command(
+        [
+            sys.executable,
+            "-m",
+            "tools.ail_static_analyzer",
+            "apps/static_analyzer/main.ail",
+            "--json-only",
+        ]
+    )
 
     # Test markdown-only
-    code2, _, _ = run_command([sys.executable, "-m", "tools.ail_static_analyzer", "apps/static_analyzer/main.ail", "--markdown-only"])
+    code2, _, _ = run_command(
+        [
+            sys.executable,
+            "-m",
+            "tools.ail_static_analyzer",
+            "apps/static_analyzer/main.ail",
+            "--markdown-only",
+        ]
+    )
 
     if code1 == 0 and code2 == 0:
         print("  ✓ PASS: Output modes work")
         return True
     else:
-        print(f"  ✗ FAIL: Output modes failed")
+        print("  ✗ FAIL: Output modes failed")
         return False
 
 

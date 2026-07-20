@@ -10,7 +10,12 @@ from compiler.lsp.protocol import (
     SignatureHelp,
     SignatureInformation,
 )
-from compiler.lsp.utils import callee_name, find_enclosing_call, position_to_offset, walk_ast
+from compiler.lsp.utils import (
+    callee_name,
+    find_enclosing_call,
+    position_to_offset,
+    walk_ast,
+)
 
 _STDLIB_SIGNATURES: dict[str, tuple[str, list[tuple[str, str]]]] = {
     "string.concat": (

@@ -6,16 +6,14 @@ import argparse
 import sys
 from pathlib import Path
 
-from ail_platform.project import get_project_root
 from ail_platform.report_schema import ExitCode
 from tools.ail_package_manager.init import init_project
 from tools.ail_package_manager.installer import install
-from tools.ail_package_manager.manifest import find_manifest, parse_manifest
 from tools.ail_package_manager.registry import (
+    RegistryError,
     load_registry_url,
     publish_local,
     publish_remote,
-    RegistryError,
 )
 
 
@@ -57,6 +55,7 @@ def cmd_publish(args: argparse.Namespace) -> int:
 
 def cmd_add(args: argparse.Namespace) -> int:
     from tools.ail_package_manager.commands import cmd_add as do_add
+
     return do_add(
         package=args.package,
         version=args.version or "*",
@@ -69,6 +68,7 @@ def cmd_add(args: argparse.Namespace) -> int:
 
 def cmd_remove(args: argparse.Namespace) -> int:
     from tools.ail_package_manager.commands import cmd_remove as do_remove
+
     return do_remove(package=args.package)
 
 
@@ -84,11 +84,13 @@ def cmd_install(args: argparse.Namespace) -> int:
 
 def cmd_update(args: argparse.Namespace) -> int:
     from tools.ail_package_manager.commands import cmd_update as do_update
+
     return do_update(package=args.package)
 
 
 def cmd_list(args: argparse.Namespace) -> int:
     from tools.ail_package_manager.commands import cmd_list as do_list
+
     return do_list(tree=args.tree, outdated=args.outdated)
 
 
@@ -101,30 +103,49 @@ def main() -> int:
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
     # ail publish
-    publish_parser = subparsers.add_parser("publish", help="Publish package to registry")
+    publish_parser = subparsers.add_parser(
+        "publish", help="Publish package to registry"
+    )
     publish_parser.add_argument(
-        "--registry", default=None,
+        "--registry",
+        default=None,
         help="Registry URL (default: from ail.toml [tool.registry] or AIL_REGISTRY env var)",
     )
 
     # ail init
     init_parser = subparsers.add_parser("init", help="Initialize a new AILang project")
-    init_parser.add_argument("directory", nargs="?", default=None, help="Target directory (default: current)")
-    init_parser.add_argument("--name", default=None, help="Project name (default: directory name)")
-    init_parser.add_argument("--version", default="0.1.0", help="Initial version (default: 0.1.0)")
+    init_parser.add_argument(
+        "directory", nargs="?", default=None, help="Target directory (default: current)"
+    )
+    init_parser.add_argument(
+        "--name", default=None, help="Project name (default: directory name)"
+    )
+    init_parser.add_argument(
+        "--version", default="0.1.0", help="Initial version (default: 0.1.0)"
+    )
     init_parser.add_argument("--description", default=None, help="Project description")
-    init_parser.add_argument("--entry", default="main.ail", help="Entry point (default: main.ail)")
-    init_parser.add_argument("--yes", "-y", action="store_true", help="Accept all defaults")
+    init_parser.add_argument(
+        "--entry", default="main.ail", help="Entry point (default: main.ail)"
+    )
+    init_parser.add_argument(
+        "--yes", "-y", action="store_true", help="Accept all defaults"
+    )
 
     # ail add
     add_parser = subparsers.add_parser("add", help="Add a dependency")
-    add_parser.add_argument("package", help="Package name (e.g. my_package, my_package@1.0.0)")
-    add_parser.add_argument("--version", "-V", default=None, help="Version requirement (default: *)")
+    add_parser.add_argument(
+        "package", help="Package name (e.g. my_package, my_package@1.0.0)"
+    )
+    add_parser.add_argument(
+        "--version", "-V", default=None, help="Version requirement (default: *)"
+    )
     add_parser.add_argument("--path", default=None, help="Local path to package")
     add_parser.add_argument("--git", default=None, help="Git repository URL")
     add_parser.add_argument("--tag", default=None, help="Git tag")
     add_parser.add_argument("--branch", default=None, help="Git branch")
-    add_parser.add_argument("--dev", action="store_true", help="Add as dev dependency (future)")
+    add_parser.add_argument(
+        "--dev", action="store_true", help="Add as dev dependency (future)"
+    )
 
     # ail remove
     remove_parser = subparsers.add_parser("remove", help="Remove a dependency")
@@ -132,20 +153,34 @@ def main() -> int:
 
     # ail install
     install_parser = subparsers.add_parser("install", help="Install all dependencies")
-    install_parser.add_argument("--no-lock", action="store_true", help="Skip lock file creation")
-    install_parser.add_argument("--offline", action="store_true", help="Fail if network access required")
-    install_parser.add_argument("--frozen-lockfile", action="store_true", help="Fail if lock file would change")
-    install_parser.add_argument("--frozen", action="store_true", help="Alias for --frozen-lockfile")
-    install_parser.add_argument("--verbose", "-v", action="store_true", help="Show detailed installation output")
+    install_parser.add_argument(
+        "--no-lock", action="store_true", help="Skip lock file creation"
+    )
+    install_parser.add_argument(
+        "--offline", action="store_true", help="Fail if network access required"
+    )
+    install_parser.add_argument(
+        "--frozen-lockfile", action="store_true", help="Fail if lock file would change"
+    )
+    install_parser.add_argument(
+        "--frozen", action="store_true", help="Alias for --frozen-lockfile"
+    )
+    install_parser.add_argument(
+        "--verbose", "-v", action="store_true", help="Show detailed installation output"
+    )
 
     # ail update
     update_parser = subparsers.add_parser("update", help="Update dependencies")
-    update_parser.add_argument("package", nargs="?", default=None, help="Package to update (default: all)")
+    update_parser.add_argument(
+        "package", nargs="?", default=None, help="Package to update (default: all)"
+    )
 
     # ail list
     list_parser = subparsers.add_parser("list", help="List installed dependencies")
     list_parser.add_argument("--tree", action="store_true", help="Show dependency tree")
-    list_parser.add_argument("--outdated", action="store_true", help="Show outdated packages")
+    list_parser.add_argument(
+        "--outdated", action="store_true", help="Show outdated packages"
+    )
 
     args = parser.parse_args()
 

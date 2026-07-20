@@ -3,12 +3,11 @@
 
 from __future__ import annotations
 
-import os
-import sys
+import hashlib
 import json
 import shutil
 import subprocess
-import hashlib
+import sys
 from pathlib import Path
 
 
@@ -45,10 +44,15 @@ def clean_generated_tests():
 def test_tool_runs_successfully() -> bool:
     """Test: python -m tools.ail_testgen runs successfully."""
     print("TEST 1: Tool runs successfully (dry run)...")
-    code, out, err = run_command([
-        sys.executable, "-m", "tools.ail_testgen",
-        "--dry-run", "--quiet",
-    ])
+    code, out, err = run_command(
+        [
+            sys.executable,
+            "-m",
+            "tools.ail_testgen",
+            "--dry-run",
+            "--quiet",
+        ]
+    )
     if code == 0:
         print("  [PASS] Tool exits with code 0")
         return True
@@ -105,10 +109,15 @@ def test_generates_test_files() -> bool:
     print("\nTEST 4: Generates test files...")
     # Clean and regenerate
     clean_generated_tests()
-    code, out, err = run_command([
-        sys.executable, "-m", "tools.ail_testgen",
-        "--force", "--quiet",
-    ])
+    code, out, err = run_command(
+        [
+            sys.executable,
+            "-m",
+            "tools.ail_testgen",
+            "--force",
+            "--quiet",
+        ]
+    )
     root = Path(__file__).resolve().parent.parent
     gen_dir = root / "tests" / "generated"
     py_files = list(gen_dir.glob("*.py"))
@@ -153,10 +162,14 @@ def test_generated_file_has_header() -> bool:
 def test_skips_existing_without_force() -> bool:
     """Test: skips existing files without --force."""
     print("\nTEST 6: Skips existing files without --force...")
-    code, out, err = run_command([
-        sys.executable, "-m", "tools.ail_testgen",
-        "--quiet",
-    ])
+    code, out, err = run_command(
+        [
+            sys.executable,
+            "-m",
+            "tools.ail_testgen",
+            "--quiet",
+        ]
+    )
     if "skipped" in out.lower() or code == 0:
         print("  [PASS] Tool ran without error")
         return True
@@ -169,10 +182,14 @@ def test_skips_existing_without_force() -> bool:
 def test_dry_run_shows_preview() -> bool:
     """Test: --dry-run shows would_generate."""
     print("\nTEST 7: Dry run preview...")
-    code, out, err = run_command([
-        sys.executable, "-m", "tools.ail_testgen",
-        "--dry-run",
-    ])
+    code, out, err = run_command(
+        [
+            sys.executable,
+            "-m",
+            "tools.ail_testgen",
+            "--dry-run",
+        ]
+    )
     if "would_generate" in out.lower() or "would generate" in out.lower():
         print("  [PASS] Dry run shows preview")
         return True
@@ -192,14 +209,27 @@ def test_generated_tests_pass() -> bool:
         print("  [SKIP] No test files to validate")
         return True
     result = subprocess.run(
-        [sys.executable, "-m", "pytest", str(gen_dir), "--tb=short", "-q", "--collect-only"],
-        capture_output=True, text=True, timeout=60,
+        [
+            sys.executable,
+            "-m",
+            "pytest",
+            str(gen_dir),
+            "--tb=short",
+            "-q",
+            "--collect-only",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=60,
     )
     if result.returncode == 0:
         print("  [PASS] All generated tests collected successfully")
         return True
     else:
-        print("  [WARN] pytest collection exit %d: %s" % (result.returncode, result.stderr[:200]))
+        print(
+            "  [WARN] pytest collection exit %d: %s"
+            % (result.returncode, result.stderr[:200])
+        )
         print("  Stdout: %s" % result.stdout[:200])
         return True  # Not a hard failure — collection may fail for apps needing args
 

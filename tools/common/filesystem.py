@@ -36,7 +36,16 @@ def discover_apps(root: Path) -> list[Path]:
 
 def list_py_files(root: Path) -> list[Path]:
     """Recursively list all .py files under root, excluding common noise dirs."""
-    exclude = {".venv", ".venv_test", ".git", ".mypy_cache", ".pytest_cache", ".ruff_cache", "node_modules", "__pycache__"}
+    exclude = {
+        ".venv",
+        ".venv_test",
+        ".git",
+        ".mypy_cache",
+        ".pytest_cache",
+        ".ruff_cache",
+        "node_modules",
+        "__pycache__",
+    }
     result = []
     for path in root.rglob("*.py"):
         if not any(part in exclude for part in path.parts):

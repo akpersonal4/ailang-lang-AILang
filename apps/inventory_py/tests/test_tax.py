@@ -1,5 +1,11 @@
-from financial.tax import tax_create, tax_get_by_id, tax_calculate, tax_list_by_country, tax_update_rate
 from core.helpers import helpers_get_map_value_safe
+from financial.tax import (
+    tax_calculate,
+    tax_create,
+    tax_get_by_id,
+    tax_list_by_country,
+    tax_update_rate,
+)
 
 
 def test_tax_create():
@@ -64,7 +70,10 @@ def test_tax_update_rate():
         return False
     turCalcResult = tax_calculate(200, turId)
     if turCalcResult != 30:
-        print("FAIL: tax_update_rate - expected 30 after update, got " + str(turCalcResult))
+        print(
+            "FAIL: tax_update_rate - expected 30 after update, got "
+            + str(turCalcResult)
+        )
         return False
     print("PASS: tax_update_rate")
     return True

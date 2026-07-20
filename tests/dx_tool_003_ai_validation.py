@@ -1,15 +1,19 @@
 # DX Tool #003 AI Validation
 # Validates that the analyzer output provides useful information for AI code generation
 
-from pathlib import Path
 import json
+from pathlib import Path
 
 
 def validate_json_for_ai_consumption() -> dict:
     """
     Validate that the JSON report provides useful metrics for AI consumption.
     """
-    json_path = Path(__file__).resolve().parent.parent / "generated" / "STATIC_ANALYZER_REPORT.json"
+    json_path = (
+        Path(__file__).resolve().parent.parent
+        / "generated"
+        / "STATIC_ANALYZER_REPORT.json"
+    )
     if not json_path.exists():
         return {"file_exists": False}
 
@@ -23,10 +27,16 @@ def validate_json_for_ai_consumption() -> dict:
         "is_list": isinstance(data, list),
         "has_entries": len(data) > 0,
         "has_path": all("path" in entry for entry in data) if data else False,
-        "has_total_lines": all("total_lines" in entry for entry in data) if data else False,
+        "has_total_lines": (
+            all("total_lines" in entry for entry in data) if data else False
+        ),
         "has_functions": all("functions" in entry for entry in data) if data else False,
-        "has_unreachable": all("unreachable_functions" in entry for entry in data) if data else False,
-        "has_undocumented": all("undocumented_functions" in entry for entry in data) if data else False,
+        "has_unreachable": (
+            all("unreachable_functions" in entry for entry in data) if data else False
+        ),
+        "has_undocumented": (
+            all("undocumented_functions" in entry for entry in data) if data else False
+        ),
         "has_max_depth": all("max_depth" in entry for entry in data) if data else False,
     }
 
@@ -37,7 +47,11 @@ def validate_markdown_for_human_readability() -> dict:
     """
     Validate that the markdown report is human-readable and useful.
     """
-    md_path = Path(__file__).resolve().parent.parent / "generated" / "STATIC_ANALYZER_REPORT.md"
+    md_path = (
+        Path(__file__).resolve().parent.parent
+        / "generated"
+        / "STATIC_ANALYZER_REPORT.md"
+    )
     if not md_path.exists():
         return {"file_exists": False}
 
@@ -58,8 +72,16 @@ def validate_new_features_present() -> dict:
     """
     Validate that new DX-003 features are present in both reports.
     """
-    json_path = Path(__file__).resolve().parent.parent / "generated" / "STATIC_ANALYZER_REPORT.json"
-    md_path = Path(__file__).resolve().parent.parent / "generated" / "STATIC_ANALYZER_REPORT.md"
+    json_path = (
+        Path(__file__).resolve().parent.parent
+        / "generated"
+        / "STATIC_ANALYZER_REPORT.json"
+    )
+    md_path = (
+        Path(__file__).resolve().parent.parent
+        / "generated"
+        / "STATIC_ANALYZER_REPORT.md"
+    )
 
     json_checks = {}
     md_checks = {}

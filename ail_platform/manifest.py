@@ -21,6 +21,7 @@ class ManifestError(Exception):
 @dataclass
 class ProjectManifest:
     """Canonical representation of an ail.toml project manifest."""
+
     name: str
     version: str
     description: str = ""
@@ -127,7 +128,7 @@ def write_manifest(manifest: ProjectManifest, path: Path) -> None:
                 if not value:
                     continue
                 items = ", ".join(repr(v) for v in value)
-                lines.append(f'{key} = [{items}]')
+                lines.append(f"{key} = [{items}]")
             elif isinstance(value, dict):
                 lines.append(f"{key} = {{")
                 for dk, dv in value.items():
@@ -140,9 +141,7 @@ def write_manifest(manifest: ProjectManifest, path: Path) -> None:
     path.write_text("\n".join(lines), encoding="utf-8")
 
 
-def get_tool_config(
-    manifest: ProjectManifest, tool_name: str
-) -> dict:
+def get_tool_config(manifest: ProjectManifest, tool_name: str) -> dict:
     """Extract tool-specific configuration from [tools.<tool_name>].
 
     Returns empty dict if the section doesn't exist or is empty.

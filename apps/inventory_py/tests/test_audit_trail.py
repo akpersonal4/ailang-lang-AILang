@@ -1,5 +1,10 @@
 from audit.audit import audit_log
-from audit.audit_trail import audit_trail_list_by_date_range, audit_trail_list_by_user, audit_trail_summary_by_action, audit_trail_recent
+from audit.audit_trail import (
+    audit_trail_list_by_date_range,
+    audit_trail_list_by_user,
+    audit_trail_recent,
+    audit_trail_summary_by_action,
+)
 from core.helpers import helpers_get_map_value_safe
 
 
@@ -32,7 +37,9 @@ def test_audit_trail_list_by_user():
         return False
     tu_len = len(tu_results)
     if tu_len < 2:
-        print("FAIL: audit_trail_list_by_user - expected at least 2, got " + str(tu_len))
+        print(
+            "FAIL: audit_trail_list_by_user - expected at least 2, got " + str(tu_len)
+        )
         return False
     print("PASS: audit_trail_list_by_user (" + str(tu_len) + " items)")
     return True
@@ -51,13 +58,25 @@ def test_audit_trail_summary_by_action():
         return False
     ts_create_count = helpers_get_map_value_safe(ts_summary, "create", 0)
     if ts_create_count < 2:
-        print("FAIL: audit_trail_summary_by_action - expected create >= 2, got " + str(ts_create_count))
+        print(
+            "FAIL: audit_trail_summary_by_action - expected create >= 2, got "
+            + str(ts_create_count)
+        )
         return False
     ts_update_count = helpers_get_map_value_safe(ts_summary, "update", 0)
     if ts_update_count < 1:
-        print("FAIL: audit_trail_summary_by_action - expected update >= 1, got " + str(ts_update_count))
+        print(
+            "FAIL: audit_trail_summary_by_action - expected update >= 1, got "
+            + str(ts_update_count)
+        )
         return False
-    print("PASS: audit_trail_summary_by_action (create=" + str(ts_create_count) + ", update=" + str(ts_update_count) + ")")
+    print(
+        "PASS: audit_trail_summary_by_action (create="
+        + str(ts_create_count)
+        + ", update="
+        + str(ts_update_count)
+        + ")"
+    )
     return True
 
 

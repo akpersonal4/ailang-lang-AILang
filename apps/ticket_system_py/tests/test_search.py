@@ -1,11 +1,14 @@
 """Tests for search and filter operations."""
-import sys
+
 import os
+import sys
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import unittest
+
 import storage
-from ticket import create, search, filter_by, set_status, assign
+from ticket import assign, create, filter_by, search, set_status
 
 
 class TestSearch(unittest.TestCase):

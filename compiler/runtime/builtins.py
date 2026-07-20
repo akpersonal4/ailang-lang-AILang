@@ -6,10 +6,10 @@ import csv as _csv
 import io as _io
 import json as _json
 import os
-from pathlib import Path
 import random as _random
 import sys
 import time as _time
+from pathlib import Path
 from typing import Any, cast
 
 from .values import RuntimeValue
@@ -97,7 +97,11 @@ def list_filter_by_contains(args: tuple[RuntimeValue, ...]) -> list[RuntimeValue
     items = args[0]
     key = str(args[1])
     substring = str(args[2])
-    return [item for item in items if isinstance(item, dict) and substring in str(item.get(key, ""))]
+    return [
+        item
+        for item in items
+        if isinstance(item, dict) and substring in str(item.get(key, ""))
+    ]
 
 
 def list_collect_key(args: tuple[RuntimeValue, ...]) -> list[RuntimeValue]:
@@ -118,7 +122,9 @@ def dict_values(args: tuple[RuntimeValue, ...]) -> list[RuntimeValue]:
     return list(values.values())
 
 
-def list_group_by_key(args: tuple[RuntimeValue, ...]) -> dict[RuntimeValue, list[RuntimeValue]]:
+def list_group_by_key(
+    args: tuple[RuntimeValue, ...],
+) -> dict[RuntimeValue, list[RuntimeValue]]:
     items = args[0]
     key = str(args[1])
     groups: dict[RuntimeValue, list[RuntimeValue]] = {}
@@ -157,7 +163,8 @@ def list_search_by_name(args: tuple[RuntimeValue, ...]) -> list[RuntimeValue]:
     items = args[0]
     query = str(args[1]).lower()
     return [
-        item for item in items
+        item
+        for item in items
         if isinstance(item, dict)
         and "name" in item
         and query in str(item["name"]).lower()

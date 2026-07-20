@@ -9,12 +9,12 @@ import json
 import sys
 from typing import Any
 
-from .context_adapter import get_language_context
 from .compiler_adapter import compile_source
-from .stdlib_adapter import get_stdlib
+from .context_adapter import get_language_context
 from .diagnostics_adapter import explain_diagnostic
-from .examples_adapter import get_examples
 from .docs_adapter import get_document, list_documents
+from .examples_adapter import get_examples
+from .stdlib_adapter import get_stdlib
 
 VERSION = "1.0.8"
 

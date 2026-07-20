@@ -1,5 +1,9 @@
-from core.helpers import helpers_generate_id, helpers_current_timestamp, helpers_get_map_value_safe
-from core.storage import storage_add, storage_list, storage_get_by_id, storage_update
+from core.helpers import (
+    helpers_current_timestamp,
+    helpers_generate_id,
+    helpers_get_map_value_safe,
+)
+from core.storage import storage_add, storage_get_by_id, storage_list, storage_update
 from inventory.stock_movement import movement_get_quantity_on_hand
 
 

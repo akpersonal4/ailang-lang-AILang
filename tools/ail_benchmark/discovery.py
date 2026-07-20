@@ -4,10 +4,8 @@
 from __future__ import annotations
 
 import sys
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
-
-from ail_platform.project import get_project_root
 
 
 @dataclass
@@ -94,22 +92,22 @@ def discover_benchmarks(
             raise ValueError(
                 f"Benchmark app '{app_name}' not found at apps/{app_name}/main.ail"
             )
-        return _add_args([
-            Benchmark(
-                name=app_name,
-                path=app_path,
-                suite="app",
-            )
-        ])
+        return _add_args(
+            [
+                Benchmark(
+                    name=app_name,
+                    path=app_path,
+                    suite="app",
+                )
+            ]
+        )
 
     if suite == "full":
         return _add_args(discover_all_apps(root))
 
     if suite not in SUITE_DEFINITIONS:
         valid = ", ".join(sorted(SUITE_DEFINITIONS.keys()) + ["full"])
-        raise ValueError(
-            f"Unknown suite '{suite}'. Valid suites: {valid}"
-        )
+        raise ValueError(f"Unknown suite '{suite}'. Valid suites: {valid}")
 
     app_names = SUITE_DEFINITIONS[suite]
     benchmarks: list[Benchmark] = []

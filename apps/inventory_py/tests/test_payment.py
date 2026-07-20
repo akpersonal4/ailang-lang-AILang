@@ -1,5 +1,11 @@
-from financial.payment import payment_create, payment_get_by_id, payment_list_by_invoice, payment_total_by_invoice, payment_refund
 from core.helpers import helpers_get_map_value_safe
+from financial.payment import (
+    payment_create,
+    payment_get_by_id,
+    payment_list_by_invoice,
+    payment_refund,
+    payment_total_by_invoice,
+)
 
 
 def test_payment_create():
@@ -38,7 +44,9 @@ def test_payment_list_by_invoice():
     tplbiResults = payment_list_by_invoice("INV-LIST-001")
     tplbiLen = len(tplbiResults)
     if tplbiLen < 2:
-        print("FAIL: payment_list_by_invoice - expected at least 2, got " + str(tplbiLen))
+        print(
+            "FAIL: payment_list_by_invoice - expected at least 2, got " + str(tplbiLen)
+        )
         return False
     print("PASS: payment_list_by_invoice (" + str(tplbiLen) + " items)")
     return True
@@ -68,7 +76,10 @@ def test_payment_refund():
         return False
     tprRefundAmount = helpers_get_map_value_safe(tprRefund, "amount", 0)
     if tprRefundAmount >= 0:
-        print("FAIL: payment_refund - expected negative amount, got " + str(tprRefundAmount))
+        print(
+            "FAIL: payment_refund - expected negative amount, got "
+            + str(tprRefundAmount)
+        )
         return False
     tprRefundReason = helpers_get_map_value_safe(tprRefund, "reason", "")
     if tprRefundReason != "Customer requested refund":

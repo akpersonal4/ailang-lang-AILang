@@ -27,9 +27,9 @@ from compiler.ast.nodes import (
     VariableDeclarationNode,
 )
 from compiler.diagnostics import (
+    SEM003_WRONG_ARG_COUNT,
     Diagnostic,
     Severity,
-    SEM003_WRONG_ARG_COUNT,
 )
 from compiler.semantic.symbol_table import SymbolTable
 
@@ -254,8 +254,12 @@ class SemanticAnalyzer:
 
         if isinstance(callee, IdentifierNode):
             func_name = callee.name
-            symbol = self.symbol_table.resolve(func_name, callee.start_span, callee.end_span)
-        elif isinstance(callee, MemberAccessNode) and isinstance(callee.receiver, IdentifierNode):
+            symbol = self.symbol_table.resolve(
+                func_name, callee.start_span, callee.end_span
+            )
+        elif isinstance(callee, MemberAccessNode) and isinstance(
+            callee.receiver, IdentifierNode
+        ):
             func_name = callee.receiver.name + "." + callee.member.name
             active = self.symbol_table.scopes[-1]
             symbol = active.resolve(func_name) if active else None
@@ -266,7 +270,11 @@ class SemanticAnalyzer:
             return
 
         arg_count = len(node.arguments)
-        min_required = symbol.required_param_count if symbol.required_param_count is not None else symbol.param_count
+        min_required = (
+            symbol.required_param_count
+            if symbol.required_param_count is not None
+            else symbol.param_count
+        )
         if arg_count < min_required or arg_count > symbol.param_count:
             if self.symbol_table.reporter is not None:
                 diagnostic = Diagnostic(

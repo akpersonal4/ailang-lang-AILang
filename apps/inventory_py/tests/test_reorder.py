@@ -1,4 +1,10 @@
-from business.reorder import reorder_set_level, reorder_get_level, reorder_check, reorder_list_needed, reorder_calculate_lead_time_demand
+from business.reorder import (
+    reorder_calculate_lead_time_demand,
+    reorder_check,
+    reorder_get_level,
+    reorder_list_needed,
+    reorder_set_level,
+)
 from core.helpers import helpers_get_map_value_safe
 
 
@@ -66,7 +72,10 @@ def test_reorder_list_needed():
 def test_reorder_calculate_lead_time_demand():
     trcResult = reorder_calculate_lead_time_demand(10, 5)
     if trcResult != 50:
-        print("FAIL: reorder_calculate_lead_time_demand - expected 50, got " + str(trcResult))
+        print(
+            "FAIL: reorder_calculate_lead_time_demand - expected 50, got "
+            + str(trcResult)
+        )
         return False
     print("PASS: reorder_calculate_lead_time_demand")
     return True

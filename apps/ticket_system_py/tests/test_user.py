@@ -1,12 +1,22 @@
 """Tests for user model."""
-import sys
+
 import os
+import sys
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import unittest
+
 import storage
-import user
-from user import create, find_by_username, authenticate, set_role, list_all, has_permission, has_permission_on_ticket
+from user import (
+    authenticate,
+    create,
+    find_by_username,
+    has_permission,
+    has_permission_on_ticket,
+    list_all,
+    set_role,
+)
 
 
 class TestUser(unittest.TestCase):

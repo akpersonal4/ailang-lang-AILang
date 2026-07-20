@@ -3,8 +3,12 @@
 from __future__ import annotations
 
 from pathlib import Path
-from benchmarks.framework.runner import RunConfiguration, compute_repo_metrics_from_dataset
+
 from benchmarks.framework.metrics import BenchmarkResult
+from benchmarks.framework.runner import (
+    RunConfiguration,
+    compute_repo_metrics_from_dataset,
+)
 
 
 def fixture_result(
@@ -15,11 +19,13 @@ def fixture_result(
     **kwargs,
 ) -> BenchmarkResult:
     """A test benchmark function that returns a minimal result."""
+    from benchmarks.framework.environment import snapshot
     from benchmarks.framework.metrics import (
-        RepositoryMetrics, AIMetrics, EngineeringMetrics, BenchmarkResult,
+        AIMetrics,
+        BenchmarkResult,
+        EngineeringMetrics,
     )
     from benchmarks.framework.reporting import generate_run_id
-    from benchmarks.framework.environment import snapshot
 
     env = snapshot()
     return BenchmarkResult(
@@ -90,6 +96,7 @@ class TestRunnerIntegration:
         )
 
         from benchmarks.framework.runner import run_benchmark
+
         result = run_benchmark(config, fixture_result)
 
         assert result.benchmark_name == "integration_test"

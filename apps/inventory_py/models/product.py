@@ -1,7 +1,20 @@
-from core.helpers import helpers_generate_id, helpers_current_timestamp, helpers_get_map_value_safe
-from core.storage import storage_add, storage_get_by_id, storage_update, storage_delete, storage_list
+from core.helpers import (
+    helpers_current_timestamp,
+    helpers_generate_id,
+    helpers_get_map_value_safe,
+)
+from core.storage import (
+    storage_add,
+    storage_delete,
+    storage_get_by_id,
+    storage_list,
+    storage_update,
+)
 
-def product_create(pcName, pcDescription, pcSku, pcCategoryId, pcUnitPrice, pcCostPrice, pcUnit):
+
+def product_create(
+    pcName, pcDescription, pcSku, pcCategoryId, pcUnitPrice, pcCostPrice, pcUnit
+):
     pcId = helpers_generate_id("PRD-")
     pcNow = helpers_current_timestamp()
     pcProduct = {
@@ -20,8 +33,10 @@ def product_create(pcName, pcDescription, pcSku, pcCategoryId, pcUnitPrice, pcCo
     storage_add("products", pcProduct)
     return pcProduct
 
+
 def product_get(pgId):
     return storage_get_by_id("products", pgId)
+
 
 def product_update(puId, puChanges):
     puNow = helpers_current_timestamp()
@@ -38,30 +53,38 @@ def product_update_status(pusId, pusStatus):
 
 
 def product_deactivate_cascade(pdcId):
-    from orders.purchase_order import purchase_list_by_product, purchase_cancel
-    from inventory.stock_reservation import reservation_list_by_product, reservation_cancel
-    from inventory.stock_movement import movement_list_by_product, movement_update_status
-    
+    from inventory.stock_movement import (
+        movement_list_by_product,
+        movement_update_status,
+    )
+    from inventory.stock_reservation import (
+        reservation_cancel,
+        reservation_list_by_product,
+    )
+    from orders.purchase_order import purchase_cancel, purchase_list_by_product
+
     pos = purchase_list_by_product(pdcId)
     for order in pos:
         purchase_cancel(helpers_get_map_value_safe(order, "id", ""))
-    
+
     reservations = reservation_list_by_product(pdcId)
     for res in reservations:
         reservation_cancel(helpers_get_map_value_safe(res, "id", ""))
-    
+
     movements = movement_list_by_product(pdcId)
     for mov in movements:
         movement_update_status(helpers_get_map_value_safe(mov, "id", ""), "cancelled")
-    
+
     return True
 
 
 def product_delete(pdId):
     return storage_delete("products", pdId)
 
+
 def product_list():
     return storage_list("products")
+
 
 def product_search(psQuery):
     psAll = storage_list("products")

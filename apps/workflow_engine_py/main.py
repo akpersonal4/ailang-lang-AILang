@@ -1,16 +1,21 @@
 """CLI dispatch for workflow engine — 20 commands."""
-import sys
-import os
+
 import json
+import os
+import sys
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+sys.path.insert(
+    0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+)
 
-from apps.workflow_engine_py import storage
-from apps.workflow_engine_py import user
-from apps.workflow_engine_py import workflow_def
-from apps.workflow_engine_py import instance
-from apps.workflow_engine_py import history
-from apps.workflow_engine_py import session
+from apps.workflow_engine_py import (
+    history,
+    instance,
+    session,
+    storage,
+    user,
+    workflow_def,
+)
 
 
 def require_role(action):
@@ -70,7 +75,9 @@ def cmd_create_workflow(args):
     if len(args) < 4:
         print("Usage: create-workflow <name> <description> <states_csv>")
         print("  states_csv: state1,state2,state3")
-        print("  Example: create-workflow Approval \"Simple approval\" pending,approved,rejected")
+        print(
+            '  Example: create-workflow Approval "Simple approval" pending,approved,rejected'
+        )
         return
     name = args[1]
     desc = args[2]
@@ -84,7 +91,9 @@ def cmd_create_workflow(args):
         return
     print(f"Workflow created: {name} (ID: {defn['id']})")
     print(f"States: {states_csv}")
-    print("Use 'add-transition <workflow_id> <from> <to> <action> [role]' to add transitions.")
+    print(
+        "Use 'add-transition <workflow_id> <from> <to> <action> [role]' to add transitions."
+    )
 
 
 def cmd_add_transition(args):
@@ -92,7 +101,9 @@ def cmd_add_transition(args):
     if user_id == 0:
         return
     if len(args) < 5:
-        print("Usage: add-transition <workflow_id> <from_state> <to_state> <action> [required_role]")
+        print(
+            "Usage: add-transition <workflow_id> <from_state> <to_state> <action> [required_role]"
+        )
         print("  Example: add-transition 1 pending approved approve operator")
         return
     wf_id = int(args[1])
@@ -146,7 +157,9 @@ def cmd_view_workflow(args):
     print(f"States: {json.dumps(defn['states'])}")
     print(f"Transitions ({len(defn['transitions'])}):")
     for t in defn["transitions"]:
-        print(f"  {t['from_state']} --({t['action']})--> {t['to_state']} [{t['required_role']}]")
+        print(
+            f"  {t['from_state']} --({t['action']})--> {t['to_state']} [{t['required_role']}]"
+        )
 
 
 def cmd_delete_workflow(args):
@@ -295,7 +308,9 @@ def cmd_history(args):
     entries = history.list_by_instance(inst_id)
     print(f"--- History for instance {inst_id} ({len(entries)}) ---")
     for e in entries:
-        print(f"  {e['from_state']} -> {e['to_state']} ({e['notes']}) [{e['timestamp']}]")
+        print(
+            f"  {e['from_state']} -> {e['to_state']} ({e['notes']}) [{e['timestamp']}]"
+        )
 
 
 def cmd_report_workflow(args):
@@ -319,7 +334,9 @@ def cmd_report_activity(args):
     entries = instance.report_activity()
     print(f"--- Activity (last 7 days): {len(entries)} transitions ---")
     for e in entries:
-        print(f"  {e['from_state']} -> {e['to_state']} ({e['notes']}) [{e['timestamp']}]")
+        print(
+            f"  {e['from_state']} -> {e['to_state']} ({e['notes']}) [{e['timestamp']}]"
+        )
 
 
 def cmd_export_workflows(args):

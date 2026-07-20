@@ -16,7 +16,7 @@ def csv_product_row(fp_item):
         helpers_get_map_value_safe(fp_item, "name", ""),
         helpers_get_map_value_safe(fp_item, "sku", ""),
         str(helpers_get_map_value_safe(fp_item, "unit_price", 0)),
-        helpers_get_map_value_safe(fp_item, "unit", "")
+        helpers_get_map_value_safe(fp_item, "unit", ""),
     ]
     return csv_join_fields(fp_fields, ",")
 
@@ -35,7 +35,7 @@ def csv_customer_row(fc_item):
         helpers_get_map_value_safe(fc_item, "id", ""),
         helpers_get_map_value_safe(fc_item, "name", ""),
         helpers_get_map_value_safe(fc_item, "email", ""),
-        helpers_get_map_value_safe(fc_item, "phone", "")
+        helpers_get_map_value_safe(fc_item, "phone", ""),
     ]
     return csv_join_fields(fc_fields, ",")
 
@@ -55,7 +55,7 @@ def csv_movements_row(fm_item):
         helpers_get_map_value_safe(fm_item, "product_id", ""),
         helpers_get_map_value_safe(fm_item, "type", ""),
         str(helpers_get_map_value_safe(fm_item, "quantity", 0)),
-        helpers_get_map_value_safe(fm_item, "created_at", "")
+        helpers_get_map_value_safe(fm_item, "created_at", ""),
     ]
     return csv_join_fields(fm_fields, ",")
 

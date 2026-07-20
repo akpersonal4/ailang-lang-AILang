@@ -55,10 +55,14 @@ def run_subprocess(
 
 def run_ail_build(filepath: str, timeout: int = 120) -> ProcessResult:
     """Run ail build on a file and return the result."""
-    return run_subprocess([sys.executable, "-m", "compiler", "build", filepath], timeout=timeout)
+    return run_subprocess(
+        [sys.executable, "-m", "compiler", "build", filepath], timeout=timeout
+    )
 
 
-def run_ail_run(filepath: str, timeout: int = 120, args: list[str] | None = None) -> ProcessResult:
+def run_ail_run(
+    filepath: str, timeout: int = 120, args: list[str] | None = None
+) -> ProcessResult:
     """Run ail run on a file and return the result."""
     cmd = [sys.executable, "-m", "compiler", "run", filepath]
     if args:

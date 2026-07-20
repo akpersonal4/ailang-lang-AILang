@@ -1,8 +1,9 @@
 from core.helpers import (
-    helpers_get_map_value_safe, helpers_generate_id,
-    helpers_list_contains
+    helpers_generate_id,
+    helpers_get_map_value_safe,
+    helpers_list_contains,
 )
-from core.storage import storage_list, storage_add, storage_update
+from core.storage import storage_add, storage_list, storage_update
 
 
 def permission_find_rec(pm_items, pm_role, pm_resource, pm_idx):

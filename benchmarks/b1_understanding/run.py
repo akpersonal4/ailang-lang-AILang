@@ -7,11 +7,10 @@ results are not interpreted here.
 
 from __future__ import annotations
 
-import json
-import time
 from pathlib import Path
 from typing import Any
 
+from benchmarks.framework.environment import snapshot
 from benchmarks.framework.metrics import (
     AIMetrics,
     BenchmarkResult,
@@ -19,9 +18,7 @@ from benchmarks.framework.metrics import (
     RepositoryMetrics,
 )
 from benchmarks.framework.reporting import generate_run_id
-from benchmarks.framework.environment import snapshot, get_project_root
 from benchmarks.providers.base import AIProvider
-
 
 BENCHMARK_NAME = "B1 — AI Repository Understanding"
 BENCHMARK_VERSION = "0.2.0"
@@ -152,18 +149,14 @@ def _populate_from_provider(
     ai.prompt_tokens = result.prompt_tokens_exact or result.prompt_tokens_estimated
     ai.context_tokens = result.prompt_tokens_exact or result.prompt_tokens_estimated
     ai.total_tokens_supplied = (
-        (result.prompt_tokens_exact or result.prompt_tokens_estimated)
-        + (result.response_tokens or 0)
-    )
+        result.prompt_tokens_exact or result.prompt_tokens_estimated
+    ) + (result.response_tokens or 0)
     ai.completion_tokens = result.response_tokens or 0
     ai.clarification_questions = result.clarification_turns
 
 
 def _default_comprehension_prompt() -> str:
-    return (
-        "What is the primary purpose of this codebase? "
-        "Answer in one sentence."
-    )
+    return "What is the primary purpose of this codebase? " "Answer in one sentence."
 
 
 def _populate_from_dict(ai: AIMetrics, data: dict[str, Any]) -> None:
@@ -199,31 +192,33 @@ def main() -> int:
         python -m benchmarks.b1_understanding.run --provider openai --model gpt-4o
         python -m benchmarks.b1_understanding.run --provider local --model llama3.2
     """
-    import sys
     import argparse
 
     parser = argparse.ArgumentParser(
         description="B1 — AI Repository Understanding Benchmark"
     )
     parser.add_argument(
-        "--provider", "-p",
+        "--provider",
+        "-p",
         default=None,
         help="AI provider name (openai, anthropic, google, local)",
     )
     parser.add_argument(
-        "--model", "-m",
+        "--model",
+        "-m",
         default="",
         help="Model identifier (provider-specific)",
     )
     parser.add_argument(
-        "--quiet", "-q",
+        "--quiet",
+        "-q",
         action="store_true",
         help="Suppress output",
     )
 
     args, _ = parser.parse_known_args()
 
-    from benchmarks.framework.runner import run_benchmark, RunConfiguration
+    from benchmarks.framework.runner import RunConfiguration, run_benchmark
 
     datasets_dir = Path(__file__).resolve().parent.parent / "datasets"
     results_dir = Path(__file__).resolve().parent.parent / "results"
@@ -231,6 +226,7 @@ def main() -> int:
     extra = {}
     if args.provider:
         from benchmarks.providers import create_provider
+
         provider = create_provider(args.provider, model=args.model)
         extra["provider"] = provider
         if not args.quiet:
@@ -243,7 +239,8 @@ def main() -> int:
         print()
 
     dataset_names = sorted(
-        d.name for d in datasets_dir.iterdir()
+        d.name
+        for d in datasets_dir.iterdir()
         if d.is_dir() and (d / "metadata.json").exists()
     )
 
@@ -273,6 +270,7 @@ def main() -> int:
             print()
 
     from benchmarks.framework.reporting import write_summary
+
     summary_path = write_summary(results, results_dir)
     if not args.quiet:
         print(f"Summary: {summary_path}")
@@ -283,4 +281,5 @@ def main() -> int:
 
 if __name__ == "__main__":
     import sys
+
     sys.exit(main())

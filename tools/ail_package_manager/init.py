@@ -7,7 +7,6 @@ from pathlib import Path
 from ail_platform.report_schema import ExitCode
 from tools.ail_package_manager.manifest import validate_package_name, validate_version
 
-
 _DEFAULT_ENTRY = """\
 # {name}
 # {description}

@@ -20,9 +20,9 @@ def compile_source(source: str) -> dict[str, Any]:
         Dictionary with success status and diagnostics
     """
     try:
+        from compiler.cli.main import _find_stdlib
         from compiler.compilation import CompilationSession
         from compiler.diagnostics import DiagnosticReporter
-        from compiler.cli.main import _find_stdlib
 
         # Create a temporary file with the source
         with tempfile.NamedTemporaryFile(
@@ -56,6 +56,7 @@ def compile_source(source: str) -> dict[str, Any]:
             except Exception as e:
                 # Internal compiler error
                 from compiler.diagnostics import Diagnostic, ErrorCode, Severity
+
                 diag = Diagnostic(
                     Severity.ERROR,
                     ErrorCode("CMP001", "Internal compiler error"),

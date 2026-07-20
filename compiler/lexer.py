@@ -74,8 +74,9 @@ class LexicalError(ValueError):
 
 
 class Lexer:
-    def __init__(self, reporter: DiagnosticReporter | None = None,
-                 source_path: str | None = None) -> None:
+    def __init__(
+        self, reporter: DiagnosticReporter | None = None, source_path: str | None = None
+    ) -> None:
         self.reporter = reporter
         self._source_path = source_path
 

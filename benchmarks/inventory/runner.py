@@ -7,12 +7,9 @@ benchmarks against both AILang and Python codebases.
 from __future__ import annotations
 
 import json
-import sys
-import os
-import time
 import subprocess
+import sys
 from pathlib import Path
-from typing import Any
 
 HERE = Path(__file__).resolve().parent
 BENCHMARKS_DIR = HERE.parent
@@ -24,12 +21,15 @@ APPS_DIR = PROJECT_ROOT / "apps"
 def cmd_list() -> int:
     """List all inventory benchmark datasets (B2–B6)."""
     names = sorted(
-        d.name for d in DATASETS_DIR.iterdir()
+        d.name
+        for d in DATASETS_DIR.iterdir()
         if d.name.startswith("b") and d.name.endswith("_inventory") and d.is_dir()
     )
     if not names:
         print("No inventory datasets found.")
-        print("Expected: b2_inventory, b3_inventory, b4_inventory, b5_inventory, b6_inventory")
+        print(
+            "Expected: b2_inventory, b3_inventory, b4_inventory, b5_inventory, b6_inventory"
+        )
         return 1
 
     print("Inventory Benchmark Datasets")
@@ -100,7 +100,9 @@ def _get_ail_build_cmd() -> str:
         try:
             result = subprocess.run(
                 [candidate, "--version"],
-                capture_output=True, text=True, timeout=10,
+                capture_output=True,
+                text=True,
+                timeout=10,
             )
             if result.returncode == 0:
                 return candidate
@@ -115,7 +117,10 @@ def _build_ailang(files: list[Path]) -> tuple[bool, str]:
     build_args = [ail_cmd, "build"] + [str(f) for f in files]
     try:
         result = subprocess.run(
-            build_args, capture_output=True, text=True, timeout=120,
+            build_args,
+            capture_output=True,
+            text=True,
+            timeout=120,
         )
         success = result.returncode == 0
         output = result.stdout + result.stderr
@@ -131,7 +136,9 @@ def _run_python_tests(test_script: Path) -> tuple[bool, str]:
     try:
         result = subprocess.run(
             [sys.executable, str(test_script)],
-            capture_output=True, text=True, timeout=120,
+            capture_output=True,
+            text=True,
+            timeout=120,
             cwd=test_script.parent,
         )
         success = result.returncode == 0

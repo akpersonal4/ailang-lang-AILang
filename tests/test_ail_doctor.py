@@ -1,7 +1,7 @@
 """Unit tests for the ail doctor developer tool."""
 
-import sys
 import subprocess
+import sys
 from pathlib import Path
 
 
@@ -26,7 +26,9 @@ def test_doctor_tool_prints_to_stdout():
 def test_doctor_is_read_only():
     """The doctor tool should be read-only and never modify source files."""
     root = Path(__file__).parent.parent
-    all_files_before = set(str(p.relative_to(root)) for p in root.rglob("*") if p.is_file())
+    all_files_before = set(
+        str(p.relative_to(root)) for p in root.rglob("*") if p.is_file()
+    )
 
     result = subprocess.run(
         [sys.executable, "-m", "tools.ail_doctor"],
@@ -35,11 +37,15 @@ def test_doctor_is_read_only():
     )
     assert result.returncode == 0
 
-    all_files_after = set(str(p.relative_to(root)) for p in root.rglob("*") if p.is_file())
+    all_files_after = set(
+        str(p.relative_to(root)) for p in root.rglob("*") if p.is_file()
+    )
 
     new_files = all_files_after - all_files_before
     non_generated_new_files = [f for f in new_files if not f.startswith("generated/")]
-    assert len(non_generated_new_files) == 0, f"Unexpected new files: {non_generated_new_files}"
+    assert (
+        len(non_generated_new_files) == 0
+    ), f"Unexpected new files: {non_generated_new_files}"
 
 
 def test_doctor_report_sections():
@@ -75,6 +81,7 @@ def test_doctor_score_format():
     content = result.stdout
 
     import re
+
     score_pattern = r"\*\*(\d+)/100\*\*"
     scores = re.findall(score_pattern, content)
     assert len(scores) >= 1, "Expected at least 1 health score"

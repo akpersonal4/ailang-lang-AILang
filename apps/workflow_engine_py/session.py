@@ -1,7 +1,7 @@
 """Session management via JSON file."""
+
 import json
 import os
-
 
 SESSION_FILE = os.path.join(os.path.dirname(__file__), "data", "session.json")
 
@@ -9,7 +9,7 @@ SESSION_FILE = os.path.join(os.path.dirname(__file__), "data", "session.json")
 def load():
     if not os.path.exists(SESSION_FILE):
         return {}
-    with open(SESSION_FILE, "r") as f:
+    with open(SESSION_FILE) as f:
         content = f.read()
     if not content:
         return {}

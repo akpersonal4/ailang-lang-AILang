@@ -8,7 +8,7 @@ immutable for a given benchmark run.
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
@@ -16,6 +16,7 @@ from typing import Any
 @dataclass(frozen=True)
 class DatasetMetadata:
     """Immutable metadata describing a benchmark dataset."""
+
     name: str
     description: str
     language: str  # "ailang" | "python" | etc.
@@ -36,6 +37,7 @@ class DatasetMetadata:
 @dataclass(frozen=True)
 class Dataset:
     """A benchmark dataset — project source + immutable metadata."""
+
     metadata: DatasetMetadata
     root: Path
 
@@ -60,10 +62,18 @@ class Dataset:
 
 
 IGNORE_DIRS = {
-    ".venv", "venv", "env", ".env",
-    ".git", ".svn", "__pycache__",
-    "node_modules", ".mypy_cache", ".pytest_cache",
-    ".vscode", ".idea",
+    ".venv",
+    "venv",
+    "env",
+    ".env",
+    ".git",
+    ".svn",
+    "__pycache__",
+    "node_modules",
+    ".mypy_cache",
+    ".pytest_cache",
+    ".vscode",
+    ".idea",
 }
 
 
@@ -78,7 +88,9 @@ def _is_project_file(path: Path) -> bool:
     return True
 
 
-def scan_project(root: Path, name: str = "", language: str = "ailang") -> DatasetMetadata:
+def scan_project(
+    root: Path, name: str = "", language: str = "ailang"
+) -> DatasetMetadata:
     """Scan a project directory and compute its metadata.
 
     This is the canonical metadata extractor. All datasets use this.

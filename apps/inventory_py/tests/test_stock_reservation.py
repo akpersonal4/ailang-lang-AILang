@@ -1,13 +1,22 @@
-from inventory.stock_reservation import reservation_create, reservation_get_by_id, reservation_list_by_order, reservation_fulfill, reservation_cancel, reservation_check_availability
-from inventory import stock_movement
 from core.helpers import helpers_get_map_value_safe
 from core.storage import storage_add
+from inventory import stock_movement
+from inventory.stock_reservation import (
+    reservation_cancel,
+    reservation_check_availability,
+    reservation_create,
+    reservation_fulfill,
+    reservation_get_by_id,
+    reservation_list_by_order,
+)
 
 
 def test_rsrv_create_and_get():
     trsProd = {"id": "RSRV-TEST-PROD-1", "name": "Reservation Test Product"}
     storage_add("products", trsProd)
-    stock_movement.movement_create("RSRV-TEST-PROD-1", "inbound", 100, "manual", "INIT", "Initial stock")
+    stock_movement.movement_create(
+        "RSRV-TEST-PROD-1", "inbound", 100, "manual", "INIT", "Initial stock"
+    )
     trsRes = reservation_create("RSRV-TEST-ORDER-1", "RSRV-TEST-PROD-1", 30)
     if trsRes is False:
         print("FAIL: reservation_create returned false")
@@ -27,7 +36,9 @@ def test_rsrv_create_and_get():
 def test_rsrv_list_by_order():
     trsoProd = {"id": "RSRV-TEST-PROD-2", "name": "Reservation List Product"}
     storage_add("products", trsoProd)
-    stock_movement.movement_create("RSRV-TEST-PROD-2", "inbound", 100, "manual", "INIT", "Initial stock")
+    stock_movement.movement_create(
+        "RSRV-TEST-PROD-2", "inbound", 100, "manual", "INIT", "Initial stock"
+    )
     reservation_create("RSRV-TEST-ORDER-2", "RSRV-TEST-PROD-2", 20)
     reservation_create("RSRV-TEST-ORDER-2", "RSRV-TEST-PROD-2", 30)
     trsoList = reservation_list_by_order("RSRV-TEST-ORDER-2")
@@ -42,7 +53,9 @@ def test_rsrv_list_by_order():
 def test_rsrv_fulfill():
     trfProd = {"id": "RSRV-TEST-PROD-3", "name": "Fulfill Product"}
     storage_add("products", trfProd)
-    stock_movement.movement_create("RSRV-TEST-PROD-3", "inbound", 100, "manual", "INIT", "Initial stock")
+    stock_movement.movement_create(
+        "RSRV-TEST-PROD-3", "inbound", 100, "manual", "INIT", "Initial stock"
+    )
     trfRes = reservation_create("RSRV-TEST-ORDER-3", "RSRV-TEST-PROD-3", 10)
     trfId = helpers_get_map_value_safe(trfRes, "id", "")
     trfResult = reservation_fulfill(trfId)
@@ -61,7 +74,9 @@ def test_rsrv_fulfill():
 def test_rsrv_cancel():
     trcProd = {"id": "RSRV-TEST-PROD-4", "name": "Cancel Product"}
     storage_add("products", trcProd)
-    stock_movement.movement_create("RSRV-TEST-PROD-4", "inbound", 100, "manual", "INIT", "Initial stock")
+    stock_movement.movement_create(
+        "RSRV-TEST-PROD-4", "inbound", 100, "manual", "INIT", "Initial stock"
+    )
     trcRes = reservation_create("RSRV-TEST-ORDER-4", "RSRV-TEST-PROD-4", 10)
     trcId = helpers_get_map_value_safe(trcRes, "id", "")
     trcResult = reservation_cancel(trcId)
@@ -80,7 +95,9 @@ def test_rsrv_cancel():
 def test_rsrv_check_availability():
     trcaProd = {"id": "RSRV-TEST-PROD-5", "name": "Availability Product"}
     storage_add("products", trcaProd)
-    stock_movement.movement_create("RSRV-TEST-PROD-5", "inbound", 50, "manual", "INIT", "Initial stock")
+    stock_movement.movement_create(
+        "RSRV-TEST-PROD-5", "inbound", 50, "manual", "INIT", "Initial stock"
+    )
     trcaAvailable = reservation_check_availability("RSRV-TEST-PROD-5", 30)
     if trcaAvailable is not True:
         print("FAIL: expected true for available stock")

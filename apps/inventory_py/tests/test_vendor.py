@@ -3,7 +3,9 @@ from models.vendor import vendor_create, vendor_get, vendor_list
 
 
 def test_vendor_create():
-    tvc_result = vendor_create("Test Vendor Inc", "vendor@test.com", "555-4000", "Contact Person")
+    tvc_result = vendor_create(
+        "Test Vendor Inc", "vendor@test.com", "555-4000", "Contact Person"
+    )
     if tvc_result == False:
         print("FAIL: vendor_create returned false")
         return False
@@ -37,7 +39,9 @@ def test_vendor_get_by_id_missing():
 
 
 def test_vendor_get_by_id():
-    tvg_created = vendor_create("GetTest Vendor", "get@vendor.com", "555-5000", "Get Contact")
+    tvg_created = vendor_create(
+        "GetTest Vendor", "get@vendor.com", "555-5000", "Get Contact"
+    )
     tvg_id = helpers_get_map_value_safe(tvg_created, "id", "")
     tvg_found = vendor_get(tvg_id)
     if tvg_found == False:

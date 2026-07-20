@@ -10,7 +10,10 @@ def product_cancel_purchase_orders(product_id):
 
 def product_cancel_reservations(product_id):
     for res in storage_list("reservations"):
-        if res.get("product_id") == product_id and res.get("status") in ("active", "pending"):
+        if res.get("product_id") == product_id and res.get("status") in (
+            "active",
+            "pending",
+        ):
             storage_update("reservations", res["id"], {"status": "cancelled"})
 
 

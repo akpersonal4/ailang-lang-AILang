@@ -1,7 +1,12 @@
 from datetime import datetime
 
-from core.helpers import helpers_generate_id, helpers_current_timestamp, helpers_get_map_value_safe, helpers_pad_number
-from core.storage import storage_list, storage_add, storage_get_by_id, storage_update
+from core.helpers import (
+    helpers_current_timestamp,
+    helpers_generate_id,
+    helpers_get_map_value_safe,
+    helpers_pad_number,
+)
+from core.storage import storage_add, storage_get_by_id, storage_list, storage_update
 
 
 def invoice_list_by_customer(ivlcCustomerId):

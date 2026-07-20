@@ -3,11 +3,10 @@
 
 from __future__ import annotations
 
-import sys
-import json
+import hashlib
 import shutil
 import subprocess
-import hashlib
+import sys
 from pathlib import Path
 
 
@@ -116,14 +115,23 @@ def test_app_filter() -> bool:
     for f in gen_dir.glob("*"):
         if f.is_file():
             f.unlink()
-    run_command([
-        sys.executable, "-m", "tools.ail_testgen",
-        "--app", "dice_roller", "--force", "--quiet",
-    ])
+    run_command(
+        [
+            sys.executable,
+            "-m",
+            "tools.ail_testgen",
+            "--app",
+            "dice_roller",
+            "--force",
+            "--quiet",
+        ]
+    )
 
     py_files = list(gen_dir.glob("*.py"))
     app_files = [f for f in py_files if "dice_roller" in f.name]
-    other_files = [f for f in py_files if "dice_roller" not in f.name and f.name != "__init__.py"]
+    other_files = [
+        f for f in py_files if "dice_roller" not in f.name and f.name != "__init__.py"
+    ]
 
     if len(app_files) > 0 and len(other_files) == 0:
         print("  [PASS] Only dice_roller tests generated")

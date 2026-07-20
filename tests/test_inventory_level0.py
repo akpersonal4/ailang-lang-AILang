@@ -26,7 +26,11 @@ def _run_inventory(source: str):
         reporter = DiagnosticReporter()
         session.analyze(reporter)
         if reporter.error_count > 0:
-            err_msgs = [f"{d.error_code.code}: {d.message} (line {d.line})" for d in reporter.diagnostics if d.severity == Severity.ERROR]
+            err_msgs = [
+                f"{d.error_code.code}: {d.message} (line {d.line})"
+                for d in reporter.diagnostics
+                if d.severity == Severity.ERROR
+            ]
             assert False, f"Compilation errors: {err_msgs}"
 
         bundle = session.build_ir()

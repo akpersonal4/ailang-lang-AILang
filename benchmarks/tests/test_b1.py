@@ -3,11 +3,10 @@
 from __future__ import annotations
 
 from pathlib import Path
+
 from benchmarks.framework.metrics import (
-    RepositoryMetrics,
-    AIMetrics,
-    EngineeringMetrics,
     BenchmarkResult,
+    RepositoryMetrics,
 )
 
 
@@ -17,9 +16,7 @@ class TestB1Run:
     def test_run_produces_result(self, tmp_path: Path):
         from benchmarks.b1_understanding.run import run
 
-        (tmp_path / "main.ail").write_text(
-            "fn main() { return 42; }\n"
-        )
+        (tmp_path / "main.ail").write_text("fn main() { return 42; }\n")
 
         repo = RepositoryMetrics(files=1, loc=1, function_count=1)
         result = run(dataset_path=tmp_path, repo_metrics=repo)
@@ -31,9 +28,7 @@ class TestB1Run:
     def test_estimates_tokens(self, tmp_path: Path):
         from benchmarks.b1_understanding.run import run
 
-        (tmp_path / "main.ail").write_text(
-            "fn hello() { return \"hello world\"; }\n"
-        )
+        (tmp_path / "main.ail").write_text('fn hello() { return "hello world"; }\n')
 
         repo = RepositoryMetrics(files=1, loc=1)
         result = run(dataset_path=tmp_path, repo_metrics=repo)
@@ -67,6 +62,7 @@ class TestEstimateTokens:
 
     def test_estimate_tokens(self):
         from benchmarks.b1_understanding.run import estimate_tokens
+
         assert estimate_tokens("hello world") == 2  # 11 chars // 4
         assert estimate_tokens("") == 1  # minimum
         assert estimate_tokens("a") == 1  # minimum

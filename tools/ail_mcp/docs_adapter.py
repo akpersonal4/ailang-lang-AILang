@@ -5,9 +5,8 @@
 
 from __future__ import annotations
 
-from typing import Any
 from pathlib import Path
-
+from typing import Any
 
 DOCUMENTS = {
     "AGENTS.md": {
@@ -39,6 +38,7 @@ def get_document(name: str) -> dict[str, Any]:
 
     try:
         import compiler
+
         docs_path = Path(compiler.__file__).parent / "docs"
         filepath = docs_path / name
     except Exception:
@@ -60,6 +60,7 @@ def list_documents() -> dict[str, Any]:
     """List available documents with metadata."""
     try:
         import compiler
+
         docs_path = Path(compiler.__file__).parent / "docs"
     except Exception:
         docs_path = None

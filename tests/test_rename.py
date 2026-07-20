@@ -2,13 +2,11 @@
 
 from __future__ import annotations
 
-import tempfile
 from pathlib import Path
 
 import pytest
 
 from compiler.rename import RenameTool
-
 
 # =============================================================================
 # Fixtures
@@ -28,7 +26,9 @@ def repo(tmp_path: Path) -> Path:
         encoding="utf-8",
     )
     # Create pyproject.toml marker
-    (root / "pyproject.toml").write_text("[project]\nname = \"test\"\nversion = \"0.1.0\"\n")
+    (root / "pyproject.toml").write_text(
+        '[project]\nname = "test"\nversion = "0.1.0"\n'
+    )
     return root
 
 
@@ -62,15 +62,21 @@ class TestScan:
         assert len(refs) >= 2
 
     def test_finds_variable_references(self, repo: Path) -> None:
-        _write_ail(repo, "example.ail",
-                    "fn main() { let item = 10; process(item); return item }\n")
+        _write_ail(
+            repo,
+            "example.ail",
+            "fn main() { let item = 10; process(item); return item }\n",
+        )
         tool = RenameTool(repo)
         refs = tool.scan("item")
         assert len(refs) >= 2  # declaration + references
 
     def test_skips_substring_matches(self, repo: Path) -> None:
-        _write_ail(repo, "example.ail",
-                    "fn supplier() { return 0 }\nfn supplier_helper() { return 0 }\n")
+        _write_ail(
+            repo,
+            "example.ail",
+            "fn supplier() { return 0 }\nfn supplier_helper() { return 0 }\n",
+        )
         tool = RenameTool(repo)
         refs = tool.scan("supplier")
         # Should find 'supplier' but not 'supplier_helper'
@@ -98,16 +104,18 @@ class TestScan:
 
 class TestStringScanning:
     def test_include_strings_finds_literals(self, repo: Path) -> None:
-        _write_ail(repo, "example.ail",
-                    'fn main() { let name = "supplier"; return 0 }\n')
+        _write_ail(
+            repo, "example.ail", 'fn main() { let name = "supplier"; return 0 }\n'
+        )
         tool = RenameTool(repo)
         refs = tool.scan("supplier", include_strings=True)
         string_refs = [r for r in refs if r.kind == "string"]
         assert len(string_refs) == 1
 
     def test_strings_off_skips_literals(self, repo: Path) -> None:
-        _write_ail(repo, "example.ail",
-                    'fn main() { let name = "supplier"; return 0 }\n')
+        _write_ail(
+            repo, "example.ail", 'fn main() { let name = "supplier"; return 0 }\n'
+        )
         tool = RenameTool(repo)
         refs = tool.scan("supplier", include_strings=False)
         string_refs = [r for r in refs if r.kind == "string"]
@@ -136,8 +144,7 @@ class TestImportScanning:
 
 class TestComputeChanges:
     def test_basic_rename(self, repo: Path) -> None:
-        fp = _write_ail(repo, "example.ail",
-                         "fn supplier(items) {\n    return 0\n}\n")
+        fp = _write_ail(repo, "example.ail", "fn supplier(items) {\n    return 0\n}\n")
         tool = RenameTool(repo)
         tool.scan("supplier")
         changes = tool.compute_changes("supplier", "vendor")
@@ -147,8 +154,11 @@ class TestComputeChanges:
         assert "fn vendor(items)" in change.new_content
 
     def test_multiple_occurrences_same_file(self, repo: Path) -> None:
-        fp = _write_ail(repo, "example.ail",
-                         "fn supplier() { return 0 }\nfn main() { supplier(); return 0 }\n")
+        fp = _write_ail(
+            repo,
+            "example.ail",
+            "fn supplier() { return 0 }\nfn main() { supplier(); return 0 }\n",
+        )
         tool = RenameTool(repo)
         tool.scan("supplier")
         changes = tool.compute_changes("supplier", "vendor")
@@ -157,8 +167,11 @@ class TestComputeChanges:
         assert "supplier" not in change.new_content
 
     def test_rename_preserves_other_content(self, repo: Path) -> None:
-        fp = _write_ail(repo, "example.ail",
-                         "fn supplier(x) {\n    let y = x + 1;\n    return y\n}\n")
+        fp = _write_ail(
+            repo,
+            "example.ail",
+            "fn supplier(x) {\n    let y = x + 1;\n    return y\n}\n",
+        )
         tool = RenameTool(repo)
         tool.scan("supplier")
         changes = tool.compute_changes("supplier", "vendor")
@@ -181,8 +194,7 @@ class TestComputeChanges:
 
 class TestApply:
     def test_apply_modifies_files(self, repo: Path) -> None:
-        fp = _write_ail(repo, "example.ail",
-                         "fn supplier(x) { return x }\n")
+        fp = _write_ail(repo, "example.ail", "fn supplier(x) { return x }\n")
         tool = RenameTool(repo)
         tool.scan("supplier")
         changes = tool.compute_changes("supplier", "vendor")
@@ -193,8 +205,7 @@ class TestApply:
         assert "supplier" not in content
 
     def test_rollback_bundle_created(self, repo: Path) -> None:
-        _write_ail(repo, "example.ail",
-                    "fn supplier(x) { return x }\n")
+        _write_ail(repo, "example.ail", "fn supplier(x) { return x }\n")
         tool = RenameTool(repo)
         tool.scan("supplier")
         changes = tool.compute_changes("supplier", "vendor")
@@ -213,8 +224,7 @@ class TestApply:
         assert rb_dir is None
 
     def test_dry_run_does_not_modify(self, repo: Path) -> None:
-        fp = _write_ail(repo, "example.ail",
-                         "fn supplier(x) { return x }\n")
+        fp = _write_ail(repo, "example.ail", "fn supplier(x) { return x }\n")
         original = fp.read_text(encoding="utf-8")
         tool = RenameTool(repo)
         tool.scan("supplier")
@@ -231,13 +241,15 @@ class TestApply:
 
 class TestVerify:
     def test_verify_passes_on_valid_rename(self, repo: Path) -> None:
-        _write_ail(repo, "supplier.ail",
-                    "fn get(id) { return id }\n")
-        _write_ail(repo, "main.ail",
-                    "import supplier;\n"
-                    "fn main(items) {\n"
-                    "    return supplier.get(items)\n"
-                    "}\n")
+        _write_ail(repo, "supplier.ail", "fn get(id) { return id }\n")
+        _write_ail(
+            repo,
+            "main.ail",
+            "import supplier;\n"
+            "fn main(items) {\n"
+            "    return supplier.get(items)\n"
+            "}\n",
+        )
         tool = RenameTool(repo)
         # stdlib must be present for verification
         ok = tool.verify(str(repo / "main.ail"))
@@ -252,8 +264,7 @@ class TestVerify:
 
 class TestRenameCli:
     def test_rename_via_cmd(self, repo: Path) -> None:
-        _write_ail(repo, "example.ail",
-                    "fn supplier(x) { return x }\n")
+        _write_ail(repo, "example.ail", "fn supplier(x) { return x }\n")
         from compiler.cli.main import cmd_rename
 
         result = cmd_rename([str(repo / "example.ail"), "supplier", "vendor"])

@@ -1,6 +1,12 @@
-from inventory.stock_adjustment import adjustment_create, adjustment_get_by_id, adjustment_list_by_product, adjustment_get_discrepancies, adjustment_summary
 from core.helpers import helpers_get_map_value_safe
 from core.storage import storage_add
+from inventory.stock_adjustment import (
+    adjustment_create,
+    adjustment_get_by_id,
+    adjustment_get_discrepancies,
+    adjustment_list_by_product,
+    adjustment_summary,
+)
 
 
 def test_adj_create_and_get():

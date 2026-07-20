@@ -1,5 +1,5 @@
-from inventory.stock_valuation import valuation_set, valuation_get, valuation_list
 from core.helpers import helpers_get_map_value_safe
+from inventory.stock_valuation import valuation_get, valuation_list, valuation_set
 
 
 def test_sv_get_nonexistent():

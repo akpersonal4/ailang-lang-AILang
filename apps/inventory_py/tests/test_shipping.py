@@ -1,9 +1,17 @@
-from orders.shipping import shipping_create, shipping_get_by_id, shipping_update_status, shipping_list_by_order, shipping_list_by_status
 from core.helpers import helpers_get_map_value_safe
+from orders.shipping import (
+    shipping_create,
+    shipping_get_by_id,
+    shipping_list_by_order,
+    shipping_list_by_status,
+    shipping_update_status,
+)
 
 
 def test_shipping_create():
-    tscResult = shipping_create("SO-SHP-001", "FedEx", "FX-123456789", "123 Main St, City", "Warehouse A")
+    tscResult = shipping_create(
+        "SO-SHP-001", "FedEx", "FX-123456789", "123 Main St, City", "Warehouse A"
+    )
     if tscResult == False:
         print("FAIL: shipping_create returned false")
         return False
@@ -33,7 +41,9 @@ def test_shipping_get_by_id_missing():
 
 
 def test_shipping_update_status():
-    tsusCreated = shipping_create("SO-SHP-002", "UPS", "UP-987654321", "456 Oak Ave, Town", "Warehouse B")
+    tsusCreated = shipping_create(
+        "SO-SHP-002", "UPS", "UP-987654321", "456 Oak Ave, Town", "Warehouse B"
+    )
     tsusId = helpers_get_map_value_safe(tsusCreated, "id", "")
     tsusUpdated = shipping_update_status(tsusId, "in_transit")
     if tsusUpdated == False:
@@ -70,7 +80,9 @@ def test_shipping_list_by_status():
     tslsResults = shipping_list_by_status("delivered")
     tslsLen = len(tslsResults)
     if tslsLen < 2:
-        print("FAIL: shipping_list_by_status - expected at least 2, got " + str(tslsLen))
+        print(
+            "FAIL: shipping_list_by_status - expected at least 2, got " + str(tslsLen)
+        )
         return False
     print("PASS: shipping_list_by_status (" + str(tslsLen) + " items)")
     return True

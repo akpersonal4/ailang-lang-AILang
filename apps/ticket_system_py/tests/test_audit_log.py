@@ -1,11 +1,14 @@
 """Tests for audit log."""
-import sys
+
 import os
+import sys
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import unittest
+
 import storage
-from audit_log import add, list_by_ticket, list_all
+from audit_log import add, list_all, list_by_ticket
 
 
 class TestAuditLog(unittest.TestCase):

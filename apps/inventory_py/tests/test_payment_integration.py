@@ -1,7 +1,11 @@
-from financial.payment_integration import pi_process_invoice_payment, pi_get_invoice_balance, pi_list_overdue_invoices
+from core.helpers import helpers_get_map_value_safe
 from financial.invoice import invoice_create, invoice_get_by_id, invoice_update_status
 from financial.payment import payment_create
-from core.helpers import helpers_get_map_value_safe
+from financial.payment_integration import (
+    pi_get_invoice_balance,
+    pi_list_overdue_invoices,
+    pi_process_invoice_payment,
+)
 
 
 def test_pi_process_payment():
@@ -80,7 +84,9 @@ def test_pi_invoice_not_found():
         return False
     tpin_balance = pi_get_invoice_balance("DOES-NOT-EXIST")
     if tpin_balance != 0:
-        print("FAIL: expected 0 balance for nonexistent invoice, got " + str(tpin_balance))
+        print(
+            "FAIL: expected 0 balance for nonexistent invoice, got " + str(tpin_balance)
+        )
         return False
     print("PASS: pi_invoice_not_found")
     return True

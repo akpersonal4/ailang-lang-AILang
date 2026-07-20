@@ -14,10 +14,9 @@ Usage:
 
 from __future__ import annotations
 
-import sys
 import subprocess
+import sys
 from pathlib import Path
-
 
 HERE = Path(__file__).resolve().parent
 
@@ -25,18 +24,21 @@ HERE = Path(__file__).resolve().parent
 def cmd_setup() -> int:
     """Initialize benchmark datasets."""
     from benchmarks.setup import main
+
     return main()
 
 
 def cmd_b1() -> int:
     """Run B1 — AI Repository Understanding Benchmark."""
     from benchmarks.b1_understanding.run import main
+
     return main()
 
 
 def cmd_calibrate() -> int:
     """Run AI provider calibration."""
     from benchmarks.calibration.run import main
+
     return main(sys.argv[2:])
 
 
@@ -49,8 +51,10 @@ def cmd_list() -> int:
         return 1
 
     import json
+
     dataset_names = sorted(
-        d.name for d in datasets_dir.iterdir()
+        d.name
+        for d in datasets_dir.iterdir()
         if d.is_dir() and (d / "metadata.json").exists()
     )
 
@@ -78,7 +82,7 @@ def cmd_list() -> int:
 
 def cmd_list_providers() -> int:
     """List registered AI providers."""
-    from benchmarks.providers import list_providers, PROVIDER_REGISTRY
+    from benchmarks.providers import PROVIDER_REGISTRY, list_providers
 
     names = list_providers()
     print("Registered AI Providers")
@@ -109,6 +113,7 @@ def cmd_test() -> int:
 def cmd_inventory() -> int:
     """Run inventory management system benchmarks (B2–B6)."""
     from benchmarks.inventory.runner import main
+
     return main()
 
 

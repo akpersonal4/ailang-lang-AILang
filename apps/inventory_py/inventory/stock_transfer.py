@@ -1,9 +1,9 @@
 from core.helpers import (
-    helpers_generate_id,
     helpers_current_timestamp,
+    helpers_generate_id,
     helpers_get_map_value_safe,
 )
-from core.storage import storage_add, storage_list, storage_get_by_id, storage_save
+from core.storage import storage_add, storage_get_by_id, storage_list, storage_save
 from inventory.stock_movement import movement_create
 
 
@@ -53,8 +53,22 @@ def transfer_complete(tcmp_id):
             dest = helpers_get_map_value_safe(item, "destination_location", "")
             qty = helpers_get_map_value_safe(item, "quantity", 0)
             out_qty = 0 - qty
-            movement_create(product_id, "transfer_out", out_qty, "transfer", tcmp_id, "Transfer out from " + source)
-            movement_create(product_id, "transfer_in", qty, "transfer", tcmp_id, "Transfer in to " + dest)
+            movement_create(
+                product_id,
+                "transfer_out",
+                out_qty,
+                "transfer",
+                tcmp_id,
+                "Transfer out from " + source,
+            )
+            movement_create(
+                product_id,
+                "transfer_in",
+                qty,
+                "transfer",
+                tcmp_id,
+                "Transfer in to " + dest,
+            )
             break
     storage_save("transfers", items)
     return storage_get_by_id("transfers", tcmp_id)

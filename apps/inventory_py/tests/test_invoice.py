@@ -1,5 +1,11 @@
-from financial.invoice import invoice_create, invoice_get_by_id, invoice_calculate_total, invoice_generate_number, invoice_list_by_customer
 from core.helpers import helpers_get_map_value_safe
+from financial.invoice import (
+    invoice_calculate_total,
+    invoice_create,
+    invoice_generate_number,
+    invoice_get_by_id,
+    invoice_list_by_customer,
+)
 
 
 def test_invoice_create():
@@ -90,7 +96,9 @@ def test_invoice_list_by_customer():
     tilcResults = invoice_list_by_customer("CUS-100")
     tilcLen = len(tilcResults)
     if tilcLen < 2:
-        print("FAIL: invoice_list_by_customer - expected at least 2, got " + str(tilcLen))
+        print(
+            "FAIL: invoice_list_by_customer - expected at least 2, got " + str(tilcLen)
+        )
         return False
     print("PASS: invoice_list_by_customer (" + str(tilcLen) + " items)")
     return True

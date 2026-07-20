@@ -1,9 +1,17 @@
 from core.helpers import helpers_get_map_value_safe, helpers_unix_timestamp
-from models.product import product_create, product_get, product_search, product_list
+from models.product import product_create, product_get, product_list, product_search
 
 
 def test_product_create():
-    tpc_result = product_create("ProdCreateTest", "A product for create test", "PCR-001", "test-cat-id", 150, 90, "pcs")
+    tpc_result = product_create(
+        "ProdCreateTest",
+        "A product for create test",
+        "PCR-001",
+        "test-cat-id",
+        150,
+        90,
+        "pcs",
+    )
     if tpc_result == False:
         print("FAIL: product_create returned false")
         return False
@@ -29,7 +37,15 @@ def test_product_get_by_id_missing():
 
 
 def test_product_get_by_id():
-    tpg_created = product_create("ProdGetTest", "A product for get test", "PGT-001", "test-cat-id", 200, 120, "pcs")
+    tpg_created = product_create(
+        "ProdGetTest",
+        "A product for get test",
+        "PGT-001",
+        "test-cat-id",
+        200,
+        120,
+        "pcs",
+    )
     tpg_id = helpers_get_map_value_safe(tpg_created, "id", "")
     tpg_found = product_get(tpg_id)
     if tpg_found == False:
@@ -45,7 +61,9 @@ def test_product_get_by_id():
 
 def test_product_search():
     tps_unique_name = "ZUniqueSearchItem_" + str(helpers_unix_timestamp())
-    product_create(tps_unique_name, "For search test", "PSR-001", "test-cat-id", 50, 30, "pcs")
+    product_create(
+        tps_unique_name, "For search test", "PSR-001", "test-cat-id", 50, 30, "pcs"
+    )
     tps_results = product_search("ZUniqueSearchItem")
     if len(tps_results) == 0:
         print("FAIL: product_search - expected at least 1 result")
@@ -53,15 +71,24 @@ def test_product_search():
     tps_first = tps_results[0]
     tps_first_name = helpers_get_map_value_safe(tps_first, "name", "")
     if tps_first_name != tps_unique_name:
-        print("FAIL: product_search - expected " + tps_unique_name + ", got " + tps_first_name)
+        print(
+            "FAIL: product_search - expected "
+            + tps_unique_name
+            + ", got "
+            + tps_first_name
+        )
         return False
     print("PASS: product_search")
     return True
 
 
 def test_product_list():
-    product_create("ProdListItem1", "First list item", "PLI-001", "test-cat-id", 10, 5, "pcs")
-    product_create("ProdListItem2", "Second list item", "PLI-002", "test-cat-id", 20, 10, "pcs")
+    product_create(
+        "ProdListItem1", "First list item", "PLI-001", "test-cat-id", 10, 5, "pcs"
+    )
+    product_create(
+        "ProdListItem2", "Second list item", "PLI-002", "test-cat-id", 20, 10, "pcs"
+    )
     tpl_all = product_list()
     if len(tpl_all) == 0:
         print("FAIL: product_list returned empty list")

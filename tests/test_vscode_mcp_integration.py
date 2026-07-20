@@ -7,11 +7,7 @@ Does not require VS Code — uses the Node.js modules directly.
 import json
 import subprocess
 import sys
-import time
 from pathlib import Path
-
-import pytest
-
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
@@ -42,12 +38,14 @@ class TestMCPProtocol:
     """Verify the MCP server speaks correct JSON-RPC 2.0 over NDJSON."""
 
     def test_initialize_returns_server_info(self):
-        resp = run_mcp_command({
-            "jsonrpc": "2.0",
-            "id": 1,
-            "method": "initialize",
-            "params": {},
-        })
+        resp = run_mcp_command(
+            {
+                "jsonrpc": "2.0",
+                "id": 1,
+                "method": "initialize",
+                "params": {},
+            }
+        )
         assert resp["jsonrpc"] == "2.0"
         assert resp["id"] == 1
         assert "result" in resp
@@ -56,22 +54,26 @@ class TestMCPProtocol:
         assert "version" in info
 
     def test_initialize_declares_capabilities(self):
-        resp = run_mcp_command({
-            "jsonrpc": "2.0",
-            "id": 1,
-            "method": "initialize",
-            "params": {},
-        })
+        resp = run_mcp_command(
+            {
+                "jsonrpc": "2.0",
+                "id": 1,
+                "method": "initialize",
+                "params": {},
+            }
+        )
         caps = resp["result"]["capabilities"]
         assert "tools" in caps
 
     def test_tools_list_returns_five_tools(self):
-        resp = run_mcp_command({
-            "jsonrpc": "2.0",
-            "id": 2,
-            "method": "tools/list",
-            "params": {},
-        })
+        resp = run_mcp_command(
+            {
+                "jsonrpc": "2.0",
+                "id": 2,
+                "method": "tools/list",
+                "params": {},
+            }
+        )
         tools = resp["result"]["tools"]
         names = [t["name"] for t in tools]
         assert len(tools) == 6
@@ -83,34 +85,40 @@ class TestMCPProtocol:
         assert "get_document" in names
 
     def test_tools_have_schemas(self):
-        resp = run_mcp_command({
-            "jsonrpc": "2.0",
-            "id": 2,
-            "method": "tools/list",
-            "params": {},
-        })
+        resp = run_mcp_command(
+            {
+                "jsonrpc": "2.0",
+                "id": 2,
+                "method": "tools/list",
+                "params": {},
+            }
+        )
         for tool in resp["result"]["tools"]:
             assert "inputSchema" in tool
             assert "type" in tool["inputSchema"]
 
     def test_ping_returns_empty(self):
-        resp = run_mcp_command({
-            "jsonrpc": "2.0",
-            "id": 3,
-            "method": "ping",
-            "params": {},
-        })
+        resp = run_mcp_command(
+            {
+                "jsonrpc": "2.0",
+                "id": 3,
+                "method": "ping",
+                "params": {},
+            }
+        )
         assert resp["jsonrpc"] == "2.0"
         assert resp["id"] == 3
         assert "result" in resp
 
     def test_unknown_method_returns_error(self):
-        resp = run_mcp_command({
-            "jsonrpc": "2.0",
-            "id": 4,
-            "method": "bogus_method",
-            "params": {},
-        })
+        resp = run_mcp_command(
+            {
+                "jsonrpc": "2.0",
+                "id": 4,
+                "method": "bogus_method",
+                "params": {},
+            }
+        )
         assert "error" in resp
         assert resp["error"]["code"] == -32601
 
@@ -124,12 +132,14 @@ class TestMCPTools:
     """Test each MCP tool via synchronous subprocess calls."""
 
     def test_get_language_context(self):
-        resp = run_mcp_command({
-            "jsonrpc": "2.0",
-            "id": 10,
-            "method": "tools/call",
-            "params": {"name": "get_language_context", "arguments": {}},
-        })
+        resp = run_mcp_command(
+            {
+                "jsonrpc": "2.0",
+                "id": 10,
+                "method": "tools/call",
+                "params": {"name": "get_language_context", "arguments": {}},
+            }
+        )
         data = json.loads(resp["result"]["content"][0]["text"])
         assert data["language"] == "AILang"
         assert "rules" in data
@@ -137,105 +147,121 @@ class TestMCPTools:
         assert data["workflow"] == ["fmt", "check", "build", "test", "run"]
 
     def test_get_stdlib_all(self):
-        resp = run_mcp_command({
-            "jsonrpc": "2.0",
-            "id": 11,
-            "method": "tools/call",
-            "params": {"name": "get_stdlib", "arguments": {}},
-        })
+        resp = run_mcp_command(
+            {
+                "jsonrpc": "2.0",
+                "id": 11,
+                "method": "tools/call",
+                "params": {"name": "get_stdlib", "arguments": {}},
+            }
+        )
         data = json.loads(resp["result"]["content"][0]["text"])
         assert "modules" in data
         assert len(data["modules"]) >= 15
 
     def test_get_stdlib_specific_module(self):
-        resp = run_mcp_command({
-            "jsonrpc": "2.0",
-            "id": 12,
-            "method": "tools/call",
-            "params": {"name": "get_stdlib", "arguments": {"module": "math"}},
-        })
+        resp = run_mcp_command(
+            {
+                "jsonrpc": "2.0",
+                "id": 12,
+                "method": "tools/call",
+                "params": {"name": "get_stdlib", "arguments": {"module": "math"}},
+            }
+        )
         data = json.loads(resp["result"]["content"][0]["text"])
         assert data["module"] == "math"
         assert "add" in data["functions"]
 
     def test_compile_source_valid(self):
-        resp = run_mcp_command({
-            "jsonrpc": "2.0",
-            "id": 13,
-            "method": "tools/call",
-            "params": {
-                "name": "compile_source",
-                "arguments": {"source": "fn main() { return 0 }"},
-            },
-        })
+        resp = run_mcp_command(
+            {
+                "jsonrpc": "2.0",
+                "id": 13,
+                "method": "tools/call",
+                "params": {
+                    "name": "compile_source",
+                    "arguments": {"source": "fn main() { return 0 }"},
+                },
+            }
+        )
         data = json.loads(resp["result"]["content"][0]["text"])
         assert data["success"] is True
         assert data["diagnostics"] == []
 
     def test_compile_source_invalid(self):
-        resp = run_mcp_command({
-            "jsonrpc": "2.0",
-            "id": 14,
-            "method": "tools/call",
-            "params": {
-                "name": "compile_source",
-                "arguments": {"source": "fn main() { let x = y; return 0 }"},
-            },
-        })
+        resp = run_mcp_command(
+            {
+                "jsonrpc": "2.0",
+                "id": 14,
+                "method": "tools/call",
+                "params": {
+                    "name": "compile_source",
+                    "arguments": {"source": "fn main() { let x = y; return 0 }"},
+                },
+            }
+        )
         data = json.loads(resp["result"]["content"][0]["text"])
         assert data["success"] is False
         assert len(data["diagnostics"]) > 0
 
     def test_explain_diagnostic_valid_code(self):
-        resp = run_mcp_command({
-            "jsonrpc": "2.0",
-            "id": 15,
-            "method": "tools/call",
-            "params": {
-                "name": "explain_diagnostic",
-                "arguments": {"code": "SEM002"},
-            },
-        })
+        resp = run_mcp_command(
+            {
+                "jsonrpc": "2.0",
+                "id": 15,
+                "method": "tools/call",
+                "params": {
+                    "name": "explain_diagnostic",
+                    "arguments": {"code": "SEM002"},
+                },
+            }
+        )
         data = json.loads(resp["result"]["content"][0]["text"])
         assert data["code"] == "SEM002"
         assert data["title"] == "Forward Reference"
         assert "fix" in data
 
     def test_explain_diagnostic_unknown_code(self):
-        resp = run_mcp_command({
-            "jsonrpc": "2.0",
-            "id": 16,
-            "method": "tools/call",
-            "params": {
-                "name": "explain_diagnostic",
-                "arguments": {"code": "BOGUS99"},
-            },
-        })
+        resp = run_mcp_command(
+            {
+                "jsonrpc": "2.0",
+                "id": 16,
+                "method": "tools/call",
+                "params": {
+                    "name": "explain_diagnostic",
+                    "arguments": {"code": "BOGUS99"},
+                },
+            }
+        )
         data = json.loads(resp["result"]["content"][0]["text"])
         assert "error" in data
         assert "available_codes" in data
 
     def test_get_examples_hello(self):
-        resp = run_mcp_command({
-            "jsonrpc": "2.0",
-            "id": 17,
-            "method": "tools/call",
-            "params": {
-                "name": "get_examples",
-                "arguments": {"category": "hello"},
-            },
-        })
+        resp = run_mcp_command(
+            {
+                "jsonrpc": "2.0",
+                "id": 17,
+                "method": "tools/call",
+                "params": {
+                    "name": "get_examples",
+                    "arguments": {"category": "hello"},
+                },
+            }
+        )
         data = json.loads(resp["result"]["content"][0]["text"])
         assert data["category"] == "hello"
         assert "fn main()" in data["code"]
 
     def test_get_examples_all(self):
-        resp = run_mcp_command({
-            "jsonrpc": "2.0",
-            "id": 18,
-            "method": "tools/call",
-            "params": {"name": "get_examples", "arguments": {}},
-        })
+        resp = run_mcp_command(
+            {
+                "jsonrpc": "2.0",
+                "id": 18,
+                "method": "tools/call",
+                "params": {"name": "get_examples", "arguments": {}},
+            }
+        )
         data = json.loads(resp["result"]["content"][0]["text"])
         assert "categories" in data
         assert len(data["categories"]) >= 6

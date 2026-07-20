@@ -1,11 +1,10 @@
 """CSV import/export for tickets."""
 
 import csv
-import io
 from pathlib import Path
 
-from storage import append, next_id
 import ticket as ticket_mod
+from storage import append, next_id
 
 
 def export_tickets(filename: str) -> bool:
@@ -13,9 +12,17 @@ def export_tickets(filename: str) -> bool:
     if not tickets:
         return False
     fields = [
-        "id", "title", "description", "status", "priority",
-        "creator_id", "assignee_id", "category",
-        "created_at", "updated_at", "resolved_at",
+        "id",
+        "title",
+        "description",
+        "status",
+        "priority",
+        "creator_id",
+        "assignee_id",
+        "category",
+        "created_at",
+        "updated_at",
+        "resolved_at",
     ]
     with open(filename, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fields)
@@ -28,7 +35,7 @@ def import_tickets(filename: str) -> int:
     path = Path(filename)
     if not path.exists():
         return 0
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, encoding="utf-8") as f:
         reader = csv.DictReader(f)
         imported = 0
         for row in reader:

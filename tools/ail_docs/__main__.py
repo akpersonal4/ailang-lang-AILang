@@ -10,7 +10,6 @@ import json
 import sys
 from pathlib import Path
 
-
 DOCUMENTS = {
     "AGENTS": {
         "filename": "AGENTS.md",
@@ -31,6 +30,7 @@ def _resolve_docs_path() -> Path | None:
     """Resolve the docs directory relative to the compiler package."""
     try:
         import compiler
+
         return Path(compiler.__file__).parent / "docs"
     except Exception:
         return None

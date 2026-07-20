@@ -1,14 +1,16 @@
-from core.helpers import helpers_get_map_value_safe, helpers_current_timestamp
-from core.storage import storage_add
+from business.notification_reorder import (
+    reorder_notify_check_all,
+    reorder_notify_clear,
+    reorder_notify_get_pending,
+    reorder_notify_summary,
+)
 from business.reorder import reorder_set_level
-from business.notification_reorder import reorder_notify_check_all, reorder_notify_get_pending, reorder_notify_clear, reorder_notify_summary
+from core.helpers import helpers_current_timestamp, helpers_get_map_value_safe
+from core.storage import storage_add
 
 
 def test_rn_check_all():
-    trnProd = {
-        "id": "RN-TEST-PROD-1",
-        "name": "Reorder Notify Product"
-    }
+    trnProd = {"id": "RN-TEST-PROD-1", "name": "Reorder Notify Product"}
     storage_add("products", trnProd)
     reorder_set_level("RN-TEST-PROD-1", 10, 100, 50)
     trnValuation = {
@@ -17,7 +19,7 @@ def test_rn_check_all():
         "quantity_on_hand": 5,
         "current_cost": 10,
         "method": "fifo",
-        "last_updated": helpers_current_timestamp()
+        "last_updated": helpers_current_timestamp(),
     }
     storage_add("valuations", trnValuation)
     trnCount = reorder_notify_check_all()
@@ -29,10 +31,7 @@ def test_rn_check_all():
 
 
 def test_rn_get_pending():
-    trpProd = {
-        "id": "RN-TEST-PROD-2",
-        "name": "Pending Notify Product"
-    }
+    trpProd = {"id": "RN-TEST-PROD-2", "name": "Pending Notify Product"}
     storage_add("products", trpProd)
     reorder_set_level("RN-TEST-PROD-2", 5, 50, 25)
     trpValuation = {
@@ -41,7 +40,7 @@ def test_rn_get_pending():
         "quantity_on_hand": 2,
         "current_cost": 10,
         "method": "fifo",
-        "last_updated": helpers_current_timestamp()
+        "last_updated": helpers_current_timestamp(),
     }
     storage_add("valuations", trpValuation)
     reorder_notify_check_all()
@@ -55,10 +54,7 @@ def test_rn_get_pending():
 
 
 def test_rn_clear():
-    trcProd = {
-        "id": "RN-TEST-PROD-3",
-        "name": "Clear Notify Product"
-    }
+    trcProd = {"id": "RN-TEST-PROD-3", "name": "Clear Notify Product"}
     storage_add("products", trcProd)
     reorder_set_level("RN-TEST-PROD-3", 5, 50, 25)
     trcValuation = {
@@ -67,7 +63,7 @@ def test_rn_clear():
         "quantity_on_hand": 1,
         "current_cost": 10,
         "method": "fifo",
-        "last_updated": helpers_current_timestamp()
+        "last_updated": helpers_current_timestamp(),
     }
     storage_add("valuations", trcValuation)
     reorder_notify_check_all()
@@ -89,10 +85,7 @@ def test_rn_clear():
 
 
 def test_rn_summary():
-    trsProd = {
-        "id": "RN-TEST-PROD-4",
-        "name": "Summary Notify Product"
-    }
+    trsProd = {"id": "RN-TEST-PROD-4", "name": "Summary Notify Product"}
     storage_add("products", trsProd)
     reorder_set_level("RN-TEST-PROD-4", 10, 100, 50)
     trsValuation = {
@@ -101,7 +94,7 @@ def test_rn_summary():
         "quantity_on_hand": 3,
         "current_cost": 10,
         "method": "fifo",
-        "last_updated": helpers_current_timestamp()
+        "last_updated": helpers_current_timestamp(),
     }
     storage_add("valuations", trsValuation)
     reorder_notify_check_all()

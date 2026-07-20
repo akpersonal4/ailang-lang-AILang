@@ -5,7 +5,6 @@ from __future__ import annotations
 import hashlib
 import shutil
 import subprocess
-import sys
 from pathlib import Path
 
 from tools.ail_package_manager.manifest import parse_manifest

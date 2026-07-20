@@ -1,12 +1,15 @@
+from business.reorder import reorder_set_level
 from core.helpers import helpers_get_map_value_safe
 from core.storage import storage_list
-from business.reorder import reorder_set_level
 
 
 def seed_warehouses():
     from models.warehouse import warehouse_create
+
     warehouse_create("Main Warehouse", "WH-MAIN", "123 Main St", "New York", "US")
-    warehouse_create("Secondary Warehouse", "WH-SEC", "456 Oak Ave", "Los Angeles", "US")
+    warehouse_create(
+        "Secondary Warehouse", "WH-SEC", "456 Oak Ave", "Los Angeles", "US"
+    )
     print("Seeded 2 warehouses")
     return True
 
@@ -28,6 +31,7 @@ def seed_reorder_levels():
 
 def seed_currencies():
     from financial.currency import currency_set_rate
+
     currency_set_rate("USD", "EUR", 0.92)
     currency_set_rate("USD", "GBP", 0.79)
     print("Seeded 2 currency rates")
@@ -36,6 +40,7 @@ def seed_currencies():
 
 def seed_taxes():
     from financial.tax import tax_create
+
     tax_create("VAT 20%", 20, "GB", "")
     tax_create("Sales Tax 8%", 8, "US", "")
     print("Seeded 2 tax rates")
@@ -44,14 +49,34 @@ def seed_taxes():
 
 def seed_suppliers():
     from models.supplier import supplier_create
-    supplier_create("Acme Supplies", "John Acme", "acme@example.com", "555-1001", "123 Supply Lane", "net_30", 14, 5)
-    supplier_create("Global Parts", "Jane Global", "global@example.com", "555-1002", "456 Parts Blvd", "net_60", 21, 4)
+
+    supplier_create(
+        "Acme Supplies",
+        "John Acme",
+        "acme@example.com",
+        "555-1001",
+        "123 Supply Lane",
+        "net_30",
+        14,
+        5,
+    )
+    supplier_create(
+        "Global Parts",
+        "Jane Global",
+        "global@example.com",
+        "555-1002",
+        "456 Parts Blvd",
+        "net_60",
+        21,
+        4,
+    )
     print("Seeded 2 suppliers")
     return True
 
 
 def seed_batches():
     from logistics.batch import batch_create
+
     sb_all_products = storage_list("products")
     sb_len = len(sb_all_products)
     if sb_len > 0:
@@ -68,6 +93,7 @@ def seed_batches():
 
 def seed_serials():
     from logistics.serial_number import serial_register
+
     ss_all_products = storage_list("products")
     ss_len = len(ss_all_products)
     if ss_len > 0:
@@ -86,6 +112,7 @@ def seed_serials():
 
 def seed_payments():
     from financial.payment import payment_create
+
     sp_all_invoices = storage_list("invoices")
     sp_len = len(sp_all_invoices)
     if sp_len > 0:
@@ -99,6 +126,7 @@ def seed_payments():
 
 def seed_returns():
     from orders.returns import returns_create
+
     sr_all_sales = storage_list("sales_orders")
     sr_len = len(sr_all_sales)
     sr_all_products = storage_list("products")
@@ -116,18 +144,22 @@ def seed_returns():
 
 def seed_shippings():
     from orders.shipping import shipping_create
+
     ssh_all_sales = storage_list("sales_orders")
     ssh_len = len(ssh_all_sales)
     if ssh_len > 0:
         ssh_first = ssh_all_sales[0]
         ssh_order_id = helpers_get_map_value_safe(ssh_first, "id", "")
-        shipping_create(ssh_order_id, "FedEx", "TRACK-001", "123 Main St, New York", "Demo User")
+        shipping_create(
+            ssh_order_id, "FedEx", "TRACK-001", "123 Main St, New York", "Demo User"
+        )
     print("Seeded shippings")
     return True
 
 
 def seed_workflows():
     from business.workflow import workflow_create
+
     sw_all_sales = storage_list("sales_orders")
     sw_len = len(sw_all_sales)
     if sw_len > 0:

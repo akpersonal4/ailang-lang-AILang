@@ -46,17 +46,21 @@ ERROR_DATABASE: dict[str, ErrorExplanation] = {
             ),
             Example(
                 broken="fn get_val() { return unknown_thing; }\nlet x = get_val();",
-                fixed='fn get_val() { return 42; }\nlet x = get_val();',
+                fixed="fn get_val() { return 42; }\nlet x = get_val();",
                 explanation="Returning a typed literal (42) lets the compiler infer int.",
             ),
         ],
         fixes=[
             "Add a known-type literal to force inference: let x = unknown + 0;",
             "Use convert helpers: let x = convert.to_int(unknown_value);",
-            "Ensure upstream functions return typed literals (return 0; return \"\").",
+            'Ensure upstream functions return typed literals (return 0; return "").',
             "Check function return types with ail explain TYP003.",
         ],
-        related_commands=["ail explain TYP003", "ail explain TYP005", "ail heal type_error"],
+        related_commands=[
+            "ail explain TYP003",
+            "ail explain TYP005",
+            "ail heal type_error",
+        ],
         heal_topic="type_error",
     ),
     "TYP002": ErrorExplanation(
@@ -90,7 +94,7 @@ ERROR_DATABASE: dict[str, ErrorExplanation] = {
         examples=[
             Example(
                 broken='fn get_val() {\n    return 42;\n    return "hello";\n}',
-                fixed='fn get_val() {\n    return 42;\n}',
+                fixed="fn get_val() {\n    return 42;\n}",
                 explanation="All return statements must return the same type.",
             ),
         ],
@@ -141,7 +145,11 @@ ERROR_DATABASE: dict[str, ErrorExplanation] = {
             "Use string.concat() for string concatenation.",
             "Convert types with convert.to_int() or convert.to_number().",
         ],
-        related_commands=["ail explain TYP001", "ail heal type_error", "ail docs STDLIB_REFERENCE.md"],
+        related_commands=[
+            "ail explain TYP001",
+            "ail heal type_error",
+            "ail docs STDLIB_REFERENCE.md",
+        ],
         heal_topic="type_error",
     ),
     "TYP006": ErrorExplanation(
@@ -340,8 +348,8 @@ ERROR_DATABASE: dict[str, ErrorExplanation] = {
         ],
         examples=[
             Example(
-                broken='import mapp;',
-                fixed='import map;',
+                broken="import mapp;",
+                fixed="import map;",
                 explanation="Check the module name spelling.",
             ),
         ],

@@ -12,9 +12,9 @@ from tools.ail_package_manager.commands import cmd_add, cmd_list, cmd_remove
 
 def _make_project(tmp_path: Path, name: str = "test_project") -> Path:
     """Create a minimal project with ail.toml."""
-    from compiler.cli.main import cmd_new
-
     import os
+
+    from compiler.cli.main import cmd_new
 
     old_cwd = os.getcwd()
     try:

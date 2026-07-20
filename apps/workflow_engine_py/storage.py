@@ -1,4 +1,5 @@
 """JSON persistence layer for workflow engine."""
+
 import json
 import os
 
@@ -14,7 +15,7 @@ def load(name):
     path = os.path.join(DATA_DIR, f"{name}.json")
     if not os.path.exists(path):
         return []
-    with open(path, "r") as f:
+    with open(path) as f:
         content = f.read()
     if not content:
         return []

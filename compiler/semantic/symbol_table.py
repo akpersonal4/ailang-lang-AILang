@@ -4,7 +4,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from compiler.diagnostics import Diagnostic, DiagnosticFormatter, DiagnosticReporter, ErrorCode, Severity
+from compiler.diagnostics import (
+    Diagnostic,
+    DiagnosticFormatter,
+    DiagnosticReporter,
+    ErrorCode,
+    Severity,
+)
 
 
 @dataclass
@@ -144,13 +150,20 @@ class SymbolTable:
             msg = f"Undefined identifier: {name}"
 
         self._report_error(
-            msg, "SEM002", start_span, end_span,
+            msg,
+            "SEM002",
+            start_span,
+            end_span,
             suggestion=suggestion,
         )
         return None
 
     def _report_error(
-        self, message: str, code: str, start_span: int | None, end_span: int | None,
+        self,
+        message: str,
+        code: str,
+        start_span: int | None,
+        end_span: int | None,
         suggestion: str | None = None,
     ) -> None:
         if self.reporter is None:

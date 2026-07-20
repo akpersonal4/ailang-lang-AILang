@@ -2,17 +2,18 @@
 
 from __future__ import annotations
 
-import pytest
 from pathlib import Path
-from benchmarks.framework.metrics import (
-    compute_repo_metrics,
-    compute_repeatability_hash,
-    RepositoryMetrics,
-    AIMetrics,
-    EngineeringMetrics,
-    BenchmarkResult,
-)
 
+import pytest
+
+from benchmarks.framework.metrics import (
+    AIMetrics,
+    BenchmarkResult,
+    EngineeringMetrics,
+    RepositoryMetrics,
+    compute_repeatability_hash,
+    compute_repo_metrics,
+)
 
 # ── Fixtures ─────────────────────────────────────────────────────────
 
@@ -55,7 +56,7 @@ class TestComputeRepoMetrics:
     def test_counts_variables(self, tmp_path: Path):
         (tmp_path / "test.ail").write_text(
             "let x = 10;\n"
-            "let name = \"hello\";\n"
+            'let name = "hello";\n'
             "fn main() {\n"
             "  let result = x;\n"
             "  return result;\n"
@@ -77,11 +78,7 @@ class TestComputeRepoMetrics:
         assert metrics.dependency_count == 3
 
     def test_counts_loc(self, tmp_path: Path):
-        (tmp_path / "test.ail").write_text(
-            "fn main() {\n"
-            "  return 1 + 2;\n"
-            "}\n"
-        )
+        (tmp_path / "test.ail").write_text("fn main() {\n" "  return 1 + 2;\n" "}\n")
         metrics = compute_repo_metrics(tmp_path)
         assert metrics.loc == 3  # 3 non-empty lines
 

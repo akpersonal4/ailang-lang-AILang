@@ -3,11 +3,10 @@
 
 from __future__ import annotations
 
-import sys
 import json
 import subprocess
+import sys
 import tempfile
-import shutil
 from pathlib import Path
 
 
@@ -20,7 +19,7 @@ def run_command(cmd: list[str]) -> tuple[int, str, str]:
 def test_forward_ref_simple() -> bool:
     """AI test: Simple forward reference detection."""
     print("TEST: Forward ref - simple case...")
-    content = '''// Function B calls A, but B is defined first
+    content = """// Function B calls A, but B is defined first
 fn main() {
     let result = call_b();
     return result;
@@ -34,18 +33,20 @@ fn call_b() {
     let x = call_a();
     return x + 1;
 }
-'''
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.ail', delete=False) as f:
+"""
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".ail", delete=False) as f:
         f.write(content)
         temp_path = f.name
-    
+
     try:
-        code, out, err = run_command([sys.executable, "-m", "tools.ail_order", temp_path])
+        code, out, err = run_command(
+            [sys.executable, "-m", "tools.ail_order", temp_path]
+        )
         if "call_b" in out and "call_a" in out:
             print("  [PASS] Functions detected correctly")
             return True
         else:
-            print(f"  [FAIL] Functions not detected")
+            print("  [FAIL] Functions not detected")
             return False
     finally:
         Path(temp_path).unlink(missing_ok=True)
@@ -54,7 +55,7 @@ fn call_b() {
 def test_multiple_forward_refs() -> bool:
     """AI test: Multiple forward references in chain."""
     print("TEST: Multiple forward references...")
-    content = '''fn main() {
+    content = """fn main() {
     let a = call_a();
     let b = call_b();
     let c = call_c();
@@ -72,13 +73,15 @@ fn call_a() {
 fn call_b() {
     return 2;
 }
-'''
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.ail', delete=False) as f:
+"""
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".ail", delete=False) as f:
         f.write(content)
         temp_path = f.name
-    
+
     try:
-        code, out, err = run_command([sys.executable, "-m", "tools.ail_order", "--json", temp_path])
+        code, out, err = run_command(
+            [sys.executable, "-m", "tools.ail_order", "--json", temp_path]
+        )
         data = json.loads(out)
         # call_a and call_b are forward refs (called before defined)
         # call_c is fine (defined before main calls it)
@@ -100,26 +103,28 @@ fn call_b() {
 def test_missing_main() -> bool:
     """AI test: File without main function."""
     print("TEST: Missing main function...")
-    content = '''fn helper() {
+    content = """fn helper() {
     return 42;
 }
 
 fn utility() {
     return 1;
 }
-'''
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.ail', delete=False) as f:
+"""
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".ail", delete=False) as f:
         f.write(content)
         temp_path = f.name
-    
+
     try:
-        code, out, err = run_command([sys.executable, "-m", "tools.ail_order", temp_path])
+        code, out, err = run_command(
+            [sys.executable, "-m", "tools.ail_order", temp_path]
+        )
         # Should still work, just no unreachable warnings
         if code == 0:
             print("  [PASS] Works without main")
             return True
         else:
-            print(f"  [FAIL] Unexpected error")
+            print("  [FAIL] Unexpected error")
             return False
     finally:
         Path(temp_path).unlink(missing_ok=True)
@@ -129,7 +134,7 @@ def test_cycle_detection() -> bool:
     """AI test: Circular dependency detection (if applicable)."""
     print("TEST: Cycle detection...")
     # AILang doesn't support mutual recursion, but tool should detect attempt
-    content = '''fn main() {
+    content = """fn main() {
     return 0;
 }
 
@@ -142,13 +147,15 @@ fn func_b() {
     let y = func_a();
     return y;
 }
-'''
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.ail', delete=False) as f:
+"""
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".ail", delete=False) as f:
         f.write(content)
         temp_path = f.name
-    
+
     try:
-        code, out, err = run_command([sys.executable, "-m", "tools.ail_order", temp_path])
+        code, out, err = run_command(
+            [sys.executable, "-m", "tools.ail_order", temp_path]
+        )
         # Should detect the cycle or at least process it
         if code == 0 or "Circular" in out or "Circular" in err:
             print("  [PASS] Cycle handled")
@@ -163,8 +170,16 @@ fn func_b() {
 def test_json_output_machine_readable() -> bool:
     """AI test: JSON output is machine-readable and valid."""
     print("TEST: JSON machine readable...")
-    code, out, err = run_command([sys.executable, "-m", "tools.ail_order", "--json", "examples/hello_world/main.ail"])
-    
+    code, out, err = run_command(
+        [
+            sys.executable,
+            "-m",
+            "tools.ail_order",
+            "--json",
+            "examples/hello_world/main.ail",
+        ]
+    )
+
     try:
         data = json.loads(out)
         # Must have these fields for machine consumption
@@ -189,7 +204,7 @@ def test_json_output_machine_readable() -> bool:
 def test_fix_mode_preserves_content() -> bool:
     """AI test: Fix mode preserves semantic content."""
     print("TEST: Fix mode preserves content...")
-    content = '''fn main() {
+    content = """fn main() {
     let x = helper(5);
     return x;
 }
@@ -197,15 +212,17 @@ def test_fix_mode_preserves_content() -> bool:
 fn helper(n) {
     return n * 2;
 }
-'''
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.ail', delete=False) as f:
+"""
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".ail", delete=False) as f:
         f.write(content)
         temp_path = f.name
-    
+
     try:
         # Get ordered content
-        code, out, err = run_command([sys.executable, "-m", "tools.ail_order", "--fix", "--stdout", temp_path])
-        
+        code, out, err = run_command(
+            [sys.executable, "-m", "tools.ail_order", "--fix", "--stdout", temp_path]
+        )
+
         # Check that both functions are still present
         if "fn main" in out and "fn helper" in out:
             print("  [PASS] Functions preserved in fix mode")
@@ -220,7 +237,7 @@ fn helper(n) {
 def test_complex_nesting() -> bool:
     """AI test: Complex nested function calls."""
     print("TEST: Complex nesting...")
-    content = '''import string;
+    content = """import string;
 
 fn main() {
     let r1 = level1_a();
@@ -239,13 +256,15 @@ fn level1_a() {
 fn level1_b() {
     return level2_helper() + 2;
 }
-'''
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.ail', delete=False) as f:
+"""
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".ail", delete=False) as f:
         f.write(content)
         temp_path = f.name
-    
+
     try:
-        code, out, err = run_command([sys.executable, "-m", "tools.ail_order", "--json", temp_path])
+        code, out, err = run_command(
+            [sys.executable, "-m", "tools.ail_order", "--json", temp_path]
+        )
         data = json.loads(out)
         # main at L2, level1_* at L1, level2_helper at L0
         if "L0" in str(data.get("levels", {})) or data["levels"]:
@@ -264,7 +283,7 @@ fn level1_b() {
 def test_doc_comment_preserved() -> bool:
     """AI test: Documentation comments are recognized."""
     print("TEST: Doc comment recognition...")
-    content = '''/// Helper function for testing
+    content = """/// Helper function for testing
 fn helper() {
     return 1;
 }
@@ -272,19 +291,23 @@ fn helper() {
 fn main() {
     return helper();
 }
-'''
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.ail', delete=False) as f:
+"""
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".ail", delete=False) as f:
         f.write(content)
         temp_path = f.name
-    
+
     try:
-        code, out, err = run_command([sys.executable, "-m", "tools.ail_order", "--json", temp_path])
+        code, out, err = run_command(
+            [sys.executable, "-m", "tools.ail_order", "--json", temp_path]
+        )
         data = json.loads(out)
         if len(data.get("functions", [])) == 2:
             print("  [PASS] Both functions detected")
             return True
         else:
-            print(f"  [FAIL] Expected 2 functions, got {len(data.get('functions', []))}")
+            print(
+                f"  [FAIL] Expected 2 functions, got {len(data.get('functions', []))}"
+            )
             return False
     finally:
         Path(temp_path).unlink(missing_ok=True)
@@ -293,7 +316,7 @@ fn main() {
 def test_cycle_detection_detailed() -> bool:
     """AI test: Mutual recursion is detected in cycle."""
     print("TEST: Cycle detection detailed...")
-    content = '''fn main() {
+    content = """fn main() {
     return 0;
 }
 
@@ -311,13 +334,15 @@ fn c() {
     let z = a();
     return z;
 }
-'''
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.ail', delete=False) as f:
+"""
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".ail", delete=False) as f:
         f.write(content)
         temp_path = f.name
-    
+
     try:
-        code, out, err = run_command([sys.executable, "-m", "tools.ail_order", temp_path])
+        code, out, err = run_command(
+            [sys.executable, "-m", "tools.ail_order", temp_path]
+        )
         # Should detect some form of dependency issue
         if "a" in out and "b" in out and "c" in out:
             print("  [PASS] Cycle functions detected")
@@ -332,7 +357,7 @@ fn c() {
 def test_all_detection_types() -> bool:
     """AI test: All detection types work together."""
     print("TEST: All detection types...")
-    content = '''fn main() {
+    content = """fn main() {
     let x = helper();
     return x;
 }
@@ -344,13 +369,15 @@ fn unused() {
 fn helper() {
     return 2;
 }
-'''
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.ail', delete=False) as f:
+"""
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".ail", delete=False) as f:
         f.write(content)
         temp_path = f.name
-    
+
     try:
-        code, out, err = run_command([sys.executable, "-m", "tools.ail_order", temp_path])
+        code, out, err = run_command(
+            [sys.executable, "-m", "tools.ail_order", temp_path]
+        )
         # Should have forward ref and unreachable
         if "helper" in out and "unused" in out:
             print("  [PASS] Both functions detected")
@@ -365,7 +392,16 @@ fn helper() {
 def test_fix_reorders_properly() -> bool:
     """AI test: Fix mode reorders multiple functions correctly."""
     print("TEST: Fix reorders properly...")
-    code, out, err = run_command([sys.executable, "-m", "tools.ail_order", "--fix", "--stdout", "tests/fixtures/forward_ref.ail"])
+    code, out, err = run_command(
+        [
+            sys.executable,
+            "-m",
+            "tools.ail_order",
+            "--fix",
+            "--stdout",
+            "tests/fixtures/forward_ref.ail",
+        ]
+    )
     # helper should come before main
     if "fn helper" in out and "fn main" in out:
         helper_pos = out.find("fn helper")
@@ -384,7 +420,15 @@ def test_fix_reorders_properly() -> bool:
 def test_json_summary() -> bool:
     """AI test: JSON summary has correct fields."""
     print("TEST: JSON summary...")
-    code, out, err = run_command([sys.executable, "-m", "tools.ail_order", "--json", "examples/hello_world/main.ail"])
+    code, out, err = run_command(
+        [
+            sys.executable,
+            "-m",
+            "tools.ail_order",
+            "--json",
+            "examples/hello_world/main.ail",
+        ]
+    )
     try:
         data = json.loads(out)
         summary = data.get("summary", {})
@@ -414,20 +458,22 @@ def test_cli_order_help() -> bool:
 def test_unreachable_detection() -> bool:
     """AI test: Unreachable functions are detected."""
     print("TEST: Unreachable detection...")
-    content = '''fn main() {
+    content = """fn main() {
     return 1;
 }
 
 fn unused_func() {
     return 2;
 }
-'''
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.ail', delete=False) as f:
+"""
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".ail", delete=False) as f:
         f.write(content)
         temp_path = f.name
-    
+
     try:
-        code, out, err = run_command([sys.executable, "-m", "tools.ail_order", temp_path])
+        code, out, err = run_command(
+            [sys.executable, "-m", "tools.ail_order", temp_path]
+        )
         if "unused_func" in out:
             print("  [PASS] Unreachable function detected")
             return True
@@ -441,7 +487,7 @@ fn unused_func() {
 def test_duplicate_detection() -> bool:
     """AI test: Duplicate functions are detected."""
     print("TEST: Duplicate detection...")
-    content = '''fn main() {
+    content = """fn main() {
     return 1;
 }
 
@@ -452,13 +498,15 @@ fn helper() {
 fn helper() {
     return 3;
 }
-'''
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.ail', delete=False) as f:
+"""
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".ail", delete=False) as f:
         f.write(content)
         temp_path = f.name
-    
+
     try:
-        code, out, err = run_command([sys.executable, "-m", "tools.ail_order", temp_path])
+        code, out, err = run_command(
+            [sys.executable, "-m", "tools.ail_order", temp_path]
+        )
         # Should detect duplicate
         if "helper" in out:
             print("  [PASS] Duplicate detected")
@@ -475,7 +523,7 @@ def run_all_tests() -> int:
     print("=" * 60)
     print("DX TOOL #006 AI VALIDATION TEST SUITE")
     print("=" * 60)
-    
+
     tests = [
         test_forward_ref_simple,
         test_multiple_forward_refs,
@@ -493,7 +541,7 @@ def run_all_tests() -> int:
         test_unreachable_detection,
         test_duplicate_detection,
     ]
-    
+
     passed = 0
     failed = 0
     for t in tests:
@@ -505,10 +553,10 @@ def run_all_tests() -> int:
         except Exception as e:
             print(f"  [ERROR] {t.__name__}: {e}")
             failed += 1
-    
+
     print("\n" + "=" * 60)
     print(f"Passed: {passed}/{len(tests)}, Failed: {failed}/{len(tests)}")
-    
+
     return 0 if failed == 0 else 1
 
 

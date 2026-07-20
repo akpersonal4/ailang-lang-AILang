@@ -5,10 +5,10 @@
 
 from __future__ import annotations
 
-import sys
 import json
-import subprocess
 import shutil
+import subprocess
+import sys
 from pathlib import Path
 
 
@@ -32,10 +32,18 @@ def validate_json_schema() -> bool:
     root = Path(__file__).resolve().parent.parent
     clean_benchmark_outputs()
 
-    code, out, err = run_command([
-        sys.executable, "-m", "tools.ail_benchmark",
-        "--suite", "quick", "--repeat", "1", "--quiet",
-    ])
+    code, out, err = run_command(
+        [
+            sys.executable,
+            "-m",
+            "tools.ail_benchmark",
+            "--suite",
+            "quick",
+            "--repeat",
+            "1",
+            "--quiet",
+        ]
+    )
     if code != 0:
         print(f"  [FAIL] FAIL: Tool exited with {code}")
         return False
@@ -53,12 +61,22 @@ def validate_json_schema() -> bool:
 
     # All benchmark names are strings
     all_names_str = all(isinstance(b.get("name"), str) for b in data["benchmarks"])
-    checks.append("[PASS] All benchmark names are strings" if all_names_str else "[FAIL] Benchmark names not strings")
+    checks.append(
+        "[PASS] All benchmark names are strings"
+        if all_names_str
+        else "[FAIL] Benchmark names not strings"
+    )
 
     # All statuses are valid
     valid_statuses = {"pass", "fail", "skip"}
-    all_status_valid = all(b.get("status") in valid_statuses for b in data["benchmarks"])
-    checks.append("[PASS] All statuses valid" if all_status_valid else "[FAIL] Invalid status found")
+    all_status_valid = all(
+        b.get("status") in valid_statuses for b in data["benchmarks"]
+    )
+    checks.append(
+        "[PASS] All statuses valid"
+        if all_status_valid
+        else "[FAIL] Invalid status found"
+    )
 
     # Stats have all 4 fields (min, max, avg, median)
     stat_fields = {"min", "max", "avg", "median"}
@@ -154,18 +172,34 @@ def validate_deterministic_schema() -> bool:
 
     # Run twice and compare structural schema
     clean_benchmark_outputs()
-    run_command([
-        sys.executable, "-m", "tools.ail_benchmark",
-        "--suite", "quick", "--repeat", "1", "--quiet",
-    ])
+    run_command(
+        [
+            sys.executable,
+            "-m",
+            "tools.ail_benchmark",
+            "--suite",
+            "quick",
+            "--repeat",
+            "1",
+            "--quiet",
+        ]
+    )
     json_path = root / "generated" / "benchmarks" / "BENCHMARK_REPORT.json"
     data1 = json.loads(json_path.read_text(encoding="utf-8"))
 
     clean_benchmark_outputs()
-    run_command([
-        sys.executable, "-m", "tools.ail_benchmark",
-        "--suite", "quick", "--repeat", "1", "--quiet",
-    ])
+    run_command(
+        [
+            sys.executable,
+            "-m",
+            "tools.ail_benchmark",
+            "--suite",
+            "quick",
+            "--repeat",
+            "1",
+            "--quiet",
+        ]
+    )
     data2 = json.loads(json_path.read_text(encoding="utf-8"))
 
     # Compare schema-level properties
@@ -209,7 +243,7 @@ def validate_self_contained() -> bool:
 
     checks = []
     # No external file references (relative paths)
-    external_refs = [".md\"", ".json\""]
+    external_refs = ['.md"', '.json"']
     has_external = any(ref in content for ref in external_refs)
     if not has_external:
         checks.append("[PASS] Report is self-contained (no external references)")

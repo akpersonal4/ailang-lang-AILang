@@ -4,10 +4,11 @@ from __future__ import annotations
 
 import hashlib
 from pathlib import Path
-from typing import Optional
 
-from tools.ail_package_manager.models import LockFile, LockFilePackage, ResolvedDependency
-
+from tools.ail_package_manager.models import (
+    LockFilePackage,
+    ResolvedDependency,
+)
 
 _LOCK_HEADER = """\
 # ail.lock — Auto-generated. Do not edit manually.
@@ -39,7 +40,7 @@ def deps_hash_matches(manifest_path: Path, lock_path: Path) -> bool:
     return current_hash == stored_hash
 
 
-def read_input_hash(lock_path: Path) -> Optional[str]:
+def read_input_hash(lock_path: Path) -> str | None:
     """Read the input_hash value from an ail.lock file."""
     if not lock_path.exists():
         return None
@@ -52,9 +53,7 @@ def read_input_hash(lock_path: Path) -> Optional[str]:
     return None
 
 
-def generate_lock(
-    resolved: list[ResolvedDependency], manifest_path: Path
-) -> str:
+def generate_lock(resolved: list[ResolvedDependency], manifest_path: Path) -> str:
     """Generate ail.lock content from a resolved dependency list."""
     input_hash = compute_deps_hash(manifest_path)
     lines = [_LOCK_HEADER.format(version=1, input_hash=input_hash)]
@@ -103,7 +102,7 @@ def read_lock_packages(lock_path: Path) -> list[LockFilePackage]:
         return []
 
     packages: list[LockFilePackage] = []
-    current: Optional[dict] = None
+    current: dict | None = None
 
     for line in lock_path.read_text(encoding="utf-8").splitlines():
         stripped = line.strip()
@@ -137,7 +136,9 @@ def _dict_to_package(d: dict) -> LockFilePackage:
     version = d.get("resolved_version", "") or d.get("version", "")
     deps = d.get("dependencies", "[]")
     deps = deps.strip("[]").strip()
-    dep_list = [d.strip().strip('"') for d in deps.split(",") if d.strip()] if deps else []
+    dep_list = (
+        [d.strip().strip('"') for d in deps.split(",") if d.strip()] if deps else []
+    )
 
     checksum = d.get("checksum", "")
     commit = d.get("commit", "")

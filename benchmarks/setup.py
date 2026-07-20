@@ -11,8 +11,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from benchmarks.framework.dataset import scan_project, save_metadata
-
+from benchmarks.framework.dataset import save_metadata, scan_project
 
 HERE = Path(__file__).resolve().parent
 DATASETS_DIR = HERE / "datasets"
@@ -40,8 +39,10 @@ def create_dataset(name: str, source_dir: Path) -> Path:
     ref_path = dataset_dir / "source_path.txt"
     ref_path.write_text(str(source_dir.resolve()), encoding="utf-8")
 
-    print(f"  [OK] {name}: {metadata.loc} LOC, {metadata.file_count} files, "
-          f"{metadata.symbol_count} symbols")
+    print(
+        f"  [OK] {name}: {metadata.loc} LOC, {metadata.file_count} files, "
+        f"{metadata.symbol_count} symbols"
+    )
     return dataset_dir
 
 

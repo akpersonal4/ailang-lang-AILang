@@ -1,9 +1,18 @@
-from orders.returns import returns_create, returns_get_by_id, returns_approve, returns_reject, returns_complete, returns_list_by_order
 from core.helpers import helpers_get_map_value_safe
+from orders.returns import (
+    returns_approve,
+    returns_complete,
+    returns_create,
+    returns_get_by_id,
+    returns_list_by_order,
+    returns_reject,
+)
 
 
 def test_returns_create():
-    trcResult = returns_create("SO-TEST-001", "PRD-TEST-001", 2, "Damaged in transit", "John Doe")
+    trcResult = returns_create(
+        "SO-TEST-001", "PRD-TEST-001", 2, "Damaged in transit", "John Doe"
+    )
     if trcResult == False:
         print("FAIL: returns_create returned false")
         return False
@@ -37,7 +46,9 @@ def test_returns_get_by_id_missing():
 
 
 def test_returns_approve():
-    traCreated = returns_create("SO-TEST-002", "PRD-TEST-002", 1, "Wrong item", "Jane Doe")
+    traCreated = returns_create(
+        "SO-TEST-002", "PRD-TEST-002", 1, "Wrong item", "Jane Doe"
+    )
     traId = helpers_get_map_value_safe(traCreated, "id", "")
     traUpdated = returns_approve(traId)
     if traUpdated == False:
@@ -53,7 +64,9 @@ def test_returns_approve():
 
 
 def test_returns_reject():
-    trrCreated = returns_create("SO-TEST-003", "PRD-TEST-003", 3, "Defective", "Bob Smith")
+    trrCreated = returns_create(
+        "SO-TEST-003", "PRD-TEST-003", 3, "Defective", "Bob Smith"
+    )
     trrId = helpers_get_map_value_safe(trrCreated, "id", "")
     trrUpdated = returns_reject(trrId, "Return window expired")
     if trrUpdated == False:
@@ -85,7 +98,9 @@ def test_returns_list_by_order():
 
 
 def test_returns_complete():
-    trcmpCreated = returns_create("SO-TEST-004", "PRD-TEST-004", 1, "Change of mind", "Alice W")
+    trcmpCreated = returns_create(
+        "SO-TEST-004", "PRD-TEST-004", 1, "Change of mind", "Alice W"
+    )
     trcmpId = helpers_get_map_value_safe(trcmpCreated, "id", "")
     returns_approve(trcmpId)
     trcmpUpdated = returns_complete(trcmpId)

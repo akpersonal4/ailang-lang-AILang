@@ -1,5 +1,16 @@
-from core.helpers import helpers_generate_id, helpers_current_timestamp, helpers_get_map_value_safe
-from core.storage import storage_add, storage_get_by_id, storage_update, storage_delete, storage_list
+from core.helpers import (
+    helpers_current_timestamp,
+    helpers_generate_id,
+    helpers_get_map_value_safe,
+)
+from core.storage import (
+    storage_add,
+    storage_delete,
+    storage_get_by_id,
+    storage_list,
+    storage_update,
+)
+
 
 def customer_create(createName, createEmail, createPhone):
     createId = helpers_generate_id("CUS-")
@@ -16,19 +27,24 @@ def customer_create(createName, createEmail, createPhone):
     storage_add("customers", createCustomer)
     return createCustomer
 
+
 def customer_get(getId):
     return storage_get_by_id("customers", getId)
+
 
 def customer_update(updId, updChanges):
     updNow = helpers_current_timestamp()
     updChanges["updated_at"] = updNow
     return storage_update("customers", updId, updChanges)
 
+
 def customer_delete(delId):
     return storage_delete("customers", delId)
 
+
 def customer_list():
     return storage_list("customers")
+
 
 def customer_search(srchQuery):
     srchAll = storage_list("customers")

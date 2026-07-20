@@ -2,10 +2,12 @@
 
 import time
 
-from storage import load, append, next_id
+from storage import append, load, next_id
 
 
-def add(ticket_id: int, user_id: int, action: str, old_value: str, new_value: str) -> dict:
+def add(
+    ticket_id: int, user_id: int, action: str, old_value: str, new_value: str
+) -> dict:
     entry = {
         "id": next_id("audit_log"),
         "ticket_id": ticket_id,

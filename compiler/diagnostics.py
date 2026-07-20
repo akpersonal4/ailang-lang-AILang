@@ -131,7 +131,9 @@ class DiagnosticFormatter:
         location = ""
         if diagnostic.file_path is not None:
             if diagnostic.line is not None and diagnostic.column is not None:
-                location = f"{diagnostic.file_path}:{diagnostic.line}:{diagnostic.column}"
+                location = (
+                    f"{diagnostic.file_path}:{diagnostic.line}:{diagnostic.column}"
+                )
             else:
                 location = f"{diagnostic.file_path}"
         elif diagnostic.line is not None and diagnostic.column is not None:
@@ -164,23 +166,29 @@ class DiagnosticFormatter:
         return matches[0] if matches else None
 
     @staticmethod
-    def format_summary(reporter: 'DiagnosticReporter', file_path: str | None = None) -> str:
+    def format_summary(
+        reporter: DiagnosticReporter, file_path: str | None = None
+    ) -> str:
         """Format a summary of diagnostics with suggested next steps."""
         error_count = reporter.error_count
         warning_count = reporter.warning_count
-        
+
         if error_count == 0 and warning_count == 0:
             return ""
-        
+
         lines = []
         if error_count > 0:
             lines.append(f"{error_count} diagnostic(s) found.")
         if warning_count > 0:
             lines.append(f"{warning_count} warning(s) found.")
-        
+
         # Suggest next steps based on error types
-        error_codes = {d.error_code.code for d in reporter.diagnostics if d.severity == Severity.ERROR}
-        
+        error_codes = {
+            d.error_code.code
+            for d in reporter.diagnostics
+            if d.severity == Severity.ERROR
+        }
+
         suggestions = set()
         if error_codes & {"TYP001", "TYP003", "TYP005", "TYP006", "TYP007", "TYP008"}:
             suggestions.add("ail heal")
@@ -190,14 +198,14 @@ class DiagnosticFormatter:
             suggestions.add("ail docs STDLIB_REFERENCE.md")
         if len(reporter.diagnostics) > 3:
             suggestions.add("ail check")
-        
+
         if suggestions:
             lines.append("")
             lines.append("Suggested next steps:")
             for s in sorted(suggestions):
                 lines.append(f"  {s}")
-        
+
         if file_path:
-            lines.append(f"\nFor more help: ail explain <ERROR_CODE>")
-        
+            lines.append("\nFor more help: ail explain <ERROR_CODE>")
+
         return "\n".join(lines)

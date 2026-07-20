@@ -8,13 +8,10 @@ Three categories of metrics:
 
 from __future__ import annotations
 
-import time
 import hashlib
-from dataclasses import dataclass, field, asdict
-from datetime import datetime, timezone
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
-
 
 # ── Repository Metrics ──────────────────────────────────────────────
 
@@ -22,6 +19,7 @@ from typing import Any
 @dataclass
 class RepositoryMetrics:
     """Static measurements of a repository's structure."""
+
     files: int = 0
     loc: int = 0
     module_count: int = 0
@@ -92,6 +90,7 @@ def compute_repo_metrics(root: Path) -> RepositoryMetrics:
 @dataclass
 class AIMetrics:
     """Measurements from AI interaction with a codebase."""
+
     prompt_tokens: int = 0
     context_tokens: int = 0
     total_tokens_supplied: int = 0
@@ -112,6 +111,7 @@ class AIMetrics:
 @dataclass
 class EngineeringMetrics:
     """Measurements about the benchmark execution itself."""
+
     execution_time_seconds: float = 0.0
     repeatability_hash: str = ""
     error_count: int = 0
@@ -134,6 +134,7 @@ def compute_repeatability_hash(data: dict[str, Any]) -> str:
 @dataclass
 class BenchmarkResult:
     """Complete, immutable measurement result for a single benchmark run."""
+
     benchmark_name: str
     benchmark_version: str
     run_id: str

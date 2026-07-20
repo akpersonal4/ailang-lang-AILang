@@ -1,5 +1,10 @@
+from business.price_history import (
+    price_history_get_by_product,
+    price_history_latest,
+    price_history_list,
+    price_history_record,
+)
 from core.helpers import helpers_get_map_value_safe
-from business.price_history import price_history_record, price_history_get_by_product, price_history_latest, price_history_list
 
 
 def test_price_history_record():
@@ -52,7 +57,10 @@ def test_price_history_latest():
         return False
     tpNewPrice = helpers_get_map_value_safe(tpLatest, "new_price", 0)
     if tpNewPrice != 400:
-        print("FAIL: price_history_latest - expected new_price 400, got " + str(tpNewPrice))
+        print(
+            "FAIL: price_history_latest - expected new_price 400, got "
+            + str(tpNewPrice)
+        )
         return False
     print("PASS: price_history_latest")
     return True

@@ -1,11 +1,13 @@
 from core.helpers import helpers_get_map_value_safe
 
+
 def pagination_paginate(pgItems, pgPageNum, pgPageSize):
     pgStart = (pgPageNum - 1) * pgPageSize
     pgEnd = pgStart + pgPageSize
     if pgStart >= len(pgItems):
         return []
     return list(pgItems[pgStart:pgEnd])
+
 
 def pagination_total_pages(tpItems, tpPageSize):
     if len(tpItems) == 0:
@@ -14,6 +16,7 @@ def pagination_total_pages(tpItems, tpPageSize):
     while tpCount * tpPageSize < len(tpItems):
         tpCount = tpCount + 1
     return tpCount
+
 
 def pagination_page_info(piItems, piPageNum, piPageSize):
     piSubset = pagination_paginate(piItems, piPageNum, piPageSize)
@@ -31,8 +34,10 @@ def pagination_page_info(piItems, piPageNum, piPageSize):
         "has_next": piHasNext,
     }
 
+
 def pagination_page_items(pimInfo):
     return helpers_get_map_value_safe(pimInfo, "items", [])
+
 
 def pagination_has_next(phnInfo):
     return helpers_get_map_value_safe(phnInfo, "has_next", False)

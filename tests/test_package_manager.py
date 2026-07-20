@@ -1,21 +1,14 @@
 """M77.1: Local Package Management — integration tests."""
+
 from __future__ import annotations
 
-import tempfile
 from pathlib import Path
 
 import pytest
 
-from tools.ail_package_manager.installer import install
-from tools.ail_package_manager.lock import (
-    generate_lock,
-    read_lock_packages,
-    deps_hash_matches,
-)
-from tools.ail_package_manager.manifest import parse_manifest, DependencySpec
-from tools.ail_package_manager.models import LockFilePackage
-from tools.ail_package_manager.resolver import resolve, ResolvedDependency
 from ail_platform.report_schema import ExitCode
+from tools.ail_package_manager.installer import install
+from tools.ail_package_manager.manifest import DependencySpec
 
 
 def _create_project(
@@ -61,7 +54,7 @@ class TestLocalDepsInstall:
             encoding="utf-8",
         )
         (local_dir / "test.ail").write_text(
-            'fn main() {\n  return 0\n}\n',
+            "fn main() {\n  return 0\n}\n",
             encoding="utf-8",
         )
 
@@ -91,7 +84,7 @@ class TestLocalDepsInstall:
             encoding="utf-8",
         )
         (local_dir / "test.ail").write_text(
-            'fn main() {\n  return 0\n}\n',
+            "fn main() {\n  return 0\n}\n",
             encoding="utf-8",
         )
         project = _create_project(tmp_path, "myapp", with_local=["mylib"])

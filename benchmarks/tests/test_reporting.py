@@ -4,11 +4,12 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+
 from benchmarks.framework.metrics import (
-    BenchmarkResult,
-    RepositoryMetrics,
     AIMetrics,
+    BenchmarkResult,
     EngineeringMetrics,
+    RepositoryMetrics,
 )
 from benchmarks.framework.reporting import (
     generate_run_id,
@@ -21,19 +22,31 @@ from benchmarks.framework.reporting import (
 def make_sample_result() -> BenchmarkResult:
     """Create a sample BenchmarkResult for testing."""
     repo = RepositoryMetrics(
-        files=10, loc=500, module_count=3, symbol_count=25,
-        function_count=20, variable_count=5, import_count=8,
+        files=10,
+        loc=500,
+        module_count=3,
+        symbol_count=25,
+        function_count=20,
+        variable_count=5,
+        import_count=8,
         doc_size_bytes=2000,
     )
     ai = AIMetrics(
-        prompt_tokens=100, context_tokens=400, total_tokens_supplied=500,
-        completion_tokens=50, clarification_questions=2,
-        comprehension_accuracy=0.85, first_attempt_correct=True,
-        iterations_to_correct=1, token_source_type="ailang",
+        prompt_tokens=100,
+        context_tokens=400,
+        total_tokens_supplied=500,
+        completion_tokens=50,
+        clarification_questions=2,
+        comprehension_accuracy=0.85,
+        first_attempt_correct=True,
+        iterations_to_correct=1,
+        token_source_type="ailang",
     )
     eng = EngineeringMetrics(
-        execution_time_seconds=3.5, repeatability_hash="abc123",
-        error_count=1, errors=["Sample error"],
+        execution_time_seconds=3.5,
+        repeatability_hash="abc123",
+        error_count=1,
+        errors=["Sample error"],
         framework_version="0.1.0",
     )
     return BenchmarkResult(

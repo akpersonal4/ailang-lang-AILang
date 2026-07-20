@@ -62,6 +62,7 @@ def header(msg):
 
 # ── Checks ─────────────────────────────────────────────────────────
 
+
 def check_python():
     """Verify Python 3.11+ is available."""
     v = sys.version_info
@@ -78,7 +79,9 @@ def check_ail():
     try:
         result = subprocess.run(
             [sys.executable, "-m", "compiler.cli.main", "--help"],
-            capture_output=True, text=True, timeout=10
+            capture_output=True,
+            text=True,
+            timeout=10,
         )
         if result.returncode == 0:
             ok("AILang CLI available")
@@ -108,6 +111,7 @@ def check_inventory_source():
 
 
 # ── Installation ───────────────────────────────────────────────────
+
 
 def create_directories(target):
     """Create required directories under target."""
@@ -144,7 +148,11 @@ def copy_source(target):
         for f in test_src.glob("*.ail"):
             shutil.copy2(f, test_dst / f.name)
             test_count += 1
-        ok(f"Copied {test_count} test .ail files" if test_count > 0 else "No test files copied")
+        ok(
+            f"Copied {test_count} test .ail files"
+            if test_count > 0
+            else "No test files copied"
+        )
 
     # Copy test_compile.py
     compile_test_src = INVENTORY_SRC / "test_compile.py"
@@ -174,19 +182,21 @@ def create_config(target):
                 "username": "admin",
                 "password": "admin123",
                 "role": "admin",
-                "name": "Admin User"
+                "name": "Admin User",
             },
             {
                 "username": "staff1",
                 "password": "staff123",
                 "role": "staff",
-                "name": "Staff Member"
-            }
+                "name": "Staff Member",
+            },
         ]
         with open(users_file, "w") as f:
             json.dump(default_users, f, indent=2)
-        ok(f"Created default config/users.json")
-        warn("Default passwords: admin/admin123, staff1/staff123 — change after first login")
+        ok("Created default config/users.json")
+        warn(
+            "Default passwords: admin/admin123, staff1/staff123 — change after first login"
+        )
     else:
         ok(f"Config file already exists: {users_file}")
 
@@ -228,6 +238,7 @@ Documentation:
 
 # ── Verification ───────────────────────────────────────────────────
 
+
 def verify_build(target):
     """Run `ail build main.ail` to verify the application compiles."""
     main_file = os.path.join(target, "main.ail")
@@ -237,8 +248,10 @@ def verify_build(target):
 
     result = subprocess.run(
         [sys.executable, "-m", "compiler.cli.main", "build", main_file],
-        capture_output=True, text=True, timeout=30,
-        cwd=target
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=target,
     )
     if result.returncode == 0:
         ok("ail build main.ail — SUCCESS")
@@ -252,9 +265,18 @@ def verify_build(target):
 def verify_help(target):
     """Run the help command and verify it works."""
     result = subprocess.run(
-        [sys.executable, "-m", "compiler.cli.main", "run", os.path.join(target, "main.ail"), "help"],
-        capture_output=True, text=True, timeout=30,
-        cwd=target
+        [
+            sys.executable,
+            "-m",
+            "compiler.cli.main",
+            "run",
+            os.path.join(target, "main.ail"),
+            "help",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=target,
     )
     if result.returncode == 0 and "Usage:" in result.stdout:
         ok("ail run main.ail help — SUCCESS")
@@ -274,8 +296,10 @@ def verify_compile_test(target):
 
     result = subprocess.run(
         [sys.executable, test_file],
-        capture_output=True, text=True, timeout=60,
-        cwd=target
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=target,
     )
     if result.returncode == 0 and "ALL TESTS PASSED" in result.stdout:
         ok("test_compile.py — ALL TESTS PASSED")
@@ -289,6 +313,7 @@ def verify_compile_test(target):
 
 # ── Main ───────────────────────────────────────────────────────────
 
+
 def print_banner():
     print(f"""
 {BOLD}{CYAN}╔══════════════════════════════════════════╗{RESET}
@@ -301,11 +326,13 @@ def print_banner():
 def install(target):
     """Full installation sequence."""
     header("Pre-flight Checks")
-    checks_pass = all([
-        check_python(),
-        check_ail(),
-        check_inventory_source(),
-    ])
+    checks_pass = all(
+        [
+            check_python(),
+            check_ail(),
+            check_inventory_source(),
+        ]
+    )
     if not checks_pass:
         fail("Pre-flight checks failed. Aborting.")
         sys.exit(1)
@@ -336,19 +363,21 @@ def install(target):
     print()
     print(f"  {BOLD}Quick start:{RESET}")
     print(f"    cd {target}")
-    print(f"    ail run main.ail help")
-    print(f"    ail run main.ail init")
-    print(f"    ail run main.ail report")
+    print("    ail run main.ail help")
+    print("    ail run main.ail init")
+    print("    ail run main.ail report")
     print()
 
 
 def verify_existing(target):
     """Verify an existing installation."""
     header(f"Verifying installation at {target}")
-    checks_pass = all([
-        check_python(),
-        check_ail(),
-    ])
+    checks_pass = all(
+        [
+            check_python(),
+            check_ail(),
+        ]
+    )
     if not checks_pass:
         fail("Verification checks failed.")
         sys.exit(1)

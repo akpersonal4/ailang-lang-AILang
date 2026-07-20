@@ -22,8 +22,17 @@ def discover_ail_files(target: Path) -> list[Path]:
         # Single pattern, then deduplicate and exclude
         raw_files = list(target.rglob("*.ail"))
         # Exclude patterns
-        exclude_dirs = {".venv", ".venv_test", ".git", "__pycache__", "ailang.egg-info", "generated"}
-        filtered = [f for f in raw_files if not any(excl in f.parts for excl in exclude_dirs)]
+        exclude_dirs = {
+            ".venv",
+            ".venv_test",
+            ".git",
+            "__pycache__",
+            "ailang.egg-info",
+            "generated",
+        }
+        filtered = [
+            f for f in raw_files if not any(excl in f.parts for excl in exclude_dirs)
+        ]
         return sorted(set(filtered))
 
     return []
@@ -77,19 +86,25 @@ def run_analyzer_on_file(filepath: Path, timeout: int = 300) -> tuple[dict, str]
             if len(parts) > 1:
                 funcs = parts[1].strip()
                 if funcs and funcs != "(none)":
-                    metrics["unreachable_functions"] = [f.strip() for f in funcs.split(",")]
+                    metrics["unreachable_functions"] = [
+                        f.strip() for f in funcs.split(",")
+                    ]
         elif "Missing docs:" in line and "(none)" not in line:
             parts = line.split(":", 1)
             if len(parts) > 1:
                 funcs = parts[1].strip()
                 if funcs and funcs != "(none)":
-                    metrics["undocumented_functions"] = [f.strip() for f in funcs.split(",")]
+                    metrics["undocumented_functions"] = [
+                        f.strip() for f in funcs.split(",")
+                    ]
         elif "Recursive:" in line and "(none detected)" not in line:
             parts = line.split(":", 1)
             if len(parts) > 1:
                 funcs = parts[1].strip()
                 if funcs and funcs != "(none)":
-                    metrics["recursive_functions"] = [f.strip() for f in funcs.split(",")]
+                    metrics["recursive_functions"] = [
+                        f.strip() for f in funcs.split(",")
+                    ]
         elif "Unused functions:" in line and "(none)" not in line:
             parts = line.split(":", 1)
             if len(parts) > 1:
@@ -100,7 +115,9 @@ def run_analyzer_on_file(filepath: Path, timeout: int = 300) -> tuple[dict, str]
     return metrics, output
 
 
-def generate_markdown_report(results: list[dict], raw_outputs: list[str], thresholds: dict) -> str:
+def generate_markdown_report(
+    results: list[dict], raw_outputs: list[str], thresholds: dict
+) -> str:
     """Generate a markdown report from the analysis results."""
     lines = [
         "# AILang Static Analyzer Report",
@@ -129,26 +146,36 @@ def generate_markdown_report(results: list[dict], raw_outputs: list[str], thresh
 
     # Warnings section
     warnings = []
-    large_files = [r for r in results if r["total_lines"] > thresholds["large_file_threshold"]]
-    many_funcs = [r for r in results if r["functions"] > thresholds["many_functions_threshold"]]
+    large_files = [
+        r for r in results if r["total_lines"] > thresholds["large_file_threshold"]
+    ]
+    many_funcs = [
+        r for r in results if r["functions"] > thresholds["many_functions_threshold"]
+    ]
     deep_recursion = [r for r in results if r["max_depth"] > thresholds["max_depth"]]
 
     if large_files:
         warnings.append("### Large Files")
         for r in large_files:
-            warnings.append(f"- `{r['path']}`: {r['total_lines']} lines (threshold: {thresholds['large_file_threshold']})")
+            warnings.append(
+                f"- `{r['path']}`: {r['total_lines']} lines (threshold: {thresholds['large_file_threshold']})"
+            )
         warnings.append("")
 
     if many_funcs:
         warnings.append("### Many Functions")
         for r in many_funcs:
-            warnings.append(f"- `{r['path']}`: {r['functions']} functions (threshold: {thresholds['many_functions_threshold']})")
+            warnings.append(
+                f"- `{r['path']}`: {r['functions']} functions (threshold: {thresholds['many_functions_threshold']})"
+            )
         warnings.append("")
 
     if deep_recursion:
         warnings.append("### Deep Recursion")
         for r in deep_recursion:
-            warnings.append(f"- `{r['path']}`: max depth {r['max_depth']} (threshold: {thresholds['max_depth']})")
+            warnings.append(
+                f"- `{r['path']}`: max depth {r['max_depth']} (threshold: {thresholds['max_depth']})"
+            )
         warnings.append("")
 
     if warnings:
@@ -183,41 +210,37 @@ def main() -> int:
         "target",
         nargs="?",
         default=".",
-        help="File or directory to analyze (.ail file, directory, or '.')"
+        help="File or directory to analyze (.ail file, directory, or '.')",
     )
     parser.add_argument(
-        "--json-only",
-        action="store_true",
-        help="Output only JSON report"
+        "--json-only", action="store_true", help="Output only JSON report"
     )
     parser.add_argument(
-        "--markdown-only",
-        action="store_true",
-        help="Output only markdown report"
+        "--markdown-only", action="store_true", help="Output only markdown report"
     )
     parser.add_argument(
         "--max-depth",
         type=int,
         default=10,
-        help="Maximum recursion depth warning threshold (default: 10)"
+        help="Maximum recursion depth warning threshold (default: 10)",
     )
     parser.add_argument(
         "--large-file-threshold",
         type=int,
         default=1000,
-        help="Large file warning threshold in lines (default: 1000)"
+        help="Large file warning threshold in lines (default: 1000)",
     )
     parser.add_argument(
         "--many-functions-threshold",
         type=int,
         default=100,
-        help="Many functions warning threshold (default: 100)"
+        help="Many functions warning threshold (default: 100)",
     )
     parser.add_argument(
         "--timeout",
         type=int,
         default=300,
-        help="Subprocess timeout in seconds per file (default: 300)"
+        help="Subprocess timeout in seconds per file (default: 300)",
     )
     args = parser.parse_args()
 

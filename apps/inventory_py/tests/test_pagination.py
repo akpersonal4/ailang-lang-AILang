@@ -1,4 +1,10 @@
-from core.pagination import pagination_paginate, pagination_total_pages, pagination_page_info, pagination_page_items, pagination_has_next
+from core.pagination import (
+    pagination_has_next,
+    pagination_page_info,
+    pagination_page_items,
+    pagination_paginate,
+    pagination_total_pages,
+)
 
 
 def test_pagination_basic():

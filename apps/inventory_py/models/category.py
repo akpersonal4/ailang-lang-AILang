@@ -1,5 +1,16 @@
-from core.helpers import helpers_generate_id, helpers_current_timestamp, helpers_get_map_value_safe
-from core.storage import storage_add, storage_get_by_id, storage_update, storage_delete, storage_list
+from core.helpers import (
+    helpers_current_timestamp,
+    helpers_generate_id,
+    helpers_get_map_value_safe,
+)
+from core.storage import (
+    storage_add,
+    storage_delete,
+    storage_get_by_id,
+    storage_list,
+    storage_update,
+)
+
 
 def category_create(ccName, ccDescription, ccParentId):
     ccId = helpers_generate_id("CAT-")
@@ -14,17 +25,22 @@ def category_create(ccName, ccDescription, ccParentId):
     storage_add("categories", ccCategory)
     return ccCategory
 
+
 def category_get(cgId):
     return storage_get_by_id("categories", cgId)
+
 
 def category_update(cuId, cuChanges):
     return storage_update("categories", cuId, cuChanges)
 
+
 def category_delete(cdId):
     return storage_delete("categories", cdId)
 
+
 def category_list():
     return storage_list("categories")
+
 
 def category_list_by_parent(clpParentId):
     clpAll = storage_list("categories")

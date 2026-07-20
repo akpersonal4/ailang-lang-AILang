@@ -25,11 +25,11 @@ import sys
 from collections.abc import Callable
 from pathlib import Path
 
+from compiler import __version__
 from compiler.compilation import CompilationSession
 from compiler.diagnostics import DiagnosticFormatter, DiagnosticReporter
 from compiler.runtime import builtins as runtime_builtins
 from compiler.runtime.interpreter import Runtime
-from compiler import __version__
 
 PROG = "ail"
 
@@ -95,7 +95,7 @@ def _mark_onboarded() -> None:
 
 def _show_welcome() -> None:
     """Display the first-run welcome message."""
-    print(f"""
+    print("""
 Welcome to AILang.
 
 Recommended startup sequence:
@@ -154,7 +154,9 @@ def _find_stdlib() -> Path:
         for start in [Path.cwd(), pkg_dir]:
             current = start
             while True:
-                if (current / "stdlib").is_dir() and (current / "pyproject.toml").is_file():
+                if (current / "stdlib").is_dir() and (
+                    current / "pyproject.toml"
+                ).is_file():
                     return current / "stdlib"
                 if current == current.parent:
                     break
@@ -312,7 +314,7 @@ def cmd_run(args: list[str]) -> int:
                 print(f"  {v['caller']}()")
                 print(f"  calls {v['callee']}()")
                 print()
-                print(f"  Suggestion:")
+                print("  Suggestion:")
                 if v["type"] == "forward_reference":
                     print(f"    Move {v['callee']}() definition above {v['caller']}()")
                 elif v["type"] == "missing_import":
@@ -573,25 +575,25 @@ def _check_file_forward_references(file_path: Path) -> list[dict]:
 
     # Parse the file to get function definitions and calls
     try:
-        from compiler.lexer import Lexer
-        from compiler.parser import Parser
         from compiler.ast.builder import ASTBuilder
         from compiler.ast.nodes import (
-            FunctionDeclarationNode,
-            CallExpressionNode,
-            MemberAccessNode,
-            IdentifierNode,
-            ImportDeclarationNode,
-            ProgramNode,
-            BlockNode,
-            ExpressionStatementNode,
-            VariableDeclarationNode,
-            ReturnStatementNode,
-            IfStatementNode,
-            ForStatementNode,
             BinaryExpressionNode,
+            BlockNode,
+            CallExpressionNode,
+            ExpressionStatementNode,
+            ForStatementNode,
+            FunctionDeclarationNode,
+            IdentifierNode,
+            IfStatementNode,
+            ImportDeclarationNode,
+            MemberAccessNode,
+            ProgramNode,
+            ReturnStatementNode,
             UnaryExpressionNode,
+            VariableDeclarationNode,
         )
+        from compiler.lexer import Lexer
+        from compiler.parser import Parser
 
         lexer = Lexer(source_path=str(file_path))
         tokens = lexer.tokenize(source_text)
@@ -1188,16 +1190,16 @@ def _create_project_dir(project_name: str, templates: dict[str, str]) -> int:
     safe_name = project_name.replace("-", "_")
     toml_content = _AIL_TOML_TEMPLATE.format(
         name=safe_name,
-        description=f"An AILang project",
+        description="An AILang project",
     )
     toml_path = project_path / "ail.toml"
     toml_path.write_text(toml_content, encoding="utf-8")
-    print(f"  Created: ail.toml")
+    print("  Created: ail.toml")
 
     # Generate ail.lock
     lock_path = project_path / "ail.lock"
     lock_path.write_text(_AIL_LOCK_TEMPLATE, encoding="utf-8")
-    print(f"  Created: ail.lock")
+    print("  Created: ail.lock")
 
     print(f"\nProject '{project_name}' created in: {project_path}")
     print(f"Run:    cd {project_name} && ail run main.ail")
@@ -1362,10 +1364,10 @@ def cmd_publish(args: list[str]) -> int:
             return 1
 
     from compiler.package.registry import (
+        RegistryError,
         load_registry_url,
         publish_local,
         publish_remote,
-        RegistryError,
     )
 
     if registry_url is None:
@@ -1546,7 +1548,7 @@ def cmd_test(args: list[str]) -> int:
                 print(f"  {v['caller']}()")
                 print(f"  calls {v['callee']}()")
                 print()
-                print(f"  Suggestion:")
+                print("  Suggestion:")
                 if v["type"] == "forward_reference":
                     print(f"    Move {v['callee']}() definition above {v['caller']}()")
                 elif v["type"] == "missing_import":
@@ -1595,14 +1597,14 @@ def cmd_test(args: list[str]) -> int:
 
             if has_import_error and suggested_root:
                 print(
-                    f"\n  Hint: This appears to be an application-local import.",
+                    "\n  Hint: This appears to be an application-local import.",
                     file=sys.stderr,
                 )
-                print(f"  Try running with --root flag:", file=sys.stderr)
+                print("  Try running with --root flag:", file=sys.stderr)
                 print(f"    ail test --root {suggested_root}", file=sys.stderr)
-                print(f"  Or run from the application directory:", file=sys.stderr)
+                print("  Or run from the application directory:", file=sys.stderr)
                 print(f"    cd {suggested_root}", file=sys.stderr)
-                print(f"    ail test", file=sys.stderr)
+                print("    ail test", file=sys.stderr)
             continue
 
         # Execute the test file
@@ -1961,47 +1963,47 @@ def cmd_help(args: list[str]) -> int:
     print(f"  {PROG} <command> [args]")
     print()
     print("Options:")
-    print(f"  -h, --help          Show this help message")
-    print(f"  -v, --version       Show version information")
+    print("  -h, --help          Show this help message")
+    print("  -v, --version       Show version information")
     print()
     print("Commands:")
-    print(f"  run <file>          Compile and run an AILang program")
-    print(f"  build <file>        Compile and check for errors (no execution)")
-    print(f"  check <file>        Check for forward references and ordering violations")
-    print(f"  fmt <file_or_dir>   Format AILang source file(s)")
-    print(f"  test [<file_or_dir>] Run test_*.ail files")
-    print(f"  new <project>       Create a new AILang project scaffold")
-    print(f"  rename <old> <new>  Rename identifier repository-wide")
-    print(f"  watch [<file>]      Watch for changes, recompile incrementally")
-    print(f"  order <target>      Analyze dependency ordering of .ail files")
+    print("  run <file>          Compile and run an AILang program")
+    print("  build <file>        Compile and check for errors (no execution)")
+    print("  check <file>        Check for forward references and ordering violations")
+    print("  fmt <file_or_dir>   Format AILang source file(s)")
+    print("  test [<file_or_dir>] Run test_*.ail files")
+    print("  new <project>       Create a new AILang project scaffold")
+    print("  rename <old> <new>  Rename identifier repository-wide")
+    print("  watch [<file>]      Watch for changes, recompile incrementally")
+    print("  order <target>      Analyze dependency ordering of .ail files")
     print()
     print("Package Management:")
-    print(f"  install             Install dependencies from ail.toml")
-    print(f"  add <package>       Add a dependency to ail.toml")
-    print(f"  remove <package>    Remove a dependency from ail.toml")
-    print(f"  update              Re-resolve all dependencies")
-    print(f"  list                List installed dependencies")
-    print(f"  publish             Publish project to package registry")
+    print("  install             Install dependencies from ail.toml")
+    print("  add <package>       Add a dependency to ail.toml")
+    print("  remove <package>    Remove a dependency from ail.toml")
+    print("  update              Re-resolve all dependencies")
+    print("  list                List installed dependencies")
+    print("  publish             Publish project to package registry")
     print()
     print("Developer Tools:")
-    print(f"  doctor              Run repository health checks")
-    print(f"  heal                Get fix suggestions for common errors")
-    print(f"  explain <CODE>      Explain a compiler error code in detail")
-    print(f"  docs [<name>]       Retrieve AILang documentation (no filesystem access)")
+    print("  doctor              Run repository health checks")
+    print("  heal                Get fix suggestions for common errors")
+    print("  explain <CODE>      Explain a compiler error code in detail")
+    print("  docs [<name>]       Retrieve AILang documentation (no filesystem access)")
     print(
-        f"  context [--json]    Generate AI-friendly project context (use --json for machine-readable)"
+        "  context [--json]    Generate AI-friendly project context (use --json for machine-readable)"
     )
     print(
-        f"  mcp                 Start MCP server for AI tool integration (stdio transport)"
+        "  mcp                 Start MCP server for AI tool integration (stdio transport)"
     )
-    print(f"  static-analyzer     Run static analysis on AILang source")
-    print(f"  benchmark           Run the AILang benchmark suite")
-    print(f"  testgen             Generate test cases for AILang apps")
+    print("  static-analyzer     Run static analysis on AILang source")
+    print("  benchmark           Run the AILang benchmark suite")
+    print("  testgen             Generate test cases for AILang apps")
     print()
     print("Other:")
-    print(f"  lsp                 Start the LSP server (stdin/stdout)")
-    print(f"  version             Print version information")
-    print(f"  help                Print this help message")
+    print("  lsp                 Start the LSP server (stdin/stdout)")
+    print("  version             Print version information")
+    print("  help                Print this help message")
     print()
     print("Examples:")
     print(f"  {PROG} run hello.ail")
@@ -2034,7 +2036,7 @@ def cmd_help(args: list[str]) -> int:
 
 def main(argv: list[str] | None = None) -> int:
     """Main entry point. Parses args and dispatches to the appropriate command.
-    
+
     Supports global --dev flag in two positions:
         ail --dev <command>
         ail <command> --dev
@@ -2105,6 +2107,7 @@ def main(argv: list[str] | None = None) -> int:
     if dev_mode_requested:
         # Set the global dev mode flag for _find_stdlib() to use
         import compiler.cli.main as cli_module
+
         cli_module._DEV_MODE = True
 
     argv = new_argv

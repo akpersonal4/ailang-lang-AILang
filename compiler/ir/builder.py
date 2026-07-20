@@ -70,7 +70,9 @@ class IRBuilder:
         for child in node.children:
             body.append(self._build_statement(child))
         all_body = tuple(self._generated_functions + body)
-        return ProgramIR(body=all_body, start_span=node.start_span, end_span=node.end_span)
+        return ProgramIR(
+            body=all_body, start_span=node.start_span, end_span=node.end_span
+        )
 
     # ---------------------------------------------------------------------
     # Statement helpers
@@ -100,9 +102,7 @@ class IRBuilder:
         defaults: list[tuple[str, IRExpression]] = []
         for p in node.parameters:
             if p.default_value is not None:
-                defaults.append(
-                    (p.name, self._build_expression(p.default_value))
-                )
+                defaults.append((p.name, self._build_expression(p.default_value)))
         body = self._build_BlockNode(node.body)
         return FunctionIR(
             name=node.name.name,
@@ -145,9 +145,7 @@ class IRBuilder:
             end_span=node.end_span,
         )
 
-    def _build_ForStatementNode(
-        self, node: ForStatementNode
-    ) -> CallIR | AssignmentIR:
+    def _build_ForStatementNode(self, node: ForStatementNode) -> CallIR | AssignmentIR:
         """Lower a for-in loop into a recursive helper function + initial call.
 
         For ``for item in collection { body }`` generates:
@@ -253,9 +251,7 @@ class IRBuilder:
                 ),
             )
         else:
-            else_stmts = (
-                ExpressionStatementIR(expression=LiteralIR(value=None)),
-            )
+            else_stmts = (ExpressionStatementIR(expression=LiteralIR(value=None)),)
         else_block = BlockIR(statements=else_stmts)
 
         if_ir = IfIR(
@@ -322,72 +318,40 @@ class IRBuilder:
                 if isinstance(node.left, IdentifierNode):
                     if node.left.name not in local_names:
                         writes.add(node.left.name)
-                    IRBuilder._collect_free_refs(
-                        node.right, local_names, reads, writes
-                    )
+                    IRBuilder._collect_free_refs(node.right, local_names, reads, writes)
                 else:
-                    IRBuilder._collect_free_refs(
-                        node.left, local_names, reads, writes
-                    )
-                    IRBuilder._collect_free_refs(
-                        node.right, local_names, reads, writes
-                    )
+                    IRBuilder._collect_free_refs(node.left, local_names, reads, writes)
+                    IRBuilder._collect_free_refs(node.right, local_names, reads, writes)
             else:
-                IRBuilder._collect_free_refs(
-                    node.left, local_names, reads, writes
-                )
-                IRBuilder._collect_free_refs(
-                    node.right, local_names, reads, writes
-                )
+                IRBuilder._collect_free_refs(node.left, local_names, reads, writes)
+                IRBuilder._collect_free_refs(node.right, local_names, reads, writes)
         elif isinstance(node, BlockNode):
             for stmt in node.statements:
                 IRBuilder._collect_free_refs(stmt, local_names, reads, writes)
         elif isinstance(node, ExpressionStatementNode):
-            IRBuilder._collect_free_refs(
-                node.expression, local_names, reads, writes
-            )
+            IRBuilder._collect_free_refs(node.expression, local_names, reads, writes)
         elif isinstance(node, ReturnStatementNode):
-            IRBuilder._collect_free_refs(
-                node.value, local_names, reads, writes
-            )
+            IRBuilder._collect_free_refs(node.value, local_names, reads, writes)
         elif isinstance(node, IfStatementNode):
-            IRBuilder._collect_free_refs(
-                node.condition, local_names, reads, writes
-            )
-            IRBuilder._collect_free_refs(
-                node.then_block, local_names, reads, writes
-            )
+            IRBuilder._collect_free_refs(node.condition, local_names, reads, writes)
+            IRBuilder._collect_free_refs(node.then_block, local_names, reads, writes)
             if node.else_block:
                 IRBuilder._collect_free_refs(
                     node.else_block, local_names, reads, writes
                 )
         elif isinstance(node, ForStatementNode):
-            IRBuilder._collect_free_refs(
-                node.iterable, local_names, reads, writes
-            )
-            IRBuilder._collect_free_refs(
-                node.body, local_names, reads, writes
-            )
+            IRBuilder._collect_free_refs(node.iterable, local_names, reads, writes)
+            IRBuilder._collect_free_refs(node.body, local_names, reads, writes)
         elif isinstance(node, CallExpressionNode):
-            IRBuilder._collect_free_refs(
-                node.callee, local_names, reads, writes
-            )
+            IRBuilder._collect_free_refs(node.callee, local_names, reads, writes)
             for arg in node.arguments:
-                IRBuilder._collect_free_refs(
-                    arg, local_names, reads, writes
-                )
+                IRBuilder._collect_free_refs(arg, local_names, reads, writes)
         elif isinstance(node, MemberAccessNode):
-            IRBuilder._collect_free_refs(
-                node.receiver, local_names, reads, writes
-            )
+            IRBuilder._collect_free_refs(node.receiver, local_names, reads, writes)
         elif isinstance(node, UnaryExpressionNode):
-            IRBuilder._collect_free_refs(
-                node.operand, local_names, reads, writes
-            )
+            IRBuilder._collect_free_refs(node.operand, local_names, reads, writes)
         elif isinstance(node, VariableDeclarationNode):
-            IRBuilder._collect_free_refs(
-                node.initializer, local_names, reads, writes
-            )
+            IRBuilder._collect_free_refs(node.initializer, local_names, reads, writes)
 
     # ---------------------------------------------------------------------
     # Expression helpers

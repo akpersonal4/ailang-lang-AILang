@@ -5,9 +5,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-import pytest
-
-
 # =============================================================================
 # Diagnostics: next_steps field
 # =============================================================================
@@ -45,19 +42,29 @@ class TestDiagnosticsNextSteps:
         assert "heal" in result.lower() or "type" in result.lower()
 
     def test_formatter_format_summary(self):
-        from compiler.diagnostics import DiagnosticFormatter, DiagnosticReporter, Diagnostic, ErrorCode, Severity
+        from compiler.diagnostics import (
+            Diagnostic,
+            DiagnosticFormatter,
+            DiagnosticReporter,
+            ErrorCode,
+            Severity,
+        )
 
         reporter = DiagnosticReporter()
-        reporter.report(Diagnostic(
-            severity=Severity.ERROR,
-            error_code=ErrorCode("TYP001", "Type mismatch"),
-            message="Expected string, got int",
-        ))
-        reporter.report(Diagnostic(
-            severity=Severity.WARNING,
-            error_code=ErrorCode("W001", "Unused value"),
-            message="Value is never used",
-        ))
+        reporter.report(
+            Diagnostic(
+                severity=Severity.ERROR,
+                error_code=ErrorCode("TYP001", "Type mismatch"),
+                message="Expected string, got int",
+            )
+        )
+        reporter.report(
+            Diagnostic(
+                severity=Severity.WARNING,
+                error_code=ErrorCode("W001", "Unused value"),
+                message="Value is never used",
+            )
+        )
         summary = DiagnosticFormatter.format_summary(reporter)
         assert "1 diagnostic(s)" in summary
         assert "1 warning(s)" in summary
@@ -178,6 +185,7 @@ class TestFirstRunExperience:
 
     def test_get_config_dir_returns_path(self):
         from compiler.cli.main import _get_config_dir
+
         config_dir = _get_config_dir()
         assert isinstance(config_dir, Path)
         assert ".ail" in str(config_dir)
@@ -210,6 +218,7 @@ class TestDoctorNewChecks:
 
     def test_check_python_version(self):
         from tools.ail_doctor.__main__ import check_python_version
+
         result = check_python_version()
         assert "current" in result
         assert "required" in result
@@ -218,12 +227,14 @@ class TestDoctorNewChecks:
 
     def test_check_stdlib_available(self):
         from tools.ail_doctor.__main__ import check_stdlib_available
+
         root = Path(__file__).parent.parent
         result = check_stdlib_available(root)
         assert isinstance(result, list)
 
     def test_check_mcp_available(self):
         from tools.ail_doctor.__main__ import check_mcp_available
+
         root = Path(__file__).parent.parent
         result = check_mcp_available(root)
         assert "server_exists" in result
@@ -231,6 +242,7 @@ class TestDoctorNewChecks:
 
     def test_check_lsp_available(self):
         from tools.ail_doctor.__main__ import check_lsp_available
+
         root = Path(__file__).parent.parent
         result = check_lsp_available(root)
         assert "server_exists" in result
@@ -238,6 +250,7 @@ class TestDoctorNewChecks:
 
     def test_check_vscode_extension(self):
         from tools.ail_doctor.__main__ import check_vscode_extension
+
         root = Path(__file__).parent.parent
         result = check_vscode_extension(root)
         assert "installed" in result
@@ -245,6 +258,7 @@ class TestDoctorNewChecks:
 
     def test_check_ail_package(self):
         from tools.ail_doctor.__main__ import check_ail_package
+
         result = check_ail_package()
         assert "installed" in result
         assert "ok" in result
@@ -327,12 +341,19 @@ class TestPathLeakagePrevention:
     def test_benchmark_metadata_no_absolute_paths(self):
         """Benchmark dataset metadata must not contain absolute paths."""
         import json
+
         root = Path(__file__).parent.parent
         for meta_file in root.glob("benchmarks/datasets/*/metadata.json"):
             content = meta_file.read_text(encoding="utf-8")
             data = json.loads(content)
             for key in ["description", "path"]:
                 if key in data:
-                    assert "C:\\" not in data[key], f"Absolute path in {meta_file.name}:{key}"
-                    assert "/Users/" not in data[key], f"Absolute path in {meta_file.name}:{key}"
-                    assert "/home/" not in data[key], f"Absolute path in {meta_file.name}:{key}"
+                    assert (
+                        "C:\\" not in data[key]
+                    ), f"Absolute path in {meta_file.name}:{key}"
+                    assert (
+                        "/Users/" not in data[key]
+                    ), f"Absolute path in {meta_file.name}:{key}"
+                    assert (
+                        "/home/" not in data[key]
+                    ), f"Absolute path in {meta_file.name}:{key}"

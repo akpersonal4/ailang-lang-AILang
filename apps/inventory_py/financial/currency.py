@@ -54,7 +54,13 @@ def currency_convert(ccAmount, ccFrom, ccTo):
 
 def currency_format(cfAmount, cfCode):
     cfStr = str(cfAmount)
-    symbols = {"USD": "$", "EUR": "\u20ac", "GBP": "\u00a3", "JPY": "\u00a5", "INR": "\u20b9"}
+    symbols = {
+        "USD": "$",
+        "EUR": "\u20ac",
+        "GBP": "\u00a3",
+        "JPY": "\u00a5",
+        "INR": "\u20b9",
+    }
     if cfCode in symbols:
         return symbols[cfCode] + cfStr
     return cfStr
@@ -67,7 +73,11 @@ def currency_list():
 def currency_set_rate(csrFrom, csrTo, csrRate):
     csrKey = csrFrom + "_" + csrTo
     csrExisting = storage_list("currency_rates")
-    csrFiltered = [csrItem for csrItem in csrExisting if helpers_get_map_value_safe(csrItem, "key", "") != csrKey]
+    csrFiltered = [
+        csrItem
+        for csrItem in csrExisting
+        if helpers_get_map_value_safe(csrItem, "key", "") != csrKey
+    ]
     csrEntry = {"key": csrKey, "rate": csrRate}
     csrFiltered.append(csrEntry)
     storage_save("currency_rates", csrFiltered)

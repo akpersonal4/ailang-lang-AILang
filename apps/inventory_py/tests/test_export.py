@@ -1,7 +1,7 @@
 from core.helpers import helpers_current_timestamp, helpers_find_in_list
 from core.storage import storage_add, storage_list
-from export.csv_export import csv_products, csv_customers
-from export.json_export import json_export_products, json_export_customers
+from export.csv_export import csv_customers, csv_products
+from export.json_export import json_export_customers, json_export_products
 
 
 def te_create_product():
@@ -15,7 +15,7 @@ def te_create_product():
         "unit": "pcs",
         "active": True,
         "created_at": helpers_current_timestamp(),
-        "updated_at": ""
+        "updated_at": "",
     }
     storage_add("products", tepProduct)
     tepLoaded = helpers_find_in_list(storage_list("products"), "id", "TEXP-PRD-001")
@@ -32,7 +32,7 @@ def te_create_customer():
         "phone": "555-EXP",
         "active": True,
         "created_at": helpers_current_timestamp(),
-        "updated_at": helpers_current_timestamp()
+        "updated_at": helpers_current_timestamp(),
     }
     storage_add("customers", tecCustomer)
     tecLoaded = helpers_find_in_list(storage_list("customers"), "id", "TEXP-CUS-001")

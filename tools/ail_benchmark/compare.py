@@ -4,8 +4,7 @@
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass, field, asdict
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -35,7 +34,7 @@ def save_baseline(results: list[dict], root: Path, name: str | None = None) -> P
     baseline = {
         "tool": "ail_benchmark",
         "type": "baseline",
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
         "benchmarks": {},
     }
 

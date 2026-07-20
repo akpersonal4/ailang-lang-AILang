@@ -64,7 +64,9 @@ def cmd_add(
     content = manifest_path.read_text(encoding="utf-8")
 
     # Build the dependency line
-    dep_line = _build_dependency_line(pkg_name, pkg_version, pkg_path, pkg_git, pkg_tag, pkg_branch)
+    dep_line = _build_dependency_line(
+        pkg_name, pkg_version, pkg_path, pkg_git, pkg_tag, pkg_branch
+    )
 
     # Find or create [dependencies] section
     if "[dependencies]" in content:
@@ -101,8 +103,10 @@ def cmd_add(
         content += "\n[dependencies]\n" + dep_line + "\n"
 
     manifest_path.write_text(content, encoding="utf-8")
-    print(f"Added dependency: {pkg_name} ({_format_dep_spec(pkg_version, pkg_path, pkg_git, pkg_tag, pkg_branch)})")
-    print(f"Run 'ail install' to install.")
+    print(
+        f"Added dependency: {pkg_name} ({_format_dep_spec(pkg_version, pkg_path, pkg_git, pkg_tag, pkg_branch)})"
+    )
+    print("Run 'ail install' to install.")
     return 0
 
 
@@ -161,7 +165,7 @@ def cmd_remove(
 
     manifest_path.write_text("\n".join(new_lines), encoding="utf-8")
     print(f"Removed dependency: {package}")
-    print(f"Run 'ail install' to update lib/.")
+    print("Run 'ail install' to update lib/.")
     return 0
 
 
@@ -264,7 +268,9 @@ def cmd_list(
             elif spec.branch:
                 version_str += f" (branch={spec.branch})"
 
-        status = "ok" if installed.startswith("v") or installed == "installed" else installed
+        status = (
+            "ok" if installed.startswith("v") or installed == "installed" else installed
+        )
         print(f"  {name} {version_str}  [{status}]")
 
     return 0

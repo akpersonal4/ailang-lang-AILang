@@ -122,8 +122,10 @@ def get_language_context() -> dict[str, Any]:
         Dictionary with language rules, workflow, diagnostics, etc.
     """
     try:
-        import compiler
         from pathlib import Path
+
+        import compiler
+
         docs_path = Path(compiler.__file__).parent / "docs"
         documentation = {
             "agents_embedded": (docs_path / "AGENTS.md").exists(),

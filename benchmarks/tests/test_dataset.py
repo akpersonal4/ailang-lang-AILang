@@ -2,11 +2,17 @@
 
 from __future__ import annotations
 
-import pytest
 from pathlib import Path
-from benchmarks.framework.dataset import scan_project, load_dataset, save_metadata, DatasetMetadata
-from benchmarks.framework.metrics import compute_repo_metrics
 
+import pytest
+
+from benchmarks.framework.dataset import (
+    DatasetMetadata,
+    load_dataset,
+    save_metadata,
+    scan_project,
+)
+from benchmarks.framework.metrics import compute_repo_metrics
 
 # ── Fixtures ─────────────────────────────────────────────────────────
 
@@ -103,6 +109,7 @@ class TestSaveMetadata:
         save_metadata(metadata, tmp_path / "meta.json")
 
         import json
+
         loaded = json.loads((tmp_path / "meta.json").read_text(encoding="utf-8"))
         assert loaded["name"] == "test"
         assert loaded["loc"] > 0
@@ -110,10 +117,18 @@ class TestSaveMetadata:
 
     def test_metadata_is_frozen(self):
         metadata = DatasetMetadata(
-            name="test", description="", language="ailang",
-            loc=100, file_count=5, module_count=2, symbol_count=10,
-            function_count=8, variable_count=2,
-            doc_size_bytes=500, dependency_count=3, path="/tmp",
+            name="test",
+            description="",
+            language="ailang",
+            loc=100,
+            file_count=5,
+            module_count=2,
+            symbol_count=10,
+            function_count=8,
+            variable_count=2,
+            doc_size_bytes=500,
+            dependency_count=3,
+            path="/tmp",
         )
         with pytest.raises(Exception):
             metadata.loc = 200  # frozen dataclass, should raise

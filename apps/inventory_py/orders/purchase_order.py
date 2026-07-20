@@ -1,5 +1,9 @@
-from core.helpers import helpers_generate_id, helpers_current_timestamp, helpers_get_map_value_safe
-from core.storage import storage_list, storage_add, storage_get_by_id, storage_update
+from core.helpers import (
+    helpers_current_timestamp,
+    helpers_generate_id,
+    helpers_get_map_value_safe,
+)
+from core.storage import storage_add, storage_get_by_id, storage_list, storage_update
 from inventory.stock_movement import movement_create
 
 
@@ -39,7 +43,14 @@ def purchase_receive_items(preItems, preOrderId):
     for priItem in preItems:
         priProdId = helpers_get_map_value_safe(priItem, "product_id", "")
         priQty = int(helpers_get_map_value_safe(priItem, "quantity", 0))
-        movement_create(priProdId, "inbound", priQty, "purchase_order", preOrderId, "Purchase order received")
+        movement_create(
+            priProdId,
+            "inbound",
+            priQty,
+            "purchase_order",
+            preOrderId,
+            "Purchase order received",
+        )
     return True
 
 

@@ -1,6 +1,10 @@
+from business.report_trends import (
+    trend_category_breakdown,
+    trend_monthly_sales,
+    trend_top_products,
+)
 from core.helpers import helpers_get_map_value_safe
-from core.storage import storage_add, storage_list
-from business.report_trends import trend_monthly_sales, trend_top_products, trend_category_breakdown
+from core.storage import storage_add
 
 
 def trend_find_month_rec(tfmrItems, tfmrTargetMonth, tfmrIdx):
@@ -14,10 +18,7 @@ def trend_find_month_rec(tfmrItems, tfmrTargetMonth, tfmrIdx):
 
 
 def test_trend_monthly_sales():
-    tmsCat = {
-        "id": "TREND-TEST-CAT",
-        "name": "Trend Test Category"
-    }
+    tmsCat = {"id": "TREND-TEST-CAT", "name": "Trend Test Category"}
     storage_add("categories", tmsCat)
     tmsOrder1 = {
         "id": "TREND-SO-1",
@@ -26,7 +27,7 @@ def test_trend_monthly_sales():
         "total": 100,
         "created_at": "2024-01-15T10:00:00",
         "updated_at": "2024-01-15T10:00:00",
-        "notes": ""
+        "notes": "",
     }
     storage_add("sales_orders", tmsOrder1)
     tmsOrder2 = {
@@ -36,7 +37,7 @@ def test_trend_monthly_sales():
         "total": 200,
         "created_at": "2024-01-20T10:00:00",
         "updated_at": "2024-01-20T10:00:00",
-        "notes": ""
+        "notes": "",
     }
     storage_add("sales_orders", tmsOrder2)
     tmsMonthly = trend_monthly_sales()
@@ -57,14 +58,14 @@ def test_trend_top_products():
         "id": "TREND-TOP-PROD-1",
         "name": "Top Product 1",
         "category_id": "TREND-TOP-CAT",
-        "active": True
+        "active": True,
     }
     storage_add("products", ttpProd1)
     ttpProd2 = {
         "id": "TREND-TOP-PROD-2",
         "name": "Top Product 2",
         "category_id": "TREND-TOP-CAT",
-        "active": True
+        "active": True,
     }
     storage_add("products", ttpProd2)
     ttpItem1 = {
@@ -73,7 +74,7 @@ def test_trend_top_products():
         "product_id": "TREND-TOP-PROD-1",
         "quantity": 10,
         "unit_price": 50,
-        "line_total": 500
+        "line_total": 500,
     }
     storage_add("sales_items", ttpItem1)
     ttpItem2 = {
@@ -82,7 +83,7 @@ def test_trend_top_products():
         "product_id": "TREND-TOP-PROD-2",
         "quantity": 5,
         "unit_price": 30,
-        "line_total": 150
+        "line_total": 150,
     }
     storage_add("sales_items", ttpItem2)
     ttpTop = trend_top_products(1)
@@ -95,23 +96,20 @@ def test_trend_top_products():
 
 
 def test_trend_category_breakdown():
-    tcbCat = {
-        "id": "TREND-BREAK-CAT",
-        "name": "Breakdown Category"
-    }
+    tcbCat = {"id": "TREND-BREAK-CAT", "name": "Breakdown Category"}
     storage_add("categories", tcbCat)
     tcbProd1 = {
         "id": "TREND-BREAK-PROD-1",
         "name": "Breakdown Product 1",
         "category_id": "TREND-BREAK-CAT",
-        "active": True
+        "active": True,
     }
     storage_add("products", tcbProd1)
     tcbProd2 = {
         "id": "TREND-BREAK-PROD-2",
         "name": "Breakdown Product 2",
         "category_id": "TREND-BREAK-CAT",
-        "active": True
+        "active": True,
     }
     storage_add("products", tcbProd2)
     tcbBreakdown = trend_category_breakdown()
