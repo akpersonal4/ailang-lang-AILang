@@ -52,17 +52,15 @@ def test_output_file_created() -> bool:
 def test_deterministic_output() -> bool:
     """Test: Running twice produces identical output."""
     print("\nTEST 3: Deterministic output (running twice)...")
-    root = Path(__file__).resolve().parent.parent
-    output_path = root / "generated" / "PROJECT_CONTEXT.md"
-    
+
     # First run
-    run_command([sys.executable, "-m", "tools.ail_context"])
-    hash1 = hash_file(output_path)
-    
+    _, out1, _ = run_command([sys.executable, "-m", "tools.ail_context"])
+    hash1 = hashlib.sha256(out1.encode()).hexdigest()
+
     # Second run
-    run_command([sys.executable, "-m", "tools.ail_context"])
-    hash2 = hash_file(output_path)
-    
+    _, out2, _ = run_command([sys.executable, "-m", "tools.ail_context"])
+    hash2 = hashlib.sha256(out2.encode()).hexdigest()
+
     if hash1 == hash2:
         print(f"  ✓ PASS: Hashes match ({hash1[:16]}...)")
         return True
