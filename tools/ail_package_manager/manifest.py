@@ -14,7 +14,9 @@ try:
 except ImportError:
     import tomli as tomllib  # type: ignore[no-redef]
 
-from ail_platform.manifest import find_manifest as find_manifest  # noqa: F401  — re-exported for package modules
+from ail_platform.manifest import (
+    find_manifest as find_manifest,
+)  # noqa: F401  — re-exported for package modules
 from tools.ail_package_manager.models import DependencySpec, ProjectManifest
 
 _NAME_RE = re.compile(r"^[a-z][a-z0-9_]*$")

@@ -16,7 +16,7 @@ Every AILang program needs a `main()` function — this is the entry point. The 
 Save this as `hello.ail` and run:
 
 ```bash
-ail hello.ail
+ail run hello.ail
 ```
 
 ## Variables

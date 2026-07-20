@@ -7,9 +7,9 @@ Project history, key decisions, and evolution timeline for AI coding assistants.
 ## Project Identity
 
 - **Language:** AILang — AI-first, deterministic, specification-driven
-- **Version:** v1.0.11
-- **Standard Library:** 16 `.ail` modules (extended: `file.listdir`, `list.sum`, `list.find_by_key`, `io.read`; fixed: `convert.to_number`)
-- **Test Suite:** 894+ passing tests across 44+ test scripts
+- **Version:** v1.1.0
+- **Standard Library:** 16 `.ail` modules (extended: `file.listdir`, `list.sum`, `list.find_by_key`, `list.filter_by_key`, `list.filter_by_contains`, `list.collect_key`, `list.group_by_key`, `list.sum_by_key`, `list.take`, `list.skip`, `list.search_by_name`, `list.exists_by_key`, `list.sort`, `list.sort_by_key`, `list.copy`, `io.read`, `string.join`, `string.from_int`, `string.from_bool`, `map.values`, `map.get_or_default`, `map.safe_get`, `convert.to_number`)
+- **Test Suite:** 1074+ passing tests across 44+ test scripts
 - **Applications:** 66+ across `apps/`, `ai_benchmarks/`, `examples/patterns/`
 
 ---
@@ -428,6 +428,36 @@ A chronological record of every major engineering phase, with results, lessons, 
 | **Result** | All arithmetic operators (`+`, `-`, `*`, `/`, `%`) now infer to INT_TYPE when pairing UnknownType with INT_TYPE; FLOAT_TYPE when pairing UnknownType with FLOAT_TYPE. 7 new regression tests added. |
 | **Files** | `compiler/types/checker.py` (already implemented), `tests/test_type_checker.py` (added 7 new tests) |
 | **Lessons** | Type inference for UnknownType with known numeric types eliminates boilerplate and improves AI code generation success rate |
+
+### M80 — Technical Debt Roadmap (v1.1.0)
+
+| Aspect | Detail |
+|--------|--------|
+| **What** | Created `docs/architecture/M80_TECHNICAL_DEBT_ROADMAP.md` (382 lines). Cataloged 7 debt categories (Python quality, type safety, test infrastructure, documentation, security, code quality, performance). Established 4-milestone plan (M81–M84) with clear prerequisites. |
+| **Why** | After v1.1.0 release, 659 ruff violations, 26 orphan app directories, 264+ stale docs, and `mypy` not running on CI. Need a structured approach to debt reduction without breaking changes. |
+| **Result** | Comprehensive debt inventory with severity ratings, effort estimates, and dependency graph. M81 identified as prerequisite for all subsequent work. |
+| **Files** | `docs/architecture/M80_TECHNICAL_DEBT_ROADMAP.md` |
+| **Lessons** | Technical debt must be cataloged before it can be reduced. Formatting/lint baseline (M81) is prerequisite for all code quality work. |
+
+### M81 — Formatting & Auto-fix Lint Baseline (v1.1.0)
+
+| Aspect | Detail |
+|--------|--------|
+| **What** | Ran `black .` (248 files reformatted, 270 total with M81.2) and `ruff check --fix` (562 violations fixed across 263 targeted rules). Restored `find_manifest` re-export in `tools/ail_package_manager/manifest.py` (false positive cross-package re-export). |
+| **Why** | 659 ruff violations and inconsistent formatting made code review impossible. M81 establishes clean baseline for all future PRs. |
+| **Result** | 377 files black-clean, 377 ruff-clean for targeted rules. Remaining 659 violations (F401 re-exports, E712, E501, UP006, etc.) need manual review. |
+| **Files** | 273 files across `compiler/`, `tools/`, `tests/`, `extensions/`, `stdlib/`, `benchmarks/` |
+| **Lessons** | Auto-fix rules (F401, F541, I001, UP045, UP017, UP037, F811, UP015) are safe to apply in bulk. Cross-package re-exports need manual restoration after F401 cleanup. |
+
+### M82 — Developer Experience & Onboarding (v1.1.0)
+
+| Aspect | Detail |
+|--------|--------|
+| **What** | Created `docs/getting-started/QUICK_START.md` (concise 5-min guide) and `docs/getting-started/ONBOARDING_CHECKLIST.md` (day-by-day guide for new developers). Fixed stale documentation across README.md, DEVELOPMENT_STATUS.md, PROJECT_MEMORY.md, and GETTING_STARTED.md. Updated test counts (894→1074), version badges (v1.0.11→v1.1.0), CLI command references (`ail hello.ail`→`ail run hello.ail`). |
+| **Why** | After v1.1.0 release, documentation contained stale version numbers, incorrect test counts, and broken CLI command references. New developers following README would hit errors immediately. |
+| **Result** | All public-facing documentation now reflects v1.1.0 with correct test counts (1074), correct CLI commands (`ail run`), and new onboarding resources. |
+| **Files** | `docs/getting-started/QUICK_START.md`, `docs/getting-started/ONBOARDING_CHECKLIST.md`, `README.md`, `DEVELOPMENT_STATUS.md`, `PROJECT_MEMORY.md`, `docs/reference/GETTING_STARTED.md` |
+| **Lessons** | Documentation accuracy is critical for first impressions. Version badges, test counts, and CLI command references must be updated in lockstep with releases. |
 
 ### Governance
 

@@ -2,12 +2,12 @@
 
 **AI-first programming language — deterministic, specification-driven, and compiler-friendly.**
 
-[![Tests](https://img.shields.io/badge/tests-894%20passing-brightgreen)](#)
+[![Tests](https://img.shields.io/badge/tests-1074%20passing-brightgreen)](#)
 [![Python](https://img.shields.io/badge/python-3.11%2B-blue)](#)
-[![Version](https://img.shields.io/badge/version-1.0.11-blue)](#)
+[![Version](https://img.shields.io/badge/version-1.1.0-blue)](#)
 [![License](https://img.shields.io/badge/license-Apache%202.0-green)](#)
 
-AILang is an AI-first programming language designed to be deterministic, specification-first, and easy for both humans and AI systems to reason about. It features a complete compiler pipeline, a 16-module standard library, and has been validated through 894 tests, stress testing up to 10,000 LOC, and AI-generated program verification with 100% first-pass success.
+AILang is an AI-first programming language designed to be deterministic, specification-first, and easy for both humans and AI systems to reason about. It features a complete compiler pipeline, a 16-module standard library, and has been validated through 1074 tests, stress testing up to 10,000 LOC, and AI-generated program verification with 100% first-pass success.
 
 ## Quick Start
 
@@ -17,7 +17,7 @@ pip install ailang-lang
 
 # Run your first program
 echo 'fn main() { print("Hello, AILang!"); return 0 }' > hello.ail
-ail hello.ail
+ail run hello.ail
 ```
 
 Or install from source:
@@ -29,13 +29,13 @@ pip install -e .
 
 # Run your first program
 echo 'fn main() { print("Hello, AILang!"); return 0 }' > hello.ail
-ail hello.ail
+ail run hello.ail
 ```
 
 ## Core Commands
 
 ```bash
-ail <file.ail>           # Run a program
+ail run <file.ail>       # Run a program
 ail fmt <file.ail>       # Format code (one style, no config)
 ail fmt --check <file>   # Check if formatted
 ail doctor               # Diagnose environment issues
@@ -151,6 +151,8 @@ fn main() {
 | [Contributor Guide](docs/governance/CONTRIBUTING.md) | How to contribute |
 | [Testing Guide](docs/reference/TESTING.md) | Test patterns and practices |
 | [Quick Start](docs/QUICKSTART.md) | 5-minute setup guide |
+| [Quick Start (concise)](docs/getting-started/QUICK_START.md) | Minimal path: install → write → run |
+| [Onboarding Checklist](docs/getting-started/ONBOARDING_CHECKLIST.md) | Day-by-day guide for new developers |
 | [VS Code Extension](extensions/vscode-ailang/README.md) | AILang VS Code extension |
 
 ## VS Code Extension
@@ -171,7 +173,7 @@ Or package and install from the VS Code Marketplace: `extensions/vscode-ailang/`
 - **AI-friendly** — validated with 23 AI-generated programs at 100% first-pass success
 - **Fast compile times** — 5000 LOC compiles in <2 seconds
 - **Low memory usage** — 5000 LOC uses <11 MB peak memory
-- **Complete test coverage** — 931 tests across all compiler stages
+- **Complete test coverage** — 1074 tests across all compiler stages
 
 ## Example
 
@@ -224,7 +226,7 @@ fn main() {
 | Python version | 3.11+ |
 | Compiler LOC | ~3,950 (39 Python files) |
 | Stdlib modules | 16 |
-| Tests | **894 passing** |
+| Tests | **1074 passing** |
 | Example programs | 55+ |
 | Application programs | 43+ |
 | DX Tools | ail context, ail doctor, ail static_analyzer, ail benchmark, ail testgen, ail docs, ail mcp |

@@ -11,7 +11,7 @@ until this document has been reviewed. Update AGENTS.md reading order after revi
 | Attribute | Value |
 |:----------|:------|
 | **Current Version** | v1.1.0 |
-| **Current Milestone** | M77.1 — Local Package Management MVP |
+| **Current Milestone** | M82 — Developer Experience & Onboarding |
 | **Project Phase** | Public Beta |
 
 ### Maturity Assessment
@@ -25,12 +25,12 @@ until this document has been reviewed. Update AGENTS.md reading order after revi
 | Platform Services | 100% |
 | Platform Integration | 100% |
 | VS Code Extension | v0.3.0 — syntax highlighting, LSP, MCP integration, 7 commands, status bar |
-| MCP Server | v1.0.8 — 6 tools, JSON-RPC 2.0 over stdio, 12 example categories |
+| MCP Server | v1.2.0 — 6 tools, JSON-RPC 2.0 over stdio, 12 example categories |
 | Documentation | 100% |
 | Governance | 100% |
 | Validation Framework | 100% |
 | Reference Applications | 8 apps (todo, expense, inventory, employee, log_analyzer, csv_etl, json_transformer, invoice) |
-| Test Suite | 955 tests passing |
+| Test Suite | 1074 tests passing |
 
 --------------------------------------
 
@@ -288,9 +288,9 @@ in the ecosystem that makes AILang productive for both human and AI developers.
 - Reduced compile time for >1000 LOC
 
 ### Not Approved
-- `string.join` — requires 10 LOC recursive implementation
-- `list.sort` — requires 20 LOC selection sort
-- `list.copy` — requires 15 LOC recursive implementation
+- ~~`string.join` — requires 10 LOC recursive implementation~~ ✅ Implemented (v0.7.0+)
+- ~~`list.sort` — requires 20 LOC selection sort~~ ✅ Implemented (v0.7.0+)
+- ~~`list.copy` — requires 15 LOC recursive implementation~~ ✅ Implemented (v0.7.0+)
 
 *Requires ≥2 benchmarks requesting before consideration per GOVERNANCE.md*
 
@@ -325,6 +325,10 @@ in the ecosystem that makes AILang productive for both human and AI developers.
 
 | Item | Version | Date |
 |------|---------|------|
+| **M82 — Developer Experience & Onboarding** — Created Quick Start guide (`docs/getting-started/QUICK_START.md`) and Onboarding Checklist (`docs/getting-started/ONBOARDING_CHECKLIST.md`). Fixed stale documentation across README.md, DEVELOPMENT_STATUS.md, PROJECT_MEMORY.md, and GETTING_STARTED.md. Updated test counts (894→1074), version badges (v1.0.11→v1.1.0), CLI command references (`ail hello.ail`→`ail run hello.ail`). | v1.1.0 | 2026-07-20 |
+| **M81 — Formatting & Auto-fix Lint Baseline** — `black .` reformatted 248 files (270 total with M81.2). `ruff check --fix` fixed 562 violations (263 targeted rules): 239 unused imports, 86 f-string, 170 unnecessary parens, 56 trailing whitespace, 11 type annotations. Restored `find_manifest` re-export (false positive). 377 files black-clean, 377 ruff-clean for targeted rules. | v1.1.0 | 2026-07-20 |
+| **M80 — Technical Debt Roadmap** — Created `docs/architecture/M80_TECHNICAL_DEBT_ROADMAP.md` (382 lines). Cataloged 7 debt categories, 4 milestone plan (M81–M84). Established formatting/lint baseline as prerequisite for all future work. | v1.1.0 | 2026-07-20 |
+| **M79.3C — Version & Release** — Released v1.1.0 on GitHub and PyPI. Published `ailang-lang` package to PyPI. | v1.1.0 | 2026-07-20 |
 | **M64 — AI-First Development Process Integration** — Integrated `ail check` into `ail run` and `ail test` as mandatory pre-flight step. `ail run` now auto-detects forward references before compilation; `ail test` auto-detects ordering violations before test execution. Both commands support `--no-check` flag for rare bypass. Updated documentation: DEVELOPMENT_PLAYBOOK.md, AGENTS.md, CONTRIBUTING.md, VISION_AND_DIFFERENTIATION.md. Official pipeline: write → fmt → check → build → test → run. | v1.0.0 | 2026-07-14 |
 | **M63 — Pre-Flight Ordering Check Validation** — Implemented `ail check` command (350 LOC) that detects forward references, missing imports, and ordering violations. Tested against 173 files: 0% false positive rate, ~15ms per file. M59 replay: AILang correction cycles dropped from 8 to 5 (-37.5%), now 29% fewer than Python (5 vs 7). AILang/Python ratio: 1.14× → 0.71×. | v1.0.0 | 2026-07-14 |
 | **M62 — AI Correction Cycle Root Cause Analysis** — Classified all 49 correction cycles (AILang 26, Python 23) across 7 benchmarks into 12 AICC categories. Key finding: forward references account for 38% of AILang cycles; 62% of AILang cycles are predictable/mechanical vs Python's 9% Recommended: `ail check` pre-flight ordering tool (200 LOC, eliminates 38% of cycles). After implementation, AILang drops to 0.70× Python's cycle count. | v1.0.0 | 2026-07-14 |
