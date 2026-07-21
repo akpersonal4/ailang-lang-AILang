@@ -1,0 +1,74 @@
+import list;
+import map;
+import string;
+import convert;
+import storage;
+import helpers;
+import integrity;
+
+fn test_integrity_json_files() {
+    let ijResults = integrity.integrity_check_json_files();
+    let ijCount = list.len(ijResults);
+    if (ijCount > 0) {
+        print("WARN: integrity_check_json_files found " + convert.to_string(ijCount) + " issues");
+    }
+    print("PASS: integrity_check_json_files (warnings: " + convert.to_string(ijCount) + ")");
+    return true;
+}
+
+fn test_integrity_product_category_refs() {
+    let ipEmptyList = list.new();
+    let ipResults = integrity.integrity_check_product_category_refs(ipEmptyList);
+    let ipCount = list.len(ipResults);
+    if (ipCount > 0) {
+        print("WARN: found " + convert.to_string(ipCount) + " orphan product category refs");
+    }
+    print("PASS: integrity_check_product_category_refs (warnings: " + convert.to_string(ipCount) + ")");
+    return true;
+}
+
+fn test_integrity_movement_product_refs() {
+    let imEmptyList = list.new();
+    let imResults = integrity.integrity_check_movement_product_refs(imEmptyList);
+    let imCount = list.len(imResults);
+    if (imCount > 0) {
+        print("WARN: found " + convert.to_string(imCount) + " orphan movement refs");
+    }
+    print("PASS: integrity_check_movement_product_refs (warnings: " + convert.to_string(imCount) + ")");
+    return true;
+}
+
+fn test_integrity_negative_stock() {
+    let insResults = integrity.integrity_check_negative_stock();
+    let insCount = list.len(insResults);
+    if (insCount > 0) {
+        print("WARN: found " + convert.to_string(insCount) + " products with negative stock");
+    }
+    print("PASS: integrity_check_negative_stock (warnings: " + convert.to_string(insCount) + ")");
+    return true;
+}
+
+fn test_integrity_full_check() {
+    let ifResult = integrity.integrity_check();
+    if (ifResult == false) {
+        print("FAIL: integrity_check returned false");
+        return false;
+    }
+    print("PASS: integrity_full_check");
+    return true;
+}
+
+fn main() {
+    let t1 = test_integrity_json_files();
+    if (t1 == false) { return 1; }
+    let t2 = test_integrity_product_category_refs();
+    if (t2 == false) { return 1; }
+    let t3 = test_integrity_movement_product_refs();
+    if (t3 == false) { return 1; }
+    let t4 = test_integrity_negative_stock();
+    if (t4 == false) { return 1; }
+    let t5 = test_integrity_full_check();
+    if (t5 == false) { return 1; }
+    print("ALL INTEGRITY TESTS PASSED");
+    return 0;
+}

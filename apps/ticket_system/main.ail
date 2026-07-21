@@ -1,0 +1,712 @@
+import environment;
+import storage;
+import user;
+import ticket;
+import comment;
+import audit_log;
+import csv_ops;
+import list;
+import map;
+import string;
+import convert;
+import file;
+import path;
+import json;
+
+let SESSION_FILE = "data/session.json";
+
+fn cv_print_comments_rec(cvComments, cvIdx) {
+    if (cvIdx >= list.len(cvComments)) {
+        return true;
+    }
+    let cvC = list.get(cvComments, cvIdx);
+    print("[" + convert.to_string(map.get(cvC, "author_id")) + "] " + map.get(cvC, "content"));
+    return cv_print_comments_rec(cvComments, cvIdx + 1);
+}
+
+fn cs_print_results_rec(csResults, csIdx) {
+    if (csIdx >= list.len(csResults)) {
+        return true;
+    }
+    let csT = list.get(csResults, csIdx);
+    print("  [" + convert.to_string(map.get(csT, "id")) + "] " + map.get(csT, "title") + " (" + map.get(csT, "status") + ", " + map.get(csT, "priority") + ")");
+    return cs_print_results_rec(csResults, csIdx + 1);
+}
+
+fn cf_print_results_rec(cfResults, cfIdx) {
+    if (cfIdx >= list.len(cfResults)) {
+        return true;
+    }
+    let cfT = list.get(cfResults, cfIdx);
+    print("  [" + convert.to_string(map.get(cfT, "id")) + "] " + map.get(cfT, "title") + " (" + map.get(cfT, "status") + ")");
+    return cf_print_results_rec(cfResults, cfIdx + 1);
+}
+
+fn cm_print_results_rec(cmResults, cmIdx) {
+    if (cmIdx >= list.len(cmResults)) {
+        return true;
+    }
+    let cmT = list.get(cmResults, cmIdx);
+    print("  [" + convert.to_string(map.get(cmT, "id")) + "] " + map.get(cmT, "title") + " (" + map.get(cmT, "status") + ", " + map.get(cmT, "priority") + ")");
+    return cm_print_results_rec(cmResults, cmIdx + 1);
+}
+
+fn cr_print_agent_rec(crTickets, crCounts, crIdx) {
+    if (crIdx >= list.len(crTickets)) {
+        return true;
+    }
+    let crT = list.get(crTickets, crIdx);
+    let crAid = convert.to_string(map.get(crT, "assignee_id"));
+    if (map.has(crCounts, crAid) == true) {
+        print("  Agent " + crAid + ": " + convert.to_string(map.get(crCounts, crAid)));
+    }
+    return cr_print_agent_rec(crTickets, crCounts, crIdx + 1);
+}
+
+fn cr_count_daily_rec(crTickets, crNow, crSevenDays, crIdx, crCreatedCount, crResolvedCount) {
+    if (crIdx >= list.len(crTickets)) {
+        return crCreatedCount;
+    }
+    let crT = list.get(crTickets, crIdx);
+    let crCreatedAt = map.get(crT, "created_at");
+    if (crNow - crCreatedAt < crSevenDays) {
+        return cr_count_daily_rec(crTickets, crNow, crSevenDays, crIdx + 1, crCreatedCount + 1, crResolvedCount);
+    }
+    return cr_count_daily_rec(crTickets, crNow, crSevenDays, crIdx + 1, crCreatedCount, crResolvedCount);
+}
+
+fn cl_print_users_rec(clUsers, clIdx) {
+    if (clIdx >= list.len(clUsers)) {
+        return true;
+    }
+    let clU = list.get(clUsers, clIdx);
+    print("  [" + convert.to_string(map.get(clU, "id")) + "] " + map.get(clU, "username") + " (" + map.get(clU, "role") + ")");
+    return cl_print_users_rec(clUsers, clIdx + 1);
+}
+
+fn session_load() {
+    if (file.exists(SESSION_FILE) == false) {
+        return map.new();
+    }
+    let scContent = file.read(SESSION_FILE);
+    return json.parse(scContent);
+}
+
+fn session_save(scUserId, scUsername) {
+    let scSession = map.new();
+    map.set(scSession, "user_id", scUserId);
+    map.set(scSession, "username", scUsername);
+    let scJson = json.stringify(scSession);
+    file.write(SESSION_FILE, scJson);
+    return true;
+}
+
+fn session_clear() {
+    if (file.exists(SESSION_FILE) == true) {
+        file.remove(SESSION_FILE);
+    }
+    return true;
+}
+
+fn session_get_user_id() {
+    let scSession = session_load();
+    if (map.has(scSession, "user_id") == false) {
+        return 0;
+    }
+    return map.get(scSession, "user_id");
+}
+
+fn session_require_login() {
+    let scUserId = session_get_user_id();
+    if (scUserId == 0) {
+        print("Error: Not logged in. Use 'login <username> <password>' first.");
+        return 0;
+    }
+    return scUserId;
+}
+
+fn session_require_role(scAction) {
+    let scUserId = session_require_login();
+    if (scUserId == 0) {
+        return 0;
+    }
+    if (user.user_has_permission(scUserId, scAction) == false) {
+        print("Error: Insufficient permissions for " + scAction);
+        return 0;
+    }
+    return scUserId;
+}
+
+fn cmd_register(crArgs) {
+    if (list.len(crArgs) < 4) {
+        print("Usage: register <username> <email> <password>");
+        return true;
+    }
+    let crUsername = list.get(crArgs, 1);
+    let crEmail = list.get(crArgs, 2);
+    let crPassword = list.get(crArgs, 3);
+    let crUser = user.user_create(crUsername, crEmail, crPassword);
+    if (map.has(crUser, "id") == false) {
+        print("Error: Username or email already exists.");
+        return true;
+    }
+    print("User registered: " + crUsername + " (ID: " + convert.to_string(map.get(crUser, "id")) + ")");
+    return true;
+}
+
+fn cmd_login(cmArgs) {
+    if (list.len(cmArgs) < 3) {
+        print("Usage: login <username> <password>");
+        return true;
+    }
+    let cmUsername = list.get(cmArgs, 1);
+    let cmPassword = list.get(cmArgs, 2);
+    let cmUser = user.user_authenticate(cmUsername, cmPassword);
+    if (map.has(cmUser, "id") == false) {
+        print("Error: Invalid username or password.");
+        return true;
+    }
+    session_save(map.get(cmUser, "id"), cmUsername);
+    print("Logged in as " + cmUsername + " (role: " + map.get(cmUser, "role") + ")");
+    return true;
+}
+
+fn cmd_logout(coArgs) {
+    let coUserId = session_require_login();
+    if (coUserId == 0) {
+        return true;
+    }
+    let coSession = session_load();
+    let coUsername = map.get(coSession, "username");
+    session_clear();
+    print("Logged out " + coUsername);
+    return true;
+}
+
+fn cmd_create_ticket(ctArgs) {
+    let ctUserId = session_require_role("create_ticket");
+    if (ctUserId == 0) {
+        return true;
+    }
+    if (list.len(ctArgs) < 5) {
+        print("Usage: create-ticket <title> <priority> <category> <description>");
+        return true;
+    }
+    let ctTitle = list.get(ctArgs, 1);
+    let ctPriority = list.get(ctArgs, 2);
+    let ctCategory = list.get(ctArgs, 3);
+    let ctDescription = list.get(ctArgs, 4);
+    let ctTicket = ticket.ticket_create(ctTitle, ctPriority, ctCategory, ctDescription, ctUserId);
+    audit_log.audit_log_add(map.get(ctTicket, "id"), ctUserId, "created", "", ctTitle);
+    print("Ticket created: ID " + convert.to_string(map.get(ctTicket, "id")));
+    return true;
+}
+
+fn cmd_update_ticket(cuArgs) {
+    if (list.len(cuArgs) < 4) {
+        print("Usage: update-ticket <id> <field> <value>");
+        return true;
+    }
+    let cuTicketId = convert.to_int(list.get(cuArgs, 1));
+    let cuField = list.get(cuArgs, 2);
+    let cuValue = list.get(cuArgs, 3);
+    let cuTicket = ticket.ticket_find_by_id(cuTicketId);
+    if (map.has(cuTicket, "id") == false) {
+        print("Error: Ticket not found.");
+        return true;
+    }
+    let cuUserId = session_require_login();
+    if (cuUserId == 0) {
+        return true;
+    }
+    let cuHasAny = user.user_has_permission(cuUserId, "update_any_ticket");
+    if (cuHasAny == false) {
+        let cuHasOwn = user.user_has_permission_on_ticket(cuUserId, "update_own_ticket", cuTicket);
+        if (cuHasOwn == false) {
+            print("Error: Cannot update this ticket.");
+            return true;
+        }
+    }
+    let cuOldValue = map.get(cuTicket, cuField);
+    ticket.ticket_update(cuTicketId, cuField, cuValue);
+    audit_log.audit_log_add(cuTicketId, cuUserId, "updated", cuOldValue, cuValue);
+    print("Ticket " + convert.to_string(cuTicketId) + " updated: " + cuField + " = " + cuValue);
+    return true;
+}
+
+fn cmd_assign_ticket(caArgs) {
+    let caUserId = session_require_role("assign_ticket");
+    if (caUserId == 0) {
+        return true;
+    }
+    if (list.len(caArgs) < 3) {
+        print("Usage: assign-ticket <id> <username>");
+        return true;
+    }
+    let caTicketId = convert.to_int(list.get(caArgs, 1));
+    let caAssigneeName = list.get(caArgs, 2);
+    let caAssignee = user.user_find_by_username(caAssigneeName);
+    if (map.has(caAssignee, "id") == false) {
+        print("Error: User not found.");
+        return true;
+    }
+    let caTicket = ticket.ticket_find_by_id(caTicketId);
+    if (map.has(caTicket, "id") == false) {
+        print("Error: Ticket not found.");
+        return true;
+    }
+    let caOldAssignee = map.get(caTicket, "assignee_id");
+    ticket.ticket_assign(caTicketId, map.get(caAssignee, "id"));
+    audit_log.audit_log_add(caTicketId, caUserId, "assigned", convert.to_string(caOldAssignee), caAssigneeName);
+    print("Ticket " + convert.to_string(caTicketId) + " assigned to " + caAssigneeName);
+    return true;
+}
+
+fn cmd_resolve_ticket(crArgs) {
+    let crUserId = session_require_role("resolve_ticket");
+    if (crUserId == 0) {
+        return true;
+    }
+    if (list.len(crArgs) < 2) {
+        print("Usage: resolve-ticket <id>");
+        return true;
+    }
+    let crTicketId = convert.to_int(list.get(crArgs, 1));
+    let crTicket = ticket.ticket_find_by_id(crTicketId);
+    if (map.has(crTicket, "id") == false) {
+        print("Error: Ticket not found.");
+        return true;
+    }
+    let crOldStatus = map.get(crTicket, "status");
+    ticket.ticket_set_status(crTicketId, "resolved");
+    audit_log.audit_log_add(crTicketId, crUserId, "status_changed", crOldStatus, "resolved");
+    print("Ticket " + convert.to_string(crTicketId) + " resolved.");
+    return true;
+}
+
+fn cmd_close_ticket(ccArgs) {
+    let ccUserId = session_require_role("close_ticket");
+    if (ccUserId == 0) {
+        return true;
+    }
+    if (list.len(ccArgs) < 2) {
+        print("Usage: close-ticket <id>");
+        return true;
+    }
+    let ccTicketId = convert.to_int(list.get(ccArgs, 1));
+    let ccTicket = ticket.ticket_find_by_id(ccTicketId);
+    if (map.has(ccTicket, "id") == false) {
+        print("Error: Ticket not found.");
+        return true;
+    }
+    let ccOldStatus = map.get(ccTicket, "status");
+    ticket.ticket_set_status(ccTicketId, "closed");
+    audit_log.audit_log_add(ccTicketId, ccUserId, "status_changed", ccOldStatus, "closed");
+    print("Ticket " + convert.to_string(ccTicketId) + " closed.");
+    return true;
+}
+
+fn cmd_reopen_ticket(crArgs) {
+    let crUserId = session_require_role("reopen_ticket");
+    if (crUserId == 0) {
+        return true;
+    }
+    if (list.len(crArgs) < 2) {
+        print("Usage: reopen-ticket <id>");
+        return true;
+    }
+    let crTicketId = convert.to_int(list.get(crArgs, 1));
+    let crTicket = ticket.ticket_find_by_id(crTicketId);
+    if (map.has(crTicket, "id") == false) {
+        print("Error: Ticket not found.");
+        return true;
+    }
+    let crOldStatus = map.get(crTicket, "status");
+    ticket.ticket_set_status(crTicketId, "open");
+    audit_log.audit_log_add(crTicketId, crUserId, "status_changed", crOldStatus, "open");
+    print("Ticket " + convert.to_string(crTicketId) + " reopened.");
+    return true;
+}
+
+fn cmd_add_comment(caArgs) {
+    let caUserId = session_require_role("add_comment");
+    if (caUserId == 0) {
+        return true;
+    }
+    if (list.len(caArgs) < 3) {
+        print("Usage: add-comment <ticket_id> <content>");
+        return true;
+    }
+    let caTicketId = convert.to_int(list.get(caArgs, 1));
+    let caContent = list.get(caArgs, 2);
+    let caTicket = ticket.ticket_find_by_id(caTicketId);
+    if (map.has(caTicket, "id") == false) {
+        print("Error: Ticket not found.");
+        return true;
+    }
+    comment.comment_create(caTicketId, caUserId, caContent);
+    audit_log.audit_log_add(caTicketId, caUserId, "commented", "", caContent);
+    print("Comment added to ticket " + convert.to_string(caTicketId));
+    return true;
+}
+
+fn cmd_view_ticket(cvArgs) {
+    let cvUserId = session_require_role("view_ticket");
+    if (cvUserId == 0) {
+        return true;
+    }
+    if (list.len(cvArgs) < 2) {
+        print("Usage: view-ticket <id>");
+        return true;
+    }
+    let cvTicketId = convert.to_int(list.get(cvArgs, 1));
+    let cvTicket = ticket.ticket_find_by_id(cvTicketId);
+    if (map.has(cvTicket, "id") == false) {
+        print("Error: Ticket not found.");
+        return true;
+    }
+    print("--- Ticket " + convert.to_string(cvTicketId) + " ---");
+    print("Title: " + map.get(cvTicket, "title"));
+    print("Status: " + map.get(cvTicket, "status"));
+    print("Priority: " + map.get(cvTicket, "priority"));
+    print("Category: " + map.get(cvTicket, "category"));
+    print("Creator ID: " + convert.to_string(map.get(cvTicket, "creator_id")));
+    print("Assignee ID: " + convert.to_string(map.get(cvTicket, "assignee_id")));
+    print("Description: " + map.get(cvTicket, "description"));
+    print("Created: " + convert.to_string(map.get(cvTicket, "created_at")));
+    let cvComments = comment.comment_list_by_ticket(cvTicketId);
+    let cvCommentCount = list.len(cvComments);
+    if (cvCommentCount > 0) {
+        print("--- Comments (" + convert.to_string(cvCommentCount) + ") ---");
+        cv_print_comments_rec(cvComments, 0);
+    }
+    return true;
+}
+
+fn cmd_search_tickets(csArgs) {
+    let csUserId = session_require_role("search_tickets");
+    if (csUserId == 0) {
+        return true;
+    }
+    if (list.len(csArgs) < 2) {
+        print("Usage: search-tickets <query>");
+        return true;
+    }
+    let csQuery = list.get(csArgs, 1);
+    let csResults = ticket.ticket_search(csQuery);
+    let csCount = list.len(csResults);
+    print("Found " + convert.to_string(csCount) + " tickets matching '" + csQuery + "'");
+    cs_print_results_rec(csResults, 0);
+    return true;
+}
+
+fn cmd_filter_tickets(cfArgs) {
+    let cfUserId = session_require_role("search_tickets");
+    if (cfUserId == 0) {
+        return true;
+    }
+    if (list.len(cfArgs) < 3) {
+        print("Usage: filter-tickets <field> <value>");
+        return true;
+    }
+    let cfField = list.get(cfArgs, 1);
+    let cfValue = list.get(cfArgs, 2);
+    let cfResults = ticket.ticket_filter(cfField, cfValue);
+    let cfCount = list.len(cfResults);
+    print("Found " + convert.to_string(cfCount) + " tickets with " + cfField + " = " + cfValue);
+    cf_print_results_rec(cfResults, 0);
+    return true;
+}
+
+fn cmd_my_tickets(cmArgs) {
+    let cmUserId = session_require_role("view_ticket");
+    if (cmUserId == 0) {
+        return true;
+    }
+    let cmResults = ticket.ticket_list_by_user(cmUserId);
+    let cmCount = list.len(cmResults);
+    print("Tickets assigned to you: " + convert.to_string(cmCount));
+    cm_print_results_rec(cmResults, 0);
+    return true;
+}
+
+fn cmd_report_status(crArgs) {
+    let crUserId = session_require_role("view_reports");
+    if (crUserId == 0) {
+        return true;
+    }
+    let crCounts = ticket.ticket_count_by_status();
+    print("--- Status Report ---");
+    print("Open: " + convert.to_string(map.get(crCounts, "open")));
+    print("In Progress: " + convert.to_string(map.get(crCounts, "in_progress")));
+    print("Resolved: " + convert.to_string(map.get(crCounts, "resolved")));
+    print("Closed: " + convert.to_string(map.get(crCounts, "closed")));
+    return true;
+}
+
+fn cmd_report_priority(crArgs) {
+    let crUserId = session_require_role("view_reports");
+    if (crUserId == 0) {
+        return true;
+    }
+    let crCounts = ticket.ticket_count_by_priority();
+    print("--- Priority Report ---");
+    print("Low: " + convert.to_string(map.get(crCounts, "low")));
+    print("Medium: " + convert.to_string(map.get(crCounts, "medium")));
+    print("High: " + convert.to_string(map.get(crCounts, "high")));
+    print("Critical: " + convert.to_string(map.get(crCounts, "critical")));
+    return true;
+}
+
+fn cmd_report_agent(crArgs) {
+    let crUserId = session_require_role("view_reports");
+    if (crUserId == 0) {
+        return true;
+    }
+    let crCounts = ticket.ticket_count_by_agent();
+    let crTickets = ticket.ticket_list_all();
+    let crTotal = list.len(crTickets);
+    print("--- Agent Report ---");
+    print("Total tickets: " + convert.to_string(crTotal));
+    print("Tickets by assignee ID:");
+    cr_print_agent_rec(crTickets, crCounts, 0);
+    return true;
+}
+
+fn cmd_report_daily(crArgs) {
+    let crUserId = session_require_role("view_reports");
+    if (crUserId == 0) {
+        return true;
+    }
+    let crTickets = ticket.ticket_list_all();
+    let crNow = time.timestamp();
+    let crSevenDays = 604800;
+    let crResult = cr_count_daily_rec(crTickets, crNow, crSevenDays, 0, 0, 0);
+    print("--- Daily Report (last 7 days) ---");
+    print("Created: " + convert.to_string(crResult));
+    return true;
+}
+
+fn cmd_export_csv(ceArgs) {
+    let ceUserId = session_require_role("export_csv");
+    if (ceUserId == 0) {
+        return true;
+    }
+    if (list.len(ceArgs) < 2) {
+        print("Usage: export-csv <filename>");
+        return true;
+    }
+    let ceFilename = list.get(ceArgs, 1);
+    let ceSuccess = csv_ops.csv_export_tickets(ceFilename);
+    if (ceSuccess == true) {
+        print("Exported to " + ceFilename);
+    } else {
+        print("Error: Export failed.");
+    }
+    return true;
+}
+
+fn cmd_import_csv(ciArgs) {
+    let ciUserId = session_require_role("import_csv");
+    if (ciUserId == 0) {
+        return true;
+    }
+    if (list.len(ciArgs) < 2) {
+        print("Usage: import-csv <filename>");
+        return true;
+    }
+    let ciFilename = list.get(ciArgs, 1);
+    let ciImported = csv_ops.csv_import_tickets(ciFilename);
+    print("Imported " + convert.to_string(ciImported) + " tickets from " + ciFilename);
+    return true;
+}
+
+fn cmd_set_role(srArgs) {
+    let srUserId = session_require_role("manage_users");
+    if (srUserId == 0) {
+        return true;
+    }
+    if (list.len(srArgs) < 3) {
+        print("Usage: set-role <username> <role>");
+        print("Roles: admin, manager, agent, viewer");
+        return true;
+    }
+    let srUsername = list.get(srArgs, 1);
+    let srRole = list.get(srArgs, 2);
+    let srTarget = user.user_find_by_username(srUsername);
+    if (map.has(srTarget, "id") == false) {
+        print("Error: User not found.");
+        return true;
+    }
+    user.user_set_role(map.get(srTarget, "id"), srRole);
+    print("Set " + srUsername + " role to " + srRole);
+    return true;
+}
+
+fn cmd_list_users(clArgs) {
+    let clUserId = session_require_role("manage_users");
+    if (clUserId == 0) {
+        return true;
+    }
+    let clUsers = user.user_list_all();
+    let clCount = list.len(clUsers);
+    print("--- Users (" + convert.to_string(clCount) + ") ---");
+    cl_print_users_rec(clUsers, 0);
+    return true;
+}
+
+fn cmd_delete_ticket(cdArgs) {
+    let cdUserId = session_require_role("delete_ticket");
+    if (cdUserId == 0) {
+        return true;
+    }
+    if (list.len(cdArgs) < 2) {
+        print("Usage: delete-ticket <id>");
+        return true;
+    }
+    let cdTicketId = convert.to_int(list.get(cdArgs, 1));
+    let cdTicket = ticket.ticket_find_by_id(cdTicketId);
+    if (map.has(cdTicket, "id") == false) {
+        print("Error: Ticket not found.");
+        return true;
+    }
+    ticket.ticket_delete(cdTicketId);
+    audit_log.audit_log_add(cdTicketId, cdUserId, "deleted", map.get(cdTicket, "title"), "");
+    print("Ticket " + convert.to_string(cdTicketId) + " deleted.");
+    return true;
+}
+
+fn cmd_escalate(ceArgs) {
+    let ceUserId = session_require_role("view_reports");
+    if (ceUserId == 0) {
+        return true;
+    }
+    let ceSlaCount = ticket.ticket_escalate_sla();
+    let ceUnassignedCount = ticket.ticket_escalate_unassigned();
+    print("Escalation complete:");
+    print("  SLA breaches escalated: " + convert.to_string(ceSlaCount));
+    print("  Unassigned critical: " + convert.to_string(ceUnassignedCount));
+    return true;
+}
+
+fn cmd_help(caArgs) {
+    print("Available commands:");
+    print("  register <username> <email> <password>");
+    print("  login <username> <password>");
+    print("  logout");
+    print("  create-ticket <title> <priority> <category> <description>");
+    print("  update-ticket <id> <field> <value>");
+    print("  assign-ticket <id> <username>");
+    print("  resolve-ticket <id>");
+    print("  close-ticket <id>");
+    print("  reopen-ticket <id>");
+    print("  add-comment <ticket_id> <content>");
+    print("  view-ticket <id>");
+    print("  search-tickets <query>");
+    print("  filter-tickets <field> <value>");
+    print("  my-tickets");
+    print("  report-status");
+    print("  report-priority");
+    print("  report-agent");
+    print("  report-daily");
+    print("  export-csv <filename>");
+    print("  import-csv <filename>");
+    print("  list-users");
+    print("  set-role <username> <role>");
+    print("  delete-ticket <id>");
+    print("  escalate");
+    print("  help");
+    return true;
+}
+
+fn dispatch_command(dcCmd, dcArgs) {
+    if (dcCmd == "register") {
+        return cmd_register(dcArgs);
+    }
+    if (dcCmd == "login") {
+        return cmd_login(dcArgs);
+    }
+    if (dcCmd == "logout") {
+        return cmd_logout(dcArgs);
+    }
+    if (dcCmd == "create-ticket") {
+        return cmd_create_ticket(dcArgs);
+    }
+    if (dcCmd == "update-ticket") {
+        return cmd_update_ticket(dcArgs);
+    }
+    if (dcCmd == "assign-ticket") {
+        return cmd_assign_ticket(dcArgs);
+    }
+    if (dcCmd == "resolve-ticket") {
+        return cmd_resolve_ticket(dcArgs);
+    }
+    if (dcCmd == "close-ticket") {
+        return cmd_close_ticket(dcArgs);
+    }
+    if (dcCmd == "reopen-ticket") {
+        return cmd_reopen_ticket(dcArgs);
+    }
+    if (dcCmd == "add-comment") {
+        return cmd_add_comment(dcArgs);
+    }
+    if (dcCmd == "view-ticket") {
+        return cmd_view_ticket(dcArgs);
+    }
+    if (dcCmd == "search-tickets") {
+        return cmd_search_tickets(dcArgs);
+    }
+    if (dcCmd == "filter-tickets") {
+        return cmd_filter_tickets(dcArgs);
+    }
+    if (dcCmd == "my-tickets") {
+        return cmd_my_tickets(dcArgs);
+    }
+    if (dcCmd == "report-status") {
+        return cmd_report_status(dcArgs);
+    }
+    if (dcCmd == "report-priority") {
+        return cmd_report_priority(dcArgs);
+    }
+    if (dcCmd == "report-agent") {
+        return cmd_report_agent(dcArgs);
+    }
+    if (dcCmd == "report-daily") {
+        return cmd_report_daily(dcArgs);
+    }
+    if (dcCmd == "export-csv") {
+        return cmd_export_csv(dcArgs);
+    }
+    if (dcCmd == "import-csv") {
+        return cmd_import_csv(dcArgs);
+    }
+    if (dcCmd == "list-users") {
+        return cmd_list_users(dcArgs);
+    }
+    if (dcCmd == "set-role") {
+        return cmd_set_role(dcArgs);
+    }
+    if (dcCmd == "delete-ticket") {
+        return cmd_delete_ticket(dcArgs);
+    }
+    if (dcCmd == "escalate") {
+        return cmd_escalate(dcArgs);
+    }
+    if (dcCmd == "help") {
+        return cmd_help(dcArgs);
+    }
+    print("Unknown command: " + dcCmd + ". Type 'help' for available commands.");
+    return true;
+}
+
+fn main() {
+    let args = environment.args();
+    if (list.len(args) == 0) {
+        print("Ticket Management System v1.0");
+        print("Usage: ail run main.ail <command> [args...]");
+        print("Type 'help' for available commands.");
+        return true;
+    }
+    let command = list.get(args, 0);
+    return dispatch_command(command, args);
+}

@@ -1,0 +1,31 @@
+import file;
+import environment;
+import list;
+import convert;
+import io;
+
+fn print_matches(lines, term, index) {
+    if (index < list.len(lines)) {
+        let line = list.get(lines, index);
+        if (line.find(term) != -1) {
+            let line_num = index + 1;
+            io.println(convert.to_string(line_num) + ": " + line);
+        }
+        print_matches(lines, term, index + 1);
+    }
+}
+
+fn main() {
+    let args = environment.args();
+    let num_args = list.len(args);
+    if (num_args < 2) {
+        io.println("Usage: grep <file> <pattern>");
+        return 1;
+    }
+    let source_file = list.get(args, num_args - 2);
+    let search_term = list.get(args, num_args - 1);
+    let content = file.read(source_file);
+    let lines = content.split("\n");
+    print_matches(lines, search_term, 0);
+    return 0;
+}

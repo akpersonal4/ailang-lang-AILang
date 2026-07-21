@@ -1,0 +1,19 @@
+import string;
+
+fn main() {
+    let s = "Hello, World!";
+    print("len:", string.length(s));
+    print("upper:", string.uppercase(s));
+    print("lower:", string.lowercase(s));
+    print("substr(0,5):", string.substring(s, 0, 5));
+    print("contains World:", string.contains(s, "World"));
+    print("starts Hello:", string.starts_with(s, "Hello"));
+    print("ends World:", string.ends_with(s, "World!"));
+    print("trim:", "'" + string.trim("  hi  ") + "'");
+    let a = "abc";
+    let b = "abc";
+    let c = "xyz";
+    print("equals abc abc:", string.equals(a, b));
+    print("equals abc xyz:", string.equals(a, c));
+    return 0
+}

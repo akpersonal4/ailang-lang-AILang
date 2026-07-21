@@ -1,0 +1,39 @@
+import io;
+import math;
+
+fn factorial(n) {
+    if (n <= 1) { return 1 }
+    return n * factorial(n - 1)
+}
+
+fn gcd(a, b) {
+    if (b == 0) { return a }
+    return gcd(b, a % b)
+}
+
+fn lcm(a, b) {
+    return a * b / gcd(a, b)
+}
+
+fn is_prime_helper(n, i) {
+    if (i * i > n) { return true }
+    if (n % i == 0) { return false }
+    return is_prime_helper(n, i + 1)
+}
+
+fn is_prime(n) {
+    if (n < 2) { return false }
+    return is_prime_helper(n, 2)
+}
+
+fn main() {
+    print("=== Scientific Calculator ===");
+    print("factorial(5) =", factorial(5));
+    print("gcd(48, 18) =", gcd(48, 18));
+    print("lcm(6, 8) =", lcm(6, 8));
+    print("is_prime(17) =", is_prime(17));
+    print("is_prime(15) =", is_prime(15));
+    print("math.abs(-10) =", math.abs(-10));
+    print("math.min(7, 3) =", math.min(7, 3));
+    print("math.max(7, 3) =", math.max(7, 3))
+}

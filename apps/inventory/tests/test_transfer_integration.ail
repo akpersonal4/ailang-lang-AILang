@@ -1,0 +1,265 @@
+import list;
+import map;
+import string;
+import convert;
+import helpers;
+import storage;
+import stock_transfer;
+import stock_movement;
+import warehouse;
+import transfer_integration;
+
+fn test_ti_create_and_get() {
+    let ttcgProd = map.new();
+    map.set(ttcgProd, "id", "TI-PROD-1");
+    map.set(ttcgProd, "name", "TI Test Product");
+    storage.storage_add("products", ttcgProd);
+    let ttcgResult = transfer_integration.ti_create_transfer("TI-PROD-1", "WH-1", "WH-2", 50, "test_user");
+    if (ttcgResult == false) {
+        print("FAIL: ti_create_transfer returned false");
+        return false;
+    }
+    let ttcgId = helpers.helpers_get_map_value_safe(ttcgResult, "id", "");
+    if (ttcgId == "") {
+        print("FAIL: ti_create_transfer - id missing");
+        return false;
+    }
+    let ttcgGot = transfer_integration.ti_get_by_id(ttcgId);
+    if (ttcgGot == false) {
+        print("FAIL: ti_get_by_id returned false");
+        return false;
+    }
+    let ttcgStatus = helpers.helpers_get_map_value_safe(ttcgGot, "status", "");
+    if (ttcgStatus != "pending") {
+        print("FAIL: expected status pending, got " + ttcgStatus);
+        return false;
+    }
+    let ttcgQty = helpers.helpers_get_map_value_safe(ttcgGot, "quantity", 0);
+    if (ttcgQty != 50) {
+        print("FAIL: expected quantity 50, got " + convert.to_string(ttcgQty));
+        return false;
+    }
+    print("PASS: ti_create_and_get");
+    return true;
+}
+
+fn test_ti_get_nonexistent() {
+    let ttgnResult = transfer_integration.ti_get_by_id("NONEXISTENT-TI-ID");
+    if (ttgnResult != false) {
+        print("FAIL: expected false for nonexistent transfer integration");
+        return false;
+    }
+    print("PASS: ti_get_nonexistent");
+    return true;
+}
+
+fn test_ti_list_by_warehouse() {
+    let ttlwProd = map.new();
+    map.set(ttlwProd, "id", "TI-PROD-2");
+    map.set(ttlwProd, "name", "TI Test Product 2");
+    storage.storage_add("products", ttlwProd);
+    transfer_integration.ti_create_transfer("TI-PROD-2", "WH-A", "WH-B", 10, "user1");
+    transfer_integration.ti_create_transfer("TI-PROD-2", "WH-A", "WH-C", 20, "user1");
+    transfer_integration.ti_create_transfer("TI-PROD-2", "WH-B", "WH-C", 30, "user1");
+    let ttlwResults = transfer_integration.ti_list_by_warehouse("WH-A");
+    if (ttlwResults == false) {
+        print("FAIL: ti_list_by_warehouse returned false");
+        return false;
+    }
+    let ttlwLen = list.len(ttlwResults);
+    if (ttlwLen < 2) {
+        print("FAIL: expected at least 2 for WH-A, got " + convert.to_string(ttlwLen));
+        return false;
+    }
+    print("PASS: ti_list_by_warehouse (" + convert.to_string(ttlwLen) + " items)");
+    return true;
+}
+
+fn test_ti_summary() {
+    let ttsProd = map.new();
+    map.set(ttsProd, "id", "TI-PROD-3");
+    map.set(ttsProd, "name", "TI Test Product 3");
+    storage.storage_add("products", ttsProd);
+    transfer_integration.ti_create_transfer("TI-PROD-3", "WH-X", "WH-Y", 5, "user2");
+    transfer_integration.ti_create_transfer("TI-PROD-3", "WH-X", "WH-Z", 15, "user2");
+    let ttsSummary = transfer_integration.ti_summary();
+    if (ttsSummary == false) {
+        print("FAIL: ti_summary returned false");
+        return false;
+    }
+    let ttsPending = helpers.helpers_get_map_value_safe(ttsSummary, "pending", 0);
+    if (ttsPending < 2) {
+        print("FAIL: expected pending >= 2, got " + convert.to_string(ttsPending));
+        return false;
+    }
+    print("PASS: ti_summary (pending=" + convert.to_string(ttsPending) + ")");
+    return true;
+}
+
+fn test_ti_create_large_transfer_pending_approval() {
+    let ttcltProd = map.new();
+    map.set(ttcltProd, "id", "TI-PROD-LT");
+    map.set(ttcltProd, "name", "Large Transfer Product");
+    storage.storage_add("products", ttcltProd);
+
+    let ttcltResult = transfer_integration.ti_create_transfer("TI-PROD-LT", "WH-X", "WH-Y", 150, "manager");
+    if (ttcltResult == false) {
+        print("FAIL: ti_create_transfer (large quantity) returned false");
+        return false;
+    }
+    let ttcltStatus = helpers.helpers_get_map_value_safe(ttcltResult, "status", "");
+    if (ttcltStatus != "pending_approval") {
+        print("FAIL: expected status pending_approval for large quantity, got " + ttcltStatus);
+        return false;
+    }
+    let ttcltTransferId = helpers.helpers_get_map_value_safe(ttcltResult, "transfer_id", "");
+    let ttcltTransfer = stock_transfer.transfer_get(ttcltTransferId);
+    let ttcltTransferStatus = helpers.helpers_get_map_value_safe(ttcltTransfer, "status", "");
+    if (ttcltTransferStatus != "pending_approval") {
+        print("FAIL: expected underlying transfer status pending_approval, got " + ttcltTransferStatus);
+        return false;
+    }
+    print("PASS: ti_create_large_transfer_pending_approval");
+    return true;
+}
+
+fn test_ti_approve_transfer() {
+    let ttatProd = map.new();
+    map.set(ttatProd, "id", "TI-PROD-APP");
+    map.set(ttatProd, "name", "Approve Test Product");
+    storage.storage_add("products", ttatProd);
+
+    let ttatInitial = transfer_integration.ti_create_transfer("TI-PROD-APP", "WH-A", "WH-B", 120, "manager");
+    let ttatId = helpers.helpers_get_map_value_safe(ttatInitial, "id", "");
+
+    let ttatApproved = transfer_integration.ti_approve_transfer(ttatId);
+    if (ttatApproved == false) {
+        print("FAIL: ti_approve_transfer returned false");
+        return false;
+    }
+    let ttatResult = transfer_integration.ti_get_by_id(ttatId);
+    let ttatStatus = helpers.helpers_get_map_value_safe(ttatResult, "status", "");
+    if (ttatStatus != "pending") {
+        print("FAIL: expected status pending after approval, got " + ttatStatus);
+        return false;
+    }
+    let ttatTransferId = helpers.helpers_get_map_value_safe(ttatResult, "transfer_id", "");
+    let ttatTransfer = stock_transfer.transfer_get(ttatTransferId);
+    let ttatTransferStatus = helpers.helpers_get_map_value_safe(ttatTransfer, "status", "");
+    if (ttatTransferStatus != "pending") {
+        print("FAIL: expected underlying transfer status pending, got " + ttatTransferStatus);
+        return false;
+    }
+    print("PASS: ti_approve_transfer");
+    return true;
+}
+
+fn test_ti_reject_transfer() {
+    let ttrtProd = map.new();
+    map.set(ttrtProd, "id", "TI-PROD-REJ");
+    map.set(ttrtProd, "name", "Reject Test Product");
+    storage.storage_add("products", ttrtProd);
+
+    let ttrtInitial = transfer_integration.ti_create_transfer("TI-PROD-REJ", "WH-X", "WH-Y", 130, "manager");
+    let ttrtId = helpers.helpers_get_map_value_safe(ttrtInitial, "id", "");
+
+    let ttrtRejected = transfer_integration.ti_reject_transfer(ttrtId);
+    if (ttrtRejected == false) {
+        print("FAIL: ti_reject_transfer returned false");
+        return false;
+    }
+    let ttrtResult = transfer_integration.ti_get_by_id(ttrtId);
+    let ttrtStatus = helpers.helpers_get_map_value_safe(ttrtResult, "status", "");
+    if (ttrtStatus != "rejected") {
+        print("FAIL: expected status rejected after rejection, got " + ttrtStatus);
+        return false;
+    }
+    let ttrtTransferId = helpers.helpers_get_map_value_safe(ttrtResult, "transfer_id", "");
+    let ttrtTransfer = stock_transfer.transfer_get(ttrtTransferId);
+    let ttrtTransferStatus = helpers.helpers_get_map_value_safe(ttrtTransfer, "status", "");
+    if (ttrtTransferStatus != "rejected") {
+        print("FAIL: expected underlying transfer status rejected, got " + ttrtTransferStatus);
+        return false;
+    }
+    print("PASS: ti_reject_transfer");
+    return true;
+}
+
+fn test_ti_complete_pending_approval_fails() {
+    let ttcpaProd = map.new();
+    map.set(ttcpaProd, "id", "TI-PROD-CPA");
+    map.set(ttcpaProd, "name", "Complete Pending Approval Fails Product");
+    storage.storage_add("products", ttcpaProd);
+
+    let ttcpaInitial = transfer_integration.ti_create_transfer("TI-PROD-CPA", "WH-1", "WH-2", 110, "manager");
+    let ttcpaTransferId = helpers.helpers_get_map_value_safe(ttcpaInitial, "transfer_id", "");
+
+    let ttcpaCompletion = stock_transfer.transfer_complete(ttcpaTransferId);
+    if (ttcpaCompletion != false) {
+        print("FAIL: transfer_complete should return false for pending_approval transfer");
+        return false;
+    }
+    print("PASS: ti_complete_pending_approval_fails");
+    return true;
+}
+
+fn test_ti_complete_rejected_fails() {
+    let ttcrfProd = map.new();
+    map.set(ttcrfProd, "id", "TI-PROD-CRF");
+    map.set(ttcrfProd, "name", "Complete Rejected Fails Product");
+    storage.storage_add("products", ttcrfProd);
+
+    let ttcrfInitial = transfer_integration.ti_create_transfer("TI-PROD-CRF", "WH-A", "WH-B", 140, "manager");
+    let ttcrfIntegrationId = helpers.helpers_get_map_value_safe(ttcrfInitial, "id", "");
+    transfer_integration.ti_reject_transfer(ttcrfIntegrationId);
+    let ttcrfTransferId = helpers.helpers_get_map_value_safe(ttcrfInitial, "transfer_id", "");
+
+    let ttcrfCompletion = stock_transfer.transfer_complete(ttcrfTransferId);
+    if (ttcrfCompletion != false) {
+        print("FAIL: transfer_complete should return false for rejected transfer");
+        return false;
+    }
+    print("PASS: ti_complete_rejected_fails");
+    return true;
+}
+
+fn main() {
+    let tt1 = test_ti_create_and_get();
+    if (tt1 == false) {
+        return 1;
+    }
+    let tt2 = test_ti_get_nonexistent();
+    if (tt2 == false) {
+        return 1;
+    }
+    let tt3 = test_ti_list_by_warehouse();
+    if (tt3 == false) {
+        return 1;
+    }
+    let tt4 = test_ti_summary();
+    if (tt4 == false) {
+        return 1;
+    }
+    let tt5 = test_ti_create_large_transfer_pending_approval();
+    if (tt5 == false) {
+        return 1;
+    }
+    let tt6 = test_ti_approve_transfer();
+    if (tt6 == false) {
+        return 1;
+    }
+    let tt7 = test_ti_reject_transfer();
+    if (tt7 == false) {
+        return 1;
+    }
+    let tt8 = test_ti_complete_pending_approval_fails();
+    if (tt8 == false) {
+        return 1;
+    }
+    let tt9 = test_ti_complete_rejected_fails();
+    if (tt9 == false) {
+        return 1;
+    }
+    print("ALL TRANSFER INTEGRATION TESTS PASSED");
+    return 0;
+}

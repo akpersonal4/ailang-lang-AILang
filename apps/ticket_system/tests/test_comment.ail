@@ -1,0 +1,73 @@
+import storage;
+import comment;
+import list;
+import map;
+import convert;
+
+fn test_comment_create() {
+    storage.storage_clear("comments");
+    let tccResult = comment.comment_create(1, 1, "Test comment");
+    if (map.has(tccResult, "id") == false) {
+        print("FAIL: comment_create - no id");
+        return false;
+    }
+    if (map.get(tccResult, "content") != "Test comment") {
+        print("FAIL: comment_create - content mismatch");
+        return false;
+    }
+    if (map.get(tccResult, "ticket_id") != 1) {
+        print("FAIL: comment_create - ticket_id mismatch");
+        return false;
+    }
+    print("PASS: comment_create");
+    return true;
+}
+
+fn test_comment_list_by_ticket() {
+    storage.storage_clear("comments");
+    comment.comment_create(10, 1, "Comment A");
+    comment.comment_create(10, 2, "Comment B");
+    comment.comment_create(20, 1, "Comment C");
+    let tclResult = comment.comment_list_by_ticket(10);
+    if (list.len(tclResult) != 2) {
+        print("FAIL: comment_list_by_ticket - expected 2, got " + convert.to_string(list.len(tclResult)));
+        return false;
+    }
+    let tclOther = comment.comment_list_by_ticket(20);
+    if (list.len(tclOther) != 1) {
+        print("FAIL: comment_list_by_ticket - wrong ticket");
+        return false;
+    }
+    print("PASS: comment_list_by_ticket");
+    return true;
+}
+
+fn test_comment_count_by_ticket() {
+    storage.storage_clear("comments");
+    comment.comment_create(5, 1, "A");
+    comment.comment_create(5, 1, "B");
+    comment.comment_create(5, 1, "C");
+    let tccResult = comment.comment_count_by_ticket(5);
+    if (tccResult != 3) {
+        print("FAIL: comment_count_by_ticket - expected 3, got " + convert.to_string(tccResult));
+        return false;
+    }
+    let tccZero = comment.comment_count_by_ticket(99);
+    if (tccZero != 0) {
+        print("FAIL: comment_count_by_ticket - expected 0 for missing, got " + convert.to_string(tccZero));
+        return false;
+    }
+    print("PASS: comment_count_by_ticket");
+    return true;
+}
+
+fn main() {
+    let tr1 = test_comment_create();
+    if (tr1 == false) { return 1; }
+    let tr2 = test_comment_list_by_ticket();
+    if (tr2 == false) { return 1; }
+    let tr3 = test_comment_count_by_ticket();
+    if (tr3 == false) { return 1; }
+    print("ALL COMMENT TESTS PASSED");
+    return 0;
+}

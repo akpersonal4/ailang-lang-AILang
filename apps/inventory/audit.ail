@@ -1,0 +1,43 @@
+import list;
+import map;
+import storage;
+import helpers;
+
+fn audit_log(action, entityType, entityId, oldValues, newValues, createdBy) {
+    let logEntry = map.new();
+    map.set(logEntry, "id", helpers.helpers_generate_id("AUD-"));
+    map.set(logEntry, "action", action);
+    map.set(logEntry, "entity_type", entityType);
+    map.set(logEntry, "entity_id", entityId);
+    map.set(logEntry, "old_values", oldValues);
+    map.set(logEntry, "new_values", newValues);
+    map.set(logEntry, "created_by", createdBy);
+    map.set(logEntry, "created_at", helpers.helpers_current_timestamp());
+    return storage.storage_add("audit_log", logEntry);
+}
+
+fn audit_list() {
+    return storage.storage_list("audit_log");
+}
+
+fn audit_filter_rec(alItems, alEntityType, alEntityId, alIdx, alAcc) {
+    let alLen = list.len(alItems);
+    if (alIdx < alLen) {
+        let alItem = list.get(alItems, alIdx);
+        if (map.get(alItem, "entity_type") == alEntityType) {
+            if (map.get(alItem, "entity_id") == alEntityId) {
+                list.append(alAcc, alItem);
+            }
+        }
+        let alNextIdx = alIdx + 1;
+        return audit_filter_rec(alItems, alEntityType, alEntityId, alNextIdx, alAcc);
+    }
+    return alAcc;
+}
+
+fn audit_list_by_entity(entityType, entityId) {
+    let alAllLogs = storage.storage_list("audit_log");
+    let alFiltered = list.new();
+    let alResult = audit_filter_rec(alAllLogs, entityType, entityId, 0, alFiltered);
+    return alResult;
+}

@@ -1,0 +1,94 @@
+import list;
+import map;
+import string;
+import convert;
+import helpers;
+import storage;
+import currency;
+
+fn test_currency_convert() {
+    let tcResult = currency.currency_convert(100, "USD", "EUR");
+    if (tcResult != 92) {
+        print("FAIL: expected 92 (100 USD to EUR), got " + convert.to_string(tcResult));
+        return false;
+    }
+    print("PASS: currency_convert");
+    return true;
+}
+
+fn test_currency_convert_same() {
+    let tcResult = currency.currency_convert(50, "USD", "USD");
+    if (tcResult != 50) {
+        print("FAIL: expected 50 (USD to USD), got " + convert.to_string(tcResult));
+        return false;
+    }
+    print("PASS: currency_convert_same");
+    return true;
+}
+
+fn test_currency_format() {
+    let tcFormatted = currency.currency_format(100, "USD");
+    if (tcFormatted != "$100") {
+        print("FAIL: expected '$100', got " + tcFormatted);
+        return false;
+    }
+    let tcEuro = currency.currency_format(100, "EUR");
+    if (tcEuro != "€100") {
+        print("FAIL: expected '€100', got " + tcEuro);
+        return false;
+    }
+    print("PASS: currency_format");
+    return true;
+}
+
+fn test_currency_list() {
+    let tcList = currency.currency_list();
+    let tcLen = list.len(tcList);
+    if (tcLen != 5) {
+        print("FAIL: expected 5 currencies, got " + convert.to_string(tcLen));
+        return false;
+    }
+    print("PASS: currency_list (" + convert.to_string(tcLen) + " codes)");
+    return true;
+}
+
+fn test_currency_set_get_rate() {
+    currency.currency_set_rate("USD", "GBP", 75 / 100);
+    let tcRate = currency.currency_get_rate("USD", "GBP");
+    if (tcRate != 75 / 100) {
+        print("FAIL: expected 0.75, got " + convert.to_string(tcRate));
+        return false;
+    }
+    let tcConverted = currency.currency_convert(200, "USD", "GBP");
+    if (tcConverted != 150) {
+        print("FAIL: expected 150 (200 USD to GBP at 0.75), got " + convert.to_string(tcConverted));
+        return false;
+    }
+    print("PASS: currency_set_get_rate");
+    return true;
+}
+
+fn main() {
+    let tc1 = test_currency_convert();
+    if (tc1 == false) {
+        return 1;
+    }
+    let tc2 = test_currency_convert_same();
+    if (tc2 == false) {
+        return 1;
+    }
+    let tc3 = test_currency_format();
+    if (tc3 == false) {
+        return 1;
+    }
+    let tc4 = test_currency_list();
+    if (tc4 == false) {
+        return 1;
+    }
+    let tc5 = test_currency_set_get_rate();
+    if (tc5 == false) {
+        return 1;
+    }
+    print("ALL CURRENCY TESTS PASSED");
+    return 0;
+}

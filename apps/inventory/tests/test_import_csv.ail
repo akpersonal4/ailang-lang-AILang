@@ -1,0 +1,74 @@
+import list;
+import map;
+import string;
+import convert;
+import path;
+import file;
+import csv;
+import storage;
+import helpers;
+import import_csv;
+
+fn test_import_file_not_found() {
+    let ifResult = import_csv.import_generic("products", "imports/nonexistent_file_xyz.csv");
+    if (ifResult != false) {
+        print("FAIL: import should fail for nonexistent file");
+        return false;
+    }
+    print("PASS: import_file_not_found");
+    return true;
+}
+
+fn test_import_empty_file() {
+    file.write("imports/test_empty.csv", "");
+    let ieResult = import_csv.import_generic("products", "imports/test_empty.csv");
+    if (ieResult != false) {
+        print("FAIL: import empty file should return false");
+        return false;
+    }
+    print("PASS: import_empty_file");
+    return true;
+}
+
+fn test_import_valid_csv() {
+    let ivCSV = "name,price\nTest Product A,1099\nTest Product B,2550\n";
+    file.write("imports/test_products.csv", ivCSV);
+    let ivCountBefore = list.len(storage.storage_list("products"));
+    let ivResult = import_csv.import_generic("products", "imports/test_products.csv");
+    if (ivResult == false) {
+        print("FAIL: import valid CSV should succeed");
+        return false;
+    }
+    let ivCountAfter = list.len(storage.storage_list("products"));
+    if (ivCountAfter <= ivCountBefore) {
+        print("FAIL: product count should increase after import");
+        return false;
+    }
+    print("PASS: import_valid_csv");
+    return true;
+}
+
+fn test_import_header_only_csv() {
+    let ihCSV = "name,price,category\n";
+    file.write("imports/test_header_only.csv", ihCSV);
+    let ihResult = import_csv.import_generic("products", "imports/test_header_only.csv");
+    if (ihResult == false) {
+        print("FAIL: import header-only CSV should return true (no data rows)");
+        return false;
+    }
+    print("PASS: import_header_only_csv");
+    return true;
+}
+
+fn main() {
+    let t1 = test_import_file_not_found();
+    if (t1 == false) { return 1; }
+    let t2 = test_import_empty_file();
+    if (t2 == false) { return 1; }
+    let t3 = test_import_valid_csv();
+    if (t3 == false) { return 1; }
+    let t4 = test_import_header_only_csv();
+    if (t4 == false) { return 1; }
+    print("ALL IMPORT CSV TESTS PASSED");
+    return 0;
+}

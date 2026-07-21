@@ -1,0 +1,97 @@
+import list;
+import map;
+import json;
+import file;
+import io;
+import convert;
+
+fn create_todo(title) {
+    let entry = map.new();
+    map.set(entry, "title", title);
+    map.set(entry, "done", 0);
+    return entry;
+}
+
+fn add_todo(todos, title) {
+    let entry = create_todo(title);
+    list.append(todos, entry);
+    return todos;
+}
+
+fn complete_todo(todos, index) {
+    let entry = list.get(todos, index);
+    map.set(entry, "done", 1);
+    return todos;
+}
+
+fn delete_todo(todos, index) {
+    list.remove(todos, index);
+    return todos;
+}
+
+fn count_pending_helper(todos, idx) {
+    if (idx >= list.len(todos)) {
+        return 0;
+    }
+    let entry = list.get(todos, idx);
+    let done = map.get(entry, "done");
+    if (done) {
+        return count_pending_helper(todos, idx + 1);
+    } else {
+        return count_pending_helper(todos, idx + 1) + 1;
+    }
+}
+
+fn count_pending(todos) {
+    return count_pending_helper(todos, 0);
+}
+
+fn display_todos_helper(todos, pos) {
+    if (pos >= list.len(todos)) {
+        return 0;
+    }
+    let entry = list.get(todos, pos);
+    let done = map.get(entry, "done");
+    if (done) {
+        io.writeln("[x]" + map.get(entry, "title"));
+    } else {
+        io.writeln("[ ]" + map.get(entry, "title"));
+    }
+    return display_todos_helper(todos, pos + 1);
+}
+
+fn display_todos(todos) {
+    let summary = string.concat("Todo list (", string.concat(convert.to_string(list.len(todos)), " items):"));
+    io.writeln(summary);
+    return display_todos_helper(todos, 0);
+}
+
+fn save_todos(filename, todos) {
+    let text = json.stringify(todos);
+    file.write(filename, text);
+    io.writeln("Saved to" + filename);
+    return 1;
+}
+
+fn load_todos(filename) {
+    let raw = file.read(filename);
+    let data = json.parse(raw);
+    io.writeln("Loaded" + convert.to_string(list.len(data)) + " todos from file");
+    return data;
+}
+
+fn main() {
+    io.writeln("=== Todo Manager ===");
+    let todos = list.new();
+    todos = add_todo(todos, "Learn AILang");
+    todos = add_todo(todos, "Build an app");
+    todos = add_todo(todos, "Write docs");
+    display_todos(todos);
+    io.writeln("Pending:" + convert.to_string(count_pending(todos)));
+    io.writeln("After completing task 1:");
+    todos = complete_todo(todos, 1);
+    display_todos(todos);
+    io.writeln("Pending:" + convert.to_string(count_pending(todos)));
+    save_todos("data/todos.json", todos);
+    load_todos("data/todos.json");
+}

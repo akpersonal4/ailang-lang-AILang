@@ -1,0 +1,1 @@
+[{"id": 1, "username": "user1", "email": "u1@example.com", "password_hash": "pass", "role": "admin", "created_at": 1784043329}, {"id": 2, "username": "user2", "email": "u2@example.com", "password_hash": "pass", "role": "agent", "created_at": 1784043329}]

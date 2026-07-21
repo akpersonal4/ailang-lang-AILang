@@ -1,0 +1,100 @@
+import storage;
+import helpers;
+import list;
+import map;
+import string;
+import convert;
+
+fn csv_escape_field(cfValue) {
+    return convert.to_string(cfValue);
+}
+
+fn csv_join_fields_rec(jfFields, jfSep, jfIdx, jfAcc) {
+    if (jfIdx >= list.len(jfFields)) {
+        return jfAcc;
+    }
+    let jfField = list.get(jfFields, jfIdx);
+    return csv_join_fields_rec(jfFields, jfSep, jfIdx + 1, jfAcc + jfSep + jfField);
+}
+
+fn csv_join_fields(jfFields, jfSep) {
+    if (list.len(jfFields) == 0) {
+        return "";
+    }
+    let jfFirst = list.get(jfFields, 0);
+    return csv_join_fields_rec(jfFields, jfSep, 1, jfFirst);
+}
+
+fn csv_product_row(fpItem) {
+    let fpFields = list.new();
+    list.append(fpFields, helpers.helpers_get_map_value_safe(fpItem, "id", ""));
+    list.append(fpFields, helpers.helpers_get_map_value_safe(fpItem, "name", ""));
+    list.append(fpFields, helpers.helpers_get_map_value_safe(fpItem, "sku", ""));
+    list.append(fpFields, convert.to_string(helpers.helpers_get_map_value_safe(fpItem, "unit_price", 0)));
+    list.append(fpFields, helpers.helpers_get_map_value_safe(fpItem, "unit", ""));
+    return csv_join_fields(fpFields, ",");
+}
+
+fn csv_products_rec(fpItems, fpIdx, fpAcc) {
+    if (fpIdx >= list.len(fpItems)) {
+        return fpAcc;
+    }
+    let fpItem = list.get(fpItems, fpIdx);
+    let fpRow = csv_product_row(fpItem);
+    return csv_products_rec(fpItems, fpIdx + 1, fpAcc + fpRow + "\n");
+}
+
+fn csv_products() {
+    let fpAll = storage.storage_list("products");
+    let fpHeader = "id,name,sku,unit_price,unit\n";
+    return csv_products_rec(fpAll, 0, fpHeader);
+}
+
+fn csv_customer_row(fcItem) {
+    let fcFields = list.new();
+    list.append(fcFields, helpers.helpers_get_map_value_safe(fcItem, "id", ""));
+    list.append(fcFields, helpers.helpers_get_map_value_safe(fcItem, "name", ""));
+    list.append(fcFields, helpers.helpers_get_map_value_safe(fcItem, "email", ""));
+    list.append(fcFields, helpers.helpers_get_map_value_safe(fcItem, "phone", ""));
+    return csv_join_fields(fcFields, ",");
+}
+
+fn csv_customers_rec(fcItems, fcIdx, fcAcc) {
+    if (fcIdx >= list.len(fcItems)) {
+        return fcAcc;
+    }
+    let fcItem = list.get(fcItems, fcIdx);
+    let fcRow = csv_customer_row(fcItem);
+    return csv_customers_rec(fcItems, fcIdx + 1, fcAcc + fcRow + "\n");
+}
+
+fn csv_customers() {
+    let fcAll = storage.storage_list("customers");
+    let fcHeader = "id,name,email,phone\n";
+    return csv_customers_rec(fcAll, 0, fcHeader);
+}
+
+fn csv_movements_row(fmItem) {
+    let fmFields = list.new();
+    list.append(fmFields, helpers.helpers_get_map_value_safe(fmItem, "id", ""));
+    list.append(fmFields, helpers.helpers_get_map_value_safe(fmItem, "product_id", ""));
+    list.append(fmFields, helpers.helpers_get_map_value_safe(fmItem, "type", ""));
+    list.append(fmFields, convert.to_string(helpers.helpers_get_map_value_safe(fmItem, "quantity", 0)));
+    list.append(fmFields, helpers.helpers_get_map_value_safe(fmItem, "created_at", ""));
+    return csv_join_fields(fmFields, ",");
+}
+
+fn csv_movements_rec(fmItems, fmIdx, fmAcc) {
+    if (fmIdx >= list.len(fmItems)) {
+        return fmAcc;
+    }
+    let fmItem = list.get(fmItems, fmIdx);
+    let fmRow = csv_movements_row(fmItem);
+    return csv_movements_rec(fmItems, fmIdx + 1, fmAcc + fmRow + "\n");
+}
+
+fn csv_movements() {
+    let fmAll = storage.storage_list("movements");
+    let fmHeader = "id,product_id,type,quantity,created_at\n";
+    return csv_movements_rec(fmAll, 0, fmHeader);
+}

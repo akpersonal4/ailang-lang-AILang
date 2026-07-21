@@ -1,0 +1,168 @@
+import storage;
+import ticket;
+import list;
+import map;
+import convert;
+import time;
+
+fn test_ticket_create() {
+    storage.storage_clear("tickets");
+    let ttcResult = ticket.ticket_create("Test Ticket", "high", "bug", "Description", 1);
+    if (map.has(ttcResult, "id") == false) {
+        print("FAIL: ticket_create - no id");
+        return false;
+    }
+    if (map.get(ttcResult, "title") != "Test Ticket") {
+        print("FAIL: ticket_create - title mismatch");
+        return false;
+    }
+    if (map.get(ttcResult, "status") != "open") {
+        print("FAIL: ticket_create - status should be open");
+        return false;
+    }
+    if (map.get(ttcResult, "priority") != "high") {
+        print("FAIL: ticket_create - priority mismatch");
+        return false;
+    }
+    print("PASS: ticket_create");
+    return true;
+}
+
+fn test_ticket_find_by_id() {
+    storage.storage_clear("tickets");
+    let ttfItem = ticket.ticket_create("Find Me", "low", "task", "Desc", 1);
+    let ttfId = map.get(ttfItem, "id");
+    let ttfResult = ticket.ticket_find_by_id(ttfId);
+    if (map.has(ttfResult, "id") == false) {
+        print("FAIL: ticket_find_by_id - not found");
+        return false;
+    }
+    if (map.get(ttfResult, "title") != "Find Me") {
+        print("FAIL: ticket_find_by_id - title mismatch");
+        return false;
+    }
+    let ttfMissing = ticket.ticket_find_by_id(999);
+    if (map.has(ttfMissing, "id") != false) {
+        print("FAIL: ticket_find_by_id - should not find missing");
+        return false;
+    }
+    print("PASS: ticket_find_by_id");
+    return true;
+}
+
+fn test_ticket_update() {
+    storage.storage_clear("tickets");
+    let ttuItem = ticket.ticket_create("Update Me", "low", "task", "Desc", 1);
+    let ttuId = map.get(ttuItem, "id");
+    ticket.ticket_update(ttuId, "title", "Updated Title");
+    let ttuResult = ticket.ticket_find_by_id(ttuId);
+    if (map.get(ttuResult, "title") != "Updated Title") {
+        print("FAIL: ticket_update - title not updated");
+        return false;
+    }
+    print("PASS: ticket_update");
+    return true;
+}
+
+fn test_ticket_assign() {
+    storage.storage_clear("tickets");
+    let ttaItem = ticket.ticket_create("Assign Me", "medium", "task", "Desc", 1);
+    let ttaId = map.get(ttaItem, "id");
+    ticket.ticket_assign(ttaId, 42);
+    let ttaResult = ticket.ticket_find_by_id(ttaId);
+    if (map.get(ttaResult, "assignee_id") != 42) {
+        print("FAIL: ticket_assign - assignee not set");
+        return false;
+    }
+    print("PASS: ticket_assign");
+    return true;
+}
+
+fn test_ticket_set_status() {
+    storage.storage_clear("tickets");
+    let ttsItem = ticket.ticket_create("Status Test", "low", "task", "Desc", 1);
+    let ttsId = map.get(ttsItem, "id");
+    ticket.ticket_set_status(ttsId, "in_progress");
+    let ttsResult = ticket.ticket_find_by_id(ttsId);
+    if (map.get(ttsResult, "status") != "in_progress") {
+        print("FAIL: ticket_set_status - status not updated");
+        return false;
+    }
+    ticket.ticket_set_status(ttsId, "resolved");
+    let ttsResolved = ticket.ticket_find_by_id(ttsId);
+    if (map.get(ttsResolved, "status") != "resolved") {
+        print("FAIL: ticket_set_status - resolve failed");
+        return false;
+    }
+    if (map.get(ttsResolved, "resolved_at") == 0) {
+        print("FAIL: ticket_set_status - resolved_at not set");
+        return false;
+    }
+    print("PASS: ticket_set_status");
+    return true;
+}
+
+fn test_ticket_list_all() {
+    storage.storage_clear("tickets");
+    ticket.ticket_create("T1", "low", "task", "D1", 1);
+    ticket.ticket_create("T2", "high", "bug", "D2", 1);
+    ticket.ticket_create("T3", "medium", "feature", "D3", 1);
+    let ttlResult = ticket.ticket_list_all();
+    if (list.len(ttlResult) != 3) {
+        print("FAIL: ticket_list_all - expected 3, got " + convert.to_string(list.len(ttlResult)));
+        return false;
+    }
+    print("PASS: ticket_list_all");
+    return true;
+}
+
+fn test_ticket_list_by_user() {
+    storage.storage_clear("tickets");
+    let tluT1 = ticket.ticket_create("T1", "low", "task", "D1", 1);
+    let tluT2 = ticket.ticket_create("T2", "high", "bug", "D2", 1);
+    let tluT3 = ticket.ticket_create("T3", "medium", "feature", "D3", 1);
+    ticket.ticket_assign(map.get(tluT1, "id"), 10);
+    ticket.ticket_assign(map.get(tluT2, "id"), 10);
+    let ttlResult = ticket.ticket_list_by_user(10);
+    if (list.len(ttlResult) != 2) {
+        print("FAIL: ticket_list_by_user - expected 2, got " + convert.to_string(list.len(ttlResult)));
+        return false;
+    }
+    print("PASS: ticket_list_by_user");
+    return true;
+}
+
+fn test_ticket_delete() {
+    storage.storage_clear("tickets");
+    let ttdItem = ticket.ticket_create("Delete Me", "low", "task", "Desc", 1);
+    let ttdId = map.get(ttdItem, "id");
+    ticket.ticket_delete(ttdId);
+    let ttdResult = ticket.ticket_find_by_id(ttdId);
+    if (map.has(ttdResult, "id") != false) {
+        print("FAIL: ticket_delete - ticket still exists");
+        return false;
+    }
+    print("PASS: ticket_delete");
+    return true;
+}
+
+fn main() {
+    let tr1 = test_ticket_create();
+    if (tr1 == false) { return 1; }
+    let tr2 = test_ticket_find_by_id();
+    if (tr2 == false) { return 1; }
+    let tr3 = test_ticket_update();
+    if (tr3 == false) { return 1; }
+    let tr4 = test_ticket_assign();
+    if (tr4 == false) { return 1; }
+    let tr5 = test_ticket_set_status();
+    if (tr5 == false) { return 1; }
+    let tr6 = test_ticket_list_all();
+    if (tr6 == false) { return 1; }
+    let tr7 = test_ticket_list_by_user();
+    if (tr7 == false) { return 1; }
+    let tr8 = test_ticket_delete();
+    if (tr8 == false) { return 1; }
+    print("ALL TICKET TESTS PASSED");
+    return 0;
+}

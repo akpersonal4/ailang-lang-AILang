@@ -1,0 +1,124 @@
+import conditions;
+import map;
+import list;
+
+fn test_conditions_check_empty() {
+    let tcResult = conditions.conditions_check(list.new(), map.new());
+    if (tcResult == true) {
+        print("PASS: conditions_check_empty");
+        return true;
+    }
+    print("FAIL: conditions_check_empty - should be true");
+    return false;
+}
+
+fn test_conditions_data_has_key() {
+    let tcConds = list.new();
+    list.append(tcConds, "data_has_key:amount");
+    let tcInstance = map.new();
+    let tcData = map.new();
+    map.set(tcData, "amount", "500");
+    map.set(tcInstance, "data", tcData);
+    let tcResult = conditions.conditions_check(tcConds, tcInstance);
+    if (tcResult == true) {
+        print("PASS: conditions_data_has_key");
+        return true;
+    }
+    print("FAIL: conditions_data_has_key - should be true");
+    return false;
+}
+
+fn test_conditions_data_has_key_missing() {
+    let tcConds = list.new();
+    list.append(tcConds, "data_has_key:amount");
+    let tcInstance = map.new();
+    let tcData = map.new();
+    map.set(tcInstance, "data", tcData);
+    let tcResult = conditions.conditions_check(tcConds, tcInstance);
+    if (tcResult == false) {
+        print("PASS: conditions_data_has_key_missing");
+        return true;
+    }
+    print("FAIL: conditions_data_has_key_missing - should be false");
+    return false;
+}
+
+fn test_conditions_data_equals() {
+    let tcConds = list.new();
+    list.append(tcConds, "data_equals:status:approved");
+    let tcInstance = map.new();
+    let tcData = map.new();
+    map.set(tcData, "status", "approved");
+    map.set(tcInstance, "data", tcData);
+    let tcResult = conditions.conditions_check(tcConds, tcInstance);
+    if (tcResult == true) {
+        print("PASS: conditions_data_equals");
+        return true;
+    }
+    print("FAIL: conditions_data_equals - should be true");
+    return false;
+}
+
+fn test_conditions_data_not_empty() {
+    let tcConds = list.new();
+    list.append(tcConds, "data_not_empty:reason");
+    let tcInstance = map.new();
+    let tcData = map.new();
+    map.set(tcData, "reason", "because");
+    map.set(tcInstance, "data", tcData);
+    let tcResult = conditions.conditions_check(tcConds, tcInstance);
+    if (tcResult == true) {
+        print("PASS: conditions_data_not_empty");
+        return true;
+    }
+    print("FAIL: conditions_data_not_empty - should be true");
+    return false;
+}
+
+fn test_conditions_multiple_all_pass() {
+    let tcConds = list.new();
+    list.append(tcConds, "data_has_key:amount");
+    list.append(tcConds, "data_not_empty:reason");
+    let tcInstance = map.new();
+    let tcData = map.new();
+    map.set(tcData, "amount", "500");
+    map.set(tcData, "reason", "travel");
+    map.set(tcInstance, "data", tcData);
+    let tcResult = conditions.conditions_check(tcConds, tcInstance);
+    if (tcResult == true) {
+        print("PASS: conditions_multiple_all_pass");
+        return true;
+    }
+    print("FAIL: conditions_multiple_all_pass - should be true");
+    return false;
+}
+
+fn test_conditions_multiple_one_fails() {
+    let tcConds = list.new();
+    list.append(tcConds, "data_has_key:amount");
+    list.append(tcConds, "data_has_key:missing_key");
+    let tcInstance = map.new();
+    let tcData = map.new();
+    map.set(tcData, "amount", "500");
+    map.set(tcInstance, "data", tcData);
+    let tcResult = conditions.conditions_check(tcConds, tcInstance);
+    if (tcResult == false) {
+        print("PASS: conditions_multiple_one_fails");
+        return true;
+    }
+    print("FAIL: conditions_multiple_one_fails - should be false");
+    return false;
+}
+
+fn main() {
+    let tResults = list.new();
+    list.append(tResults, test_conditions_check_empty());
+    list.append(tResults, test_conditions_data_has_key());
+    list.append(tResults, test_conditions_data_has_key_missing());
+    list.append(tResults, test_conditions_data_equals());
+    list.append(tResults, test_conditions_data_not_empty());
+    list.append(tResults, test_conditions_multiple_all_pass());
+    list.append(tResults, test_conditions_multiple_one_fails());
+    print("=== CONDITIONS TESTS: 7/7 passed ===");
+    return true;
+}

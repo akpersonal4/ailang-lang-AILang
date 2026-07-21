@@ -1,0 +1,42 @@
+// Recursive Map Pattern
+// Transforms each element of a list using a transform function
+// Use: fn transform(item) { return transformed_item }
+//
+// fn map_helper(coll, i, xform, acc) {
+//     if (i >= list.len(coll)) { return acc }
+//     list.append(acc, xform(list.get(coll, i)))
+//     return map_helper(coll, i + 1, xform, acc)
+// }
+// fn map(coll, xform) {
+//     return map_helper(coll, 0, xform, list.new())
+// }
+
+import list;
+
+fn double(n) { return n * 2 }
+
+fn map_helper(coll, i, xform, acc) {
+    if (i >= list.len(coll)) { return acc }
+    list.append(acc, xform(list.get(coll, i)));
+    return map_helper(coll, i + 1, xform, acc)
+}
+
+fn map(coll, xform) {
+    return map_helper(coll, 0, xform, list.new())
+}
+
+fn print_items(items, i) {
+    if (i >= list.len(items)) { return 0 }
+    print(" ", list.get(items, i));
+    return print_items(items, i + 1)
+}
+
+fn main() {
+    let nums = list.new();
+    list.append(nums, 1); list.append(nums, 2);
+    list.append(nums, 3); list.append(nums, 4);
+    let doubled = map(nums, double);
+    print("Doubled:");
+    print_items(doubled, 0);
+    print("")
+}

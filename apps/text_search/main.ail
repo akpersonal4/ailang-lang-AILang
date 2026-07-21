@@ -1,0 +1,20 @@
+import string;
+
+fn contains_ignore_case(text, pattern) {
+    return string.contains(string.lowercase(text), string.lowercase(pattern))
+}
+
+fn main() {
+    print("=== Text Search ===");
+    let text = "The Quick Brown Fox Jumps Over The Lazy Dog";
+    let found = contains_ignore_case(text, "the");
+    print("Contains 'the' (case-insensitive):", found);
+    let found2 = contains_ignore_case(text, "fox");
+    print("Contains 'fox':", found2);
+    let found3 = contains_ignore_case(text, "cat");
+    print("Contains 'cat':", found3);
+    let upper = string.uppercase(text);
+    print("Uppercase first 3 chars:", upper);
+    print("Starts with 'THE':", string.starts_with(upper, "THE"));
+    print("Ends with 'DOG':", string.ends_with(upper, "DOG"))
+}

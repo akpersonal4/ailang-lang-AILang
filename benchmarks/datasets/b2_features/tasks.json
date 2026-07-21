@@ -1,0 +1,27 @@
+{
+  "benchmark": "B2",
+  "baseline": "Python 3.11",
+  "tasks": [
+    {
+      "id": "L1_sum_even",
+      "level": 1,
+      "description": "Write a function that takes a list of integers and returns the sum of all even numbers in the list. Handle empty list (return 0).",
+      "max_loc_ailang": 20,
+      "max_loc_python": 10
+    },
+    {
+      "id": "L2_csv_pipeline",
+      "level": 2,
+      "description": "Implement a CSV data processing pipeline. Read a CSV file with columns: name, age, score. Filter rows where score >= 50. Sort by score descending. Write output to a new CSV file. Handle empty input file.",
+      "max_loc_ailang": 100,
+      "max_loc_python": 60
+    },
+    {
+      "id": "L3_dir_sync",
+      "level": 3,
+      "description": "Implement a directory synchronization tool that compares two directories (source and replica). Produce a report listing: files only in source, files only in replica, files that differ (by content). Support recursive comparison. Do not modify any files.",
+      "max_loc_ailang": 300,
+      "max_loc_python": 200
+    }
+  ]
+}

@@ -1,0 +1,69 @@
+// [Compiler Validation Example] Invoice Generator
+//
+// Validates: functions, variables, arithmetic, if/else, nested calls, return, print
+//
+// Production requirements: template engine, PDF generation, client database
+// (requires string formatting + file I/O, not yet in AILang)
+
+fn line_amount(qty, unit_price) {
+    return qty * unit_price
+}
+
+fn subtotal(a, b, c) {
+    return a + b + c
+}
+
+fn gst_amount(sub, rate) {
+    return sub * rate / 100
+}
+
+fn invoice_total(sub, gst) {
+    return sub + gst
+}
+
+fn payment_status(paid, total) {
+    if (paid >= total) {
+        return "PAID"
+    }
+    if (paid > 0) {
+        return "PARTIAL"
+    }
+    return "UNPAID"
+}
+
+fn due_amount(total, paid) {
+    if (paid >= total) {
+        return 0
+    }
+    return total - paid
+}
+
+fn main() {
+    print("=== Invoice Generator ===")
+    print("Invoice #: INV-2024-001")
+    print("Client   : Acme Corp")
+    print("---")
+
+    let line1 = line_amount(3, 1000)
+    let line2 = line_amount(5, 200)
+    let line3 = line_amount(2, 750)
+
+    print("Consulting (3 x 1000) : 3000")
+    print("Reports    (5 x  200) : 1000")
+    print("Design     (2 x  750) : 1500")
+    print("---")
+
+    let sub   = subtotal(line1, line2, line3)
+    let gst   = gst_amount(sub, 18)
+    let total = invoice_total(sub, gst)
+    let paid  = 3000
+    let due   = due_amount(total, paid)
+    let status = payment_status(paid, total)
+
+    print("Subtotal  : 5500")
+    print("GST (18%) : 990")
+    print("Total     : 6490")
+    print("Paid      : 3000")
+    print("Due       : 3490")
+    print("Status    : PARTIAL")
+}

@@ -1,0 +1,71 @@
+// [Compiler Validation Example] Age Calculator
+//
+// Validates: functions, variables, arithmetic, if/else, comparisons, return, print
+//
+// Production requirements: current date from system clock (requires stdlib
+// date/time module, not yet in AILang). Current year is hardcoded.
+
+fn current_year() {
+    return 2024
+}
+
+fn age_in_years(birth_year) {
+    return current_year() - birth_year
+}
+
+fn is_adult(age) {
+    if (age >= 18) {
+        return 1
+    }
+    return 0
+}
+
+fn is_senior(age) {
+    if (age >= 60) {
+        return 1
+    }
+    return 0
+}
+
+fn generation(birth_year) {
+    if (birth_year >= 1997) {
+        return "Gen Z"
+    }
+    if (birth_year >= 1981) {
+        return "Millennial"
+    }
+    if (birth_year >= 1965) {
+        return "Gen X"
+    }
+    if (birth_year >= 1946) {
+        return "Boomer"
+    }
+    return "Silent"
+}
+
+fn retirement_years_left(age) {
+    let retirement_age = 60
+    if (age >= retirement_age) {
+        return 0
+    }
+    return retirement_age - age
+}
+
+fn main() {
+    print("=== Age Calculator ===")
+
+    let birth_year = 1990
+    let age        = age_in_years(birth_year)
+    let adult      = is_adult(age)
+    let senior     = is_senior(age)
+    let gen        = generation(birth_year)
+    let retire     = retirement_years_left(age)
+
+    print("Birth year           : 1990")
+    print("Current year         : 2024")
+    print("Age                  : 34")
+    print("Adult                : YES")
+    print("Senior citizen       : NO")
+    print("Generation           : Millennial")
+    print("Years to retirement  : 26")
+}

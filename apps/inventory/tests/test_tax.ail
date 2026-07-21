@@ -1,0 +1,109 @@
+import list;
+import map;
+import string;
+import convert;
+import helpers;
+import storage;
+import tax;
+
+fn test_tax_create() {
+    let ttcResult = tax.tax_create("VAT Standard", 20, "GB", "England");
+    if (ttcResult == false) {
+        print("FAIL: tax_create returned false");
+        return false;
+    }
+    let ttcId = helpers.helpers_get_map_value_safe(ttcResult, "id", "");
+    if (ttcId == "") {
+        print("FAIL: tax_create - tax id missing");
+        return false;
+    }
+    let ttcName = helpers.helpers_get_map_value_safe(ttcResult, "name", "");
+    if (ttcName != "VAT Standard") {
+        print("FAIL: tax_create - expected VAT Standard, got " + ttcName);
+        return false;
+    }
+    let ttcRate = helpers.helpers_get_map_value_safe(ttcResult, "rate", 0);
+    if (ttcRate != 20) {
+        print("FAIL: tax_create - expected rate 20, got " + convert.to_string(ttcRate));
+        return false;
+    }
+    print("PASS: tax_create");
+    return true;
+}
+
+fn test_tax_get_by_id_missing() {
+    let ttgmResult = tax.tax_get_by_id("NONEXISTENT-TAX-ID");
+    if (ttgmResult != false) {
+        print("FAIL: tax_get_by_id_missing - expected false");
+        return false;
+    }
+    print("PASS: tax_get_by_id_missing");
+    return true;
+}
+
+fn test_tax_calculate() {
+    let ttcalcTax = tax.tax_create("Sales Tax", 10, "US", "California");
+    let ttcalcId = helpers.helpers_get_map_value_safe(ttcalcTax, "id", "");
+    let ttcalcResult = tax.tax_calculate(1000, ttcalcId);
+    if (ttcalcResult != 100) {
+        print("FAIL: tax_calculate - expected 100, got " + convert.to_string(ttcalcResult));
+        return false;
+    }
+    print("PASS: tax_calculate (" + convert.to_string(ttcalcResult) + ")");
+    return true;
+}
+
+fn test_tax_list_by_country() {
+    let tlbc1 = tax.tax_create("VAT France", 20, "FR", "Ile-de-France");
+    let tlbc2 = tax.tax_create("VAT France Reduced", 10, "FR", "Ile-de-France");
+    let tlbcResult = tax.tax_list_by_country("FR");
+    let tlbcLen = list.len(tlbcResult);
+    if (tlbcLen < 2) {
+        print("FAIL: tax_list_by_country - expected at least 2, got " + convert.to_string(tlbcLen));
+        return false;
+    }
+    print("PASS: tax_list_by_country (" + convert.to_string(tlbcLen) + " items)");
+    return true;
+}
+
+fn test_tax_update_rate() {
+    let turTax = tax.tax_create("GST", 18, "IN", "Maharashtra");
+    let turId = helpers.helpers_get_map_value_safe(turTax, "id", "");
+    let turResult = tax.tax_update_rate(turId, 15);
+    if (turResult == false) {
+        print("FAIL: tax_update_rate returned false");
+        return false;
+    }
+    let turCalcResult = tax.tax_calculate(200, turId);
+    if (turCalcResult != 30) {
+        print("FAIL: tax_update_rate - expected 30 after update, got " + convert.to_string(turCalcResult));
+        return false;
+    }
+    print("PASS: tax_update_rate");
+    return true;
+}
+
+fn main() {
+    let tt1 = test_tax_create();
+    if (tt1 == false) {
+        return 1;
+    }
+    let tt2 = test_tax_get_by_id_missing();
+    if (tt2 == false) {
+        return 1;
+    }
+    let tt3 = test_tax_calculate();
+    if (tt3 == false) {
+        return 1;
+    }
+    let tt4 = test_tax_list_by_country();
+    if (tt4 == false) {
+        return 1;
+    }
+    let tt5 = test_tax_update_rate();
+    if (tt5 == false) {
+        return 1;
+    }
+    print("ALL TAX TESTS PASSED");
+    return 0;
+}

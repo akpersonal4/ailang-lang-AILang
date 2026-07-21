@@ -1,0 +1,139 @@
+import list;
+import map;
+import string;
+import convert;
+import helpers;
+import storage;
+import batch;
+
+fn test_batch_create() {
+    let tbcResult = batch.batch_create("PRD-001", "BAT-2026-001", 100, "2026-12-31", "2026-01-15");
+    if (tbcResult == false) {
+        print("FAIL: batch_create returned false");
+        return false;
+    }
+    let tbcId = helpers.helpers_get_map_value_safe(tbcResult, "id", "");
+    if (tbcId == "") {
+        print("FAIL: batch_create - batch id missing");
+        return false;
+    }
+    let tbcQty = helpers.helpers_get_map_value_safe(tbcResult, "quantity", 0);
+    if (tbcQty != 100) {
+        print("FAIL: batch_create - expected quantity 100, got " + convert.to_string(tbcQty));
+        return false;
+    }
+    let tbcProductId = helpers.helpers_get_map_value_safe(tbcResult, "product_id", "");
+    if (tbcProductId != "PRD-001") {
+        print("FAIL: batch_create - expected PRD-001, got " + tbcProductId);
+        return false;
+    }
+    print("PASS: batch_create");
+    return true;
+}
+
+fn test_batch_get_by_id_missing() {
+    let tbgmResult = batch.batch_get_by_id("NONEXISTENT-BATCH-ID");
+    if (tbgmResult != false) {
+        print("FAIL: batch_get_by_id_missing - expected false");
+        return false;
+    }
+    print("PASS: batch_get_by_id_missing");
+    return true;
+}
+
+fn test_batch_list_by_product() {
+    let tblp1 = batch.batch_create("PRD-LIST-001", "BLP-001", 50, "2026-06-30", "2026-01-01");
+    let tblp2 = batch.batch_create("PRD-LIST-001", "BLP-002", 75, "2026-07-31", "2026-01-01");
+    let tblpResults = batch.batch_list_by_product("PRD-LIST-001");
+    let tblpLen = list.len(tblpResults);
+    if (tblpLen < 2) {
+        print("FAIL: batch_list_by_product - expected at least 2, got " + convert.to_string(tblpLen));
+        return false;
+    }
+    print("PASS: batch_list_by_product (" + convert.to_string(tblpLen) + " items)");
+    return true;
+}
+
+fn test_batch_update_quantity() {
+    let tbuqBatch = batch.batch_create("PRD-UPD-001", "BUQ-001", 200, "2026-09-30", "2026-02-01");
+    let tbuqId = helpers.helpers_get_map_value_safe(tbuqBatch, "id", "");
+    let tbuqResult = batch.batch_update_quantity(tbuqId, 150);
+    if (tbuqResult == false) {
+        print("FAIL: batch_update_quantity returned false");
+        return false;
+    }
+    let tbuqUpdated = batch.batch_get_by_id(tbuqId);
+    if (tbuqUpdated == false) {
+        print("FAIL: batch_update_quantity - batch not found after update");
+        return false;
+    }
+    let tbuqNewQty = helpers.helpers_get_map_value_safe(tbuqUpdated, "quantity", 0);
+    if (tbuqNewQty != 150) {
+        print("FAIL: batch_update_quantity - expected 150, got " + convert.to_string(tbuqNewQty));
+        return false;
+    }
+    print("PASS: batch_update_quantity");
+    return true;
+}
+
+fn test_batch_get_expiring_before() {
+    let tgebEarly = batch.batch_create("PRD-EXP-001", "GEB-001", 100, "2026-03-15", "2026-01-01");
+    let tgebLate = batch.batch_create("PRD-EXP-001", "GEB-002", 100, "2026-09-15", "2026-01-01");
+    let tgebResults = batch.batch_get_expiring_before("2026-06-01");
+    let tgebLen = list.len(tgebResults);
+    if (tgebLen == 0) {
+        print("FAIL: batch_get_expiring_before - expected at least 1 expiring batch");
+        return false;
+    }
+    print("PASS: batch_get_expiring_before");
+    return true;
+}
+
+fn test_batch_get_active_by_product() {
+    let tgabActive = batch.batch_create("PRD-ACT-001", "GAB-001", 50, "2026-12-31", "2026-01-01");
+    let tgabActiveId = helpers.helpers_get_map_value_safe(tgabActive, "id", "");
+    let tgabZero = batch.batch_create("PRD-ACT-001", "GAB-002", 0, "2026-12-31", "2026-01-01");
+    let tgabResults = batch.batch_get_active_by_product("PRD-ACT-001");
+    let tgabLen = list.len(tgabResults);
+    if (tgabLen == 0) {
+        print("FAIL: batch_get_active_by_product - expected at least 1 active batch");
+        return false;
+    }
+    let tgabFirst = list.get(tgabResults, 0);
+    let tgabFirstQty = helpers.helpers_get_map_value_safe(tgabFirst, "quantity", 0);
+    if (tgabFirstQty <= 0) {
+        print("FAIL: batch_get_active_by_product - found batch with zero quantity");
+        return false;
+    }
+    print("PASS: batch_get_active_by_product (" + convert.to_string(tgabLen) + " active)");
+    return true;
+}
+
+fn main() {
+    let tb1 = test_batch_create();
+    if (tb1 == false) {
+        return 1;
+    }
+    let tb2 = test_batch_get_by_id_missing();
+    if (tb2 == false) {
+        return 1;
+    }
+    let tb3 = test_batch_list_by_product();
+    if (tb3 == false) {
+        return 1;
+    }
+    let tb4 = test_batch_update_quantity();
+    if (tb4 == false) {
+        return 1;
+    }
+    let tb5 = test_batch_get_expiring_before();
+    if (tb5 == false) {
+        return 1;
+    }
+    let tb6 = test_batch_get_active_by_product();
+    if (tb6 == false) {
+        return 1;
+    }
+    print("ALL BATCH TESTS PASSED");
+    return 0;
+}

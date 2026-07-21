@@ -1,0 +1,11 @@
+{
+  "benchmark": "B6",
+  "baseline": "Python 3.12",
+  "subject": "Inventory Management System",
+  "description": "Simulated 6-month maintenance cycle: 50 incremental changes (15 features, 20 bugs, 10 refactors, 5 upgrades). Report is measured every 10 changes.",
+  "language": "both",
+  "source_root_ailang": "apps/inventory/",
+  "source_root_python": "apps/inventory_py/",
+  "measurement_intervals": [10, 20, 30, 40, 50],
+  "changes": "benchmarks/datasets/b6_inventory/changes.json"
+}

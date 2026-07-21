@@ -1,0 +1,66 @@
+import storage;
+import helpers;
+import list;
+import map;
+import string;
+import convert;
+
+fn sales_report_all() {
+    return storage.storage_list("sales_orders");
+}
+
+fn sales_report_by_status_rec(rsItems, rsStatus, rsIdx, rsResult) {
+    if (rsIdx >= list.len(rsItems)) {
+        return rsResult;
+    }
+    let rsItem = list.get(rsItems, rsIdx);
+    let rsItemStatus = helpers.helpers_get_map_value_safe(rsItem, "status", "");
+    if (rsItemStatus == rsStatus) {
+        list.append(rsResult, rsItem);
+    }
+    return sales_report_by_status_rec(rsItems, rsStatus, rsIdx + 1, rsResult);
+}
+
+fn sales_report_by_status(rsStatus) {
+    let rsAll = storage.storage_list("sales_orders");
+    let rsResult = list.new();
+    return sales_report_by_status_rec(rsAll, rsStatus, 0, rsResult);
+}
+
+fn sales_report_total_revenue_rec(rtItems, rtIdx, rtSum) {
+    if (rtIdx >= list.len(rtItems)) {
+        return rtSum;
+    }
+    let rtItem = list.get(rtItems, rtIdx);
+    if (map.has(rtItem, "total")) {
+        let rtTotal = map.get(rtItem, "total");
+        return sales_report_total_revenue_rec(rtItems, rtIdx + 1, rtSum + convert.to_int(rtTotal));
+    }
+    return sales_report_total_revenue_rec(rtItems, rtIdx + 1, rtSum);
+}
+
+fn sales_report_total_revenue() {
+    let rtAll = storage.storage_list("sales_orders");
+    return sales_report_total_revenue_rec(rtAll, 0, 0);
+}
+
+fn sales_report_count_by_status_rec(rcItems, rcStatus, rcIdx, rcCount) {
+    if (rcIdx >= list.len(rcItems)) {
+        return rcCount;
+    }
+    let rcItem = list.get(rcItems, rcIdx);
+    let rcItemStatus = helpers.helpers_get_map_value_safe(rcItem, "status", "");
+    if (rcItemStatus == rcStatus) {
+        return sales_report_count_by_status_rec(rcItems, rcStatus, rcIdx + 1, rcCount + 1);
+    }
+    return sales_report_count_by_status_rec(rcItems, rcStatus, rcIdx + 1, rcCount);
+}
+
+fn sales_report_count_by_status(rcStatus) {
+    let rcAll = storage.storage_list("sales_orders");
+    return sales_report_count_by_status_rec(rcAll, rcStatus, 0, 0);
+}
+
+fn sales_report_items() {
+    return storage.storage_list("sales_items");
+}

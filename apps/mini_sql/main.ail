@@ -1,0 +1,916 @@
+// Mini SQL Engine for AILang
+// Parses and executes SQL queries over CSV-backed in-memory tables
+
+import string;
+import list;
+import map;
+import convert;
+import csv;
+import file;
+import io;
+import json;
+
+// ============================================================
+// Level 0: Leaf utilities — no dependencies on other AILang fns
+// ============================================================
+
+fn is_digit_char(ch) {
+    if (string.equals(ch, "0")) { return true }
+    if (string.equals(ch, "1")) { return true }
+    if (string.equals(ch, "2")) { return true }
+    if (string.equals(ch, "3")) { return true }
+    if (string.equals(ch, "4")) { return true }
+    if (string.equals(ch, "5")) { return true }
+    if (string.equals(ch, "6")) { return true }
+    if (string.equals(ch, "7")) { return true }
+    if (string.equals(ch, "8")) { return true }
+    if (string.equals(ch, "9")) { return true }
+    return false
+}
+
+fn is_letter_char(ch) {
+    if (string.equals(ch, "a")) { return true }
+    if (string.equals(ch, "b")) { return true }
+    if (string.equals(ch, "c")) { return true }
+    if (string.equals(ch, "d")) { return true }
+    if (string.equals(ch, "e")) { return true }
+    if (string.equals(ch, "f")) { return true }
+    if (string.equals(ch, "g")) { return true }
+    if (string.equals(ch, "h")) { return true }
+    if (string.equals(ch, "i")) { return true }
+    if (string.equals(ch, "j")) { return true }
+    if (string.equals(ch, "k")) { return true }
+    if (string.equals(ch, "l")) { return true }
+    if (string.equals(ch, "m")) { return true }
+    if (string.equals(ch, "n")) { return true }
+    if (string.equals(ch, "o")) { return true }
+    if (string.equals(ch, "p")) { return true }
+    if (string.equals(ch, "q")) { return true }
+    if (string.equals(ch, "r")) { return true }
+    if (string.equals(ch, "s")) { return true }
+    if (string.equals(ch, "t")) { return true }
+    if (string.equals(ch, "u")) { return true }
+    if (string.equals(ch, "v")) { return true }
+    if (string.equals(ch, "w")) { return true }
+    if (string.equals(ch, "x")) { return true }
+    if (string.equals(ch, "y")) { return true }
+    if (string.equals(ch, "z")) { return true }
+    if (string.equals(ch, "A")) { return true }
+    if (string.equals(ch, "B")) { return true }
+    if (string.equals(ch, "C")) { return true }
+    if (string.equals(ch, "D")) { return true }
+    if (string.equals(ch, "E")) { return true }
+    if (string.equals(ch, "F")) { return true }
+    if (string.equals(ch, "G")) { return true }
+    if (string.equals(ch, "H")) { return true }
+    if (string.equals(ch, "I")) { return true }
+    if (string.equals(ch, "J")) { return true }
+    if (string.equals(ch, "K")) { return true }
+    if (string.equals(ch, "L")) { return true }
+    if (string.equals(ch, "M")) { return true }
+    if (string.equals(ch, "N")) { return true }
+    if (string.equals(ch, "O")) { return true }
+    if (string.equals(ch, "P")) { return true }
+    if (string.equals(ch, "Q")) { return true }
+    if (string.equals(ch, "R")) { return true }
+    if (string.equals(ch, "S")) { return true }
+    if (string.equals(ch, "T")) { return true }
+    if (string.equals(ch, "U")) { return true }
+    if (string.equals(ch, "V")) { return true }
+    if (string.equals(ch, "W")) { return true }
+    if (string.equals(ch, "X")) { return true }
+    if (string.equals(ch, "Y")) { return true }
+    if (string.equals(ch, "Z")) { return true }
+    return false
+}
+
+fn is_alphanum_char(ch) {
+    if (is_letter_char(ch)) { return true }
+    if (is_digit_char(ch)) { return true }
+    if (string.equals(ch, "_")) { return true }
+    if (string.equals(ch, ".")) { return true }
+    return false
+}
+
+fn is_whitespace_char(ch) {
+    if (string.equals(ch, " ")) { return true }
+    if (string.equals(ch, "\n")) { return true }
+    if (string.equals(ch, "\t")) { return true }
+    if (string.equals(ch, "\r")) { return true }
+    return false
+}
+
+fn to_upper(s) { return string.uppercase(s) }
+
+fn trim_str(s) { return string.trim(s) }
+
+fn find_substring(text, start, pattern) {
+    if (start >= string.length(text)) { return -1 }
+    let remaining = string.length(text) - start;
+    let pat_len = string.length(pattern);
+    if (remaining < pat_len) { return -1 }
+    let chunk = string.substring(text, start, start + pat_len);
+    if (string.equals(chunk, pattern)) { return start }
+    return find_substring(text, start + 1, pattern)
+}
+
+// ============================================================
+// Level 1: String helpers — depend on Level 0
+// ============================================================
+
+fn is_numeric_string_helper(s, i) {
+    if (i >= string.length(s)) { return true }
+    let ch = string.substring(s, i, i + 1);
+    if (is_digit_char(ch)) { return is_numeric_string_helper(s, i + 1) }
+    if (i == 0 && string.equals(ch, "-")) { return is_numeric_string_helper(s, i + 1) }
+    return false
+}
+
+fn is_numeric_string(s) {
+    let len = string.length(s);
+    if (len == 0) { return false }
+    return is_numeric_string_helper(s, 0)
+}
+
+fn split_string_helper(text, delim, start, result) {
+    let len = string.length(text);
+    let delim_len = string.length(delim);
+    if (start >= len) { return result }
+    let pos = find_substring(text, start, delim);
+    if (pos == -1) {
+        list.append(result, string.substring(text, start, len));
+        return result
+    }
+    list.append(result, string.substring(text, start, pos));
+    return split_string_helper(text, delim, pos + delim_len, result)
+}
+
+fn split_string(text, delim) {
+    let result = list.new();
+    return split_string_helper(text, delim, 0, result)
+}
+
+fn list_append_all_helper(target, source, i) {
+    if (i >= list.len(source)) { return target }
+    list.append(target, list.get(source, i));
+    return list_append_all_helper(target, source, i + 1)
+}
+
+fn list_append_all(target, source) {
+    return list_append_all_helper(target, source, 0)
+}
+
+fn list_clone(source) {
+    let result = list.new();
+    return list_append_all_helper(result, source, 0)
+}
+
+fn make_token(type_val, value_val) {
+    let t = map.new();
+    map.set(t, "type", type_val);
+    map.set(t, "value", value_val);
+    return t
+}
+
+// ============================================================
+// Level 2: Tokenizer — all recursion avoids mutual calls
+// Collectors (digit/alphanum) are pure — they return a result map
+// and do NOT call the main tokenize_step. This avoids the
+// callee-before-caller problem with mutual recursion.
+// ============================================================
+
+fn collect_digits(text, pos, start) {
+    let len = string.length(text);
+    if (pos < len && is_digit_char(string.substring(text, pos, pos + 1))) {
+        return collect_digits(text, pos + 1, start)
+    }
+    let value_str = string.substring(text, start, pos);
+    let value_int = convert.to_int(value_str);
+    let result = map.new();
+    map.set(result, "value", value_int);
+    map.set(result, "pos", pos);
+    return result
+}
+
+fn collect_alphanum(text, pos, start) {
+    let len = string.length(text);
+    if (pos < len && is_alphanum_char(string.substring(text, pos, pos + 1))) {
+        return collect_alphanum(text, pos + 1, start)
+    }
+    let result = map.new();
+    map.set(result, "word", string.substring(text, start, pos));
+    map.set(result, "pos", pos);
+    return result
+}
+
+fn read_string_literal(text, pos, tokens) {
+    let end = find_substring(text, pos, "'");
+    if (end == -1) {
+        let value = string.substring(text, pos, string.length(text));
+        list.append(tokens, make_token("STRING", value));
+        return string.length(text)
+    }
+    let value = string.substring(text, pos, end);
+    list.append(tokens, make_token("STRING", value));
+    return end + 1
+}
+
+fn classify_word(word) {
+    let upper = string.uppercase(word);
+    if (string.equals(upper, "SELECT") || string.equals(upper, "FROM")
+        || string.equals(upper, "WHERE") || string.equals(upper, "ORDER")
+        || string.equals(upper, "BY") || string.equals(upper, "LIMIT")
+        || string.equals(upper, "DISTINCT") || string.equals(upper, "COUNT")
+        || string.equals(upper, "AND") || string.equals(upper, "OR")
+        || string.equals(upper, "ASC") || string.equals(upper, "DESC")) {
+        return "KEYWORD"
+    }
+    return "IDENTIFIER"
+}
+
+fn read_word(text, pos, tokens) {
+    let r = collect_alphanum(text, pos, pos);
+    let word = map.get(r, "word");
+    let new_pos = map.get(r, "pos");
+    let ttype = classify_word(word);
+    list.append(tokens, make_token(ttype, word));
+    return new_pos
+}
+
+fn read_number(text, pos, tokens) {
+    let start = pos;
+    if (string.equals(string.substring(text, pos, pos + 1), "-")) { pos = pos + 1 }
+    let r = collect_digits(text, pos, pos);
+    let val = map.get(r, "value");
+    let new_pos = map.get(r, "pos");
+    list.append(tokens, make_token("NUMBER", val));
+    return new_pos
+}
+
+fn tokenize_step(text, pos, tokens) {
+    let len = string.length(text);
+    if (pos >= len) {
+        list.append(tokens, make_token("EOF", ""));
+        return tokens
+    }
+    let ch = string.substring(text, pos, pos + 1);
+    if (is_whitespace_char(ch)) { return tokenize_step(text, pos + 1, tokens) }
+    if (string.equals(ch, "'")) {
+        let new_pos = read_string_literal(text, pos + 1, tokens);
+        return tokenize_step(text, new_pos, tokens)
+    }
+    if (is_digit_char(ch)) {
+        let new_pos = read_number(text, pos, tokens);
+        return tokenize_step(text, new_pos, tokens)
+    }
+    if (string.equals(ch, "-") && pos + 1 < len) {
+        if (is_digit_char(string.substring(text, pos + 1, pos + 2))) {
+            let new_pos = read_number(text, pos, tokens);
+            return tokenize_step(text, new_pos, tokens)
+        }
+    }
+    if (is_letter_char(ch) || string.equals(ch, "_")) {
+        let new_pos = read_word(text, pos, tokens);
+        return tokenize_step(text, new_pos, tokens)
+    }
+    if ((string.equals(ch, "!") || string.equals(ch, "<") || string.equals(ch, ">")) && pos + 1 < len) {
+        let next = string.substring(text, pos + 1, pos + 2);
+        if (string.equals(next, "=")) {
+            list.append(tokens, make_token("OPERATOR", string.concat(ch, "=")));
+            return tokenize_step(text, pos + 2, tokens)
+        }
+    }
+    if (string.equals(ch, "=") || string.equals(ch, "<") || string.equals(ch, ">")) {
+        list.append(tokens, make_token("OPERATOR", ch));
+        return tokenize_step(text, pos + 1, tokens)
+    }
+    if (string.equals(ch, ",")) {
+        list.append(tokens, make_token("COMMA", ","));
+        return tokenize_step(text, pos + 1, tokens)
+    }
+    if (string.equals(ch, "*")) {
+        list.append(tokens, make_token("STAR", "*"));
+        return tokenize_step(text, pos + 1, tokens)
+    }
+    if (string.equals(ch, "(")) {
+        list.append(tokens, make_token("LPAREN", "("));
+        return tokenize_step(text, pos + 1, tokens)
+    }
+    if (string.equals(ch, ")")) {
+        list.append(tokens, make_token("RPAREN", ")"));
+        return tokenize_step(text, pos + 1, tokens)
+    }
+    return tokenize_step(text, pos + 1, tokens)
+}
+
+fn tokenize(sql_text) {
+    let tokens = list.new();
+    return tokenize_step(sql_text, 0, tokens)
+}
+
+// ============================================================
+// Level 3: Parser helpers — depend on Level 2
+// ============================================================
+
+fn make_error(msg) {
+    let err = map.new();
+    map.set(err, "error", msg);
+    return err
+}
+
+fn make_result(query_val, pos_val) {
+    let result = map.new();
+    map.set(result, "query", query_val);
+    map.set(result, "pos", pos_val);
+    return result
+}
+
+fn make_col_result(cols_val, pos_val) {
+    let result = map.new();
+    map.set(result, "columns", cols_val);
+    map.set(result, "pos", pos_val);
+    return result
+}
+
+fn make_result_cond(cond_val, pos_val) {
+    let result = map.new();
+    map.set(result, "cond", cond_val);
+    map.set(result, "pos", pos_val);
+    return result
+}
+
+fn peek_token(tokens, pos) {
+    if (pos >= list.len(tokens)) { return make_token("EOF", "") }
+    return list.get(tokens, pos)
+}
+
+fn match_keyword(tokens, pos, keyword) {
+    if (pos >= list.len(tokens)) { return false }
+    let tok = list.get(tokens, pos);
+    if (string.equals(map.get(tok, "type"), "KEYWORD")) {
+        if (string.equals(map.get(tok, "value"), keyword)) { return true }
+    }
+    return false
+}
+
+fn token_type(tokens, pos) {
+    if (pos >= list.len(tokens)) { return "EOF" }
+    return map.get(list.get(tokens, pos), "type")
+}
+
+fn token_value(tokens, pos) {
+    if (pos >= list.len(tokens)) { return "" }
+    return map.get(list.get(tokens, pos), "value")
+}
+
+fn parse_condition(tokens, pos, depth) {
+    if (depth > 100) { return make_error("Condition nesting too deep") }
+    if (pos >= list.len(tokens)) { return make_error("Unexpected end in condition") }
+    let left_tok = list.get(tokens, pos);
+    let ltype = map.get(left_tok, "type");
+    let left_val = "";
+    if (string.equals(ltype, "IDENTIFIER") || string.equals(ltype, "STRING") || string.equals(ltype, "NUMBER")) {
+        left_val = map.get(left_tok, "value");
+        pos = pos + 1
+    } else {
+        return make_error(string.concat("Expected identifier or value in condition, got ", ltype))
+    }
+    if (pos >= list.len(tokens)) { return make_error("Expected operator in condition") }
+    if (!string.equals(token_type(tokens, pos), "OPERATOR")) {
+        return make_error("Expected operator (=, !=, <, <=, >, >=) in condition")
+    }
+    let op = token_value(tokens, pos);
+    pos = pos + 1;
+    if (pos >= list.len(tokens)) { return make_error("Expected value after operator in condition") }
+    let rtype = token_type(tokens, pos);
+    let right_val = "";
+    if (string.equals(rtype, "IDENTIFIER") || string.equals(rtype, "STRING") || string.equals(rtype, "NUMBER")) {
+        right_val = token_value(tokens, pos);
+        pos = pos + 1
+    } else {
+        return make_error("Expected value after operator in condition")
+    }
+    let cond = map.new();
+    map.set(cond, "op", op);
+    map.set(cond, "left", left_val);
+    map.set(cond, "right", right_val);
+    if (pos < list.len(tokens)) {
+        if (string.equals(token_type(tokens, pos), "KEYWORD")) {
+            let kw = token_value(tokens, pos);
+            if (string.equals(kw, "AND") || string.equals(kw, "OR")) {
+                pos = pos + 1;
+                let right_result = parse_condition(tokens, pos, depth + 1);
+                if (map.has(right_result, "error")) { return right_result }
+                let combined = map.new();
+                map.set(combined, "op", kw);
+                map.set(combined, "left", cond);
+                map.set(combined, "right", map.get(right_result, "cond"));
+                cond = combined;
+                pos = map.get(right_result, "pos")
+            }
+        }
+    }
+    return make_result_cond(cond, pos)
+}
+
+fn parse_column_list_helper(tokens, pos, columns) {
+    if (pos >= list.len(tokens)) { return make_error("Unexpected end of query in column list") }
+    let ttype = token_type(tokens, pos);
+    if (string.equals(ttype, "STAR")) {
+        list.append(columns, "*");
+        return make_col_result(columns, pos + 1)
+    }
+    if (!string.equals(ttype, "IDENTIFIER")) {
+        return make_error("Expected column name or * in SELECT")
+    }
+    list.append(columns, token_value(tokens, pos));
+    pos = pos + 1;
+    if (pos < list.len(tokens)) {
+        if (string.equals(token_type(tokens, pos), "COMMA")) {
+            return parse_column_list_helper(tokens, pos + 1, columns)
+        }
+    }
+    return make_col_result(columns, pos)
+}
+
+fn parse_column_list(tokens, pos) {
+    let columns = list.new();
+    return parse_column_list_helper(tokens, pos, columns)
+}
+
+fn parse_select(tokens, pos) {
+    if (!match_keyword(tokens, pos, "SELECT")) { return make_error("Query must start with SELECT") }
+    pos = pos + 1;
+    let distinct = false;
+    if (match_keyword(tokens, pos, "DISTINCT")) { distinct = true; pos = pos + 1 }
+    let count_star = false;
+    let columns = list.new();
+    if (match_keyword(tokens, pos, "COUNT")) {
+        pos = pos + 1;
+        if (pos < list.len(tokens)) {
+            if (string.equals(token_type(tokens, pos), "LPAREN")) {
+                pos = pos + 1;
+                if (pos < list.len(tokens)) {
+                    if (string.equals(token_type(tokens, pos), "STAR")) {
+                        pos = pos + 1;
+                        if (pos < list.len(tokens)) {
+                            if (string.equals(token_type(tokens, pos), "RPAREN")) {
+                                pos = pos + 1; count_star = true
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        if (!count_star) { return make_error("COUNT must be followed by (*)") }
+    } else {
+        let parse_result = parse_column_list(tokens, pos);
+        if (map.has(parse_result, "error")) { return parse_result }
+        columns = map.get(parse_result, "columns");
+        pos = map.get(parse_result, "pos")
+    }
+    if (!match_keyword(tokens, pos, "FROM")) { return make_error("Expected FROM after column list") }
+    pos = pos + 1;
+    if (pos >= list.len(tokens)) { return make_error("Expected table name after FROM") }
+    if (!string.equals(token_type(tokens, pos), "IDENTIFIER")) { return make_error("Expected table name after FROM") }
+    let table_name = token_value(tokens, pos);
+    pos = pos + 1;
+    let where_cond = map.new();
+    let has_where = false;
+    if (match_keyword(tokens, pos, "WHERE")) {
+        pos = pos + 1;
+        let cond_result = parse_condition(tokens, pos, 0);
+        if (map.has(cond_result, "error")) { return cond_result }
+        where_cond = map.get(cond_result, "cond");
+        pos = map.get(cond_result, "pos");
+        has_where = true
+    }
+    let order_by = "";
+    let order_dir = "ASC";
+    if (match_keyword(tokens, pos, "ORDER")) {
+        pos = pos + 1;
+        if (!match_keyword(tokens, pos, "BY")) { return make_error("Expected BY after ORDER") }
+        pos = pos + 1;
+        if (pos >= list.len(tokens)) { return make_error("Expected column name after ORDER BY") }
+        if (!string.equals(token_type(tokens, pos), "IDENTIFIER")) {
+            return make_error("Expected column name after ORDER BY")
+        }
+        order_by = to_upper(token_value(tokens, pos));
+        pos = pos + 1;
+        if (match_keyword(tokens, pos, "ASC")) { order_dir = "ASC"; pos = pos + 1 }
+        else if (match_keyword(tokens, pos, "DESC")) { order_dir = "DESC"; pos = pos + 1 }
+    }
+    let limit_val = -1;
+    if (match_keyword(tokens, pos, "LIMIT")) {
+        pos = pos + 1;
+        if (pos >= list.len(tokens)) { return make_error("Expected number after LIMIT") }
+        if (!string.equals(token_type(tokens, pos), "NUMBER")) { return make_error("Expected number after LIMIT") }
+        limit_val = token_value(tokens, pos);
+        pos = pos + 1
+    }
+    let query = map.new();
+    map.set(query, "command", "SELECT");
+    map.set(query, "columns", columns);
+    map.set(query, "table", table_name);
+    map.set(query, "where", where_cond);
+    map.set(query, "has_where", has_where);
+    map.set(query, "order_by", order_by);
+    map.set(query, "order_dir", order_dir);
+    map.set(query, "limit", limit_val);
+    map.set(query, "distinct", distinct);
+    map.set(query, "count_star", count_star);
+    return make_result(query, pos)
+}
+
+fn parse_query(sql_text) {
+    let tokens = tokenize(sql_text);
+    return parse_select(tokens, 0)
+}
+
+// ============================================================
+// Level 4: Table loader
+// ============================================================
+
+fn normalize_column_list(cols, i, result) {
+    if (i >= list.len(cols)) { return result }
+    list.append(result, trim_str(to_upper(list.get(cols, i))));
+    return normalize_column_list(cols, i + 1, result)
+}
+
+fn normalize_row(src, cols, i, dst) {
+    if (i >= list.len(cols)) { return dst }
+    let raw_key = list.get(cols, i);
+    let val = map.get(src, raw_key);
+    map.set(dst, trim_str(to_upper(raw_key)), val);
+    return normalize_row(src, cols, i + 1, dst)
+}
+
+fn parse_rows(parsed, cols, i, result) {
+    if (i >= list.len(parsed)) { return result }
+    let dst = normalize_row(list.get(parsed, i), cols, 0, map.new());
+    list.append(result, dst);
+    return parse_rows(parsed, cols, i + 1, result)
+}
+
+fn load_table(filepath) {
+    let table = map.new();
+    map.set(table, "columns", list.new());
+    map.set(table, "rows", list.new());
+    if (!file.exists(filepath)) { return make_error(string.concat("File not found: ", filepath)) }
+    let content = file.read(filepath);
+    let parsed = csv.parse_header(content);
+    if (list.len(parsed) == 0) { return make_error("Empty CSV file") }
+    let row0 = list.get(parsed, 0);
+    let cols = map.keys(row0);
+    let norm_cols = normalize_column_list(cols, 0, list.new());
+    map.set(table, "columns", norm_cols);
+    let rows = parse_rows(parsed, cols, 0, list.new());
+    map.set(table, "rows", rows);
+    return table
+}
+
+// ============================================================
+// Level 5: Condition evaluator
+// ============================================================
+
+fn eval_condition(cond, row) {
+    if (!map.has(cond, "op")) { return true }
+    let op = map.get(cond, "op");
+    if (string.equals(op, "AND")) {
+        let left = eval_condition(map.get(cond, "left"), row);
+        if (!left) { return false }
+        return eval_condition(map.get(cond, "right"), row)
+    }
+    if (string.equals(op, "OR")) {
+        let left = eval_condition(map.get(cond, "left"), row);
+        if (left) { return true }
+        return eval_condition(map.get(cond, "right"), row)
+    }
+    let raw_left = convert.to_string(map.get(cond, "left"));
+    let raw_right = convert.to_string(map.get(cond, "right"));
+    let left_key = to_upper(raw_left);
+    let right_key = to_upper(raw_right);
+    let left_val = raw_left;
+    if (map.has(row, left_key)) { left_val = map.get(row, left_key) }
+    let right_val = raw_right;
+    if (map.has(row, right_key)) { right_val = map.get(row, right_key) }
+    let left_str = convert.to_string(left_val);
+    let right_str = convert.to_string(right_val);
+    if (is_numeric_string(left_str) && is_numeric_string(right_str)) {
+        let ln = convert.to_int(left_str);
+        let rn = convert.to_int(right_str);
+        if (string.equals(op, "=")) { return ln == rn }
+        if (string.equals(op, "!=")) { return ln != rn }
+        if (string.equals(op, "<")) { return ln < rn }
+        if (string.equals(op, "<=")) { return ln <= rn }
+        if (string.equals(op, ">")) { return ln > rn }
+        if (string.equals(op, ">=")) { return ln >= rn }
+        return false
+    }
+    if (string.equals(op, "=")) { return string.equals(left_str, right_str) }
+    if (string.equals(op, "!=")) { return !string.equals(left_str, right_str) }
+    if (string.equals(op, "<")) { return left_str < right_str }
+    if (string.equals(op, "<=")) { return left_str <= right_str }
+    if (string.equals(op, ">")) { return left_str > right_str }
+    if (string.equals(op, ">=")) { return left_str >= right_str }
+    return false
+}
+
+// ============================================================
+// Level 6: Executor helpers
+// ============================================================
+
+fn rows_equal_by_keys(a, b, keys, i) {
+    if (i >= list.len(keys)) { return true }
+    let key = list.get(keys, i);
+    if (!map.has(b, key)) { return false }
+    let va = convert.to_string(map.get(a, key));
+    let vb = convert.to_string(map.get(b, key));
+    if (!string.equals(va, vb)) { return false }
+    return rows_equal_by_keys(a, b, keys, i + 1)
+}
+
+fn rows_are_equal(a, b) {
+    let keys = map.keys(a);
+    return rows_equal_by_keys(a, b, keys, 0)
+}
+
+fn is_duplicate_row(rows, row, i) {
+    if (i >= list.len(rows)) { return false }
+    if (rows_are_equal(list.get(rows, i), row)) { return true }
+    return is_duplicate_row(rows, row, i + 1)
+}
+
+fn distinct_all_rows(rows, i, result) {
+    if (i >= list.len(rows)) { return result }
+    let row = list.get(rows, i);
+    if (!is_duplicate_row(result, row, 0)) { list.append(result, row) }
+    return distinct_all_rows(rows, i + 1, result)
+}
+
+fn filter_all_rows(rows, cond, i, result) {
+    if (i >= list.len(rows)) { return result }
+    let row = list.get(rows, i);
+    if (eval_condition(cond, row)) { list.append(result, row) }
+    return filter_all_rows(rows, cond, i + 1, result)
+}
+
+fn find_min_idx(rows, col, min_idx, i) {
+    if (i >= list.len(rows)) { return min_idx }
+    let min_row = list.get(rows, min_idx);
+    let cur_row = list.get(rows, i);
+    let min_val = string.uppercase(convert.to_string(map.get(min_row, col)));
+    let cur_val = string.uppercase(convert.to_string(map.get(cur_row, col)));
+    if (cur_val < min_val) { return find_min_idx(rows, col, i, i + 1) }
+    return find_min_idx(rows, col, min_idx, i + 1)
+}
+
+fn find_max_idx(rows, col, max_idx, i) {
+    if (i >= list.len(rows)) { return max_idx }
+    let max_row = list.get(rows, max_idx);
+    let cur_row = list.get(rows, i);
+    let max_val = string.uppercase(convert.to_string(map.get(max_row, col)));
+    let cur_val = string.uppercase(convert.to_string(map.get(cur_row, col)));
+    if (cur_val > max_val) { return find_max_idx(rows, col, i, i + 1) }
+    return find_max_idx(rows, col, max_idx, i + 1)
+}
+
+fn build_swapped_list(rows, i, j, val_i, val_j, idx, result) {
+    if (idx >= list.len(rows)) { return result }
+    if (idx == i) { list.append(result, val_j) }
+    else if (idx == j) { list.append(result, val_i) }
+    else { list.append(result, list.get(rows, idx)) }
+    return build_swapped_list(rows, i, j, val_i, val_j, idx + 1, result)
+}
+
+fn swap_rows_in_place(rows, i, j) {
+    let tmp = list.get(rows, i);
+    let other = list.get(rows, j);
+    let new_list = build_swapped_list(rows, i, j, tmp, other, 0, list.new());
+    list.clear(rows);
+    list_append_all(rows, new_list);
+    return 0
+}
+
+fn sort_rows_asc_pass(rows, col, i) {
+    let len = list.len(rows);
+    if (i >= len - 1) { return 0 }
+    let min_idx = find_min_idx(rows, col, i, i + 1);
+    if (min_idx != i) { swap_rows_in_place(rows, i, min_idx) }
+    return sort_rows_asc_pass(rows, col, i + 1)
+}
+
+fn sort_rows_asc(rows, col) {
+    let len = list.len(rows);
+    if (len <= 1) { return rows }
+    let result = list_clone(rows);
+    sort_rows_asc_pass(result, col, 0);
+    return result
+}
+
+fn sort_rows_desc_pass(rows, col, i) {
+    let len = list.len(rows);
+    if (i >= len - 1) { return 0 }
+    let max_idx = find_max_idx(rows, col, i, i + 1);
+    if (max_idx != i) { swap_rows_in_place(rows, i, max_idx) }
+    return sort_rows_desc_pass(rows, col, i + 1)
+}
+
+fn sort_rows_desc(rows, col) {
+    let len = list.len(rows);
+    if (len <= 1) { return rows }
+    let result = list_clone(rows);
+    sort_rows_desc_pass(result, col, 0);
+    return result
+}
+
+fn take_first_n(rows, n, i, result) {
+    if (i >= list.len(rows)) { return result }
+    if (i >= n) { return result }
+    list.append(result, list.get(rows, i));
+    return take_first_n(rows, n, i + 1, result)
+}
+
+fn copy_all_columns(src, keys, i, dst) {
+    if (i >= list.len(keys)) { return dst }
+    let key = list.get(keys, i);
+    map.set(dst, key, map.get(src, key));
+    return copy_all_columns(src, keys, i + 1, dst)
+}
+
+fn project_row(src, sel_cols, j, dst) {
+    if (j >= list.len(sel_cols)) { return dst }
+    let col_name = list.get(sel_cols, j);
+    let upper_name = to_upper(col_name);
+    if (string.equals(col_name, "*")) {
+        return copy_all_columns(src, map.keys(src), 0, dst)
+    }
+    if (map.has(src, upper_name)) {
+        map.set(dst, upper_name, map.get(src, upper_name))
+    } else {
+        map.set(dst, upper_name, json.parse("null"))
+    }
+    return project_row(src, sel_cols, j + 1, dst)
+}
+
+fn project_all_rows(rows, sel_cols, i, result) {
+    if (i >= list.len(rows)) { return result }
+    let src = list.get(rows, i);
+    let dst = project_row(src, sel_cols, 0, map.new());
+    list.append(result, dst);
+    return project_all_rows(rows, sel_cols, i + 1, result)
+}
+
+fn normalize_col_list(cols, i, result) {
+    if (i >= list.len(cols)) { return result }
+    list.append(result, to_upper(list.get(cols, i)));
+    return normalize_col_list(cols, i + 1, result)
+}
+
+fn resolve_columns(sel_cols, table_cols) {
+    if (list.len(sel_cols) == 1) {
+        if (string.equals(list.get(sel_cols, 0), "*")) {
+            return table_cols
+        }
+    }
+    return normalize_col_list(sel_cols, 0, list.new())
+}
+
+fn execute_query(table, query) {
+    let rows = map.get(table, "rows");
+    let table_cols = map.get(table, "columns");
+    let has_where = map.get(query, "has_where");
+    let use_distinct = map.get(query, "distinct");
+    let count_star = map.get(query, "count_star");
+    let sel_cols = map.get(query, "columns");
+    let out_cols = resolve_columns(sel_cols, table_cols);
+    let filtered = rows;
+    if (has_where) { filtered = filter_all_rows(rows, map.get(query, "where"), 0, list.new()) }
+    let projected = project_all_rows(filtered, out_cols, 0, list.new());
+    let distincted = projected;
+    if (use_distinct && !count_star) { distincted = distinct_all_rows(projected, 0, list.new()) }
+    let sorted = distincted;
+    let order_by = map.get(query, "order_by");
+    if (!string.equals(order_by, "")) {
+        let order_dir = map.get(query, "order_dir");
+        if (string.equals(order_dir, "DESC")) { sorted = sort_rows_desc(sorted, order_by) }
+        else { sorted = sort_rows_asc(sorted, order_by) }
+    }
+    let limited = sorted;
+    let limit_val = map.get(query, "limit");
+    if (limit_val >= 0) { limited = take_first_n(sorted, limit_val, 0, list.new()) }
+    if (count_star) {
+        let count_row = map.new();
+        map.set(count_row, "COUNT(*)", list.len(limited));
+        let result_cols = list.new();
+        list.append(result_cols, "COUNT(*)");
+        let result_rows = list.new();
+        list.append(result_rows, count_row);
+        let result = map.new();
+        map.set(result, "columns", result_cols);
+        map.set(result, "rows", result_rows);
+        return result
+    }
+    let result = map.new();
+    map.set(result, "columns", out_cols);
+    map.set(result, "rows", limited);
+    return result
+}
+
+// ============================================================
+// Level 7: Display
+// ============================================================
+
+fn build_header_line(columns, i, acc) {
+    if (i >= list.len(columns)) { return acc }
+    if (i > 0) { acc = string.concat(acc, " | ") }
+    acc = string.concat(acc, convert.to_string(list.get(columns, i)));
+    return build_header_line(columns, i + 1, acc)
+}
+
+fn build_separator(text, i, acc) {
+    if (i >= string.length(text)) { return acc }
+    acc = string.concat(acc, "-");
+    return build_separator(text, i + 1, acc)
+}
+
+fn build_row_line(row, columns, i, acc) {
+    if (i >= list.len(columns)) { return acc }
+    if (i > 0) { acc = string.concat(acc, " | ") }
+    let col_name = list.get(columns, i);
+    if (map.has(row, col_name)) {
+        acc = string.concat(acc, convert.to_string(map.get(row, col_name)))
+    } else {
+        acc = string.concat(acc, "NULL")
+    }
+    return build_row_line(row, columns, i + 1, acc)
+}
+
+fn display_all_rows(rows, columns, i) {
+    if (i >= list.len(rows)) { return 0 }
+    let row = list.get(rows, i);
+    let line = build_row_line(row, columns, 0, "");
+    io.writeln(line);
+    return display_all_rows(rows, columns, i + 1)
+}
+
+fn display_results(columns, rows) {
+    let header = build_header_line(columns, 0, "");
+    io.writeln(header);
+    let sep = build_separator(header, 0, "");
+    io.writeln(sep);
+    display_all_rows(rows, columns, 0);
+    let count_str = convert.to_string(list.len(rows));
+    io.writeln(string.concat("(", string.concat(count_str, " rows)")));
+    return 0
+}
+
+// ============================================================
+// Level 8: Main
+// ============================================================
+
+fn main() {
+    let args = environment.args();
+    if (list.len(args) < 2) {
+        io.writeln("Mini SQL Engine for AILang");
+        io.writeln("Usage:");
+        io.writeln("  ail run apps/mini_sql/main.ail 'SELECT ... FROM file.csv'");
+        io.writeln("  ail run apps/mini_sql/main.ail file.csv 'SELECT ...'");
+        return 1
+    }
+    let arg0 = list.get(args, 0);
+    let query_text = "";
+    let file_to_load = "";
+    let arg0_upper = to_upper(trim_str(arg0));
+    if (string.starts_with(arg0_upper, "SELECT")) {
+        query_text = arg0
+    } else {
+        file_to_load = arg0
+    }
+    if (list.len(args) >= 2) {
+        query_text = list.get(args, 1)
+    }
+    if (string.equals(query_text, "")) {
+        io.writeln("Error: No SQL query provided");
+        return 1
+    }
+    let parse_result = parse_query(query_text);
+    if (map.has(parse_result, "error")) {
+        io.writeln(string.concat("Error: ", map.get(parse_result, "error")));
+        return 1
+    }
+    let query = map.get(parse_result, "query");
+    let table_file = map.get(query, "table");
+    let full_path = table_file;
+    if (!string.equals(file_to_load, "")) { full_path = file_to_load }
+    let table = load_table(full_path);
+    if (map.has(table, "error")) {
+        io.writeln(map.get(table, "error"));
+        return 1
+    }
+    let result = execute_query(table, query);
+    let result_cols = map.get(result, "columns");
+    let result_rows = map.get(result, "rows");
+    display_results(result_cols, result_rows);
+    return 0
+}

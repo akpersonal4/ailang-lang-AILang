@@ -1,0 +1,16 @@
+{
+  "benchmark": "B5",
+  "baseline": "Python 3.11",
+  "scenarios": [
+    {
+      "id": "function_signature_change",
+      "description": "Simulate an upgrade where 'sum_even_helper' signature changes to accept a threshold parameter. Measure how many files and call sites need updating.",
+      "language": "both"
+    },
+    {
+      "id": "return_type_change",
+      "description": "Simulate a change where the return type of a helper function changes from int to string. Measure regressions.",
+      "language": "both"
+    }
+  ]
+}

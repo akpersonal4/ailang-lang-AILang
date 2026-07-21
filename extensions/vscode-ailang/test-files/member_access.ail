@@ -1,0 +1,28 @@
+// === AILang member access test file ===
+
+import map;
+import list;
+import json;
+
+fn main() {
+    let data = map.new();
+    map.set(data, "name", "Alice");
+    map.set(data, "age", 30);
+
+    // Member access for map key lookup
+    let name = data.name;
+    print(name);
+
+    // Module function calls via member access
+    let items = list.new();
+    list.append(items, 10);
+    list.append(items, 20);
+    let first = list.get(items, 0);
+    print(first);
+
+    // JSON
+    let parsed = json.parse("{\"key\": \"value\"}");
+    print(parsed);
+
+    return 0
+}

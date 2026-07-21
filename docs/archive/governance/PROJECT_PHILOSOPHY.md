@@ -1,0 +1,195 @@
+# PROJECT_PHILOSOPHY
+
+**A design manifesto. Why AILang exists, what it values, and what it deliberately
+chooses not to be.**
+
+This is not a technical specification. It is the project's governing philosophy —
+the set of convictions that guide every decision about the language, the compiler,
+and the ecosystem.
+
+---
+
+## Why AILang Exists
+
+Most programming languages grow by accretion. A feature is added here, a syntax
+shortcut there, a new paradigm bolted on. Over time, the language becomes a
+dense thicket of overlapping mechanisms where every new user must learn not only
+what the language *has*, but which parts they are *supposed* to use.
+
+AILang exists to demonstrate an alternative: a language designed from scratch
+with a **specification-first** methodology, a **minimal and stable** core, and a
+disciplined process for every single addition. It is a proof that a language can
+be simple, deterministic, testable, and useful without chasing every trend.
+
+AILang is also an **AI-first language**. It is optimized for reliable generation
+by large language models — unambiguous syntax, no hidden state, no implicit
+behaviour, no context-sensitive parsing. If an AI can generate correct AILang
+reliably, then humans with AI assistance can build real software with it.
+
+---
+
+## Problems AILang Solves
+
+| Problem | How AILang Solves It |
+|---------|---------------------|
+| **Non-determinism in compilers** | Every compile of the same source produces identical IR (verified by SHA-256 hash) |
+| **Specification drift** | Single canonical `LANGUAGE_SPEC.md` is the source of truth; all implementations must match it |
+| **Feature creep** | Formal governance process with evidence bars; rejected-forever list; language freeze |
+| **AI generation unreliability** | Unambiguous grammar, explicit braces, no significant whitespace, no implicit conversions |
+| **Testing complexity** | TDD mandatory; every feature starts with tests; all 408 tests must pass before any change |
+| **Documentation decay** | Docs are validated against the compiler during releases; 144+ code examples tested |
+| **Unclear decision history** | Every feature request recorded permanently in `LANGUAGE_EVOLUTION.md` with rationale |
+
+---
+
+## Problems AILang Intentionally Does Not Solve
+
+AILang is *not* trying to be everything to everyone. These are valid problems
+that other languages solve better. AILang deliberately chooses *not* to address
+them, because solving them would conflict with the project's core principles.
+
+| Problem | Why AILang Defers | Better Choice |
+|---------|-------------------|---------------|
+| **High-performance number crunching** | No float literals, no SIMD, no JIT (yet) | Rust, C++, Fortran |
+| **Concurrent / parallel workloads** | No threads, no async, no actors | Go, Erlang, Rust |
+| **Large-scale enterprise applications** | No package manager, no LSP (yet), no IDE support | Java, C#, TypeScript |
+| **Rapid prototyping** | No REPL, no dynamic typing, no inferred types | Python, JavaScript |
+| **Systems programming** | No manual memory management, no pointers, no unsafe | C, Rust, Zig |
+| **Type-level programming** | No generics, no traits, no type classes | Haskell, Rust, Scala |
+| **Metaprogramming** | No macros, no codegen, no reflection | Lisp, Rust, Nim |
+| **Interop / FFI** | No C ABI, no foreign function interface | Python (ctypes), Rust (extern) |
+| **Data science / ML** | Limited numeric support, no array broadcasting | Python (NumPy), Julia, R |
+
+These are not gaps. They are **intentional boundaries**. Every feature that
+AILang does not have is a feature that cannot introduce bugs, cannot create
+ambiguity, and cannot make the language harder for AI to generate reliably.
+
+---
+
+## Core Principles
+
+### 1. Deterministic
+
+Same input always produces the same output. Non-determinism is a defect.
+
+- IR SHA-256 hash is verified across compilations
+- No random seeds that change between runs (unless explicitly called)
+- No platform-dependent behaviour in the language itself
+- No undefined behaviour
+
+### 2. Explicit
+
+Everything that matters is visible in the code. No hidden state, no magic, no
+implicit behaviour.
+
+- No implicit type conversions — use `convert.to_int()` etc.
+- No implicit variable declaration — `let` is required
+- No implicit returns — `return` is explicit
+- No truthy/falsy coercion — conditions must be boolean
+- No operator overloading — `+` always means addition
+- No automatic memory management visible to the programmer
+
+### 3. Specification-First
+
+Every feature starts with a written specification, not an implementation.
+
+- `LANGUAGE_SPEC.md` is the canonical source of truth — 934 lines covering
+  syntax, grammar, semantics, type system, stdlib, errors, and CLI
+- No undocumented behaviour — if it is not in the spec, it is not a feature
+- ADRs for architectural decisions
+- Phase reports for every milestone
+
+### 4. AI-Friendly
+
+The language is designed to be reliably generated by large language models.
+
+- Unambiguous grammar with no context-sensitive constructs
+- Explicit braces `{}` for blocks — no significant whitespace
+- Simple, regular syntax that is easy to tokenize and parse
+- No syntactic sugar — what you write is what you get
+- Small keyword set — easy for AI to enumerate
+- Deterministic output — AI can verify its own generation by re-compiling
+
+### 5. Tested
+
+Every line of code is tested.
+
+- TDD mandatory — tests before implementation
+- 408 tests covering lexer, parser, AST, IR, semantic analysis, type checker,
+  runtime, CLI, formatter, stdlib, stress, benchmarks, and AI validation
+- Tests are first-class project artifacts, not afterthoughts
+- Quality gates (pytest, black, ruff, mypy) enforced on every change
+
+### 6. Minimal
+
+The language has the smallest possible feature set that solves the problems it
+sets out to solve. Every new feature must justify its existence against the
+evidence bar defined in the governance process.
+
+- No feature is added because "it would be nice" or "every language has it"
+- Every rejected feature stays rejected unless new evidence emerges
+- The v0.1.x language freeze locks the specification until the ecosystem matures
+
+---
+
+## Non-Goals
+
+| Non-Goal | Rationale |
+|----------|-----------|
+| **Replace Python** | AILang targets a different niche (AI-first, deterministic, spec-driven). Python's ecosystem, libraries, and community are not the target. |
+| **Be the fastest language** | Correctness and determinism matter more than speed. Optimization is secondary. |
+| **Satisfy every use case** | AILang is designed for a specific intersection: AI generation, deterministic execution, simple toolchain. If your use case does not fit, use a different language. |
+| **Achieve "industry adoption"** | The primary measure of success is a correct, maintainable, well-specified compiler — not user count. |
+| **Compete with established languages** | AILang is an exercise in disciplined language design. Competition is not the goal. |
+| **Support every programming paradigm** | AILang is imperative with functions. No OOP, no FP purity, no logic programming. |
+| **Have a large standard library** | Stdlib is minimal and focused. The bar for additions is high. |
+| **Backward compatibility forever** | Pre-1.0 breaking changes are permitted with ADR. Post-1.0 guarantees apply only after the language stabilises. |
+
+---
+
+## Long-Term Vision
+
+```
+v0.1.x   Language freeze. Ecosystem and tooling growth. Community building.
+v0.2     Evidence-based language improvements (only if real-world usage demands it).
+v0.5     Ecosystem maturity — LSP, package manager, REPL, documentation site.
+v1.0     Language freeze with full backward-compatibility guarantees.
+         Post-1.0: slow, disciplined evolution driven by user evidence.
+```
+
+The goal is not to ship features quickly. The goal is to build a language that
+is still well-designed, well-specified, and well-tested ten years from now.
+
+Success looks like:
+- A stable, correct compiler that produces identical output across platforms
+- A governance process that has rejected more features than it has accepted
+- A community that understands and values the project's principles
+- Real programs written in AILang by people who were not involved in building it
+
+---
+
+## How This Document Is Used
+
+This philosophy guides every decision:
+
+1. **When evaluating a proposal**: Does it align with the core principles?
+   Does it violate a non-goal? If yes, reject.
+
+2. **When designing a feature**: Is it deterministic? Is it explicit?
+   Is it spec-first? Is it minimal? If no, redesign.
+
+3. **When rejecting a request**: Cite the relevant principle or non-goal.
+   Record it in `LANGUAGE_EVOLUTION.md`.
+
+4. **When contributing**: Read this document first. If a change conflicts
+   with the philosophy, it will not be accepted.
+
+---
+
+## Related Documents
+
+- [Project Vision](PROJECT_VISION.md) — Original project motivation and goals
+- [Project Constitution](PROJECT_CONSTITUTION.md) — Immutable rules for development
+- [Governance](GOVERNANCE.md) — Proposal process, freeze policy, rejected features
+- [Language Evolution](LANGUAGE_EVOLUTION.md) — Permanent record of every feature request
+- [Language Specification](../LANGUAGE_SPEC.md) — Technical specification of the language

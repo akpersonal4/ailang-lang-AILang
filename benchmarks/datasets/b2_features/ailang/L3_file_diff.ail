@@ -1,0 +1,158 @@
+import list;
+import file;
+import io;
+import string;
+import convert;
+
+fn read_lines(filepath) {
+    let content = file.read(filepath);
+    return string.split(content, "\n");
+}
+
+fn swap_in_list(items, i, j, idx, result) {
+    let len = list.len(items);
+    if idx >= len {
+        return result;
+    }
+    if idx == i {
+        result = list.append(result, list.get(items, j));
+    } else {
+        if idx == j {
+            result = list.append(result, list.get(items, i));
+        } else {
+            result = list.append(result, list.get(items, idx));
+        }
+    }
+    return swap_in_list(items, i, j, idx + 1, result);
+}
+
+fn find_in_sorted(sorted_lines, target, left, right) {
+    if left > right {
+        return -1;
+    }
+    let range = right - left;
+    let half = 0;
+    if range < 2 {
+        half = 0;
+    } else {
+        half = range / 2;
+    }
+    let mid_idx = convert.to_int(half);
+    let mid = left + mid_idx;
+    let mid_val = list.get(sorted_lines, mid);
+    if string.equals(mid_val, target) {
+        return mid;
+    }
+    if target < mid_val {
+        return find_in_sorted(sorted_lines, target, left, mid - 1);
+    }
+    return find_in_sorted(sorted_lines, target, mid + 1, right);
+}
+
+fn print_label_and_line(label, line) {
+    io.write(label);
+    io.writeln(line);
+    return 0;
+}
+
+fn create_source_file(path) {
+    file.write(path, "apple\nbanana\ncherry\ndate\nfig\ngrape");
+    return 0;
+}
+
+fn create_replica_file(path) {
+    file.write(path, "apple\ncherry\ndate\nelderberry\nfig\nhoneydew");
+    return 0;
+}
+
+fn trim_lines(lines, index, result) {
+    let len = list.len(lines);
+    if index >= len {
+        return result;
+    }
+    let trimmed = string.trim(list.get(lines, index));
+    if string.length(trimmed) > 0 {
+        result = list.append(result, trimmed);
+    }
+    return trim_lines(lines, index + 1, result);
+}
+
+fn find_max_idx(lines, limit, current_max_idx, index) {
+    if index >= limit {
+        return current_max_idx;
+    }
+    let current_val = list.get(lines, current_max_idx);
+    let next_val = list.get(lines, index);
+    if next_val > current_val {
+        return find_max_idx(lines, limit, index, index + 1);
+    }
+    return find_max_idx(lines, limit, current_max_idx, index + 1);
+}
+
+fn sort_lines(lines, count) {
+    if count <= 1 {
+        return lines;
+    }
+    let max_idx = find_max_idx(lines, count, 0, 1);
+    let swapped = swap_in_list(lines, max_idx, count - 1, 0, list.new());
+    return sort_lines(swapped, count - 1);
+}
+
+fn find_unique(a_sorted, b_sorted, index, result) {
+    let len = list.len(a_sorted);
+    if index >= len {
+        return result;
+    }
+    let line = list.get(a_sorted, index);
+    let found_in_b = find_in_sorted(b_sorted, line, 0, list.len(b_sorted) - 1);
+    if found_in_b < 0 {
+        result = list.append(result, line);
+    }
+    return find_unique(a_sorted, b_sorted, index + 1, result);
+}
+
+fn find_common(a_sorted, b_sorted, index, result) {
+    let len = list.len(a_sorted);
+    if index >= len {
+        return result;
+    }
+    let line = list.get(a_sorted, index);
+    let found_in_b = find_in_sorted(b_sorted, line, 0, list.len(b_sorted) - 1);
+    if found_in_b >= 0 {
+        result = list.append(result, line);
+    }
+    return find_common(a_sorted, b_sorted, index + 1, result);
+}
+
+fn print_lines(label, lines, index) {
+    let len = list.len(lines);
+    if index >= len {
+        return 0;
+    }
+    io.write(label);
+    io.writeln(list.get(lines, index));
+    return print_lines(label, lines, index + 1);
+}
+
+fn main() {
+    let source_path = "benchmarks/datasets/b2_features/ailang/source.txt";
+    let replica_path = "benchmarks/datasets/b2_features/ailang/replica.txt";
+    create_source_file(source_path);
+    create_replica_file(replica_path);
+    let source_lines = read_lines(source_path);
+    let replica_lines = read_lines(replica_path);
+    let source_clean = trim_lines(source_lines, 0, list.new());
+    let replica_clean = trim_lines(replica_lines, 0, list.new());
+    let source_sorted = sort_lines(source_clean, list.len(source_clean));
+    let replica_sorted = sort_lines(replica_clean, list.len(replica_clean));
+    io.writeln("=== Files only in source ===");
+    let only_source = find_unique(source_sorted, replica_sorted, 0, list.new());
+    print_lines("- ", only_source, 0);
+    io.writeln("=== Files only in replica ===");
+    let only_replica = find_unique(replica_sorted, source_sorted, 0, list.new());
+    print_lines("- ", only_replica, 0);
+    io.writeln("=== Common lines ===");
+    let common = find_common(source_sorted, replica_sorted, 0, list.new());
+    print_lines("- ", common, 0);
+    return 0;
+}

@@ -1,0 +1,83 @@
+import list;
+import map;
+import string;
+import convert;
+import helpers;
+import storage;
+
+fn at_range_rec(arItems, arStart, arEnd, arIdx, arAcc) {
+    let arLen = list.len(arItems);
+    if (arIdx < arLen) {
+        let arItem = list.get(arItems, arIdx);
+        let arCreated = helpers.helpers_get_map_value_safe(arItem, "created_at", "");
+        if (arCreated >= arStart && arCreated <= arEnd) {
+            list.append(arAcc, arItem);
+        }
+        return at_range_rec(arItems, arStart, arEnd, arIdx + 1, arAcc);
+    }
+    return arAcc;
+}
+
+fn at_user_rec(arItems, arUserName, arIdx, arAcc) {
+    let arLen = list.len(arItems);
+    if (arIdx < arLen) {
+        let arItem = list.get(arItems, arIdx);
+        let arCreator = helpers.helpers_get_map_value_safe(arItem, "created_by", "");
+        if (arCreator == arUserName) {
+            list.append(arAcc, arItem);
+        }
+        return at_user_rec(arItems, arUserName, arIdx + 1, arAcc);
+    }
+    return arAcc;
+}
+
+fn at_group_to_counts(atgKeys, atgGroups, atgResult, atgIdx) {
+    if (atgIdx >= list.len(atgKeys)) {
+        return atgResult;
+    }
+    let atgKey = list.get(atgKeys, atgIdx);
+    let atgGroup = map.get(atgGroups, atgKey);
+    map.set(atgResult, atgKey, list.len(atgGroup));
+    return at_group_to_counts(atgKeys, atgGroups, atgResult, math.add(atgIdx, 1));
+}
+
+fn at_recent_rec(arItems, arIdx, arEnd, arAcc) {
+    if (arIdx < arEnd) {
+        list.append(arAcc, list.get(arItems, arIdx));
+        return at_recent_rec(arItems, arIdx + 1, arEnd, arAcc);
+    }
+    return arAcc;
+}
+
+fn audit_trail_list_by_date_range(arStartDate, arEndDate) {
+    let arAll = storage.storage_list("audit_log");
+    let arResults = list.new();
+    return at_range_rec(arAll, arStartDate, arEndDate, 0, arResults);
+}
+
+fn audit_trail_list_by_user(arUserName) {
+    let arAll = storage.storage_list("audit_log");
+    let arResults = list.new();
+    return at_user_rec(arAll, arUserName, 0, arResults);
+}
+
+fn audit_trail_summary_by_action() {
+    let arAll = storage.storage_list("audit_log");
+    let arGroups = list.group_by_key(arAll, "action");
+    let arKeys = map.keys(arGroups);
+    return at_group_to_counts(arKeys, arGroups, map.new(), 0);
+}
+
+fn audit_trail_recent(arCount) {
+    let arAll = storage.storage_list("audit_log");
+    let arLen = list.len(arAll);
+    let arResult = list.new();
+    if (arLen == 0) {
+        return arResult;
+    }
+    let arStart = 0;
+    if (arLen > arCount) {
+        arStart = arLen - arCount;
+    }
+    return at_recent_rec(arAll, arStart, arLen, arResult);
+}

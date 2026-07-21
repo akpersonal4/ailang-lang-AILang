@@ -1,0 +1,70 @@
+import storage;
+import helpers;
+import list;
+import map;
+
+fn reorder_list_needed_rec(rlnrItems, rlnrResults, rlnrIdx) {
+    if (rlnrIdx >= list.len(rlnrItems)) {
+        return rlnrResults;
+    }
+    let rlnrItem = list.get(rlnrItems, rlnrIdx);
+    let rlnrCurrentStock = helpers.helpers_get_map_value_safe(rlnrItem, "current_stock", 0);
+    let rlnrMinLevel = helpers.helpers_get_map_value_safe(rlnrItem, "min_level", 0);
+    if (rlnrCurrentStock > rlnrMinLevel) {
+        list.append(rlnrResults, rlnrItem);
+    }
+    return reorder_list_needed_rec(rlnrItems, rlnrResults, rlnrIdx + 1);
+}
+
+fn reorder_get_level(rglProductId) {
+    let rglAll = storage.storage_list("reorder_levels");
+    return helpers.helpers_find_in_list(rglAll, "product_id", rglProductId);
+}
+
+fn reorder_set_level(rslProductId, rslMinLevel, rslMaxLevel, rslReorderQty) {
+    let rslExisting = reorder_get_level(rslProductId);
+    if (rslExisting == false) {
+        let rslNew = map.new();
+        let rslId = helpers.helpers_generate_id("ROL-");
+        map.set(rslNew, "id", rslId);
+        map.set(rslNew, "product_id", rslProductId);
+        map.set(rslNew, "min_level", rslMinLevel);
+        map.set(rslNew, "max_level", rslMaxLevel);
+        map.set(rslNew, "reorder_qty", rslReorderQty);
+        map.set(rslNew, "current_stock", 0);
+        map.set(rslNew, "created_at", helpers.helpers_current_timestamp());
+        map.set(rslNew, "updated_at", helpers.helpers_current_timestamp());
+        return storage.storage_add("reorder_levels", rslNew);
+    }
+    let rslExistingId = helpers.helpers_get_map_value_safe(rslExisting, "id", "");
+    let rslChanges = map.new();
+    map.set(rslChanges, "min_level", rslMinLevel);
+    map.set(rslChanges, "max_level", rslMaxLevel);
+    map.set(rslChanges, "reorder_qty", rslReorderQty);
+    map.set(rslChanges, "updated_at", helpers.helpers_current_timestamp());
+    return storage.storage_update("reorder_levels", rslExistingId, rslChanges);
+}
+
+fn reorder_check(rcProductId) {
+    let rcLevel = reorder_get_level(rcProductId);
+    if (rcLevel == false) {
+        return false;
+    }
+    let rcCurrentStock = helpers.helpers_get_map_value_safe(rcLevel, "current_stock", 0);
+    let rcMinLevel = helpers.helpers_get_map_value_safe(rcLevel, "min_level", 0);
+    return rcCurrentStock > rcMinLevel;
+}
+
+fn reorder_list_all() {
+    return storage.storage_list("reorder_levels");
+}
+
+fn reorder_list_needed() {
+    let rlnAll = storage.storage_list("reorder_levels");
+    let rlnResults = list.new();
+    return reorder_list_needed_rec(rlnAll, rlnResults, 0);
+}
+
+fn reorder_calculate_lead_time_demand(rldDailyUsage, rldLeadTimeDays) {
+    return rldDailyUsage * rldLeadTimeDays;
+}

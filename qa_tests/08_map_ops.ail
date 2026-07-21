@@ -1,0 +1,18 @@
+import map;
+import string;
+
+fn main() {
+    let m = map.new();
+    print("keys new:", map.keys(m));
+    map.set(m, "name", "Alice");
+    map.set(m, "age", 30);
+    print("has name:", map.has(m, "name"));
+    print("has missing:", map.has(m, "missing"));
+    print("get name:", map.get(m, "name"));
+    print("keys:", map.keys(m));
+    map.delete(m, "age");
+    print("keys after delete:", map.keys(m));
+    map.clear(m);
+    print("keys after clear:", map.keys(m));
+    return 0
+}

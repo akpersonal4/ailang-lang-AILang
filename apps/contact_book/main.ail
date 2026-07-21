@@ -1,0 +1,50 @@
+import list;
+import map;
+
+fn add_contact(contacts, name, phone, email) {
+    let c = map.new();
+    map.set(c, "name", name);
+    map.set(c, "phone", phone);
+    map.set(c, "email", email);
+    list.append(contacts, c);
+    return contacts
+}
+
+fn find_by_name_helper(contacts, name, i) {
+    if (i >= list.len(contacts)) { return false }
+    let c = list.get(contacts, i);
+    if (map.get(c, "name") == name) { return c }
+    return find_by_name_helper(contacts, name, i + 1)
+}
+
+fn find_by_name(contacts, name) {
+    return find_by_name_helper(contacts, name, 0)
+}
+
+fn display_contacts_helper(contacts, i) {
+    if (i >= list.len(contacts)) { return false }
+    let c = list.get(contacts, i);
+    print(map.get(c, "name"), "|", map.get(c, "phone"), "|", map.get(c, "email"));
+    display_contacts_helper(contacts, i + 1)
+}
+
+fn display_contacts(contacts) {
+    display_contacts_helper(contacts, 0)
+}
+
+fn main() {
+    print("=== Contact Book ===");
+    let contacts = list.new();
+    contacts = add_contact(contacts, "Alice", "555-0101", "alice@example.com");
+    contacts = add_contact(contacts, "Bob", "555-0102", "bob@example.com");
+    contacts = add_contact(contacts, "Charlie", "555-0103", "charlie@example.com");
+    print("All contacts:");
+    display_contacts(contacts);
+    let found = find_by_name(contacts, "Bob");
+    if (found) {
+        print("Found Bob:", map.get(found, "email"))
+    };
+    if (!find_by_name(contacts, "unknown")) {
+        print("Unknown contact not found (correct)")
+    }
+}

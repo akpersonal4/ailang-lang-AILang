@@ -1,0 +1,10 @@
+// Test file with forward reference (helper defined after caller)
+fn main() {
+    let result = helper(5);
+    return result;
+}
+
+// This should be before main per AILang ordering rules
+fn helper(x) {
+    return x * 2;
+}

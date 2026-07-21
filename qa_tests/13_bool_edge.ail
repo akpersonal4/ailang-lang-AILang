@@ -1,0 +1,15 @@
+fn main() {
+    let a = true;
+    let b = false;
+    print("true && false:", a && b);
+    print("true || false:", a || b);
+    print("!true:", !a);
+    print("!false:", !b);
+    print("true == false:", a == b);
+    print("true != false:", a != b);
+    let x = 1;
+    if (x) { print("1 is truthy") }
+    if (0) { print("0 is truthy") } else { print("0 is falsy") }
+    if ("") { print("empty string truthy") } else { print("empty string falsy") }
+    return 0
+}

@@ -1,0 +1,8 @@
+import json;
+import io;
+
+fn main() {
+    let result = json.parse("[\"Alice\", 30, 85]");
+    io.println(result);
+    return 0;
+}

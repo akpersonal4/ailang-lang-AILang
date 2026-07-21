@@ -1,0 +1,11 @@
+fn get(name) {
+    return env_get(name)
+}
+
+fn cwd() {
+    return env_cwd()
+}
+
+fn args() {
+    return env_args()
+}

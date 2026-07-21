@@ -1,0 +1,28 @@
+import list;
+import map;
+
+fn test_div_zero() {
+    let x = 10 / 0;
+    return x
+}
+
+fn test_out_of_bounds() {
+    let l = list.new();
+    list.append(l, "a");
+    let x = list.get(l, 5);
+    return x
+}
+
+fn test_bad_map_key() {
+    let m = map.new();
+    map.set(m, "k", "v");
+    let x = map.get(m, "missing");
+    return x
+}
+
+fn main() {
+    print("test_bad_map_key:", test_bad_map_key());
+    print("test_out_of_bounds:", test_out_of_bounds());
+    // print("div by zero:", test_div_zero());
+    return 0
+}

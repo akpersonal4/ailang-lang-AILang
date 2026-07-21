@@ -1,0 +1,6 @@
+import main;
+
+fn benchmark_report() {
+    main.main_report();
+    return true;
+}

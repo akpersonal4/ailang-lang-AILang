@@ -1,0 +1,97 @@
+import list;
+import map;
+import string;
+import convert;
+import helpers;
+import storage;
+import vendor;
+
+fn test_vendor_create() {
+    let tvcResult = vendor.vendor_create("Test Vendor Inc", "vendor@test.com", "555-4000", "Contact Person");
+    if (tvcResult == false) {
+        print("FAIL: vendor_create returned false");
+        return false;
+    }
+    let tvcId = helpers.helpers_get_map_value_safe(tvcResult, "id", "");
+    if (tvcId == "") {
+        print("FAIL: vendor_create - no id");
+        return false;
+    }
+    let tvcName = helpers.helpers_get_map_value_safe(tvcResult, "name", "");
+    if (tvcName != "Test Vendor Inc") {
+        print("FAIL: vendor_create - name mismatch");
+        return false;
+    }
+    let tvcEmail = helpers.helpers_get_map_value_safe(tvcResult, "email", "");
+    if (tvcEmail != "vendor@test.com") {
+        print("FAIL: vendor_create - email mismatch");
+        return false;
+    }
+    let tvcContact = helpers.helpers_get_map_value_safe(tvcResult, "contact_person", "");
+    if (tvcContact != "Contact Person") {
+        print("FAIL: vendor_create - contact_person mismatch");
+        return false;
+    }
+    print("PASS: vendor_create");
+    return true;
+}
+
+fn test_vendor_get_by_id_missing() {
+    let tvgmResult = vendor.vendor_get("NONEXISTENT-VENDOR-ID");
+    if (tvgmResult != false) {
+        print("FAIL: vendor_get_by_id_missing - expected false");
+        return false;
+    }
+    print("PASS: vendor_get_by_id_missing");
+    return true;
+}
+
+fn test_vendor_get_by_id() {
+    let tvgCreated = vendor.vendor_create("GetTest Vendor", "get@vendor.com", "555-5000", "Get Contact");
+    let tvgId = helpers.helpers_get_map_value_safe(tvgCreated, "id", "");
+    let tvgFound = vendor.vendor_get(tvgId);
+    if (tvgFound == false) {
+        print("FAIL: vendor_get_by_id returned false for existing vendor");
+        return false;
+    }
+    let tvgName = helpers.helpers_get_map_value_safe(tvgFound, "name", "");
+    if (tvgName != "GetTest Vendor") {
+        print("FAIL: vendor_get_by_id - name mismatch");
+        return false;
+    }
+    print("PASS: vendor_get_by_id");
+    return true;
+}
+
+fn test_vendor_list() {
+    vendor.vendor_create("ListTest V1", "v1@test.com", "555-6001", "Contact1");
+    vendor.vendor_create("ListTest V2", "v2@test.com", "555-6002", "Contact2");
+    let tvlAll = vendor.vendor_list();
+    if (list.len(tvlAll) == 0) {
+        print("FAIL: vendor_list returned empty list");
+        return false;
+    }
+    print("PASS: vendor_list (" + convert.to_string(list.len(tvlAll)) + " items)");
+    return true;
+}
+
+fn main() {
+    let tvr1 = test_vendor_create();
+    if (tvr1 == false) {
+        return 1;
+    }
+    let tvr2 = test_vendor_get_by_id_missing();
+    if (tvr2 == false) {
+        return 1;
+    }
+    let tvr3 = test_vendor_get_by_id();
+    if (tvr3 == false) {
+        return 1;
+    }
+    let tvr4 = test_vendor_list();
+    if (tvr4 == false) {
+        return 1;
+    }
+    print("ALL VENDOR TESTS PASSED");
+    return 0;
+}

@@ -1,0 +1,9 @@
+Type,Amount,Category,Description,Timestamp
+income,50000,Salary,Monthly salary,2026-07-05 10:43:36
+expense,12000,Rent,Monthly rent payment,2026-07-05 10:43:36
+expense,3500,Food,Groceries,2026-07-05 10:43:36
+expense,2000,Transport,Fuel,2026-07-05 10:43:36
+income,8000,Freelance,Project payment,2026-07-05 10:43:36
+expense,1500,Food,Dining out,2026-07-05 10:43:36
+expense,3000,Utilities,Electricity bill,2026-07-05 10:43:36
+expense,2500,Transport,Metro pass,2026-07-05 10:43:36

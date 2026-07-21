@@ -1,0 +1,29 @@
+import storage;
+import json;
+import time;
+import list;
+import map;
+import convert;
+
+fn comment_create(ccTicketId, ccAuthorId, ccContent) {
+    let ccComment = map.new();
+    let ccNewId = storage.storage_next_id("comments");
+    map.set(ccComment, "id", ccNewId);
+    map.set(ccComment, "ticket_id", ccTicketId);
+    map.set(ccComment, "author_id", ccAuthorId);
+    map.set(ccComment, "content", ccContent);
+    map.set(ccComment, "created_at", time.timestamp());
+    storage.storage_append("comments", ccComment);
+    return ccComment;
+}
+
+fn comment_list_by_ticket(clTicketId) {
+    let clComments = storage.storage_load("comments");
+    return list.filter_by_key(clComments, "ticket_id", clTicketId);
+}
+
+fn comment_count_by_ticket(ccTicketId) {
+    let ccComments = storage.storage_load("comments");
+    let ccFiltered = list.filter_by_key(ccComments, "ticket_id", ccTicketId);
+    return list.len(ccFiltered);
+}

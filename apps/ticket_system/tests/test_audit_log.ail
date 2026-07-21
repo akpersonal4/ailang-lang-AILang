@@ -1,0 +1,62 @@
+import storage;
+import audit_log;
+import list;
+import map;
+import convert;
+
+fn test_audit_log_add() {
+    storage.storage_clear("audit_log");
+    let talResult = audit_log.audit_log_add(1, 1, "created", "", "Test");
+    if (map.has(talResult, "id") == false) {
+        print("FAIL: audit_log_add - no id");
+        return false;
+    }
+    if (map.get(talResult, "action") != "created") {
+        print("FAIL: audit_log_add - action mismatch");
+        return false;
+    }
+    if (map.get(talResult, "ticket_id") != 1) {
+        print("FAIL: audit_log_add - ticket_id mismatch");
+        return false;
+    }
+    print("PASS: audit_log_add");
+    return true;
+}
+
+fn test_audit_log_list_by_ticket() {
+    storage.storage_clear("audit_log");
+    audit_log.audit_log_add(10, 1, "created", "", "Title");
+    audit_log.audit_log_add(10, 1, "updated", "old", "new");
+    audit_log.audit_log_add(20, 1, "created", "", "Other");
+    let tallResult = audit_log.audit_log_list_by_ticket(10);
+    if (list.len(tallResult) != 2) {
+        print("FAIL: audit_log_list_by_ticket - expected 2, got " + convert.to_string(list.len(tallResult)));
+        return false;
+    }
+    print("PASS: audit_log_list_by_ticket");
+    return true;
+}
+
+fn test_audit_log_list_all() {
+    storage.storage_clear("audit_log");
+    audit_log.audit_log_add(1, 1, "action1", "", "");
+    audit_log.audit_log_add(2, 1, "action2", "", "");
+    let tallResult = audit_log.audit_log_list_all();
+    if (list.len(tallResult) != 2) {
+        print("FAIL: audit_log_list_all - expected 2, got " + convert.to_string(list.len(tallResult)));
+        return false;
+    }
+    print("PASS: audit_log_list_all");
+    return true;
+}
+
+fn main() {
+    let tr1 = test_audit_log_add();
+    if (tr1 == false) { return 1; }
+    let tr2 = test_audit_log_list_by_ticket();
+    if (tr2 == false) { return 1; }
+    let tr3 = test_audit_log_list_all();
+    if (tr3 == false) { return 1; }
+    print("ALL AUDIT LOG TESTS PASSED");
+    return 0;
+}

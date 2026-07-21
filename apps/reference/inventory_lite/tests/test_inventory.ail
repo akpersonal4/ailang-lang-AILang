@@ -1,0 +1,142 @@
+import list;
+import map;
+import io;
+import convert;
+import json;
+
+fn create_product(id, name, price, stock) {
+    let product = map.new();
+    map.set(product, "id", id);
+    map.set(product, "name", name);
+    map.set(product, "price", price);
+    map.set(product, "stock", stock);
+    return product
+}
+
+fn add_product(products, id, name, price, stock) {
+    let item = create_product(id, name, price, stock);
+    list.append(products, item);
+    return products
+}
+
+fn find_product_helper(products, id, index) {
+    if (index >= list.len(products)) { return json.parse("null") }
+    let item = list.get(products, index);
+    if (map.get(item, "id") == id) { return item }
+    return find_product_helper(products, id, index + 1)
+}
+
+fn find_product(products, id) {
+    return find_product_helper(products, id, 0)
+}
+
+fn stock_in(products, id, qty) {
+    let item = find_product(products, id);
+    let null_val = json.parse("null");
+    if (item != null_val) {
+        let current = map.get(item, "stock");
+        map.set(item, "stock", current + qty)
+    };
+    return item
+}
+
+fn stock_out(products, id, qty) {
+    let item = find_product(products, id);
+    let null_val = json.parse("null");
+    if (item != null_val) {
+        let current = map.get(item, "stock");
+        map.set(item, "stock", current - qty)
+    };
+    return item
+}
+
+fn count_products_helper(products, idx) {
+    if (idx >= list.len(products)) { return 0 }
+    return 1 + count_products_helper(products, idx + 1)
+}
+
+fn count_products(products) {
+    return count_products_helper(products, 0)
+}
+
+fn total_value_helper(products, idx) {
+    if (idx >= list.len(products)) { return 0.0 }
+    let item = list.get(products, idx);
+    let prc = map.get(item, "price");
+    let stk = map.get(item, "stock");
+    return (prc * stk) + total_value_helper(products, idx + 1)
+}
+
+fn total_value(products) {
+    return total_value_helper(products, 0)
+}
+
+fn test_create_product() {
+    let prod = create_product(1, "TestItem", 9.99, 10);
+    if (map.get(prod, "id") == 1) {
+        io.writeln("PASS: create_product id")
+    };
+    if (map.get(prod, "name") == "TestItem") {
+        io.writeln("PASS: create_product name")
+    };
+    if (map.get(prod, "price") == 9.99) {
+        io.writeln("PASS: create_product price")
+    };
+    if (map.get(prod, "stock") == 10) {
+        io.writeln("PASS: create_product stock")
+    }
+}
+
+fn test_add_and_find() {
+    let inv = list.new();
+    add_product(inv, 1, "Alpha", 5.0, 20);
+    add_product(inv, 2, "Beta", 10.0, 30);
+    if (count_products(inv) == 2) {
+        io.writeln("PASS: add_product count")
+    };
+    let found = find_product(inv, 1);
+    let null_val = json.parse("null");
+    if (found != null_val) {
+        io.writeln("PASS: find_product found")
+    };
+    let missing = find_product(inv, 99);
+    if (missing == null_val) {
+        io.writeln("PASS: find_product missing")
+    }
+}
+
+fn test_stock_operations() {
+    let items = list.new();
+    add_product(items, 1, "Widget", 5.0, 100);
+    stock_in(items, 1, 25);
+    let after_in = find_product(items, 1);
+    if (map.get(after_in, "stock") == 125) {
+        io.writeln("PASS: stock_in")
+    };
+    stock_out(items, 1, 30);
+    let after_out = find_product(items, 1);
+    if (map.get(after_out, "stock") == 95) {
+        io.writeln("PASS: stock_out")
+    }
+}
+
+fn test_value_calculation() {
+    let prods = list.new();
+    add_product(prods, 1, "A", 10.0, 5);
+    add_product(prods, 2, "B", 20.0, 3);
+    let val = total_value(prods);
+    if (val == 110.0) {
+        io.writeln("PASS: total_value")
+    }
+}
+
+fn main() {
+    io.writeln("=== Inventory Tests ===");
+    test_create_product();
+    test_add_and_find();
+    test_stock_operations();
+    test_value_calculation();
+    io.writeln("All tests completed.")
+}
+
+main()

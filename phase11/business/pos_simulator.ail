@@ -1,0 +1,85 @@
+import list;
+import map;
+import environment;
+import convert;
+
+fn create_products() {
+    let products = map.new();
+    map.set(products, "widget", "parts,9.99");
+    map.set(products, "bolt", "hardware,0.50");
+    map.set(products, "nail", "hardware,0.10");
+    map.set(products, "hammer", "tools,14.99");
+    map.set(products, "screwdriver", "tools,8.99");
+    map.set(products, "drill", "tools,59.99");
+    map.set(products, "paint", "supplies,24.99");
+    map.set(products, "brush", "supplies,3.99");
+    map.set(products, "gloves", "safety,7.99");
+    map.set(products, "goggles", "safety,12.99");
+    return products
+}
+
+fn price_to_cents(price_str) {
+    let parts = price_str.split(".");
+    let dollars = convert.to_int(list.get(parts, 0));
+    let cents = convert.to_int(list.get(parts, 1));
+    return dollars * 100 + cents
+}
+
+fn format_cents(cents) {
+    let dollars = convert.to_int(cents / 100);
+    let remainder = cents - dollars * 100;
+    let rem_str = convert.to_string(remainder);
+    if (remainder < 10) {
+        rem_str = "0" + rem_str
+    };
+    return convert.to_string(dollars) + "." + rem_str
+}
+
+fn process_items_helper(products, items, i, subtotal_cents) {
+    if (i >= list.len(items)) {
+        return subtotal_cents
+    };
+    let name = list.get(items, i);
+    if (map.has(products, name)) {
+        let value = map.get(products, name);
+        let parts = value.split(",");
+        let price_str = list.get(parts, 1);
+        let price_cents = price_to_cents(price_str);
+        print("  " + name + ": $" + price_str);
+        return process_items_helper(products, items, i + 1, subtotal_cents + price_cents)
+    } else {
+        print("Item not found: " + name);
+        return process_items_helper(products, items, i + 1, subtotal_cents)
+    }
+}
+
+fn print_receipt(products, items) {
+    print("==============================");
+    print("       AILang Store");
+    print("==============================");
+    print("");
+    let subtotal_cents = process_items_helper(products, items, 0, 0);
+    print("");
+    print("------------------------------");
+    let subtotal_str = format_cents(subtotal_cents);
+    print("Subtotal: $" + subtotal_str);
+    let tax_cents = subtotal_cents * 8 / 100;
+    let tax_cents_int = convert.to_int(tax_cents);
+    let tax_str = format_cents(tax_cents_int);
+    print("Tax (8%): $" + tax_str);
+    let total_cents = subtotal_cents + tax_cents_int;
+    let total_str = format_cents(total_cents);
+    print("Total: $" + total_str);
+    print("==============================")
+}
+
+fn main() {
+    let args = environment.args();
+    if (list.len(args) < 1) {
+        print("Usage: pos_simulator.ail <item1> [item2] ...");
+        return 0
+    };
+    let products = create_products();
+    print_receipt(products, args);
+    return 0
+}

@@ -1,0 +1,21 @@
+import list;
+import string;
+
+fn main() {
+    let l = list.new();
+    print("len new:", list.len(l));
+    list.append(l, "a");
+    list.append(l, "b");
+    list.append(l, "c");
+    print("len after:", list.len(l));
+    print("get 0:", list.get(l, 0));
+    print("get 1:", list.get(l, 1));
+    print("contains a:", list.contains(l, "a"));
+    print("contains z:", list.contains(l, "z"));
+    list.remove(l, "b");
+    print("len after remove:", list.len(l));
+    print("get 1 after remove:", list.get(l, 1));
+    list.clear(l);
+    print("len after clear:", list.len(l));
+    return 0
+}

@@ -1,0 +1,25 @@
+import path;
+
+fn main() {
+    print("=== Path Operations Demo ===");
+
+    let full = path.join("docs", "README.md");
+    print("Joined path:");
+    print(full);
+
+    let base = path.basename(full);
+    print("Basename:");
+    print(base);
+
+    let dir = path.dirname(full);
+    print("Dirname:");
+    print(dir);
+
+    let ext = path.extension(full);
+    print("Extension:");
+    print(ext);
+
+    let normal = path.normalize("src/./code/../docs/./file.txt");
+    print("Normalized:");
+    print(normal);
+}

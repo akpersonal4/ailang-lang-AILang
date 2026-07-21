@@ -1,0 +1,64 @@
+import storage;
+import helpers;
+import list;
+import map;
+import string;
+
+fn warehouse_search_rec(whsrItems, whsrQuery, whsrResults, whsrIdx) {
+    if (whsrIdx >= list.len(whsrItems)) {
+        return whsrResults;
+    }
+    let whsrItem = list.get(whsrItems, whsrIdx);
+    let whsrName = helpers.helpers_get_map_value_safe(whsrItem, "name", "");
+    let whsrCode = helpers.helpers_get_map_value_safe(whsrItem, "code", "");
+    let whsrNameLower = string.lowercase(whsrName);
+    let whsrCodeLower = string.lowercase(whsrCode);
+    let whsrQueryLower = string.lowercase(whsrQuery);
+    if (string.contains(whsrNameLower, whsrQueryLower)) {
+        list.append(whsrResults, whsrItem);
+    } else if (string.contains(whsrCodeLower, whsrQueryLower)) {
+        list.append(whsrResults, whsrItem);
+    }
+    return warehouse_search_rec(whsrItems, whsrQuery, whsrResults, whsrIdx + 1);
+}
+
+fn warehouse_create(whName, whCode, whAddress, whCity, whCountry) {
+    let whItem = map.new();
+    let whId = helpers.helpers_generate_id("WH-");
+    let whNow = helpers.helpers_current_timestamp();
+    map.set(whItem, "id", whId);
+    map.set(whItem, "name", whName);
+    map.set(whItem, "code", whCode);
+    map.set(whItem, "address", whAddress);
+    map.set(whItem, "city", whCity);
+    map.set(whItem, "country", whCountry);
+    map.set(whItem, "active", true);
+    map.set(whItem, "created_at", whNow);
+    map.set(whItem, "updated_at", whNow);
+    storage.storage_add("warehouses", whItem);
+    return whItem;
+}
+
+fn warehouse_get_by_id(whgId) {
+    return storage.storage_get_by_id("warehouses", whgId);
+}
+
+fn warehouse_update(whuId, whuChanges) {
+    let whuNow = helpers.helpers_current_timestamp();
+    map.set(whuChanges, "updated_at", whuNow);
+    return storage.storage_update("warehouses", whuId, whuChanges);
+}
+
+fn warehouse_delete(whdId) {
+    return storage.storage_delete("warehouses", whdId);
+}
+
+fn warehouse_list() {
+    return storage.storage_list("warehouses");
+}
+
+fn warehouse_search(whsQuery) {
+    let whsAll = storage.storage_list("warehouses");
+    let whsResults = list.new();
+    return warehouse_search_rec(whsAll, whsQuery, whsResults, 0);
+}

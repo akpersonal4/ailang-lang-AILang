@@ -1,0 +1,7 @@
+fn main() {
+    let name = "AILang";
+    let version = 1;
+    let pi = 22 / 7;
+    print("Welcome to", name);
+    return 0
+}

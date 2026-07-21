@@ -1,0 +1,135 @@
+import list;
+import map;
+import string;
+import convert;
+import helpers;
+import storage;
+import invoice;
+
+fn test_invoice_create() {
+    let ticItems = list.new();
+    let ticItem1 = map.new();
+    map.set(ticItem1, "product_id", "PRD-001");
+    map.set(ticItem1, "quantity", 2);
+    map.set(ticItem1, "unit_price", 50);
+    map.set(ticItem1, "line_total", 100);
+    list.append(ticItems, ticItem1);
+    let ticItem2 = map.new();
+    map.set(ticItem2, "product_id", "PRD-002");
+    map.set(ticItem2, "quantity", 1);
+    map.set(ticItem2, "unit_price", 200);
+    map.set(ticItem2, "line_total", 200);
+    list.append(ticItems, ticItem2);
+    let ticResult = invoice.invoice_create("SO-INV-001", "CUS-001", ticItems, 300);
+    if (ticResult == false) {
+        print("FAIL: invoice_create returned false");
+        return false;
+    }
+    let ticId = helpers.helpers_get_map_value_safe(ticResult, "id", "");
+    if (ticId == "") {
+        print("FAIL: invoice_create - no id generated");
+        return false;
+    }
+    let ticStatus = helpers.helpers_get_map_value_safe(ticResult, "status", "");
+    if (ticStatus != "draft") {
+        print("FAIL: invoice_create - expected status draft, got " + ticStatus);
+        return false;
+    }
+    print("PASS: invoice_create");
+    return true;
+}
+
+fn test_invoice_get_by_id_missing() {
+    let tigmResult = invoice.invoice_get_by_id("NONEXISTENT-INVOICE-ID");
+    if (tigmResult != false) {
+        print("FAIL: invoice_get_by_id_missing - expected false");
+        return false;
+    }
+    print("PASS: invoice_get_by_id_missing");
+    return true;
+}
+
+fn test_invoice_calculate_total() {
+    let tictItems = list.new();
+    let tictItem1 = map.new();
+    map.set(tictItem1, "product_id", "PRD-A");
+    map.set(tictItem1, "line_total", 150);
+    list.append(tictItems, tictItem1);
+    let tictItem2 = map.new();
+    map.set(tictItem2, "product_id", "PRD-B");
+    map.set(tictItem2, "line_total", 75);
+    list.append(tictItems, tictItem2);
+    let tictItem3 = map.new();
+    map.set(tictItem3, "product_id", "PRD-C");
+    list.append(tictItems, tictItem3);
+    let tictTotal = invoice.invoice_calculate_total(tictItems);
+    if (tictTotal != 225) {
+        print("FAIL: invoice_calculate_total - expected 225, got " + convert.to_string(tictTotal));
+        return false;
+    }
+    print("PASS: invoice_calculate_total (" + convert.to_string(tictTotal) + ")");
+    return true;
+}
+
+fn test_invoice_generate_number() {
+    let tignResult = invoice.invoice_generate_number(5);
+    if (tignResult == false) {
+        print("FAIL: invoice_generate_number returned false");
+        return false;
+    }
+    let tignPrefix = string.substring(tignResult, 0, 4);
+    if (tignPrefix != "INV-") {
+        print("FAIL: invoice_generate_number - expected INV- prefix, got " + tignPrefix);
+        return false;
+    }
+    let tignLen = string.length(tignResult);
+    if (tignLen < 12) {
+        print("FAIL: invoice_generate_number - result too short: " + tignResult);
+        return false;
+    }
+    print("PASS: invoice_generate_number (" + tignResult + ")");
+    return true;
+}
+
+fn test_invoice_list_by_customer() {
+    let tilcItems = list.new();
+    let tilcItemData = map.new();
+    map.set(tilcItemData, "product_id", "PRD-X");
+    map.set(tilcItemData, "line_total", 50);
+    list.append(tilcItems, tilcItemData);
+    invoice.invoice_create("SO-CUS-1", "CUS-100", tilcItems, 50);
+    invoice.invoice_create("SO-CUS-2", "CUS-100", tilcItems, 50);
+    let tilcResults = invoice.invoice_list_by_customer("CUS-100");
+    let tilcLen = list.len(tilcResults);
+    if (tilcLen < 2) {
+        print("FAIL: invoice_list_by_customer - expected at least 2, got " + convert.to_string(tilcLen));
+        return false;
+    }
+    print("PASS: invoice_list_by_customer (" + convert.to_string(tilcLen) + " items)");
+    return true;
+}
+
+fn main() {
+    let ti1 = test_invoice_create();
+    if (ti1 == false) {
+        return 1;
+    }
+    let ti2 = test_invoice_get_by_id_missing();
+    if (ti2 == false) {
+        return 1;
+    }
+    let ti3 = test_invoice_calculate_total();
+    if (ti3 == false) {
+        return 1;
+    }
+    let ti4 = test_invoice_generate_number();
+    if (ti4 == false) {
+        return 1;
+    }
+    let ti5 = test_invoice_list_by_customer();
+    if (ti5 == false) {
+        return 1;
+    }
+    print("ALL INVOICE TESTS PASSED");
+    return 0;
+}

@@ -1,0 +1,162 @@
+import storage;
+import helpers;
+import list;
+import map;
+import string;
+import convert;
+import stock_movement;
+
+fn purchase_calc_line_total(pcQty, pcPrice) {
+    return pcQty * pcPrice;
+}
+
+fn purchase_recalc_total_rec(prItems, prOrderId, prIdx, prSum) {
+    if (prIdx >= list.len(prItems)) {
+        return prSum;
+    }
+    let prItem = list.get(prItems, prIdx);
+    if (helpers.helpers_get_map_value_safe(prItem, "order_id", "") == prOrderId) {
+        return purchase_recalc_total_rec(prItems, prOrderId, prIdx + 1, prSum + helpers.helpers_get_map_value_safe(prItem, "line_total", 0));
+    }
+    return purchase_recalc_total_rec(prItems, prOrderId, prIdx + 1, prSum);
+}
+
+fn purchase_get_items_rec(pgiItems, pgiOrderId, pgiResults, pgiIdx) {
+    if (pgiIdx >= list.len(pgiItems)) {
+        return pgiResults;
+    }
+    let pgiItem = list.get(pgiItems, pgiIdx);
+    let pgiItemOrderId = helpers.helpers_get_map_value_safe(pgiItem, "order_id", "");
+    if (pgiItemOrderId == pgiOrderId) {
+        list.append(pgiResults, pgiItem);
+    }
+    return purchase_get_items_rec(pgiItems, pgiOrderId, pgiResults, pgiIdx + 1);
+}
+
+fn purchase_list_by_vendor_rec(lvItems, lvVendorId, lvResults, lvIdx) {
+    if (lvIdx >= list.len(lvItems)) {
+        return lvResults;
+    }
+    let lvItem = list.get(lvItems, lvIdx);
+    let lvItemVendorId = helpers.helpers_get_map_value_safe(lvItem, "vendor_id", "");
+    if (lvItemVendorId == lvVendorId) {
+        list.append(lvResults, lvItem);
+    }
+    return purchase_list_by_vendor_rec(lvItems, lvVendorId, lvResults, lvIdx + 1);
+}
+
+fn purchase_receive_items_rec(priItems, priOrderId, priIdx) {
+    if (priIdx >= list.len(priItems)) {
+        return true;
+    }
+    let priItem = list.get(priItems, priIdx);
+    let priProdId = helpers.helpers_get_map_value_safe(priItem, "product_id", "");
+    let priQty = convert.to_int(helpers.helpers_get_map_value_safe(priItem, "quantity", 0));
+    stock_movement.movement_create(priProdId, "inbound", priQty, "purchase_order", priOrderId, "Purchase order received");
+    return purchase_receive_items_rec(priItems, priOrderId, priIdx + 1);
+}
+
+fn purchase_recalc_total(prtOrderId) {
+    let prtItems = storage.storage_list("purchase_items");
+    let prtSum = purchase_recalc_total_rec(prtItems, prtOrderId, 0, 0);
+    let prtChanges = map.new();
+    let prtNow = helpers.helpers_current_timestamp();
+    map.set(prtChanges, "total", prtSum);
+    map.set(prtChanges, "updated_at", prtNow);
+    return storage.storage_update("purchase_orders", prtOrderId, prtChanges);
+}
+
+fn purchase_get_items(piOrderId) {
+    let piItems = storage.storage_list("purchase_items");
+    let piResults = list.new();
+    return purchase_get_items_rec(piItems, piOrderId, piResults, 0);
+}
+
+fn purchase_list_by_vendor(plvVendorId) {
+    let plvItems = storage.storage_list("purchase_orders");
+    let plvResults = list.new();
+    return purchase_list_by_vendor_rec(plvItems, plvVendorId, plvResults, 0);
+}
+
+fn purchase_create(pcrVendorId, pcrNotes) {
+    let pcrOrder = map.new();
+    let pcrId = helpers.helpers_generate_id("PO-");
+    let pcrNow = helpers.helpers_current_timestamp();
+    map.set(pcrOrder, "id", pcrId);
+    map.set(pcrOrder, "vendor_id", pcrVendorId);
+    map.set(pcrOrder, "status", "draft");
+    map.set(pcrOrder, "total", 0);
+    map.set(pcrOrder, "notes", pcrNotes);
+    map.set(pcrOrder, "created_at", pcrNow);
+    map.set(pcrOrder, "updated_at", pcrNow);
+    storage.storage_add("purchase_orders", pcrOrder);
+    return pcrOrder;
+}
+
+fn purchase_get(pgId) {
+    return storage.storage_get_by_id("purchase_orders", pgId);
+}
+
+fn purchase_list() {
+    return storage.storage_list("purchase_orders");
+}
+
+fn purchase_update_status(pusOrderId, pusNewStatus) {
+    let pusChanges = map.new();
+    let pusNow = helpers.helpers_current_timestamp();
+    map.set(pusChanges, "status", pusNewStatus);
+    map.set(pusChanges, "updated_at", pusNow);
+    return storage.storage_update("purchase_orders", pusOrderId, pusChanges);
+}
+
+fn purchase_order(poOrderId) {
+    return purchase_update_status(poOrderId, "ordered");
+}
+
+fn purchase_add_item(paiOrderId, paiProductId, paiQty, paiPrice) {
+    let paiLineTotal = purchase_calc_line_total(paiQty, paiPrice);
+    let paiItem = map.new();
+    let paiId = helpers.helpers_generate_id("POI-");
+    let paiNow = helpers.helpers_current_timestamp();
+    map.set(paiItem, "id", paiId);
+    map.set(paiItem, "order_id", paiOrderId);
+    map.set(paiItem, "product_id", paiProductId);
+    map.set(paiItem, "quantity", paiQty);
+    map.set(paiItem, "unit_price", paiPrice);
+    map.set(paiItem, "line_total", paiLineTotal);
+    storage.storage_add("purchase_items", paiItem);
+    purchase_recalc_total(paiOrderId);
+    return true;
+}
+
+fn purchase_receive(preOrderId) {
+    purchase_update_status(preOrderId, "received");
+    let preItems = purchase_get_items(preOrderId);
+    return purchase_receive_items_rec(preItems, preOrderId, 0);
+}
+
+fn purchase_cancel(pccOrderId) {
+    return purchase_update_status(pccOrderId, "cancelled");
+}
+
+fn purchase_list_by_product_rec(plprItems, plprProductId, plprResults, plprIdx) {
+    if (plprIdx >= list.len(plprItems)) {
+        return plprResults;
+    }
+    let plprItem = list.get(plprItems, plprIdx);
+    let plprProdId = helpers.helpers_get_map_value_safe(plprItem, "product_id", "");
+    if (plprProdId == plprProductId) {
+        let plprOrderId = helpers.helpers_get_map_value_safe(plprItem, "order_id", "");
+        let plprOrder = purchase_get(plprOrderId);
+        if (plprOrder != false) {
+            list.append(plprResults, plprOrder);
+        }
+    }
+    return purchase_list_by_product_rec(plprItems, plprProductId, plprResults, plprIdx + 1);
+}
+
+fn purchase_list_by_product(plpProductId) {
+    let plpItems = storage.storage_list("purchase_items");
+    let plpResults = list.new();
+    return purchase_list_by_product_rec(plpItems, plpProductId, plpResults, 0);
+}

@@ -1,0 +1,7 @@
+Program
+  VariableDeclaration x
+    Literal 10
+  Function foo
+    Block
+      Return
+        VariableReference x

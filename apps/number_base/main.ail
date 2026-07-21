@@ -1,0 +1,59 @@
+import convert;
+
+fn to_binary_helper(n, acc) {
+    if (n == 0) { return acc }
+    let digit = "";
+    if (n % 2 == 0) { digit = "0" } else { digit = "1" }
+    return to_binary_helper(convert.to_int(n / 2), digit + acc)
+}
+
+fn to_binary(n) {
+    if (n == 0) { return "0" }
+    return to_binary_helper(n, "")
+}
+
+fn to_hex_helper(n, acc) {
+    if (n == 0) { return acc }
+    let rem = convert.to_int(n % 16);
+    let digit = "";
+    if (rem < 10) {
+        if (rem == 0) { digit = "0" }
+        if (rem == 1) { digit = "1" }
+        if (rem == 2) { digit = "2" }
+        if (rem == 3) { digit = "3" }
+        if (rem == 4) { digit = "4" }
+        if (rem == 5) { digit = "5" }
+        if (rem == 6) { digit = "6" }
+        if (rem == 7) { digit = "7" }
+        if (rem == 8) { digit = "8" }
+        if (rem == 9) { digit = "9" }
+    } else {
+        if (rem == 10) { digit = "A" }
+        if (rem == 11) { digit = "B" }
+        if (rem == 12) { digit = "C" }
+        if (rem == 13) { digit = "D" }
+        if (rem == 14) { digit = "E" }
+        if (rem == 15) { digit = "F" }
+    }
+    return to_hex_helper(convert.to_int(n / 16), digit + acc)
+}
+
+fn to_hex(n) {
+    if (n == 0) { return "0" }
+    return to_hex_helper(n, "")
+}
+
+fn digit_sum(n) {
+    if (n == 0) { return 0 }
+    return n % 10 + digit_sum(convert.to_int(n / 10))
+}
+
+fn main() {
+    print("=== Number Base Converter ===");
+    print("42 in binary:", to_binary(42));
+    print("255 in binary:", to_binary(255));
+    print("42 in hex:", to_hex(42));
+    print("255 in hex:", to_hex(255));
+    print("4095 in hex:", to_hex(4095));
+    print("Digit sum of 12345:", digit_sum(12345))
+}

@@ -1,0 +1,77 @@
+import list;
+import map;
+import string;
+import convert;
+import helpers;
+import storage;
+import stock_valuation;
+
+fn test_sv_get_nonexistent() {
+    let svmResult = stock_valuation.valuation_get("NONEXISTENT-PROD");
+    if (svmResult != false) {
+        print("FAIL: expected false for nonexistent valuation");
+        return false;
+    }
+    print("PASS: valuation_get_nonexistent");
+    return true;
+}
+
+fn test_sv_set_and_get() {
+    let svgResult = stock_valuation.valuation_set("SV-PROD-1", "fifo", 100, 50);
+    if (svgResult == false) {
+        print("FAIL: valuation_set returned false");
+        return false;
+    }
+    let svgGot = stock_valuation.valuation_get("SV-PROD-1");
+    if (svgGot == false) {
+        print("FAIL: valuation_get returned false");
+        return false;
+    }
+    let svgCost = helpers.helpers_get_map_value_safe(svgGot, "current_cost", 0);
+    if (svgCost != 100) {
+        print("FAIL: expected current_cost 100, got " + convert.to_string(svgCost));
+        return false;
+    }
+    let svgMethod = helpers.helpers_get_map_value_safe(svgGot, "method", "");
+    if (svgMethod != "fifo") {
+        print("FAIL: expected method fifo, got " + svgMethod);
+        return false;
+    }
+    let svgQty = helpers.helpers_get_map_value_safe(svgGot, "quantity_on_hand", 0);
+    if (svgQty != 50) {
+        print("FAIL: expected quantity_on_hand 50, got " + convert.to_string(svgQty));
+        return false;
+    }
+    print("PASS: valuation_set and valuation_get");
+    return true;
+}
+
+fn test_sv_list() {
+    stock_valuation.valuation_set("SV-PROD-L1", "fifo", 50, 10);
+    stock_valuation.valuation_set("SV-PROD-L2", "average", 75, 20);
+    let svlList = stock_valuation.valuation_list();
+    let svlLen = list.len(svlList);
+    if (svlLen < 2) {
+        print("FAIL: expected at least 2 valuations, got " + convert.to_string(svlLen));
+        return false;
+    }
+    print("PASS: valuation_list");
+    return true;
+}
+
+fn main() {
+    let sv1 = test_sv_get_nonexistent();
+    if (sv1 == false) {
+        return 1;
+    }
+    let sv2 = test_sv_set_and_get();
+    if (sv2 == false) {
+        return 1;
+    }
+    let sv3 = test_sv_list();
+    if (sv3 == false) {
+        return 1;
+    }
+    print("ALL STOCK VALUATION TESTS PASSED");
+    return 0;
+}

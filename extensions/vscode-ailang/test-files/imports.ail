@@ -1,0 +1,30 @@
+// === AILang imports test file ===
+// All import styles.
+
+import string;
+import math;
+import list;
+import map;
+import set;
+import json;
+import csv;
+import file;
+import path;
+import time;
+import random;
+import environment;
+import convert;
+import io;
+import system;
+
+// Aliased import
+import math as m;
+
+fn main() {
+    let s = string.uppercase("hello");
+    let sum = m.add(1, 2);
+    let items = list.new();
+    list.append(items, "test");
+    print(s, sum, list.len(items));
+    return 0
+}

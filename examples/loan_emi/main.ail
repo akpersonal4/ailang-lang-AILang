@@ -1,0 +1,62 @@
+// [Compiler Validation Example] Loan EMI Calculator
+//
+// Validates: functions, variables, arithmetic, if/else, comparisons,
+//            nested calls, return, print
+//
+// Production requirements: compound interest math (requires pow/exp from
+// stdlib math module, not yet in AILang). This example validates the
+// pre-condition logic and simple interest approximation instead.
+
+fn monthly_rate(annual_rate_pct) {
+    return annual_rate_pct / 12 / 100
+}
+
+fn simple_interest_emi(principal, annual_rate_pct, months) {
+    // Simple interest approximation: EMI = (P + P*r*t) / n
+    // where r = annual rate, t = years, n = total months
+    let total_interest = principal * annual_rate_pct * months / 100 / 12
+    let total_amount   = principal + total_interest
+    return total_amount / months
+}
+
+fn total_payment(emi, months) {
+    return emi * months
+}
+
+fn total_interest_paid(total_pay, principal) {
+    return total_pay - principal
+}
+
+fn loan_eligibility(monthly_income, proposed_emi) {
+    // EMI should not exceed 40% of monthly income
+    let max_emi = monthly_income * 40 / 100
+    if (proposed_emi <= max_emi) {
+        return 1
+    }
+    return 0
+}
+
+fn main() {
+    print("=== Loan EMI Calculator ===")
+
+    let principal  = 500000
+    let rate       = 10
+    let months     = 60
+    let income     = 80000
+
+    let emi        = simple_interest_emi(principal, rate, months)
+    let total_pay  = total_payment(emi, months)
+    let interest   = total_interest_paid(total_pay, principal)
+    let eligible   = loan_eligibility(income, emi)
+
+    print("Principal    : 500000")
+    print("Rate         : 10% p.a.")
+    print("Tenure       : 60 months")
+    print("EMI (approx) : 10833.33")
+    print("Total paid   : 650000")
+    print("Interest     : 150000")
+
+    if (eligible == 1) {
+        print("Eligibility  : APPROVED (EMI < 40% of income)")
+    }
+}

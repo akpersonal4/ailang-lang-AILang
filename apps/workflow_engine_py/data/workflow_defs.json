@@ -1,0 +1,1 @@
+[{"id": 1, "name": "Test", "description": "desc", "states": ["a", "b"], "initial_state": "a", "transitions": [{"from_state": "a", "to_state": "b", "action": "go", "conditions": [], "required_role": "operator"}], "created_at": 1784042186}]

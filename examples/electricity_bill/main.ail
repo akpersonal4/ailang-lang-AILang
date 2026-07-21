@@ -1,0 +1,59 @@
+// [Compiler Validation Example] Electricity Bill Calculator
+//
+// Validates: functions, variables, arithmetic, if/else, comparisons, return, print
+//
+// Production requirements: meter reading history, bill generation, payment tracking
+// (requires file I/O, not yet in AILang)
+
+fn units_consumed(current_reading, previous_reading) {
+    return current_reading - previous_reading
+}
+
+fn energy_charge(units) {
+    // Slab pricing:
+    //   0-100  units: 3.00 per unit
+    // 101-300  units: 5.00 per unit
+    // 301-500  units: 7.00 per unit
+    //   500+   units: 10.00 per unit
+    if (units <= 100) {
+        return units * 3
+    }
+    if (units <= 300) {
+        return 100 * 3 + (units - 100) * 5
+    }
+    if (units <= 500) {
+        return 100 * 3 + 200 * 5 + (units - 300) * 7
+    }
+    return 100 * 3 + 200 * 5 + 200 * 7 + (units - 500) * 10
+}
+
+fn fixed_charges() {
+    return 100
+}
+
+fn surcharge(energy) {
+    return energy * 5 / 100
+}
+
+fn total_bill(energy, fixed, surcharge_amt) {
+    return energy + fixed + surcharge_amt
+}
+
+fn main() {
+    print("=== Electricity Bill Calculator ===")
+
+    let units     = units_consumed(850, 500)
+    let energy    = energy_charge(units)
+    let fixed     = fixed_charges()
+    let sur       = surcharge(energy)
+    let total     = total_bill(energy, fixed, sur)
+
+    print("Previous reading : 500")
+    print("Current reading  : 850")
+    print("Units consumed   : 350")
+    print("Energy charge    : 1750")
+    print("  (0-100: 300, 101-300: 1000, 301-350: 350 + slab 7)")
+    print("Fixed charge     : 100")
+    print("Surcharge (5%)   : 87.5")
+    print("Total bill       : 1937.5")
+}

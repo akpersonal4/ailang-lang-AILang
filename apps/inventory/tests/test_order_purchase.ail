@@ -1,0 +1,162 @@
+import list;
+import map;
+import string;
+import convert;
+import helpers;
+import storage;
+import order_purchase_order;
+import stock_movement;
+
+fn test_po_nonexistent() {
+    let tpnResult = order_purchase_order.purchase_get("NON-EXISTENT-ORDER");
+    if (tpnResult != false) {
+        print("FAIL: purchase_get returned non-false for non-existent order");
+        return false;
+    }
+    print("PASS: purchase_get_nonexistent");
+    return true;
+}
+
+fn test_po_create_vendor() {
+    let tpvenVendor = map.new();
+    map.set(tpvenVendor, "id", "TEST-VEN-001");
+    map.set(tpvenVendor, "name", "Test Vendor");
+    map.set(tpvenVendor, "email", "test@vendor.com");
+    map.set(tpvenVendor, "phone", "555-TEST");
+    map.set(tpvenVendor, "contact_person", "TestContact");
+    map.set(tpvenVendor, "active", true);
+    let tpvenNow = helpers.helpers_current_timestamp();
+    map.set(tpvenVendor, "created_at", tpvenNow);
+    map.set(tpvenVendor, "updated_at", tpvenNow);
+    storage.storage_add("vendors", tpvenVendor);
+    let tpvenLoaded = helpers.helpers_find_in_list(storage.storage_list("vendors"), "id", "TEST-VEN-001");
+    if (tpvenLoaded == false) {
+        print("FAIL: vendor not found after storage_add");
+        return false;
+    }
+    print("PASS: created test vendor");
+    return true;
+}
+
+fn test_po_create_product() {
+    let tpcpProduct = map.new();
+    map.set(tpcpProduct, "id", "TEST-PRD-001");
+    map.set(tpcpProduct, "name", "Test Product");
+    map.set(tpcpProduct, "sku", "TST-001");
+    map.set(tpcpProduct, "category_id", "");
+    map.set(tpcpProduct, "unit_price", 100);
+    map.set(tpcpProduct, "cost_price", 50);
+    map.set(tpcpProduct, "unit", "pcs");
+    map.set(tpcpProduct, "active", true);
+    let tpcpNow = helpers.helpers_current_timestamp();
+    map.set(tpcpProduct, "created_at", tpcpNow);
+    map.set(tpcpProduct, "updated_at", "");
+    storage.storage_add("products", tpcpProduct);
+    let tpcpLoaded = helpers.helpers_find_in_list(storage.storage_list("products"), "id", "TEST-PRD-001");
+    if (tpcpLoaded == false) {
+        print("FAIL: product not found after storage_add");
+        return false;
+    }
+    print("PASS: created test product");
+    return true;
+}
+
+fn test_po_create_valuation() {
+    let tpcvVal = map.new();
+    map.set(tpcvVal, "id", "TEST-VAL-001");
+    map.set(tpcvVal, "product_id", "TEST-PRD-001");
+    map.set(tpcvVal, "method", "fifo");
+    map.set(tpcvVal, "current_cost", 0);
+    map.set(tpcvVal, "quantity_on_hand", 0);
+    let tpcvNow = helpers.helpers_current_timestamp();
+    map.set(tpcvVal, "last_updated", tpcvNow);
+    storage.storage_add("valuations", tpcvVal);
+    let tpcvLoaded = helpers.helpers_find_in_list(storage.storage_list("valuations"), "id", "TEST-VAL-001");
+    if (tpcvLoaded == false) {
+        print("FAIL: valuation not found after storage_add");
+        return false;
+    }
+    print("PASS: created test valuation");
+    return true;
+}
+
+fn test_po_verify_items(tpviOrderId) {
+    let tpviItems = order_purchase_order.purchase_get_items(tpviOrderId);
+    let tpviCount = list.len(tpviItems);
+    if (tpviCount != 1) {
+        print("FAIL: expected 1 item, got " + convert.to_string(tpviCount));
+        return false;
+    }
+    let tpviFirst = list.get(tpviItems, 0);
+    let tpviQty = helpers.helpers_get_map_value_safe(tpviFirst, "quantity", 0);
+    if (tpviQty != 5) {
+        print("FAIL: expected quantity 5, got " + convert.to_string(tpviQty));
+        return false;
+    }
+    let tpviPrice = helpers.helpers_get_map_value_safe(tpviFirst, "unit_price", 0);
+    if (tpviPrice != 100) {
+        print("FAIL: expected unit_price 100, got " + convert.to_string(tpviPrice));
+        return false;
+    }
+    let tpviProdId = helpers.helpers_get_map_value_safe(tpviFirst, "product_id", "");
+    if (tpviProdId != "TEST-PRD-001") {
+        print("FAIL: expected product_id TEST-PRD-001, got " + tpviProdId);
+        return false;
+    }
+    print("PASS: purchase_verify_items");
+    return true;
+}
+
+fn test_po_receive_order(tproOrderId) {
+    let tproResult = order_purchase_order.purchase_receive(tproOrderId);
+    if (tproResult == false) {
+        print("FAIL: purchase_receive returned false");
+        return false;
+    }
+    let tproMovements = stock_movement.movement_list();
+    let tproCount = list.len(tproMovements);
+    if (tproCount == 0) {
+        print("FAIL: no stock movements created after receive");
+        return false;
+    }
+    print("PASS: purchase_receive");
+    return true;
+}
+
+fn main() {
+    let tm1 = test_po_nonexistent();
+    if (tm1 == false) {
+        return 1;
+    }
+    let tm2 = test_po_create_vendor();
+    if (tm2 == false) {
+        return 1;
+    }
+    let tm3 = test_po_create_product();
+    if (tm3 == false) {
+        return 1;
+    }
+    let tm4 = test_po_create_valuation();
+    if (tm4 == false) {
+        return 1;
+    }
+    let tmPO = order_purchase_order.purchase_create("TEST-VEN-001", "Test purchase order");
+    let tmPOId = helpers.helpers_get_map_value_safe(tmPO, "id", "");
+    print("Created PO with id: " + tmPOId);
+    let tmAddItem = order_purchase_order.purchase_add_item(tmPOId, "TEST-PRD-001", 5, 100);
+    if (tmAddItem == false) {
+        print("FAIL: purchase_add_item returned false");
+        return 1;
+    }
+    print("PASS: purchase_add_item");
+    let tm5 = test_po_verify_items(tmPOId);
+    if (tm5 == false) {
+        return 1;
+    }
+    let tm6 = test_po_receive_order(tmPOId);
+    if (tm6 == false) {
+        return 1;
+    }
+    print("ALL PURCHASE ORDER TESTS PASSED");
+    return 0;
+}

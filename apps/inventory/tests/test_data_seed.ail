@@ -1,0 +1,52 @@
+import list;
+import map;
+import string;
+import convert;
+import helpers;
+import storage;
+import data_seed;
+
+fn test_seed_all() {
+    let tsProd = map.new();
+    map.set(tsProd, "id", "SEED-PROD-1");
+    map.set(tsProd, "name", "Seed Test Product 1");
+    map.set(tsProd, "unit_price", 100);
+    storage.storage_add("products", tsProd);
+    let tsProd2 = map.new();
+    map.set(tsProd2, "id", "SEED-PROD-2");
+    map.set(tsProd2, "name", "Seed Test Product 2");
+    map.set(tsProd2, "unit_price", 50);
+    storage.storage_add("products", tsProd2);
+    let tsCust = map.new();
+    map.set(tsCust, "id", "SEED-CUST-1");
+    map.set(tsCust, "name", "Seed Customer");
+    storage.storage_add("customers", tsCust);
+    let tsSalesOrder = map.new();
+    map.set(tsSalesOrder, "id", "SEED-SO-1");
+    map.set(tsSalesOrder, "customer_id", "SEED-CUST-1");
+    map.set(tsSalesOrder, "total", 500);
+    storage.storage_add("sales_orders", tsSalesOrder);
+    let tsSalesOrder2 = map.new();
+    map.set(tsSalesOrder2, "id", "SEED-SO-2");
+    map.set(tsSalesOrder2, "customer_id", "SEED-CUST-1");
+    map.set(tsSalesOrder2, "total", 1000);
+    storage.storage_add("sales_orders", tsSalesOrder2);
+    let tsInv = map.new();
+    map.set(tsInv, "id", "SEED-INV-1");
+    map.set(tsInv, "customer_id", "SEED-CUST-1");
+    map.set(tsInv, "total_amount", 500);
+    map.set(tsInv, "status", "draft");
+    storage.storage_add("invoices", tsInv);
+    data_seed.seed_all();
+    print("PASS: seed_all completed without error");
+    return true;
+}
+
+fn main() {
+    let tsResult = test_seed_all();
+    if (tsResult == false) {
+        return 1;
+    }
+    print("ALL DATA SEED TESTS PASSED");
+    return 0;
+}

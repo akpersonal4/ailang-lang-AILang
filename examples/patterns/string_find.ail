@@ -1,0 +1,40 @@
+// String Find Pattern
+// Finds the index of a substring within a string (manual implementation)
+// string.find() does NOT exist in stdlib — implement this yourself
+//
+// fn find_substring(text, pattern, start) { ... }
+// fn string_contains(text, pattern) { ... }
+// fn count_occurrences(text, pattern, i, acc) { ... }
+
+import string;
+
+fn find_substring(text, pattern, start) {
+    let tlen = string.length(text);
+    let plen = string.length(pattern);
+    if (start + plen > tlen) { return -1 }
+    let segment = string.substring(text, start, start + plen);
+    if (string.equals(segment, pattern)) { return start }
+    return find_substring(text, pattern, start + 1)
+}
+
+fn string_contains(text, pattern) {
+    if (find_substring(text, pattern, 0) >= 0) { return true }
+    return false
+}
+
+fn count_occurrences(text, pattern, start, acc) {
+    let pos = find_substring(text, pattern, start);
+    if (pos < 0) { return acc }
+    return count_occurrences(text, pattern, pos + 1, acc + 1)
+}
+
+fn main() {
+    let text = "the quick brown fox jumps over the lazy dog";
+    let pos = find_substring(text, "fox", 0);
+    print("'fox' found at position:", pos);
+    let pos2 = find_substring(text, "cat", 0);
+    print("'cat' found at:", pos2);
+    let count = count_occurrences(text, "the", 0, 0);
+    print("'the' appears", count, "times");
+    print("Contains 'brown':", string_contains(text, "brown"))
+}

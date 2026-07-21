@@ -1,0 +1,114 @@
+import storage;
+import helpers;
+import list;
+import map;
+import string;
+import stock_movement;
+
+fn transfer_create(trcProdId, trcSource, trcDest, trcQty, trcStatus) {
+    let trcTransfer = map.new();
+    let trcId = helpers.helpers_generate_id("TRF-");
+    let trcNow = helpers.helpers_current_timestamp();
+    map.set(trcTransfer, "id", trcId);
+    map.set(trcTransfer, "product_id", trcProdId);
+    map.set(trcTransfer, "source_location", trcSource);
+    map.set(trcTransfer, "destination_location", trcDest);
+    map.set(trcTransfer, "quantity", trcQty);
+    map.set(trcTransfer, "status", trcStatus);
+    map.set(trcTransfer, "created_at", trcNow);
+    map.set(trcTransfer, "completed_at", "");
+    storage.storage_add("transfers", trcTransfer);
+    return trcTransfer;
+}
+
+fn transfer_get(trgId) {
+    return storage.storage_get_by_id("transfers", trgId);
+}
+
+fn transfer_complete_rec(tcrItems, tcrId, tcrIdx) {
+    if (tcrIdx >= list.len(tcrItems)) {
+        return tcrItems;
+    }
+    let tcrItem = list.get(tcrItems, tcrIdx);
+    let tcrItemId = helpers.helpers_get_map_value_safe(tcrItem, "id", "");
+    if (tcrItemId == tcrId) {
+        let tcrNow = helpers.helpers_current_timestamp();
+        map.set(tcrItem, "status", "completed");
+        map.set(tcrItem, "completed_at", tcrNow);
+        let tcrProductId = helpers.helpers_get_map_value_safe(tcrItem, "product_id", "");
+        let tcrSource = helpers.helpers_get_map_value_safe(tcrItem, "source_location", "");
+        let tcrDest = helpers.helpers_get_map_value_safe(tcrItem, "destination_location", "");
+        let tcrQty = helpers.helpers_get_map_value_safe(tcrItem, "quantity", 0);
+        let tcrOutQty = 0 - tcrQty;
+        let tcrNotesOut = "Transfer out from " + tcrSource;
+        let tcrNotesIn = "Transfer in to " + tcrDest;
+        stock_movement.movement_create(tcrProductId, "transfer_out", tcrOutQty, "transfer", tcrId, tcrNotesOut);
+        stock_movement.movement_create(tcrProductId, "transfer_in", tcrQty, "transfer", tcrId, tcrNotesIn);
+        return tcrItems;
+    }
+    return transfer_complete_rec(tcrItems, tcrId, tcrIdx + 1);
+}
+
+fn transfer_complete(tcmpId) {
+    let tcmpTransfer = transfer_get(tcmpId);
+    if (tcmpTransfer == false) {
+        return false;
+    }
+    let tcmpStatus = helpers.helpers_get_map_value_safe(tcmpTransfer, "status", "");
+    if (tcmpStatus != "pending") {
+        return false; // Only pending transfers can be completed
+    }
+    let tcmpItems = storage.storage_list("transfers");
+    let tcmpResult = transfer_complete_rec(tcmpItems, tcmpId, 0);
+    storage.storage_save("transfers", tcmpResult);
+    return storage.storage_get_by_id("transfers", tcmpId);
+}
+
+fn transfer_cancel_rec(tcncrItems, tcncrId, tcncrIdx) {
+    if (tcncrIdx >= list.len(tcncrItems)) {
+        return tcncrItems;
+    }
+    let tcncrItem = list.get(tcncrItems, tcncrIdx);
+    let tcncrItemId = helpers.helpers_get_map_value_safe(tcncrItem, "id", "");
+    if (tcncrItemId == tcncrId) {
+        map.set(tcncrItem, "status", "cancelled");
+        return tcncrItems;
+    }
+    return transfer_cancel_rec(tcncrItems, tcncrId, tcncrIdx + 1);
+}
+
+fn transfer_cancel(tcncId) {
+    let tcncItems = storage.storage_list("transfers");
+    let tcncResult = transfer_cancel_rec(tcncItems, tcncId, 0);
+    return storage.storage_save("transfers", tcncResult);
+}
+
+fn transfer_update_status(tusTransferId, tusNewStatus) {
+    let tusChanges = map.new();
+    let tusNow = helpers.helpers_current_timestamp();
+    map.set(tusChanges, "status", tusNewStatus);
+    map.set(tusChanges, "updated_at", tusNow);
+    return storage.storage_update("transfers", tusTransferId, tusChanges);
+}
+
+fn transfer_list() {
+    return storage.storage_list("transfers");
+}
+
+fn transfer_list_pending_rec(tlprItems, tlprResults, tlprIdx) {
+    if (tlprIdx >= list.len(tlprItems)) {
+        return tlprResults;
+    }
+    let tlprItem = list.get(tlprItems, tlprIdx);
+    let tlprStatus = helpers.helpers_get_map_value_safe(tlprItem, "status", "");
+    if (tlprStatus == "pending") {
+        list.append(tlprResults, tlprItem);
+    }
+    return transfer_list_pending_rec(tlprItems, tlprResults, tlprIdx + 1);
+}
+
+fn transfer_list_pending() {
+    let tlpItems = storage.storage_list("transfers");
+    let tlpResults = list.new();
+    return transfer_list_pending_rec(tlpItems, tlpResults, 0);
+}

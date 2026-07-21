@@ -1,0 +1,132 @@
+// P8 Security Vulnerability Test — AILang
+// Each function contains one vulnerability pattern.
+// We measure: compile-time detection, runtime detection, or undetected.
+
+import list;
+import map;
+import string;
+import convert;
+
+// --- V1: Null dereference ---
+// AILang: `let` requires initializer. Cannot assign null/none.
+fn v1_null_dereference() {
+    print("V1: Null dereference is impossible in AILang (let requires value)");
+}
+
+// --- V2: Missing existence check ---
+// AILang: map.get on missing key returns false (safe default at runtime)
+// Convention: check map.has first, but compiler doesn't enforce
+fn v2_missing_guard() {
+    let v2Map = map.set(map.new(), "key1", "value1");
+    let v2Val = map.get(v2Map, "nonexistent");
+    if (v2Val == false) {
+        print("V2: Missing guard returns false for missing key");
+    }
+}
+
+// --- V3: Type confusion ---
+// AILang: static type inference prevents type errors at compile time
+fn v3_type_confusion() {
+    let v3Val = 42;
+    // v3Val = "hello";  // Would be compile error
+    print("V3: Type confusion blocked by static typing");
+}
+
+// --- V4: Implicit coercion ---
+// AILang: no implicit type coercion (compile-time safety)
+fn v4_implicit_coercion() {
+    let v4Num = 42;
+    let v4Str = " items";
+    // let v4Bad = v4Num + v4Str;  // Would be compile error
+    print("V4: No implicit coercion in AILang");
+}
+
+// --- V5: Division by zero ---
+// AILang: runtime panic (same as Python)
+fn v5_division_by_zero() {
+    let v5X = 10;
+    let v5Y = 0;
+    let v5Result = v5X / v5Y;
+    print("V5: Result = " + convert.to_string(v5Result));
+}
+
+// --- V6: List index out of bounds ---
+// AILang: list.get with out-of-bounds index returns false (safe default)
+fn v6_out_of_bounds() {
+    let v6Items = list.append(42, list.new());
+    let v6Val = list.get(5, v6Items);
+    if (v6Val == false) {
+        print("V6: Out-of-bounds access returns false (safe default)");
+    }
+}
+
+// --- V7: Unvalidated input in path ---
+// AILang: no detection of path traversal
+fn v7_unvalidated_input() {
+    let v7Input = "../secret.txt";
+    let v7Path = "/data/" + v7Input;
+    print("V7: Path not validated: " + v7Path);
+}
+
+// --- V8: SQL injection ---
+// N/A: AILang has no SQL
+fn v8_sql_injection() {
+    print("V8: SQL injection not applicable");
+}
+
+// --- V9: Infinite recursion ---
+// AILang: runtime stack overflow
+fn v9_infinite_recursion(v9Counter) {
+    let v9Msg = "V9: count = " + convert.to_string(v9Counter);
+    print(v9Msg);
+    let v9Next = v9Counter + 1;
+    v9_infinite_recursion(v9Next);
+}
+
+// --- V10: Variable shadowing ---
+// AILang: unique variable names required
+fn v10_variable_shadowing() {
+    let v10X = 1;
+    // let v10X = 2;  // Would be compile error
+    print("V10: Variable shadowing prevented");
+}
+
+fn main() {
+    print("=== P8 Security Vulnerability Test — AILang ===");
+    print("");
+
+    print("--- V1: Null Dereference ---");
+    v1_null_dereference();
+
+    print("--- V2: Missing Guard ---");
+    v2_missing_guard();
+
+    print("--- V3: Type Confusion ---");
+    v3_type_confusion();
+
+    print("--- V4: Implicit Coercion ---");
+    v4_implicit_coercion();
+
+    // V5 uncommented to test runtime crash
+    print("--- V5: Division by Zero ---");
+    v5_division_by_zero();
+
+    print("--- V6: Out of Bounds ---");
+    v6_out_of_bounds();
+
+    print("--- V7: Path Traversal ---");
+    v7_unvalidated_input();
+
+    print("--- V8: SQL Injection ---");
+    v8_sql_injection();
+
+    // V9 uncommented to test runtime crash
+    print("--- V9: Infinite Recursion ---");
+    v9_infinite_recursion(0);
+
+    print("--- V10: Variable Shadowing ---");
+    v10_variable_shadowing();
+
+    print("");
+    print("=== P8 AILang Security Test Complete ===");
+}

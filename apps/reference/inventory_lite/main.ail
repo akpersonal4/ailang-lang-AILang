@@ -1,0 +1,130 @@
+import list;
+import map;
+import json;
+import file;
+import io;
+import convert;
+
+fn create_product(id, name, price, stock) {
+    let product = map.new();
+    map.set(product, "id", id);
+    map.set(product, "name", name);
+    map.set(product, "price", price);
+    map.set(product, "stock", stock);
+    return product;
+}
+
+fn add_product(products, id, name, price, stock) {
+    let item = create_product(id, name, price, stock);
+    list.append(products, item);
+    return products;
+}
+
+fn find_product_helper(products, id, index) {
+    if (index >= list.len(products)) {
+        return -1;
+    }
+    let item = list.get(products, index);
+    if (map.get(item, "id") == id) {
+        return item;
+    }
+    return find_product_helper(products, id, index + 1);
+}
+
+fn find_product(products, id) {
+    return find_product_helper(products, id, 0);
+}
+
+fn stock_in(products, id, qty) {
+    let item = find_product(products, id);
+    if (item != -1) {
+        let current = map.get(item, "stock");
+        map.set(item, "stock", current + qty);
+    }
+    return item;
+}
+
+fn stock_out(products, id, qty) {
+    let item = find_product(products, id);
+    if (item != -1) {
+        let current = map.get(item, "stock");
+        map.set(item, "stock", current - qty);
+    }
+    return item;
+}
+
+fn count_products_helper(products, idx) {
+    if (idx >= list.len(products)) {
+        return 0;
+    }
+    return 1 + count_products_helper(products, idx + 1);
+}
+
+fn count_products(products) {
+    return count_products_helper(products, 0);
+}
+
+fn total_value_helper(products, idx) {
+    if (idx >= list.len(products)) {
+        return 0;
+    }
+    let item = list.get(products, idx);
+    let prc = map.get(item, "price");
+    let stk = map.get(item, "stock");
+    return convert.to_int(prc * stk) + total_value_helper(products, idx + 1);
+}
+
+fn total_value(products) {
+    return total_value_helper(products, 0);
+}
+
+fn display_products_helper(products, idx) {
+    if (idx >= list.len(products)) {
+        return -1;
+    }
+    let item = list.get(products, idx);
+    let pid = map.get(item, "id");
+    let pname = map.get(item, "name");
+    let pprice = map.get(item, "price");
+    let pstock = map.get(item, "stock");
+    io.writeln("[" + convert.to_string(pid) + "] " + pname + " - $" + convert.to_string(pprice) + " (" + convert.to_string(pstock) + " in stock)");
+    return display_products_helper(products, idx + 1);
+}
+
+fn display_products(products) {
+    let cnt = count_products(products);
+    io.writeln("Products (" + convert.to_string(cnt) + " items):");
+    return display_products_helper(products, 0);
+}
+
+fn save_inventory(filename, products) {
+    let data = json.stringify(products);
+    file.write(filename, data);
+    return 0;
+}
+
+fn load_inventory(filename) {
+    let data = file.read(filename);
+    let loaded = json.parse(data);
+    return loaded;
+}
+
+fn main() {
+    io.writeln("=== Inventory Management ===");
+    let products = list.new();
+    add_product(products, 1, "Widget", 9.99, 100);
+    add_product(products, 2, "Gadget", 24.99, 50);
+    add_product(products, 3, "Doohickey", 4.99, 200);
+    display_products(products);
+    let val = total_value(products);
+    io.writeln("Total inventory value: $" + convert.to_string(val));
+    let w = stock_in(products, 1, 25);
+    io.writeln("Stock in: " + map.get(w, "name") + " +25 = " + convert.to_string(map.get(w, "stock")));
+    let g = stock_out(products, 2, 10);
+    io.writeln("Stock out: " + map.get(g, "name") + " -10 = " + convert.to_string(map.get(g, "stock")));
+    save_inventory("data/inventory.json", products);
+    let loaded = load_inventory("data/inventory.json");
+    io.writeln("Loaded " + convert.to_string(count_products(loaded)) + " products from file");
+}
+
+main();

@@ -1,0 +1,8 @@
+import convert;
+fn testRecurse(counter) {
+    let msg = "count = " + convert.to_string(counter);
+    print(msg);
+    let next = counter + 1;
+    testRecurse(next);
+}
+fn main() { testRecurse(0); }

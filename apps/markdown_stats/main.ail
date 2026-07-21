@@ -1,0 +1,21 @@
+import string;
+
+fn is_header(line) {
+    return string.starts_with(line, "#")
+}
+
+fn is_link(text) {
+    return string.contains(text, "[") && string.contains(text, "](")
+}
+
+fn main() {
+    print("=== Markdown Statistics ===");
+    let md = "# Title\n\n## Section 1\n\nThis is a [link](https://example.com) here.\n\n## Section 2\n\nAnother [link](https://test.org) and more text.\n";
+    print("Contains headers:", string.contains(md, "#"));
+    print("Contains links:", string.contains(md, "["));
+    print("Has 'Section':", string.contains(md, "Section"));
+    print("Length:", string.length(md));
+    let line1 = md;
+    print("Starts with '#':", string.starts_with(md, "#"));
+    print("Starts with '##':", string.contains(md, "##"))
+}

@@ -1,0 +1,72 @@
+import list;
+import map;
+import string;
+import convert;
+import helpers;
+import storage;
+
+fn ph_filter_by_product_rec(pmItems, pmProductId, pmIdx, pmAcc) {
+    let pmLen = list.len(pmItems);
+    if (pmIdx < pmLen) {
+        let pmItem = list.get(pmItems, pmIdx);
+        let pmProdId = helpers.helpers_get_map_value_safe(pmItem, "product_id", "");
+        if (pmProdId == pmProductId) {
+            list.append(pmAcc, pmItem);
+        }
+        return ph_filter_by_product_rec(pmItems, pmProductId, pmIdx + 1, pmAcc);
+    }
+    return pmAcc;
+}
+
+fn ph_clear_product_rec(pmItems, pmProductId, pmIdx, pmAcc) {
+    let pmLen = list.len(pmItems);
+    if (pmIdx < pmLen) {
+        let pmItem = list.get(pmItems, pmIdx);
+        let pmProdId = helpers.helpers_get_map_value_safe(pmItem, "product_id", "");
+        if (pmProdId != pmProductId) {
+            list.append(pmAcc, pmItem);
+        }
+        return ph_clear_product_rec(pmItems, pmProductId, pmIdx + 1, pmAcc);
+    }
+    return pmAcc;
+}
+
+fn price_history_record(pmProductId, pmOldPrice, pmNewPrice, pmChangedBy) {
+    let pmRecord = map.new();
+    let pmId = helpers.helpers_generate_id("PH-");
+    let pmNow = helpers.helpers_current_timestamp();
+    map.set(pmRecord, "id", pmId);
+    map.set(pmRecord, "product_id", pmProductId);
+    map.set(pmRecord, "old_price", pmOldPrice);
+    map.set(pmRecord, "new_price", pmNewPrice);
+    map.set(pmRecord, "changed_by", pmChangedBy);
+    map.set(pmRecord, "created_at", pmNow);
+    storage.storage_add("price_history", pmRecord);
+    return pmRecord;
+}
+
+fn price_history_get_by_product(pmProductId) {
+    let pmAll = storage.storage_list("price_history");
+    let pmResults = list.new();
+    return ph_filter_by_product_rec(pmAll, pmProductId, 0, pmResults);
+}
+
+fn price_history_latest(pmProductId) {
+    let pmFiltered = price_history_get_by_product(pmProductId);
+    let pmLen = list.len(pmFiltered);
+    if (pmLen == 0) {
+        return false;
+    }
+    return list.get(pmFiltered, pmLen - 1);
+}
+
+fn price_history_list() {
+    return storage.storage_list("price_history");
+}
+
+fn price_history_clear_product(pmProductId) {
+    let pmAll = storage.storage_list("price_history");
+    let pmFiltered = list.new();
+    let pmResult = ph_clear_product_rec(pmAll, pmProductId, 0, pmFiltered);
+    return storage.storage_save("price_history", pmResult);
+}

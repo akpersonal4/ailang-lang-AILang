@@ -1,0 +1,18 @@
+fn to_string(value) {
+    return __native_to_string(value)
+}
+
+fn to_int(value) {
+    return __native_to_int(value)
+}
+
+fn to_bool(value) {
+    if (value == "true" || value == "1" || value == "yes") {
+        return true
+    }
+    return false
+}
+
+fn to_number(value) {
+    return __native_to_int(value)
+}

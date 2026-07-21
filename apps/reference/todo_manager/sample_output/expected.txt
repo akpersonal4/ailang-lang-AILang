@@ -1,0 +1,13 @@
+=== Todo Manager ===
+Todo list (3 items):
+[x] Learn AILang
+[ ] Build an app
+[ ] Write docs
+Pending: 2
+After completing task 1:
+[x] Learn AILang
+[x] Build an app
+[ ] Write docs
+Pending: 1
+Saved to data/todos.json
+Loaded 3 todos from file

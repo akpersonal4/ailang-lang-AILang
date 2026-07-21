@@ -1,0 +1,58 @@
+import file;
+import environment;
+import list;
+import io;
+import convert;
+
+fn extract_module(line) {
+    let parts = line.split(" ");
+    let mod_with_semi = list.get(parts, 1);
+    return mod_with_semi.replace(";", "");
+}
+
+fn find_imports(lines, idx, result) {
+    if (idx >= list.len(lines)) {
+        return result;
+    }
+    let line = list.get(lines, idx);
+    let trimmed = line.strip();
+    if (trimmed.startswith("import ")) {
+        let module_name = extract_module(trimmed);
+        list.append(result, module_name);
+    }
+    return find_imports(lines, idx + 1, result);
+}
+
+fn print_imports(imports, idx) {
+    if (idx >= list.len(imports)) {
+        return 0;
+    }
+    let mod = list.get(imports, idx);
+    io.println("  -> " + mod);
+    return print_imports(imports, idx + 1);
+}
+
+fn collect_args(args, idx, result) {
+    if (idx >= list.len(args)) {
+        return result;
+    }
+    let val = list.get(args, idx);
+    if (val != "--") {
+        list.append(result, val);
+    }
+    return collect_args(args, idx + 1, result);
+}
+
+fn main() {
+    let raw = environment.args();
+    let all_args = list.new();
+    let user_args = collect_args(raw, 0, all_args);
+    let file_path = list.get(user_args, 0);
+    let content = file.read(file_path);
+    let lines = content.split("\n");
+    let imports_list = list.new();
+    let imports = find_imports(lines, 0, imports_list);
+    io.println("Dependency Graph for " + file_path + ":");
+    let print_result = print_imports(imports, 0);
+    return 0;
+}

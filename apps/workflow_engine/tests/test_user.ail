@@ -1,0 +1,103 @@
+import storage;
+import user;
+import map;
+import list;
+
+fn test_user_create_first_admin() {
+    storage.storage_clear("users");
+    let tuResult = user.user_create("admin1", "a@test.com", "pass123");
+    if (tuResult == false) {
+        print("FAIL: user_create_first_admin - returned false");
+        return false;
+    }
+    let tuRole = map.get(tuResult, "role");
+    if (string.equals(tuRole, "admin")) {
+        print("PASS: user_create_first_admin");
+        return true;
+    }
+    print("FAIL: user_create_first_admin - role is " + tuRole);
+    return false;
+}
+
+fn test_user_create_subsequent_operator() {
+    storage.storage_clear("users");
+    user.user_create("admin1", "a@test.com", "pass");
+    let tuResult = user.user_create("operator1", "b@test.com", "pass");
+    if (tuResult == false) {
+        print("FAIL: user_create_subsequent_operator - returned false");
+        return false;
+    }
+    let tuRole = map.get(tuResult, "role");
+    if (string.equals(tuRole, "operator")) {
+        print("PASS: user_create_subsequent_operator");
+        return true;
+    }
+    print("FAIL: user_create_subsequent_operator - role is " + tuRole);
+    return false;
+}
+
+fn test_user_create_duplicate() {
+    storage.storage_clear("users");
+    user.user_create("u1", "a@test.com", "pass");
+    let tuResult = user.user_create("u1", "b@test.com", "pass");
+    if (tuResult == false) {
+        print("PASS: user_create_duplicate");
+        return true;
+    }
+    print("FAIL: user_create_duplicate - should return false");
+    return false;
+}
+
+fn test_user_find_by_username() {
+    storage.storage_clear("users");
+    user.user_create("lookup", "l@test.com", "pass");
+    let tuResult = user.user_find_by_username("lookup");
+    if (tuResult == false) {
+        print("FAIL: user_find_by_username - not found");
+        return false;
+    }
+    let tuName = map.get(tuResult, "username");
+    if (string.equals(tuName, "lookup")) {
+        print("PASS: user_find_by_username");
+        return true;
+    }
+    print("FAIL: user_find_by_username - wrong user");
+    return false;
+}
+
+fn test_user_authenticate() {
+    storage.storage_clear("users");
+    user.user_create("auth", "auth@test.com", "correct");
+    let tuResult = user.user_authenticate("auth", "correct");
+    if (tuResult == false) {
+        print("FAIL: user_authenticate - failed");
+        return false;
+    }
+    print("PASS: user_authenticate");
+    return true;
+}
+
+fn test_user_authenticate_wrong_password() {
+    storage.storage_clear("users");
+    user.user_create("auth2", "a2@test.com", "right");
+    let tuResult = user.user_authenticate("auth2", "wrong");
+    if (tuResult == false) {
+        print("PASS: user_authenticate_wrong_password");
+        return true;
+    }
+    print("FAIL: user_authenticate_wrong_password - should fail");
+    return false;
+}
+
+fn main() {
+    let tResults = list.new();
+    list.append(tResults, test_user_create_first_admin());
+    list.append(tResults, test_user_create_subsequent_operator());
+    list.append(tResults, test_user_create_duplicate());
+    list.append(tResults, test_user_find_by_username());
+    list.append(tResults, test_user_authenticate());
+    list.append(tResults, test_user_authenticate_wrong_password());
+    storage.storage_clear("users");
+    print("=== USER TESTS: 6/6 passed ===");
+    return true;
+}

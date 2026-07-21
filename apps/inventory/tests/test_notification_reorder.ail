@@ -1,0 +1,137 @@
+import list;
+import map;
+import string;
+import convert;
+import helpers;
+import storage;
+import reorder;
+import notification;
+import notification_reorder;
+
+fn test_rn_check_all() {
+    let trnProd = map.new();
+    map.set(trnProd, "id", "RN-TEST-PROD-1");
+    map.set(trnProd, "name", "Reorder Notify Product");
+    storage.storage_add("products", trnProd);
+    reorder.reorder_set_level("RN-TEST-PROD-1", 10, 100, 50);
+    let trnValuation = map.new();
+    map.set(trnValuation, "id", "RN-VAL-1");
+    map.set(trnValuation, "product_id", "RN-TEST-PROD-1");
+    map.set(trnValuation, "quantity_on_hand", 5);
+    map.set(trnValuation, "current_cost", 10);
+    map.set(trnValuation, "method", "fifo");
+    map.set(trnValuation, "last_updated", helpers.helpers_current_timestamp());
+    storage.storage_add("valuations", trnValuation);
+    let trnCount = notification_reorder.reorder_notify_check_all();
+    if (trnCount == 0) {
+        print("FAIL: expected at least 1 notification");
+        return false;
+    }
+    print("PASS: reorder_notify_check_all");
+    return true;
+}
+
+fn test_rn_get_pending() {
+    let trpProd = map.new();
+    map.set(trpProd, "id", "RN-TEST-PROD-2");
+    map.set(trpProd, "name", "Pending Notify Product");
+    storage.storage_add("products", trpProd);
+    reorder.reorder_set_level("RN-TEST-PROD-2", 5, 50, 25);
+    let trpValuation = map.new();
+    map.set(trpValuation, "id", "RN-VAL-2");
+    map.set(trpValuation, "product_id", "RN-TEST-PROD-2");
+    map.set(trpValuation, "quantity_on_hand", 2);
+    map.set(trpValuation, "current_cost", 10);
+    map.set(trpValuation, "method", "fifo");
+    map.set(trpValuation, "last_updated", helpers.helpers_current_timestamp());
+    storage.storage_add("valuations", trpValuation);
+    notification_reorder.reorder_notify_check_all();
+    let trpPending = notification_reorder.reorder_notify_get_pending();
+    let trpLen = list.len(trpPending);
+    if (trpLen == 0) {
+        print("FAIL: expected at least 1 pending notification");
+        return false;
+    }
+    print("PASS: reorder_notify_get_pending");
+    return true;
+}
+
+fn test_rn_clear() {
+    let trcProd = map.new();
+    map.set(trcProd, "id", "RN-TEST-PROD-3");
+    map.set(trcProd, "name", "Clear Notify Product");
+    storage.storage_add("products", trcProd);
+    reorder.reorder_set_level("RN-TEST-PROD-3", 5, 50, 25);
+    let trcValuation = map.new();
+    map.set(trcValuation, "id", "RN-VAL-3");
+    map.set(trcValuation, "product_id", "RN-TEST-PROD-3");
+    map.set(trcValuation, "quantity_on_hand", 1);
+    map.set(trcValuation, "current_cost", 10);
+    map.set(trcValuation, "method", "fifo");
+    map.set(trcValuation, "last_updated", helpers.helpers_current_timestamp());
+    storage.storage_add("valuations", trcValuation);
+    notification_reorder.reorder_notify_check_all();
+    let trcResult = notification_reorder.reorder_notify_clear("RN-TEST-PROD-3");
+    let trcPending = notification_reorder.reorder_notify_get_pending();
+    let trcLen = list.len(trcPending);
+    let trcFound = false;
+    let trcCheckIdx = 0;
+    if (trcLen > 0) {
+        let trcCheckItem = list.get(trcPending, trcCheckIdx);
+        let trcCheckProd = helpers.helpers_get_map_value_safe(trcCheckItem, "product_id", "");
+        if (trcCheckProd == "RN-TEST-PROD-3") {
+            trcFound = true;
+        }
+    }
+    if (trcFound) {
+        print("FAIL: notification still exists after clear");
+        return false;
+    }
+    print("PASS: reorder_notify_clear");
+    return true;
+}
+
+fn test_rn_summary() {
+    let trsProd = map.new();
+    map.set(trsProd, "id", "RN-TEST-PROD-4");
+    map.set(trsProd, "name", "Summary Notify Product");
+    storage.storage_add("products", trsProd);
+    reorder.reorder_set_level("RN-TEST-PROD-4", 10, 100, 50);
+    let trsValuation = map.new();
+    map.set(trsValuation, "id", "RN-VAL-4");
+    map.set(trsValuation, "product_id", "RN-TEST-PROD-4");
+    map.set(trsValuation, "quantity_on_hand", 3);
+    map.set(trsValuation, "current_cost", 10);
+    map.set(trsValuation, "method", "fifo");
+    map.set(trsValuation, "last_updated", helpers.helpers_current_timestamp());
+    storage.storage_add("valuations", trsValuation);
+    notification_reorder.reorder_notify_check_all();
+    let trsCount = notification_reorder.reorder_notify_summary();
+    if (trsCount == 0) {
+        print("FAIL: expected non-zero summary count");
+        return false;
+    }
+    print("PASS: reorder_notify_summary");
+    return true;
+}
+
+fn main() {
+    let tr1 = test_rn_check_all();
+    if (tr1 == false) {
+        return 1;
+    }
+    let tr2 = test_rn_get_pending();
+    if (tr2 == false) {
+        return 1;
+    }
+    let tr3 = test_rn_clear();
+    if (tr3 == false) {
+        return 1;
+    }
+    let tr4 = test_rn_summary();
+    if (tr4 == false) {
+        return 1;
+    }
+    print("ALL NOTIFICATION REORDER TESTS PASSED");
+    return 0;
+}

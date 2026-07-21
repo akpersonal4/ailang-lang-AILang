@@ -1,0 +1,119 @@
+import file;
+import json;
+import path;
+import list;
+import map;
+import string;
+import convert;
+import storage;
+import helpers;
+
+fn backup_coll_name_from_file(bcfFilename) {
+    let bcfLen = string.length(bcfFilename);
+    let bcfNameLen = bcfLen - 5;
+    if (bcfNameLen <= 0) {
+        return "";
+    }
+    return string.substring(bcfFilename, 0, bcfNameLen);
+}
+
+fn backup_filter_json_files_rec(bfrFiles, bfrIdx, bfrAcc) {
+    if (bfrIdx >= list.len(bfrFiles)) {
+        return bfrAcc;
+    }
+    let bfrFile = list.get(bfrFiles, bfrIdx);
+    if (string.contains(bfrFile, ".json")) {
+        let bfrCollName = backup_coll_name_from_file(bfrFile);
+        if (bfrCollName != "") {
+            if (string.contains(bfrCollName, "auto_") == false) {
+                list.append(bfrAcc, bfrCollName);
+            }
+        }
+    }
+    return backup_filter_json_files_rec(bfrFiles, bfrIdx + 1, bfrAcc);
+}
+
+fn backup_collections_list() {
+    let bclFiles = file.listdir("data");
+    let bclResult = list.new();
+    return backup_filter_json_files_rec(bclFiles, 0, bclResult);
+}
+
+fn backup_create_rec_collections(bcrcColls, bcrcIdx, bcrcResult) {
+    if (bcrcIdx >= list.len(bcrcColls)) {
+        return bcrcResult;
+    }
+    let bcrcCollName = list.get(bcrcColls, bcrcIdx);
+    let bcrcItems = storage.storage_load(bcrcCollName);
+    map.set(bcrcResult, bcrcCollName, bcrcItems);
+    return backup_create_rec_collections(bcrcColls, bcrcIdx + 1, bcrcResult);
+}
+
+fn backup_create() {
+    let bcTimestamp = convert.to_string(helpers.helpers_unix_timestamp());
+    let bcBackupPath = path.join("backups", bcTimestamp + ".json");
+    let bcColls = backup_collections_list();
+    let bcAllData = map.new();
+    bcAllData = backup_create_rec_collections(bcColls, 0, bcAllData);
+    let bcJson = json.stringify(bcAllData);
+    file.write(bcBackupPath, bcJson);
+    print("Backup created: " + bcBackupPath);
+    return true;
+}
+
+fn backup_restore_rec(brKeys, brData, brIdx) {
+    if (brIdx >= list.len(brKeys)) {
+        return true;
+    }
+    let brKey = list.get(brKeys, brIdx);
+    if (map.has(brData, brKey)) {
+        let brItems = map.get(brData, brKey);
+        storage.storage_save(brKey, brItems);
+    }
+    return backup_restore_rec(brKeys, brData, brIdx + 1);
+}
+
+fn backup_restore(brTimestamp) {
+    let brBackupPath = path.join("backups", brTimestamp + ".json");
+    if (file.exists(brBackupPath) == false) {
+        print("Error: Backup not found: " + brBackupPath);
+        return false;
+    }
+    let brContent = file.read(brBackupPath);
+    let brData = json.parse(brContent);
+    if (brData == false) {
+        print("Error: Cannot parse backup file: " + brBackupPath);
+        return false;
+    }
+    let brKeys = map.keys(brData);
+    backup_restore_rec(brKeys, brData, 0);
+    print("Restored from: " + brBackupPath);
+    return true;
+}
+
+fn backup_list_rec(blFiles, blIdx) {
+    if (blIdx >= list.len(blFiles)) {
+        return true;
+    }
+    let blFile = list.get(blFiles, blIdx);
+    if (string.contains(blFile, ".json")) {
+        print("  " + blFile);
+    }
+    return backup_list_rec(blFiles, blIdx + 1);
+}
+
+fn backup_list() {
+    if (file.exists("backups") == false) {
+        print("No backups directory found. Create 'backups/' first.");
+        return false;
+    }
+    let blFiles = file.listdir("backups");
+    let blCount = list.len(blFiles);
+    if (blCount == 0) {
+        print("No backups found.");
+        return true;
+    }
+    print("Available backups (" + convert.to_string(blCount) + " files):");
+    backup_list_rec(blFiles, 0);
+    return true;
+}

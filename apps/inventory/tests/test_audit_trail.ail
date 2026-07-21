@@ -1,0 +1,132 @@
+import list;
+import map;
+import string;
+import convert;
+import helpers;
+import storage;
+import audit;
+import audit_trail;
+
+fn test_audit_trail_list_by_date_range() {
+    let tdOld = map.new();
+    let tdNew = map.new();
+    map.set(tdNew, "status", "active");
+    audit.audit_log("create", "customer", "CUST-DR-001", tdOld, tdNew, "date_range_user");
+    let tdResults = audit_trail.audit_trail_list_by_date_range("2000-01-01", "2100-12-31");
+    if (tdResults == false) {
+        print("FAIL: audit_trail_list_by_date_range returned false");
+        return false;
+    }
+    let tdLen = list.len(tdResults);
+    if (tdLen == 0) {
+        print("FAIL: audit_trail_list_by_date_range - no results");
+        return false;
+    }
+    print("PASS: audit_trail_list_by_date_range (" + convert.to_string(tdLen) + " items)");
+    return true;
+}
+
+fn test_audit_trail_list_by_user() {
+    let tuOld = map.new();
+    let tuNew = map.new();
+    map.set(tuNew, "name", "User Test Item");
+    audit.audit_log("update", "product", "PROD-USR-001", tuOld, tuNew, "test_user_at");
+    audit.audit_log("update", "product", "PROD-USR-002", tuOld, tuNew, "test_user_at");
+    let tuResults = audit_trail.audit_trail_list_by_user("test_user_at");
+    if (tuResults == false) {
+        print("FAIL: audit_trail_list_by_user returned false");
+        return false;
+    }
+    let tuLen = list.len(tuResults);
+    if (tuLen < 2) {
+        print("FAIL: audit_trail_list_by_user - expected at least 2, got " + convert.to_string(tuLen));
+        return false;
+    }
+    print("PASS: audit_trail_list_by_user (" + convert.to_string(tuLen) + " items)");
+    return true;
+}
+
+fn test_audit_trail_summary_by_action() {
+    let tsOld = map.new();
+    let tsNew = map.new();
+    map.set(tsNew, "qty", 10);
+    audit.audit_log("create", "inventory", "INV-SUM-001", tsOld, tsNew, "summary_user");
+    audit.audit_log("create", "inventory", "INV-SUM-002", tsOld, tsNew, "summary_user");
+    audit.audit_log("update", "inventory", "INV-SUM-003", tsOld, tsNew, "summary_user");
+    let tsSummary = audit_trail.audit_trail_summary_by_action();
+    if (tsSummary == false) {
+        print("FAIL: audit_trail_summary_by_action returned false");
+        return false;
+    }
+    let tsCreateCount = helpers.helpers_get_map_value_safe(tsSummary, "create", 0);
+    if (tsCreateCount < 2) {
+        print("FAIL: audit_trail_summary_by_action - expected create >= 2, got " + convert.to_string(tsCreateCount));
+        return false;
+    }
+    let tsUpdateCount = helpers.helpers_get_map_value_safe(tsSummary, "update", 0);
+    if (tsUpdateCount < 1) {
+        print("FAIL: audit_trail_summary_by_action - expected update >= 1, got " + convert.to_string(tsUpdateCount));
+        return false;
+    }
+    print("PASS: audit_trail_summary_by_action (create=" + convert.to_string(tsCreateCount) + ", update=" + convert.to_string(tsUpdateCount) + ")");
+    return true;
+}
+
+fn test_audit_trail_recent() {
+    let trOld = map.new();
+    let trNew = map.new();
+    map.set(trNew, "price", 99);
+    audit.audit_log("update", "product", "PROD-REC-001", trOld, trNew, "recent_user");
+    let trResults = audit_trail.audit_trail_recent(5);
+    if (trResults == false) {
+        print("FAIL: audit_trail_recent returned false");
+        return false;
+    }
+    let trLen = list.len(trResults);
+    if (trLen == 0) {
+        print("FAIL: audit_trail_recent - no results");
+        return false;
+    }
+    print("PASS: audit_trail_recent (" + convert.to_string(trLen) + " items)");
+    return true;
+}
+
+fn test_audit_trail_list_by_user_empty() {
+    let teResults = audit_trail.audit_trail_list_by_user("nonexistent_user_xyz");
+    if (teResults == false) {
+        print("FAIL: audit_trail_list_by_user_empty returned false");
+        return false;
+    }
+    let teLen = list.len(teResults);
+    if (teLen != 0) {
+        print("FAIL: audit_trail_list_by_user_empty - expected 0, got " + convert.to_string(teLen));
+        return false;
+    }
+    print("PASS: audit_trail_list_by_user_empty");
+    return true;
+}
+
+fn main() {
+    let ttr1 = test_audit_trail_list_by_date_range();
+    if (ttr1 == false) {
+        return 1;
+    }
+    let ttr2 = test_audit_trail_list_by_user();
+    if (ttr2 == false) {
+        return 1;
+    }
+    let ttr3 = test_audit_trail_summary_by_action();
+    if (ttr3 == false) {
+        return 1;
+    }
+    let ttr4 = test_audit_trail_recent();
+    if (ttr4 == false) {
+        return 1;
+    }
+    let ttr5 = test_audit_trail_list_by_user_empty();
+    if (ttr5 == false) {
+        return 1;
+    }
+    print("ALL AUDIT TRAIL TESTS PASSED");
+    return 0;
+}

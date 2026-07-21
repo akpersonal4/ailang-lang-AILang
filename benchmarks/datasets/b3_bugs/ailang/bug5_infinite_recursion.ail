@@ -1,0 +1,14 @@
+import io;
+
+fn countdown(n) {
+    io.println(n);
+    if n == 0 {
+        return 0;
+    }
+    return countdown(n - 1);
+}
+
+fn main() {
+    countdown(5);
+    return 0;
+}

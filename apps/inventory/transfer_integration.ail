@@ -1,0 +1,123 @@
+import list;
+import map;
+import string;
+import convert;
+import helpers;
+import storage;
+import stock_transfer;
+import stock_movement;
+import warehouse;
+
+fn ti_list_by_warehouse_rec(tilwrItems, tilwrWarehouseId, tilwrIdx, tilwrAcc) {
+    if (tilwrIdx >= list.len(tilwrItems)) {
+        return tilwrAcc;
+    }
+    let tilwrItem = list.get(tilwrItems, tilwrIdx);
+    let tilwrSource = helpers.helpers_get_map_value_safe(tilwrItem, "source_warehouse_id", "");
+    if (tilwrSource == tilwrWarehouseId) {
+        list.append(tilwrAcc, tilwrItem);
+    } else {
+        let tilwrDest = helpers.helpers_get_map_value_safe(tilwrItem, "dest_warehouse_id", "");
+        if (tilwrDest == tilwrWarehouseId) {
+            list.append(tilwrAcc, tilwrItem);
+        }
+    }
+    return ti_list_by_warehouse_rec(tilwrItems, tilwrWarehouseId, tilwrIdx + 1, tilwrAcc);
+}
+
+fn ti_summary_rec(tisrItems, tisrIdx, tisrPending, tisrCompleted, tisrCancelled) {
+    if (tisrIdx >= list.len(tisrItems)) {
+        let tisrResult = map.new();
+        map.set(tisrResult, "pending", tisrPending);
+        map.set(tisrResult, "completed", tisrCompleted);
+        map.set(tisrResult, "cancelled", tisrCancelled);
+        return tisrResult;
+    }
+    let tisrItem = list.get(tisrItems, tisrIdx);
+    let tisrStatus = helpers.helpers_get_map_value_safe(tisrItem, "status", "");
+    if (tisrStatus == "pending") {
+        return ti_summary_rec(tisrItems, tisrIdx + 1, tisrPending + 1, tisrCompleted, tisrCancelled);
+    }
+    if (tisrStatus == "completed") {
+        return ti_summary_rec(tisrItems, tisrIdx + 1, tisrPending, tisrCompleted + 1, tisrCancelled);
+    }
+    if (tisrStatus == "cancelled") {
+        return ti_summary_rec(tisrItems, tisrIdx + 1, tisrPending, tisrCompleted, tisrCancelled + 1);
+    }
+    return ti_summary_rec(tisrItems, tisrIdx + 1, tisrPending, tisrCompleted, tisrCancelled);
+}
+
+fn ti_create_transfer(ticProductId, ticSourceWarehouseId, ticDestWarehouseId, ticQuantity, ticCreatedBy) {
+    let ticStatus = "pending_approval";
+    if (ticQuantity <= 100) {
+        ticStatus = "pending";
+    }
+    let ticTransfer = stock_transfer.transfer_create(ticProductId, ticSourceWarehouseId, ticDestWarehouseId, ticQuantity, ticStatus);
+    let ticTransferId = helpers.helpers_get_map_value_safe(ticTransfer, "id", "");
+    let ticNow = helpers.helpers_current_timestamp();
+    let ticOutQty = 0 - ticQuantity;
+    let ticOutNotes = "Transfer out to " + ticDestWarehouseId;
+    stock_movement.movement_create(ticProductId, "transfer_out", ticOutQty, "transfer", ticTransferId, ticOutNotes);
+    let ticInNotes = "Transfer in from " + ticSourceWarehouseId;
+    stock_movement.movement_create(ticProductId, "transfer_in", ticQuantity, "transfer", ticTransferId, ticInNotes);
+    let ticIntegration = map.new();
+    let ticIntegrationId = helpers.helpers_generate_id("TI-");
+    map.set(ticIntegration, "id", ticIntegrationId);
+    map.set(ticIntegration, "transfer_id", ticTransferId);
+    map.set(ticIntegration, "product_id", ticProductId);
+    map.set(ticIntegration, "source_warehouse_id", ticSourceWarehouseId);
+    map.set(ticIntegration, "dest_warehouse_id", ticDestWarehouseId);
+    map.set(ticIntegration, "quantity", ticQuantity);
+    map.set(ticIntegration, "status", ticStatus);
+    map.set(ticIntegration, "created_by", ticCreatedBy);
+    map.set(ticIntegration, "created_at", ticNow);
+    storage.storage_add("transfer_integrations", ticIntegration);
+    return ticIntegration;
+}
+
+fn ti_get_by_id(tigiId) {
+    return storage.storage_get_by_id("transfer_integrations", tigiId);
+}
+
+fn ti_list() {
+    return storage.storage_list("transfer_integrations");
+}
+
+fn ti_list_by_warehouse(tilwWarehouseId) {
+    let tilwAll = storage.storage_list("transfer_integrations");
+    let tilwResults = list.new();
+    return ti_list_by_warehouse_rec(tilwAll, tilwWarehouseId, 0, tilwResults);
+}
+
+fn ti_summary() {
+    let tisAll = storage.storage_list("transfer_integrations");
+    return ti_summary_rec(tisAll, 0, 0, 0, 0);
+}
+
+fn ti_approve_transfer(tiaId) {
+    let tiaIntegration = ti_get_by_id(tiaId);
+    if (tiaIntegration == false) {
+        return false;
+    }
+    let tiaTransferId = helpers.helpers_get_map_value_safe(tiaIntegration, "transfer_id", "");
+    stock_transfer.transfer_update_status(tiaTransferId, "pending");
+    let tiaChanges = map.new();
+    let tiaNow = helpers.helpers_current_timestamp();
+    map.set(tiaChanges, "status", "pending");
+    map.set(tiaChanges, "updated_at", tiaNow);
+    return storage.storage_update("transfer_integrations", tiaId, tiaChanges);
+}
+
+fn ti_reject_transfer(tirId) {
+    let tirIntegration = ti_get_by_id(tirId);
+    if (tirIntegration == false) {
+        return false;
+    }
+    let tirTransferId = helpers.helpers_get_map_value_safe(tirIntegration, "transfer_id", "");
+    stock_transfer.transfer_update_status(tirTransferId, "rejected");
+    let tirChanges = map.new();
+    let tirNow = helpers.helpers_current_timestamp();
+    map.set(tirChanges, "status", "rejected");
+    map.set(tirChanges, "updated_at", tirNow);
+    return storage.storage_update("transfer_integrations", tirId, tirChanges);
+}

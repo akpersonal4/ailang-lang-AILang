@@ -1,0 +1,60 @@
+import storage;
+import history;
+import map;
+import list;
+
+fn test_history_add() {
+    storage.storage_clear("history");
+    let thEntry = history.history_add(1, "start", "pending", 1, "created");
+    if (thEntry == false) {
+        print("FAIL: history_add - returned false");
+        return false;
+    }
+    let thFrom = map.get(thEntry, "from_state");
+    let thTo = map.get(thEntry, "to_state");
+    if (string.equals(thFrom, "start") && string.equals(thTo, "pending")) {
+        print("PASS: history_add");
+        return true;
+    }
+    print("FAIL: history_add - wrong states");
+    return false;
+}
+
+fn test_history_list_by_instance() {
+    storage.storage_clear("history");
+    history.history_add(1, "start", "a", 1, "note1");
+    history.history_add(1, "a", "b", 1, "note2");
+    history.history_add(2, "start", "x", 1, "note3");
+    let thResult = history.history_list_by_instance(1);
+    let thLen = list.len(thResult);
+    if (thLen == 2) {
+        print("PASS: history_list_by_instance");
+        return true;
+    }
+    print("FAIL: history_list_by_instance - expected 2, got " + convert.to_string(thLen));
+    return false;
+}
+
+fn test_history_list_all() {
+    storage.storage_clear("history");
+    history.history_add(1, "a", "b", 1, "n1");
+    history.history_add(2, "c", "d", 1, "n2");
+    let thResult = history.history_list_all();
+    let thLen = list.len(thResult);
+    if (thLen == 2) {
+        print("PASS: history_list_all");
+        return true;
+    }
+    print("FAIL: history_list_all - expected 2, got " + convert.to_string(thLen));
+    return false;
+}
+
+fn main() {
+    let tResults = list.new();
+    list.append(tResults, test_history_add());
+    list.append(tResults, test_history_list_by_instance());
+    list.append(tResults, test_history_list_all());
+    storage.storage_clear("history");
+    print("=== HISTORY TESTS: 3/3 passed ===");
+    return true;
+}

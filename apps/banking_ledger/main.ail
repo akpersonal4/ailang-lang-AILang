@@ -1,0 +1,56 @@
+import list;
+import map;
+import time;
+
+fn create_account(accounts, name, initial) {
+    let acc = map.new();
+    map.set(acc, "name", name);
+    map.set(acc, "balance", initial);
+    list.append(accounts, acc);
+    return accounts
+}
+
+fn deposit(acc, amount) {
+    let bal = map.get(acc, "balance");
+    map.set(acc, "balance", bal + amount);
+    return acc
+}
+
+fn withdraw(acc, amount) {
+    let bal = map.get(acc, "balance");
+    if (bal >= amount) {
+        map.set(acc, "balance", bal - amount);
+        return true
+    }
+    return false
+}
+
+fn display_account_helper(accounts, i) {
+    if (i >= list.len(accounts)) { return false }
+    let acc = list.get(accounts, i);
+    print(map.get(acc, "name"), "balance:", map.get(acc, "balance"));
+    display_account_helper(accounts, i + 1)
+}
+
+fn display_accounts(accounts) {
+    display_account_helper(accounts, 0)
+}
+
+fn main() {
+    print("=== Banking Ledger ===");
+    let accounts = list.new();
+    accounts = create_account(accounts, "Checking", 1000);
+    accounts = create_account(accounts, "Savings", 5000);
+    print("Initial balances:");
+    display_accounts(accounts);
+    let checking = list.get(accounts, 0);
+    deposit(checking, 500);
+    print("Deposited $500 into Checking");
+    let ok = withdraw(checking, 200);
+    if (ok) {
+        print("Withdrew $200 from Checking")
+    };
+    print("Final balances:");
+    display_accounts(accounts);
+    print("Timestamp:", time.now())
+}

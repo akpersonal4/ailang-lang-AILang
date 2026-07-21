@@ -1,0 +1,15 @@
+import io;
+
+fn double(x) {
+    return x * 2;
+}
+
+fn calculate(x) {
+    return double(x);
+}
+
+fn main() {
+    let result = calculate(5);
+    io.println(result);
+    return 0;
+}

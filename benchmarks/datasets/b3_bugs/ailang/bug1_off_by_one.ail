@@ -1,0 +1,29 @@
+import list;
+import io;
+
+fn sum_even_helper(numbers, index, accumulator) {
+    let len = list.len(numbers);
+    if index >= len {
+        return accumulator;
+    }
+    let value = list.get(numbers, index);
+    let remainder = value % 2;
+    if remainder == 0 {
+        return sum_even_helper(numbers, index + 1, accumulator + value);
+    }
+    return sum_even_helper(numbers, index + 1, accumulator);
+}
+
+fn sum_even(numbers) {
+    return sum_even_helper(numbers, 0, 0);
+}
+
+fn main() {
+    let test = list.new();
+    test = list.append(test, 1);
+    test = list.append(test, 2);
+    test = list.append(test, 3);
+    let result = sum_even(test);
+    io.println(result);
+    return 0;
+}

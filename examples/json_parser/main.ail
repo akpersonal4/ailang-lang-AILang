@@ -1,0 +1,56 @@
+// [Compiler Validation Example] JSON Parser
+//
+// Validates: functions, if/else, comparisons, return, print
+//
+// Note: This program validates field-level logic using hardcoded values.
+// A production JSON parser would require standard library support for
+// string indexing, character scanning, and recursive descent parsing,
+// which are not yet available in AILang.
+
+fn json_get_name() {
+    return "Alice"
+}
+
+fn json_get_age() {
+    return 30
+}
+
+fn json_get_active() {
+    return 1
+}
+
+fn validate_name(name) {
+    if (name == "") {
+        return 0
+    }
+    return 1
+}
+
+fn validate_age(age) {
+    if (age < 0) {
+        return 0
+    }
+    if (age > 150) {
+        return 0
+    }
+    return 1
+}
+
+fn main() {
+    print("=== JSON Parser ===")
+    print("Input: {\"name\": \"Alice\", \"age\": 30, \"active\": true}")
+    let name = json_get_name()
+    let age = json_get_age()
+    let active = json_get_active()
+    let name_ok = validate_name(name)
+    let age_ok = validate_age(age)
+    if (name_ok == 1) {
+        print("name: Alice  [valid]")
+    }
+    if (age_ok == 1) {
+        print("age: 30  [valid]")
+    }
+    if (active == 1) {
+        print("active: true")
+    }
+}

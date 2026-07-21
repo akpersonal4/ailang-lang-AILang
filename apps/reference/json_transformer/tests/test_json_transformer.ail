@@ -1,0 +1,55 @@
+import list;
+import map;
+import json;
+import io;
+import string;
+import convert;
+
+fn test_uppercase_field() {
+    let trec = map.new();
+    map.set(trec, "name", "alice");
+    let tval = map.get(trec, "name");
+    let tupper = string.uppercase(tval);
+    if (tupper == "ALICE") {
+        io.writeln("PASS: uppercase_field")
+    } else {
+        io.writeln("FAIL: uppercase_field")
+    }
+}
+
+fn test_normalize_record() {
+    let trec2 = map.new();
+    map.set(trec2, "name", "bob");
+    map.set(trec2, "city", "los angeles");
+    map.set(trec2, "score", 92);
+    let tname = string.uppercase(map.get(trec2, "name"));
+    let tcity = string.uppercase(map.get(trec2, "city"));
+    if (tname == "BOB") {
+        io.writeln("PASS: normalize_record name")
+    } else {
+        io.writeln("FAIL: normalize_record name")
+    }
+    if (tcity == "LOS ANGELES") {
+        io.writeln("PASS: normalize_record city")
+    } else {
+        io.writeln("FAIL: normalize_record city")
+    }
+}
+
+fn test_build_output() {
+    let tjson = '[{"name":"carol","city":"chicago","score":78}]';
+    let tparsed = json.parse(tjson);
+    let titem = list.get(tparsed, 0);
+    let tresult = string.uppercase(map.get(titem, "name"));
+    if (tresult == "CAROL") {
+        io.writeln("PASS: build_output")
+    } else {
+        io.writeln("FAIL: build_output")
+    }
+}
+
+fn main() {
+    test_uppercase_field();
+    test_normalize_record();
+    test_build_output()
+}

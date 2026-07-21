@@ -1,0 +1,111 @@
+import list;
+import map;
+import string;
+import convert;
+import helpers;
+import storage;
+import vendor;
+
+fn supplier_search_rec(spItems, spTerm, spIdx, spAcc) {
+    let spLen = list.len(spItems);
+    if (spIdx < spLen) {
+        let spItem = list.get(spItems, spIdx);
+        let spName = helpers.helpers_get_map_value_safe(spItem, "name", "");
+        let spContact = helpers.helpers_get_map_value_safe(spItem, "contact_person", "");
+        let spEmail = helpers.helpers_get_map_value_safe(spItem, "email", "");
+        let spTermLower = string.lowercase(spTerm);
+        let spMatch = false;
+        if (string.contains(string.lowercase(spName), spTermLower)) {
+            spMatch = true;
+        }
+        if (spMatch == false && string.contains(string.lowercase(spContact), spTermLower)) {
+            spMatch = true;
+        }
+        if (spMatch == false && string.contains(string.lowercase(spEmail), spTermLower)) {
+            spMatch = true;
+        }
+        if (spMatch) {
+            list.append(spAcc, spItem);
+        }
+        return supplier_search_rec(spItems, spTerm, spIdx + 1, spAcc);
+    }
+    return spAcc;
+}
+
+fn supplier_top_rated_rec(spItems, spMinRating, spIdx, spAcc) {
+    let spLen = list.len(spItems);
+    if (spIdx < spLen) {
+        let spItem = list.get(spItems, spIdx);
+        let spRating = helpers.helpers_get_map_value_safe(spItem, "rating", 0);
+        if (spRating >= spMinRating) {
+            list.append(spAcc, spItem);
+        }
+        return supplier_top_rated_rec(spItems, spMinRating, spIdx + 1, spAcc);
+    }
+    return spAcc;
+}
+
+fn supplier_filter_by_payment_terms_rec(spItems, spTerms, spIdx, spAcc) {
+    let spLen = list.len(spItems);
+    if (spIdx < spLen) {
+        let spItem = list.get(spItems, spIdx);
+        let spPayment = helpers.helpers_get_map_value_safe(spItem, "payment_terms", "");
+        if (spPayment == spTerms) {
+            list.append(spAcc, spItem);
+        }
+        return supplier_filter_by_payment_terms_rec(spItems, spTerms, spIdx + 1, spAcc);
+    }
+    return spAcc;
+}
+
+fn supplier_create(spName, spContactPerson, spEmail, spPhone, spAddress, spPaymentTerms, spLeadTimeDays, spRating) {
+    let spSupplier = map.new();
+    let spId = helpers.helpers_generate_id("SUP-");
+    let spNow = helpers.helpers_current_timestamp();
+    map.set(spSupplier, "id", spId);
+    map.set(spSupplier, "name", spName);
+    map.set(spSupplier, "contact_person", spContactPerson);
+    map.set(spSupplier, "email", spEmail);
+    map.set(spSupplier, "phone", spPhone);
+    map.set(spSupplier, "address", spAddress);
+    map.set(spSupplier, "payment_terms", spPaymentTerms);
+    map.set(spSupplier, "lead_time_days", spLeadTimeDays);
+    map.set(spSupplier, "rating", spRating);
+    map.set(spSupplier, "active", true);
+    map.set(spSupplier, "created_at", spNow);
+    map.set(spSupplier, "updated_at", spNow);
+    storage.storage_add("suppliers", spSupplier);
+    return spSupplier;
+}
+
+fn supplier_get_by_id(spSupId) {
+    return storage.storage_get_by_id("suppliers", spSupId);
+}
+
+fn supplier_list() {
+    return storage.storage_list("suppliers");
+}
+
+fn supplier_update(spSupId, spChanges) {
+    let spNow = helpers.helpers_current_timestamp();
+    map.set(spChanges, "updated_at", spNow);
+    return storage.storage_update("suppliers", spSupId, spChanges);
+}
+
+fn supplier_search(spSearchTerm) {
+    let spAll = storage.storage_list("suppliers");
+    let spResults = list.new();
+    return supplier_search_rec(spAll, spSearchTerm, 0, spResults);
+}
+
+fn supplier_top_rated(spMinRating) {
+    let spAll = storage.storage_list("suppliers");
+    let spResults = list.new();
+    return supplier_top_rated_rec(spAll, spMinRating, 0, spResults);
+}
+
+fn supplier_get_by_payment_terms(spTerms) {
+    let spAll = storage.storage_list("suppliers");
+    let spResults = list.new();
+    return supplier_filter_by_payment_terms_rec(spAll, spTerms, 0, spResults);
+}

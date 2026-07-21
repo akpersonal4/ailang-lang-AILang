@@ -1,0 +1,31 @@
+import json;
+import list;
+import map;
+
+fn main() {
+    print("=== JSON Demo ===");
+
+    let raw = "{\"name\": \"Alice\", \"age\": 30, \"active\": true}";
+    let data = json.parse(raw);
+
+    print("Parsed JSON object:");
+    print("Name: " + map.get(data, "name"));
+    print("Age:");
+    print(map.get(data, "age"));
+    print("Active:");
+    print(map.get(data, "active"));
+
+    let items = json.parse("[10, 20, 30]");
+    print("First item:");
+    print(list.get(items, 0));
+
+    let person = map.new();
+    map.set(person, "name", "Bob");
+    map.set(person, "age", 25);
+    let output = json.stringify(person);
+    print("Stringified: " + output);
+
+    let empty = json.parse("null");
+    print("Null value:");
+    print(empty);
+}

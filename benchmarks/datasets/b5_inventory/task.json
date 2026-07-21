@@ -1,0 +1,47 @@
+{
+  "benchmark": "B5",
+  "baseline": "Python 3.12",
+  "subject": "Inventory Management System",
+  "description": "Simulated stdlib/helper upgrades: measure cost of adapting to API changes.",
+  "scenarios": [
+    {
+      "id": "sig_change_helpers_generate_id",
+      "description": "helpers_generate_id(prefix) now requires a second parameter: helpers_generate_id(prefix, length). All call sites must be updated. AILang has no default params.",
+      "language": "both",
+      "files_affected_ailang": [
+        "helpers.ail",
+        "stock_movement.ail",
+        "order_purchase_order.ail",
+        "order_sales_order.ail",
+        "stock_valuation.ail",
+        "reorder.ail",
+        "transfer_integration.ail"
+      ],
+      "files_affected_python": [
+        "core/helpers.py",
+        "inventory/stock_movement.py",
+        "orders/purchase_order.py",
+        "orders/sales_order.py",
+        "inventory/stock_valuation.py",
+        "business/reorder.py",
+        "inventory/transfer_integration.py"
+      ],
+      "acceptance": [
+        "All call sites updated to pass length parameter",
+        "Full test suite passes (38/38)",
+        "No calls to helpers_generate_id with 1 argument remain"
+      ]
+    },
+    {
+      "id": "deprecate_storage_add",
+      "description": "storage_add is deprecated in favor of storage_insert. storage_add remains as an alias. All call sites must migrate.",
+      "language": "both",
+      "acceptance": [
+        "All call sites use storage_insert instead of storage_add",
+        "storage_add still exists as an alias",
+        "Full test suite passes (38/38)",
+        "Zero calls to storage_add remain in app code"
+      ]
+    }
+  ]
+}

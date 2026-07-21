@@ -1,0 +1,110 @@
+import list;
+import map;
+import json;
+import file;
+import io;
+import convert;
+import math;
+import time;
+
+fn create_line_item(dscr, qnty, prc) {
+    let li = map.new();
+    map.set(li, "desc", dscr);
+    map.set(li, "qty", qnty);
+    map.set(li, "price", prc);
+    map.set(li, "total", math.mul(qnty, prc));
+    li;
+}
+
+fn add_line_item(litems, dscr2, qnty2, prc2) {
+    let nitem = create_line_item(dscr2, qnty2, prc2);
+    list.append(litems, nitem);
+    litems;
+}
+
+fn line_total(litem) {
+    math.mul(map.get(litem, "qty"), map.get(litem, "price"));
+}
+
+fn calc_subtotal_helper(litems2, p) {
+    if (p >= list.len(litems2)) {
+        return 0;
+    }
+    let cv = line_total(list.get(litems2, p));
+    cv + calc_subtotal_helper(litems2, p + 1);
+}
+
+fn calc_subtotal(litems3) {
+    calc_subtotal_helper(litems3, 0);
+}
+
+fn calc_tax(stotal, trate) {
+    math.div(math.mul(stotal, trate), 100);
+}
+
+fn calc_total(stotal2, taxval) {
+    stotal2 + taxval;
+}
+
+fn format_currency(amt) {
+    "$" + convert.to_string(amt);
+}
+
+fn display_line_items_helper(litems4, p2) {
+    if (p2 >= list.len(litems4)) {
+        return litems4;
+    }
+    let di = list.get(litems4, p2);
+    let dstr = string.concat(string.concat(string.concat(string.concat(string.concat(string.concat(string.concat("  ", map.get(di, "desc")), " x "), convert.to_string(map.get(di, "qty"))), " @ "), format_currency(map.get(di, "price"))), " = "), format_currency(map.get(di, "total")));
+    io.writeln(dstr);
+    display_line_items_helper(litems4, p2 + 1);
+}
+
+fn display_line_items(litems5) {
+    display_line_items_helper(litems5, 0);
+}
+
+fn build_invoice(cust, litems6, taxrate) {
+    let inv = map.new();
+    map.set(inv, "customer", cust);
+    map.set(inv, "items", litems6);
+    let inv_stotal = calc_subtotal(litems6);
+    let inv_tax = calc_tax(inv_stotal, taxrate);
+    map.set(inv, "date", time.now());
+    map.set(inv, "subtotal", inv_stotal);
+    map.set(inv, "tax_rate", taxrate);
+    map.set(inv, "tax", inv_tax);
+    map.set(inv, "total", calc_total(inv_stotal, inv_tax));
+    inv;
+}
+
+fn display_invoice(inv2) {
+    let di_cust = map.get(inv2, "customer");
+    io.writeln(string.concat("Invoice for: ", map.get(di_cust, "name")));
+    io.writeln(string.concat("Date: ", map.get(inv2, "date")));
+    io.writeln("---");
+    io.writeln("Line Items:");
+    display_line_items(map.get(inv2, "items"));
+    io.writeln("---");
+    io.writeln(string.concat("Subtotal: ", format_currency(map.get(inv2, "subtotal"))));
+    io.writeln(string.concat(string.concat(string.concat("Tax (", convert.to_string(map.get(inv2, "tax_rate"))), "%): "), format_currency(map.get(inv2, "tax"))));
+    io.writeln(string.concat("Total: ", format_currency(map.get(inv2, "total"))));
+}
+
+fn save_invoice(fname, inv3) {
+    file.write(fname, json.stringify(inv3));
+    fname;
+}
+
+fn main() {
+    io.writeln("=== Invoice Generator ===");
+    let cust_data = json.parse(file.read("sample_input/customer.json"));
+    let order_items = list.new();
+    add_line_item(order_items, "Keyboard", 1, 50);
+    add_line_item(order_items, "Mouse", 2, 25);
+    add_line_item(order_items, "Monitor", 1, 200);
+    let inv = build_invoice(cust_data, order_items, 8);
+    display_invoice(inv);
+    save_invoice("data/invoice.json", inv);
+    io.writeln("Invoice saved to data/invoice.json");
+}

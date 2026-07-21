@@ -1,0 +1,18 @@
+fn write(value) {
+    print(value)
+    return value
+}
+
+fn writeln(value) {
+    print(value)
+    return value
+}
+
+fn println(value) {
+    print(value)
+    return value
+}
+
+fn read() {
+    return io_read()
+}

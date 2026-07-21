@@ -1,0 +1,132 @@
+import list;
+import map;
+import io;
+import string;
+import convert;
+
+fn create_log_entry(lev, msg) {
+    let entry_map = map.new();
+    map.set(entry_map, "level", lev);
+    map.set(entry_map, "message", msg);
+    entry_map
+}
+
+fn parse_log_line(line_src) {
+    let toks = string.split(line_src, " ");
+    let lvl = list.get(toks, 2);
+    let dt = list.get(toks, 0);
+    let tm = list.get(toks, 1);
+    let pfx = convert.to_int(string.length(dt) + string.length(tm) + string.length(lvl) + 3);
+    let msg_out = string.substring(line_src, pfx, string.length(line_src));
+    create_log_entry(lvl, msg_out)
+}
+
+fn count_errors_helper(entries_err, idx_err) {
+    if (idx_err >= list.len(entries_err)) { return 0 }
+    let item_err = list.get(entries_err, idx_err);
+    let lvl_err = map.get(item_err, "level");
+    if (lvl_err == "ERROR") {
+        return 1 + count_errors_helper(entries_err, idx_err + 1)
+    }
+    count_errors_helper(entries_err, idx_err + 1)
+}
+
+fn count_errors(entries_err_count) {
+    count_errors_helper(entries_err_count, 0)
+}
+
+fn count_warnings_helper(entries_wrn, idx_wrn) {
+    if (idx_wrn >= list.len(entries_wrn)) { return 0 }
+    let item_wrn = list.get(entries_wrn, idx_wrn);
+    let lvl_wrn = map.get(item_wrn, "level");
+    if (lvl_wrn == "WARN") {
+        return 1 + count_warnings_helper(entries_wrn, idx_wrn + 1)
+    }
+    count_warnings_helper(entries_wrn, idx_wrn + 1)
+}
+
+fn count_warnings(entries_wrn_count) {
+    count_warnings_helper(entries_wrn_count, 0)
+}
+
+fn generate_report_helper(entries_rpt, rmap_rpt, seq_rpt) {
+    if (seq_rpt >= list.len(entries_rpt)) { return rmap_rpt }
+    let cur_rpt = list.get(entries_rpt, seq_rpt);
+    let cur_lvl = map.get(cur_rpt, "level");
+    let prev_cnt = map.get(rmap_rpt, cur_lvl);
+    map.set(rmap_rpt, cur_lvl, prev_cnt + 1);
+    generate_report_helper(entries_rpt, rmap_rpt, seq_rpt + 1)
+}
+
+fn generate_report(entries_rpt_report) {
+    let rmap_init = map.new();
+    map.set(rmap_init, "INFO", 0);
+    map.set(rmap_init, "DEBUG", 0);
+    map.set(rmap_init, "WARN", 0);
+    map.set(rmap_init, "ERROR", 0);
+    generate_report_helper(entries_rpt_report, rmap_init, 0)
+}
+
+fn test_create_entry() {
+    let t_ce = create_log_entry("ERROR", "test msg");
+    let t_lv = map.get(t_ce, "level");
+    let t_ms = map.get(t_ce, "message");
+    if (t_lv == "ERROR") { io.writeln("PASS: create_log_entry level") }
+    if (t_ms == "test msg") { io.writeln("PASS: create_log_entry message") }
+    0
+}
+
+fn test_parse_line() {
+    let t_pl = parse_log_line("2026-07-15 10:00:01 INFO Application started");
+    let t_plv = map.get(t_pl, "level");
+    let t_pmsg = map.get(t_pl, "message");
+    if (t_plv == "INFO") { io.writeln("PASS: parse_log_line extracts level") }
+    if (t_pmsg == "Application started") { io.writeln("PASS: parse_log_line extracts message") }
+    0
+}
+
+fn test_count_errors() {
+    let t_ce = list.new();
+    list.append(t_ce, create_log_entry("ERROR", "e1"));
+    list.append(t_ce, create_log_entry("INFO", "i1"));
+    list.append(t_ce, create_log_entry("ERROR", "e2"));
+    let t_ec = count_errors(t_ce);
+    if (t_ec == 2) { io.writeln("PASS: count_errors returns 2") }
+    0
+}
+
+fn test_count_warnings() {
+    let t_cw = list.new();
+    list.append(t_cw, create_log_entry("WARN", "w1"));
+    list.append(t_cw, create_log_entry("INFO", "i1"));
+    let t_wc = count_warnings(t_cw);
+    if (t_wc == 1) { io.writeln("PASS: count_warnings returns 1") }
+    0
+}
+
+fn test_build_report() {
+    let t_br = list.new();
+    list.append(t_br, create_log_entry("INFO", "a"));
+    list.append(t_br, create_log_entry("INFO", "b"));
+    list.append(t_br, create_log_entry("ERROR", "c"));
+    let t_rm = generate_report(t_br);
+    let t_vi = map.get(t_rm, "INFO");
+    let t_ve = map.get(t_rm, "ERROR");
+    if (t_vi == 2) { io.writeln("PASS: generate_report INFO=2") }
+    if (t_ve == 1) { io.writeln("PASS: generate_report ERROR=1") }
+    0
+}
+
+fn run_all_tests() {
+    io.writeln("Running Log Analyzer Tests...");
+    test_create_entry();
+    test_parse_line();
+    test_count_errors();
+    test_count_warnings();
+    test_build_report();
+    io.writeln("All tests complete")
+}
+
+fn main() {
+    run_all_tests()
+}

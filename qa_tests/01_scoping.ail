@@ -1,0 +1,31 @@
+import map;
+
+fn maker() {
+    let result = map.new();
+    map.set(result, "a", 1);
+    return result
+}
+
+fn clobber_int() {
+    let result = 42;
+    return result
+}
+
+fn clobber_string() {
+    let result = "hello";
+    return result
+}
+
+fn test_after_calls() {
+    let m = maker();
+    let _ = clobber_int();
+    let _ = clobber_string();
+    let val = map.get(m, "a");
+    print("a:", val);
+    return 0
+}
+
+fn main() {
+    test_after_calls();
+    return 0
+}

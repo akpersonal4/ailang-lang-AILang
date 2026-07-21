@@ -1,0 +1,89 @@
+import list;
+import map;
+import string;
+import convert;
+import helpers;
+import storage;
+import audit_trail;
+
+fn ai_format_entry(aifeItem) {
+    let aifeAction = helpers.helpers_get_map_value_safe(aifeItem, "action", "");
+    let aifeEntity = helpers.helpers_get_map_value_safe(aifeItem, "entity_type", "");
+    let aifeEntityId = helpers.helpers_get_map_value_safe(aifeItem, "entity_id", "");
+    let aifeUser = helpers.helpers_get_map_value_safe(aifeItem, "created_by", "");
+    let aifeTime = helpers.helpers_get_map_value_safe(aifeItem, "created_at", "");
+    let aifeLine = aifeTime + " | ";
+    let aifeLine2 = aifeLine + aifeUser;
+    let aifeLine3 = aifeLine2 + " | ";
+    let aifeLine4 = aifeLine3 + aifeAction;
+    let aifeLine5 = aifeLine4 + " | ";
+    let aifeLine6 = aifeLine5 + aifeEntity;
+    let aifeLine7 = aifeLine6 + " | ";
+    return aifeLine7 + aifeEntityId;
+}
+
+fn ai_summary_rec(aisrItems, aisrIdx, aisrAcc) {
+    if (aisrIdx >= list.len(aisrItems)) {
+        return aisrAcc;
+    }
+    let aisrItem = list.get(aisrItems, aisrIdx);
+    let aisrEntity = helpers.helpers_get_map_value_safe(aisrItem, "entity_type", "");
+    let aisrCurrent = helpers.helpers_get_map_value_safe(aisrAcc, aisrEntity, 0);
+    map.set(aisrAcc, aisrEntity, aisrCurrent + 1);
+    return ai_summary_rec(aisrItems, aisrIdx + 1, aisrAcc);
+}
+
+fn ai_build_summary_lines(aislKeys, aislSummary, aislResult, aislIdx) {
+    if (aislIdx >= list.len(aislKeys)) {
+        return aislResult;
+    }
+    let aislKey = list.get(aislKeys, aislIdx);
+    let aislCount = helpers.helpers_get_map_value_safe(aislSummary, aislKey, 0);
+    let aislLine = aislKey + ": ";
+    let aislLine2 = aislLine + convert.to_string(aislCount);
+    let aislNewResult = aislResult + aislLine2;
+    aislResult = aislNewResult + "\n";
+    return ai_build_summary_lines(aislKeys, aislSummary, aislResult, aislIdx + 1);
+}
+
+fn ai_recent_rec(airrItems, airrIdx, airrEnd, airrAcc) {
+    if (airrIdx < airrEnd) {
+        let airrItem = list.get(airrItems, airrIdx);
+        let airrFormatted = ai_format_entry(airrItem);
+        list.append(airrAcc, airrFormatted);
+        return ai_recent_rec(airrItems, airrIdx + 1, airrEnd, airrAcc);
+    }
+    return airrAcc;
+}
+
+fn audit_integration_full_report() {
+    let airSummary = audit_trail.audit_trail_summary_by_action();
+    let airAll = storage.storage_list("audit_log");
+    let airTotal = list.len(airAll);
+    let airReport = "=== AUDIT REPORT ===\n";
+    let airLine = airReport + "Total Entries: ";
+    let airLine2 = airLine + convert.to_string(airTotal);
+    airReport = airLine2 + "\n";
+    let airLine3 = airReport + "--- Summary by Action ---\n";
+    airReport = airLine3;
+    let airKeys = map.keys(airSummary);
+    airReport = ai_build_summary_lines(airKeys, airSummary, airReport, 0);
+    let airEnd = airReport + "=== END REPORT ===";
+    return airEnd;
+}
+
+fn audit_integration_summary_by_entity() {
+    let aiseAll = storage.storage_list("audit_log");
+    let aiseAcc = map.new();
+    return ai_summary_rec(aiseAll, 0, aiseAcc);
+}
+
+fn audit_integration_recent_activity(aicCount) {
+    let aicRecent = audit_trail.audit_trail_recent(aicCount);
+    let aicLen = list.len(aicRecent);
+    let aicResult = list.new();
+    if (aicLen == 0) {
+        return aicResult;
+    }
+    return ai_recent_rec(aicRecent, 0, aicLen, aicResult);
+}

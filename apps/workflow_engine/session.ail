@@ -1,0 +1,40 @@
+import json;
+import file;
+import path;
+import map;
+import string;
+
+fn session_load() {
+    let slPath = path.join("data", "session.json");
+    let slExists = file.exists(slPath);
+    if (slExists == false) {
+        return map.new();
+    }
+    let slContent = file.read(slPath);
+    let slEmpty = string.equals(slContent, "");
+    if (slEmpty == true) {
+        return map.new();
+    }
+    return json.parse(slContent);
+}
+
+fn session_save(userId, username) {
+    let ssPath = path.join("data", "session.json");
+    let ssSession = map.new();
+    map.set(ssSession, "user_id", userId);
+    map.set(ssSession, "username", username);
+    let ssJson = json.stringify(ssSession);
+    file.write(ssPath, ssJson);
+    return true;
+}
+
+fn session_clear() {
+    let scPath = path.join("data", "session.json");
+    file.write(scPath, "");
+    return true;
+}
+
+fn session_get_user_id() {
+    let sguSession = session_load();
+    return map.get_or_default(sguSession, "user_id", 0);
+}

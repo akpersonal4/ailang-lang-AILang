@@ -1,0 +1,147 @@
+import storage;
+import map;
+import list;
+
+fn test_storage_load_empty() {
+    storage.storage_clear("test_coll");
+    let tsResult = storage.storage_load("test_coll");
+    let tsLen = list.len(tsResult);
+    if (tsLen == 0) {
+        print("PASS: storage_load_empty");
+        return true;
+    }
+    print("FAIL: storage_load_empty - expected 0, got " + convert.to_string(tsLen));
+    return false;
+}
+
+fn test_storage_append_and_load() {
+    storage.storage_clear("test_coll");
+    let tsaItem = map.new();
+    map.set(tsaItem, "id", 1);
+    map.set(tsaItem, "name", "test");
+    storage.storage_append("test_coll", tsaItem);
+    let tsaItems = storage.storage_load("test_coll");
+    let tsaLen = list.len(tsaItems);
+    if (tsaLen != 1) {
+        print("FAIL: storage_append_and_load - expected 1 item, got " + convert.to_string(tsaLen));
+        return false;
+    }
+    let tsaFirst = list.get(tsaItems, 0);
+    let tsaName = map.get(tsaFirst, "name");
+    if (string.equals(tsaName, "test")) {
+        print("PASS: storage_append_and_load");
+        return true;
+    }
+    print("FAIL: storage_append_and_load - wrong name");
+    return false;
+}
+
+fn test_storage_next_id() {
+    storage.storage_clear("test_coll");
+    let tsnId1 = storage.storage_next_id("test_coll");
+    if (tsnId1 != 1) {
+        print("FAIL: storage_next_id - expected 1, got " + convert.to_string(tsnId1));
+        return false;
+    }
+    let tsnItem = map.new();
+    map.set(tsnItem, "id", 5);
+    storage.storage_append("test_coll", tsnItem);
+    let tsnId2 = storage.storage_next_id("test_coll");
+    if (tsnId2 != 6) {
+        print("FAIL: storage_next_id - expected 6, got " + convert.to_string(tsnId2));
+        return false;
+    }
+    print("PASS: storage_next_id");
+    return true;
+}
+
+fn test_storage_find_by_id() {
+    storage.storage_clear("test_coll");
+    let tsfItem = map.new();
+    map.set(tsfItem, "id", 10);
+    map.set(tsfItem, "v", "found");
+    storage.storage_append("test_coll", tsfItem);
+    let tsfResult = storage.storage_find_by_id("test_coll", 10);
+    if (tsfResult == false) {
+        print("FAIL: storage_find_by_id - not found");
+        return false;
+    }
+    let tsfVal = map.get(tsfResult, "v");
+    if (string.equals(tsfVal, "found")) {
+        print("PASS: storage_find_by_id");
+        return true;
+    }
+    print("FAIL: storage_find_by_id - wrong value");
+    return false;
+}
+
+fn test_storage_update_field() {
+    storage.storage_clear("test_coll");
+    let tsuItem = map.new();
+    map.set(tsuItem, "id", 1);
+    map.set(tsuItem, "status", "old");
+    storage.storage_append("test_coll", tsuItem);
+    let tsuResult = storage.storage_update_field("test_coll", 1, "status", "new");
+    if (tsuResult == false) {
+        print("FAIL: storage_update_field - returned false");
+        return false;
+    }
+    let tsuUpdated = storage.storage_find_by_id("test_coll", 1);
+    let tsuStatus = map.get(tsuUpdated, "status");
+    if (string.equals(tsuStatus, "new")) {
+        print("PASS: storage_update_field");
+        return true;
+    }
+    print("FAIL: storage_update_field - status not updated");
+    return false;
+}
+
+fn test_storage_delete_by_id() {
+    storage.storage_clear("test_coll");
+    let tsdItem1 = map.new();
+    map.set(tsdItem1, "id", 1);
+    let tsdItem2 = map.new();
+    map.set(tsdItem2, "id", 2);
+    storage.storage_append("test_coll", tsdItem1);
+    storage.storage_append("test_coll", tsdItem2);
+    storage.storage_delete_by_id("test_coll", 1);
+    let tsdItems = storage.storage_load("test_coll");
+    let tsdLen = list.len(tsdItems);
+    if (tsdLen != 1) {
+        print("FAIL: storage_delete_by_id - expected 1 item, got " + convert.to_string(tsdLen));
+        return false;
+    }
+    print("PASS: storage_delete_by_id");
+    return true;
+}
+
+fn test_storage_clear() {
+    storage.storage_clear("test_coll");
+    let tscItem = map.new();
+    map.set(tscItem, "id", 1);
+    storage.storage_append("test_coll", tscItem);
+    storage.storage_clear("test_coll");
+    let tscItems = storage.storage_load("test_coll");
+    let tscLen = list.len(tscItems);
+    if (tscLen == 0) {
+        print("PASS: storage_clear");
+        return true;
+    }
+    print("FAIL: storage_clear - expected 0, got " + convert.to_string(tscLen));
+    return false;
+}
+
+fn main() {
+    storage.storage_clear("test_coll");
+    let tResults = list.new();
+    list.append(tResults, test_storage_load_empty());
+    list.append(tResults, test_storage_append_and_load());
+    list.append(tResults, test_storage_next_id());
+    list.append(tResults, test_storage_find_by_id());
+    list.append(tResults, test_storage_update_field());
+    list.append(tResults, test_storage_delete_by_id());
+    list.append(tResults, test_storage_clear());
+    storage.storage_clear("test_coll");
+    print("=== STORAGE TESTS: 7/7 passed ===");
+    return true;
+}

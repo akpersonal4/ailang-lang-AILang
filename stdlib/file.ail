@@ -1,0 +1,23 @@
+fn exists(path) {
+    return file_exists(path)
+}
+
+fn read(path) {
+    return file_read(path)
+}
+
+fn write(path, content) {
+    return file_write(path, content)
+}
+
+fn append(path, content) {
+    return file_append(path, content)
+}
+
+fn remove(path) {
+    return file_remove(path)
+}
+
+fn listdir(path) {
+    return file_listdir(path)
+}

@@ -1,0 +1,26 @@
+import storage;
+import map;
+import list;
+import time;
+
+fn history_add(instanceId, fromState, toState, performedBy, notes) {
+    let haEntry = map.new();
+    map.set(haEntry, "id", storage.storage_next_id("history"));
+    map.set(haEntry, "instance_id", instanceId);
+    map.set(haEntry, "from_state", fromState);
+    map.set(haEntry, "to_state", toState);
+    map.set(haEntry, "performed_by", performedBy);
+    map.set(haEntry, "notes", notes);
+    map.set(haEntry, "timestamp", time.timestamp());
+    storage.storage_append("history", haEntry);
+    return haEntry;
+}
+
+fn history_list_by_instance(instanceId) {
+    let hliAll = storage.storage_load("history");
+    return list.filter_by_key(hliAll, "instance_id", instanceId);
+}
+
+fn history_list_all() {
+    return storage.storage_load("history");
+}

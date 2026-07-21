@@ -1,0 +1,51 @@
+// === AILang standard library usage test file ===
+
+import string;
+import math;
+import list;
+import map;
+import set;
+import json;
+import csv;
+import convert;
+
+fn main() {
+    // string
+    let s = string.uppercase("ailang");
+    print("string:", s);
+
+    // math
+    let sum = math.add(10, 20);
+    print("math:", sum);
+
+    // list
+    let items = list.new();
+    list.append(items, "a");
+    list.append(items, "b");
+    print("list:", list.len(items));
+
+    // map
+    let data = map.new();
+    map.set(data, "key", 42);
+    print("map:", map.has(data, "key"));
+
+    // set
+    let values = set.new();
+    set.add(values, 1);
+    set.add(values, 2);
+    print("set:", set.contains(values, 1));
+
+    // json
+    let parsed = json.parse("{\"a\":1}");
+    print("json:", parsed);
+
+    // csv
+    let rows = csv.parse("a,b\n1,2");
+    print("csv:", list.len(rows));
+
+    // convert
+    let as_str = convert.to_string(42);
+    print("convert:", as_str);
+
+    return 0
+}

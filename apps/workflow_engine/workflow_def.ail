@@ -1,0 +1,133 @@
+import storage;
+import map;
+import list;
+import string;
+import time;
+import json;
+
+fn workflow_def_has_active_instances(instances, defId) {
+    return list.exists_by_key(instances, "workflow_id", defId);
+}
+
+fn workflow_def_find_transition_rec(transitions, action, index) {
+    let wftrLen = list.len(transitions);
+    if (index == wftrLen) {
+        return false;
+    }
+    let wftrTrans = list.get(transitions, index);
+    let wftrAction = map.get(wftrTrans, "action");
+    if (string.equals(wftrAction, action)) {
+        return wftrTrans;
+    }
+    return workflow_def_find_transition_rec(transitions, action, math.add(index, 1));
+}
+
+fn workflow_def_find_by_name(name) {
+    let wfbDefs = storage.storage_load("workflow_defs");
+    let wfbResults = list.search_by_name(wfbDefs, name);
+    if (list.len(wfbResults) == 0) {
+        return false;
+    }
+    return list.get(wfbResults, 0);
+}
+
+fn workflow_def_import_rec(defs, index) {
+    let wibrLen = list.len(defs);
+    if (index == wibrLen) {
+        return index;
+    }
+    let wibrDef = list.get(defs, index);
+    let wibrName = map.get(wibrDef, "name");
+    let wibrExisting = workflow_def_find_by_name(wibrName);
+    if (wibrExisting == false) {
+        storage.storage_append("workflow_defs", wibrDef);
+    }
+    return workflow_def_import_rec(defs, math.add(index, 1));
+}
+
+fn workflow_def_create(name, description, statesJson, transitionsJson) {
+    let wdcDuplicate = workflow_def_find_by_name(name);
+    if (wdcDuplicate != false) {
+        return false;
+    }
+    let wdcStates = json.parse(statesJson);
+    let wdcTransitions = json.parse(transitionsJson);
+    let wdcInitialState = list.get(wdcStates, 0);
+    let wdcDef = map.new();
+    map.set(wdcDef, "id", storage.storage_next_id("workflow_defs"));
+    map.set(wdcDef, "name", name);
+    map.set(wdcDef, "description", description);
+    map.set(wdcDef, "states", wdcStates);
+    map.set(wdcDef, "initial_state", wdcInitialState);
+    map.set(wdcDef, "transitions", wdcTransitions);
+    map.set(wdcDef, "created_at", time.timestamp());
+    storage.storage_append("workflow_defs", wdcDef);
+    return wdcDef;
+}
+
+fn workflow_def_create_with_data(name, description, states, initialState, transitions) {
+    let wdcDuplicate = workflow_def_find_by_name(name);
+    if (wdcDuplicate != false) {
+        return false;
+    }
+    let wdcDef = map.new();
+    map.set(wdcDef, "id", storage.storage_next_id("workflow_defs"));
+    map.set(wdcDef, "name", name);
+    map.set(wdcDef, "description", description);
+    map.set(wdcDef, "states", states);
+    map.set(wdcDef, "initial_state", initialState);
+    map.set(wdcDef, "transitions", transitions);
+    map.set(wdcDef, "created_at", time.timestamp());
+    storage.storage_append("workflow_defs", wdcDef);
+    return wdcDef;
+}
+
+fn workflow_def_find_by_id(defId) {
+    return storage.storage_find_by_id("workflow_defs", defId);
+}
+
+fn workflow_def_list_all() {
+    return storage.storage_load("workflow_defs");
+}
+
+fn workflow_def_delete(defId) {
+    let wddInstances = storage.storage_load("instances");
+    let wddHasActive = workflow_def_has_active_instances(wddInstances, defId);
+    if (wddHasActive == true) {
+        return false;
+    }
+    storage.storage_delete_by_id("workflow_defs", defId);
+    return true;
+}
+
+fn workflow_def_find_transition(defId, action) {
+    let wftDef = workflow_def_find_by_id(defId);
+    if (wftDef == false) {
+        return false;
+    }
+    let wftTransitions = map.get(wftDef, "transitions");
+    return workflow_def_find_transition_rec(wftTransitions, action, 0);
+}
+
+fn workflow_def_validate_transition(defId, fromState, action) {
+    let wvtTrans = workflow_def_find_transition(defId, action);
+    if (wvtTrans == false) {
+        return false;
+    }
+    let wvtFrom = map.get(wvtTrans, "from_state");
+    if (string.equals(wvtFrom, fromState)) {
+        return wvtTrans;
+    }
+    return false;
+}
+
+fn workflow_def_export() {
+    let weDefs = storage.storage_load("workflow_defs");
+    return json.stringify(weDefs);
+}
+
+fn workflow_def_import(jsonData) {
+    let wiDefs = json.parse(jsonData);
+    let wiCount = workflow_def_import_rec(wiDefs, 0);
+    return wiCount;
+}

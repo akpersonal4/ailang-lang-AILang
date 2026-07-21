@@ -1,0 +1,158 @@
+import list;
+import map;
+import helpers;
+import storage;
+
+fn dashboard_count_low_stock_rec(dclItems, dclThreshold, dclIdx, dclCount) {
+    if (dclIdx >= list.len(dclItems)) {
+        return dclCount;
+    }
+    let dclItem = list.get(dclItems, dclIdx);
+    let dclQty = helpers.helpers_get_map_value_safe(dclItem, "quantity_on_hand", 0);
+    if (dclQty < dclThreshold) {
+        dclCount = dclCount + 1;
+    }
+    return dashboard_count_low_stock_rec(dclItems, dclThreshold, dclIdx + 1, dclCount);
+}
+
+fn dashboard_collect_from_rec(dcfItems, dcfStartIdx, dcfResult) {
+    if (dcfStartIdx >= list.len(dcfItems)) {
+        return dcfResult;
+    }
+    let dcfItem = list.get(dcfItems, dcfStartIdx);
+    list.append(dcfResult, dcfItem);
+    return dashboard_collect_from_rec(dcfItems, dcfStartIdx + 1, dcfResult);
+}
+
+fn dashboard_find_max_idx_rec(dfmItems, dfmKey, dfmIdx, dfmMaxIdx) {
+    if (dfmIdx >= list.len(dfmItems)) {
+        return dfmMaxIdx;
+    }
+    let dfmItem = list.get(dfmItems, dfmIdx);
+    let dfmVal = helpers.helpers_get_map_value_safe(dfmItem, dfmKey, 0);
+    let dfmMaxItem = list.get(dfmItems, dfmMaxIdx);
+    let dfmMaxVal = helpers.helpers_get_map_value_safe(dfmMaxItem, dfmKey, 0);
+    if (dfmVal > dfmMaxVal) {
+        return dashboard_find_max_idx_rec(dfmItems, dfmKey, dfmIdx + 1, dfmIdx);
+    }
+    return dashboard_find_max_idx_rec(dfmItems, dfmKey, dfmIdx + 1, dfmMaxIdx);
+}
+
+fn dashboard_skip_index_rec(dsiItems, dsiSkip, dsiIdx, dsiResult) {
+    if (dsiIdx >= list.len(dsiItems)) {
+        return dsiResult;
+    }
+    if (dsiIdx != dsiSkip) {
+        let dsiItem = list.get(dsiItems, dsiIdx);
+        list.append(dsiResult, dsiItem);
+    }
+    return dashboard_skip_index_rec(dsiItems, dsiSkip, dsiIdx + 1, dsiResult);
+}
+
+fn dashboard_build_val_map_rec(dbvItems, dbvIdx, dbvMap) {
+    if (dbvIdx >= list.len(dbvItems)) {
+        return dbvMap;
+    }
+    let dbvItem = list.get(dbvItems, dbvIdx);
+    let dbvProdId = helpers.helpers_get_map_value_safe(dbvItem, "product_id", "");
+    map.set(dbvMap, dbvProdId, dbvItem);
+    return dashboard_build_val_map_rec(dbvItems, dbvIdx + 1, dbvMap);
+}
+
+fn dashboard_compute_values_rec(dcvProducts, dcvValMap, dcvIdx, dcvResult) {
+    if (dcvIdx >= list.len(dcvProducts)) {
+        return dcvResult;
+    }
+    let dcvProduct = list.get(dcvProducts, dcvIdx);
+    let dcvProdId = helpers.helpers_get_map_value_safe(dcvProduct, "id", "");
+    let dcvPrice = helpers.helpers_get_map_value_safe(dcvProduct, "unit_price", 0);
+    let dcvName = helpers.helpers_get_map_value_safe(dcvProduct, "name", "");
+    let dcvValuation = helpers.helpers_get_map_value_safe(dcvValMap, dcvProdId, false);
+    let dcvQty = 0;
+    if (dcvValuation != false) {
+        dcvQty = helpers.helpers_get_map_value_safe(dcvValuation, "quantity_on_hand", 0);
+    }
+    let dcvValue = dcvPrice * dcvQty;
+    let dcvEntry = map.new();
+    map.set(dcvEntry, "product_id", dcvProdId);
+    map.set(dcvEntry, "product_name", dcvName);
+    map.set(dcvEntry, "value", dcvValue);
+    list.append(dcvResult, dcvEntry);
+    return dashboard_compute_values_rec(dcvProducts, dcvValMap, dcvIdx + 1, dcvResult);
+}
+
+fn dashboard_take_rec(dtItems, dtCount, dtIdx, dtResult) {
+    if (dtIdx >= list.len(dtItems)) {
+        return dtResult;
+    }
+    if (dtIdx >= dtCount) {
+        return dtResult;
+    }
+    let dtItem = list.get(dtItems, dtIdx);
+    list.append(dtResult, dtItem);
+    return dashboard_take_rec(dtItems, dtCount, dtIdx + 1, dtResult);
+}
+
+fn dashboard_sort_build(dsbItems, dsbKey, dsbResult) {
+    if (list.len(dsbItems) == 0) {
+        return dsbResult;
+    }
+    let dsbMaxIdx = dashboard_find_max_idx_rec(dsbItems, dsbKey, 1, 0);
+    let dsbMaxItem = list.get(dsbItems, dsbMaxIdx);
+    list.append(dsbResult, dsbMaxItem);
+    let dsbRemaining = dashboard_skip_index_rec(dsbItems, dsbMaxIdx, 0, list.new());
+    return dashboard_sort_build(dsbRemaining, dsbKey, dsbResult);
+}
+
+fn dashboard_sort_by_value(dsvItems, dsvKey) {
+    return dashboard_sort_build(dsvItems, dsvKey, list.new());
+}
+
+fn dashboard_summary() {
+    let dsProducts = storage.storage_list("products");
+    let dsCategories = storage.storage_list("categories");
+    let dsCustomers = storage.storage_list("customers");
+    let dsVendors = storage.storage_list("vendors");
+    let dsMovements = storage.storage_list("movements");
+    let dsSalesOrders = storage.storage_list("sales_orders");
+    let dsPurchaseOrders = storage.storage_list("purchase_orders");
+    let dsWarehouses = storage.storage_list("warehouses");
+    let dsResult = map.new();
+    map.set(dsResult, "total_products", list.len(dsProducts));
+    map.set(dsResult, "total_categories", list.len(dsCategories));
+    map.set(dsResult, "total_customers", list.len(dsCustomers));
+    map.set(dsResult, "total_vendors", list.len(dsVendors));
+    map.set(dsResult, "total_movements", list.len(dsMovements));
+    map.set(dsResult, "total_sales_orders", list.len(dsSalesOrders));
+    map.set(dsResult, "total_purchase_orders", list.len(dsPurchaseOrders));
+    map.set(dsResult, "total_warehouses", list.len(dsWarehouses));
+    return dsResult;
+}
+
+fn dashboard_low_stock_count(dlsThreshold) {
+    let dlsItems = storage.storage_list("valuations");
+    return dashboard_count_low_stock_rec(dlsItems, dlsThreshold, 0, 0);
+}
+
+fn dashboard_recent_movements(drmCount) {
+    let drmItems = storage.storage_list("movements");
+    let drmTotal = list.len(drmItems);
+    if (drmTotal == 0) {
+        let drmEmpty = list.new();
+        return drmEmpty;
+    }
+    let drmStart = drmTotal - drmCount;
+    if (drmStart < 0) {
+        drmStart = 0;
+    }
+    return dashboard_collect_from_rec(drmItems, drmStart, list.new());
+}
+
+fn dashboard_top_products(dtpLimit) {
+    let dtpProducts = storage.storage_list("products");
+    let dtpValuations = storage.storage_list("valuations");
+    let dtpValMap = dashboard_build_val_map_rec(dtpValuations, 0, map.new());
+    let dtpValues = dashboard_compute_values_rec(dtpProducts, dtpValMap, 0, list.new());
+    let dtpSorted = dashboard_sort_by_value(dtpValues, "value");
+    return dashboard_take_rec(dtpSorted, dtpLimit, 0, list.new());
+}

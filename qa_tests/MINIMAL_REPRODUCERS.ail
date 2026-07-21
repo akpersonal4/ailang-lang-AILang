@@ -1,0 +1,91 @@
+// ============================================================
+// MINIMAL REPRODUCERS — All 7 discovered bugs
+// Run each section individually with `ail run` or `ail build`
+// ============================================================
+
+// ----------------------------------------------------------
+// BUG-001: Empty return crashes AST builder
+// Severity: High | Category: Compiler Bug / Poor Diagnostic
+//   ail build this file → AssertionError crash
+// ----------------------------------------------------------
+// Uncomment to reproduce:
+// fn bug_empty_return() {
+//     return
+// }
+// fn main() { return 0 }
+
+// ----------------------------------------------------------
+// BUG-002: Missing initializer crashes AST builder
+// Severity: High | Category: Compiler Bug / Poor Diagnostic
+//   ail build this file → AssertionError crash
+// ----------------------------------------------------------
+// Uncomment to reproduce:
+// fn main() {
+//     let x = ;  // no initializer
+//     return 0
+// }
+
+// ----------------------------------------------------------
+// BUG-003: Module names not resolvable as bare identifiers
+// Severity: Medium | Category: Runtime Bug
+//   ail run this file → "Undefined variable: map"
+// ----------------------------------------------------------
+// Uncomment to reproduce:
+// import map;
+// fn main() {
+//     let m = map.new();
+//     let f = map.set;  // fails here
+//     return 0
+// }
+
+// ----------------------------------------------------------
+// BUG-004: Float literal produces cryptic error
+// Severity: Medium | Category: Poor Diagnostic
+//   ail build this file → "Identifier node missing token"
+// ----------------------------------------------------------
+// Uncomment to reproduce:
+// fn main() {
+//     let x = 3.14;
+//     return 0
+// }
+
+// ----------------------------------------------------------
+// BUG-005: Block-level shadowing not implemented
+// Severity: Low | Category: Language Limitation
+//   ail run this file → inner value persists after block
+// ----------------------------------------------------------
+// Uncomment to reproduce:
+// fn main() {
+//     let x = "outer";
+//     if (1 == 1) {
+//         let x = "inner";
+//         print("inside:", x);
+//     }
+//     print("outside:", x);  // expected "outer", got "inner"
+//     return 0
+// }
+
+// ----------------------------------------------------------
+// BUG-006: Python recursion limit for deep recursion
+// Severity: Low | Category: Language Limitation
+//   ail run this file → "maximum recursion depth exceeded"
+// ----------------------------------------------------------
+// Uncomment to reproduce:
+// fn count(n) {
+//     if (n <= 0) { return 0 }
+//     return 1 + count(n - 1)
+// }
+// fn main() {
+//     print(count(10000));
+//     return 0
+// }
+
+// ----------------------------------------------------------
+// BUG-007: Duplicate import silently accepted
+// Severity: Low | Category: Compiler Bug (Minor)
+//   ail build this file → no error or warning
+// ----------------------------------------------------------
+// Uncomment to reproduce:
+// import list;
+// import list;
+// fn main() { return 0 }

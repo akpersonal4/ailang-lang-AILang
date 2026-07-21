@@ -1,0 +1,40 @@
+import random;
+import list;
+import io;
+
+fn generate_ints_helper(acc, remaining, min_val, max_val) {
+    if (remaining <= 0) { return acc }
+    list.append(acc, random.int(min_val, max_val));
+    return generate_ints_helper(acc, remaining - 1, min_val, max_val)
+}
+
+fn generate_ints(count, min_val, max_val) {
+    return generate_ints_helper(list.new(), count, min_val, max_val)
+}
+
+fn display_helper(items, i) {
+    if (i >= list.len(items)) { return false }
+    print(" ", list.get(items, i));
+    display_helper(items, i + 1)
+}
+
+fn main() {
+    print("=== Random Data Generator ===");
+    let nums = generate_ints(5, 1, 100);
+    print("5 random ints (1-100):");
+    display_helper(nums, 0);
+    print("");
+    let floats = list.new();
+    list.append(floats, random.float());
+    list.append(floats, random.float());
+    list.append(floats, random.float());
+    print("3 random floats:");
+    display_helper(floats, 0);
+    print("");
+    let colors = list.new();
+    list.append(colors, "red");
+    list.append(colors, "green");
+    list.append(colors, "blue");
+    list.append(colors, "yellow");
+    print("Random color:", random.choice(colors))
+}

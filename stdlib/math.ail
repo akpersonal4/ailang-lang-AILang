@@ -1,0 +1,36 @@
+fn add(a, b) {
+    return a + b
+}
+
+fn sub(a, b) {
+    return a - b
+}
+
+fn mul(a, b) {
+    return a * b
+}
+
+fn div(a, b) {
+    return a / b
+}
+
+fn abs(value) {
+    if (value < 0) {
+        return -value
+    }
+    return value
+}
+
+fn min(a, b) {
+    if (a < b) {
+        return a
+    }
+    return b
+}
+
+fn max(a, b) {
+    if (a > b) {
+        return a
+    }
+    return b
+}

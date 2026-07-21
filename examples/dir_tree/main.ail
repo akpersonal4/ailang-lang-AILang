@@ -1,0 +1,34 @@
+// [Compiler Validation Example] Directory Tree Printer
+//
+// Validates: functions, if/else, comparisons, return, print
+//
+// Note: This program prints a hardcoded tree structure. A production directory
+// tree printer would require standard library support for filesystem traversal
+// (readdir, stat, recursive walk), which are not yet available in AILang.
+
+fn print_node(depth, name) {
+    if (depth == 0) {
+        print(name)
+        return 0
+    }
+    if (depth == 1) {
+        print("|-- file")
+        return 0
+    }
+    if (depth == 2) {
+        print("    |-- file")
+        return 0
+    }
+    return 0
+}
+
+fn main() {
+    print("=== Directory Tree Printer ===")
+    print(".")
+    print("|-- src")
+    print("    |-- main.ail")
+    print("    |-- utils.ail")
+    print("|-- tests")
+    print("    |-- test_main.ail")
+    print("|-- README.md")
+}

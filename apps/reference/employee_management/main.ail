@@ -1,0 +1,153 @@
+import list;
+import map;
+import io;
+import convert;
+import file;
+
+fn create_employee(id, name, dept, salary) {
+    let emp = map.new();
+    map.set(emp, "id", id);
+    map.set(emp, "name", name);
+    map.set(emp, "dept", dept);
+    map.set(emp, "salary", salary);
+    return emp;
+}
+
+fn add_employee(employees, id, name, dept, salary) {
+    let emp = create_employee(id, name, dept, salary);
+    list.append(employees, emp);
+    return employees;
+}
+
+fn filter_by_dept_helper(employees, idx, dept, result) {
+    if (idx >= list.len(employees)) {
+        return result;
+    }
+    let emp = list.get(employees, idx);
+    if (map.get(emp, "dept") == dept) {
+        list.append(result, emp);
+    }
+    return filter_by_dept_helper(employees, idx + 1, dept, result);
+}
+
+fn filter_by_dept(employees, dept) {
+    let result = list.new();
+    return filter_by_dept_helper(employees, 0, dept, result);
+}
+
+fn total_salary_helper(employees, idx) {
+    if (idx >= list.len(employees)) {
+        return 0;
+    }
+    let emp = list.get(employees, idx);
+    let sal = map.get(emp, "salary");
+    return sal + total_salary_helper(employees, idx + 1);
+}
+
+fn total_salary(employees) {
+    return total_salary_helper(employees, 0);
+}
+
+fn count_employees_helper(employees, idx) {
+    if (idx >= list.len(employees)) {
+        return 0;
+    }
+    return 1 + count_employees_helper(employees, idx + 1);
+}
+
+fn count_employees(employees) {
+    return count_employees_helper(employees, 0);
+}
+
+fn avg_salary(employees) {
+    let total = total_salary(employees);
+    let cnt = count_employees(employees);
+    return total / cnt;
+}
+
+fn display_employees_helper(employees, idx) {
+    if (idx >= list.len(employees)) {
+        return -1;
+    }
+    let emp = list.get(employees, idx);
+    let eid = map.get(emp, "id");
+    let ename = map.get(emp, "name");
+    let edept = map.get(emp, "dept");
+    let esal = map.get(emp, "salary");
+    io.writeln("[" + convert.to_string(eid) + "] " + ename + " - " + edept + " - $" + convert.to_string(esal));
+    return display_employees_helper(employees, idx + 1);
+}
+
+fn display_employees(employees) {
+    let cnt = count_employees(employees);
+    io.writeln("All Employees (" + convert.to_string(cnt) + "):");
+    return display_employees_helper(employees, 0);
+}
+
+fn display_dept_helper(employees, idx) {
+    if (idx >= list.len(employees)) {
+        return -1;
+    }
+    let emp = list.get(employees, idx);
+    let eid = map.get(emp, "id");
+    let ename = map.get(emp, "name");
+    let esal = map.get(emp, "salary");
+    io.writeln("[" + convert.to_string(eid) + "] " + ename + " - $" + convert.to_string(esal));
+    return display_dept_helper(employees, idx + 1);
+}
+
+fn display_dept(employees) {
+    return display_dept_helper(employees, 0);
+}
+
+fn export_csv_header() {
+    io.writeln("id,name,dept,salary");
+    return 0;
+}
+
+fn export_csv_row(emp) {
+    let rid = map.get(emp, "id");
+    let rname = map.get(emp, "name");
+    let rdept = map.get(emp, "dept");
+    let rsal = map.get(emp, "salary");
+    io.writeln(convert.to_string(rid) + "," + rname + "," + rdept + "," + convert.to_string(rsal));
+    return 0;
+}
+
+fn export_csv_helper(employees, idx) {
+    if (idx >= list.len(employees)) {
+        return 0;
+    }
+    let emp = list.get(employees, idx);
+    export_csv_row(emp);
+    return export_csv_helper(employees, idx + 1);
+}
+
+fn export_csv(employees, filename) {
+    export_csv_header();
+    export_csv_helper(employees, 0);
+    io.writeln("CSV exported to " + filename);
+    return 0;
+}
+
+fn main() {
+    io.writeln("=== Employee Management ===");
+    let employees = list.new();
+    add_employee(employees, 1, "Alice", "Engineering", 95000);
+    add_employee(employees, 2, "Bob", "Marketing", 72000);
+    add_employee(employees, 3, "Carol", "Engineering", 105000);
+    add_employee(employees, 4, "Dave", "Sales", 68000);
+    add_employee(employees, 5, "Eve", "Marketing", 78000);
+    display_employees(employees);
+    let eng = filter_by_dept(employees, "Engineering");
+    let eng_cnt = count_employees(eng);
+    io.writeln("Engineering (" + convert.to_string(eng_cnt) + " employees):");
+    display_dept(eng);
+    let total = total_salary(employees);
+    io.writeln("Total salary: $" + convert.to_string(total));
+    let avg = avg_salary(employees);
+    io.writeln("Average salary: $" + convert.to_string(avg));
+    export_csv(employees, "data/employees.csv");
+}
+
+main();

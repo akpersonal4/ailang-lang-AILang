@@ -1,0 +1,110 @@
+import string;
+import list;
+import map;
+import time;
+import convert;
+
+
+let HELPERS_GLOBAL_SEQ = 0;
+
+fn helpers_repeat_char(inChar, inCount, inAcc) {
+    if (inCount <= 0) {
+        return inAcc;
+    }
+    return helpers_repeat_char(inChar, inCount - 1, inAcc + inChar);
+}
+
+fn helpers_pad_number(padNum, padDigits) {
+    let padStr = convert.to_string(padNum);
+    let padLen = string.length(padStr);
+    if (padLen >= padDigits) {
+        return padStr;
+    }
+    let padZeros = helpers_repeat_char("0", padDigits - padLen, "");
+    return padZeros + padStr;
+}
+
+fn helpers_current_timestamp() {
+    return time.now();
+}
+
+fn helpers_unix_timestamp() {
+    return time.timestamp();
+}
+
+fn helpers_generate_id(idPrefix) {
+    HELPERS_GLOBAL_SEQ = HELPERS_GLOBAL_SEQ + 1;
+    let idSeq = HELPERS_GLOBAL_SEQ;
+    let idTs = helpers_unix_timestamp();
+    let idPadded = helpers_pad_number(idSeq, 4);
+    return idPrefix + convert.to_string(idTs) + idPadded;
+}
+
+fn helpers_safe_string(strValue) {
+    if (strValue == false) {
+        return "";
+    }
+    return convert.to_string(strValue);
+}
+
+fn helpers_is_empty_list(listToCheck) {
+    if (listToCheck == false) {
+        return true;
+    }
+    return list.len(listToCheck) == 0;
+}
+
+fn helpers_copy_map_iter(hmKeys, hmSource, hmTarget, hmIdx) {
+    if (hmIdx >= list.len(hmKeys)) {
+        return hmTarget;
+    }
+    let hmKey = list.get(hmKeys, hmIdx);
+    let hmValue = map.get(hmSource, hmKey);
+    map.set(hmTarget, hmKey, hmValue);
+    return helpers_copy_map_iter(hmKeys, hmSource, hmTarget, hmIdx + 1);
+}
+
+fn helpers_copy_map(hmSource) {
+    let hmKeys = map.keys(hmSource);
+    let hmResult = map.new();
+    return helpers_copy_map_iter(hmKeys, hmSource, hmResult, 0);
+}
+
+fn helpers_get_map_value_safe(gvMap, gvKey, gvDefault) {
+    if (map.has(gvMap, gvKey)) {
+        return map.get(gvMap, gvKey);
+    }
+    return gvDefault;
+}
+
+fn helpers_find_in_list_rec(frItems, frKey, frValue, frIdx) {
+    if (frIdx >= list.len(frItems)) {
+        return false;
+    }
+    let frItem = list.get(frItems, frIdx);
+    let frResult = helpers_get_map_value_safe(frItem, frKey, false);
+    if (frResult == frValue) {
+        return frItem;
+    }
+    return helpers_find_in_list_rec(frItems, frKey, frValue, frIdx + 1);
+}
+
+fn helpers_find_in_list(frItems, frKey, frValue) {
+    return helpers_find_in_list_rec(frItems, frKey, frValue, 0);
+}
+
+fn helpers_list_contains(lcItems, lcValue) {
+    return list.contains(lcItems, lcValue);
+}
+
+fn helpers_format_currency(amount) {
+    return "$" + convert.to_string(amount);
+}
+
+fn helpers_string_to_number(stValue) {
+    let stTrimmed = string.trim(stValue);
+    if (stTrimmed == "") {
+        return 0;
+    }
+    return convert.to_int(stTrimmed);
+}

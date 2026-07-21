@@ -1,0 +1,64 @@
+import list;
+import map;
+import string;
+import convert;
+import helpers;
+import storage;
+import reorder;
+import notification;
+
+fn rn_check_rec(rncrLevels, rncrIdx, rncrCount) {
+    if (rncrIdx >= list.len(rncrLevels)) {
+        return rncrCount;
+    }
+    let rncrLevel = list.get(rncrLevels, rncrIdx);
+    let rncrProductId = helpers.helpers_get_map_value_safe(rncrLevel, "product_id", "");
+    let rncrNeedsReorder = reorder.reorder_check(rncrProductId);
+    if (rncrNeedsReorder) {
+        let rncrMinLevel = helpers.helpers_get_map_value_safe(rncrLevel, "min_level", 0);
+        let rncrNotif = map.new();
+        let rncrNotifId = helpers.helpers_generate_id("RN-");
+        let rncrNow = helpers.helpers_current_timestamp();
+        map.set(rncrNotif, "id", rncrNotifId);
+        map.set(rncrNotif, "product_id", rncrProductId);
+        map.set(rncrNotif, "min_level", rncrMinLevel);
+        map.set(rncrNotif, "created_at", rncrNow);
+        storage.storage_add("reorder_notifications", rncrNotif);
+        return rn_check_rec(rncrLevels, rncrIdx + 1, rncrCount + 1);
+    }
+    return rn_check_rec(rncrLevels, rncrIdx + 1, rncrCount);
+}
+
+fn rn_clear_rec(rnclItems, rnclProductId, rnclResults, rnclIdx) {
+    if (rnclIdx >= list.len(rnclItems)) {
+        return rnclResults;
+    }
+    let rnclItem = list.get(rnclItems, rnclIdx);
+    let rnclItemProdId = helpers.helpers_get_map_value_safe(rnclItem, "product_id", "");
+    if (rnclItemProdId != rnclProductId) {
+        list.append(rnclResults, rnclItem);
+    }
+    return rn_clear_rec(rnclItems, rnclProductId, rnclResults, rnclIdx + 1);
+}
+
+fn reorder_notify_check_all() {
+    let rncaLevels = reorder.reorder_list_all();
+    let rncaCount = rn_check_rec(rncaLevels, 0, 0);
+    return rncaCount;
+}
+
+fn reorder_notify_get_pending() {
+    return storage.storage_list("reorder_notifications");
+}
+
+fn reorder_notify_clear(rncProductId) {
+    let rncItems = storage.storage_list("reorder_notifications");
+    let rncResults = list.new();
+    let rncFiltered = rn_clear_rec(rncItems, rncProductId, rncResults, 0);
+    return storage.storage_save("reorder_notifications", rncFiltered);
+}
+
+fn reorder_notify_summary() {
+    let rnsItems = storage.storage_list("reorder_notifications");
+    return list.len(rnsItems);
+}

@@ -1,0 +1,13 @@
+=== Employee Management ===
+All Employees (5):
+[1] Alice - Engineering - $95000
+[2] Bob - Marketing - $72000
+[3] Carol - Engineering - $105000
+[4] Dave - Sales - $68000
+[5] Eve - Marketing - $78000
+Engineering (2 employees):
+[1] Alice - $95000
+[3] Carol - $105000
+Total salary: $418000
+Average salary: $83600
+CSV exported to data/employees.csv

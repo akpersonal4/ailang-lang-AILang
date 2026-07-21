@@ -1,0 +1,30 @@
+fn movement_check_alert_threshold_rec(mcrItems, mcrProductId, mcrIdx) {
+    if (mcrIdx >= list.len(mcrItems)) {
+        return false;
+    }
+    let mcrItem = list.get(mcrItems, mcrIdx);
+    let mcrProdId = helpers.helpers_get_map_value_safe(mcrItem, "product_id", "");
+    if (mcrProdId == mcrProductId) {
+        let mcrQty = helpers.helpers_get_map_value_safe(mcrItem, "quantity", 0);
+        return mcrQty;
+    }
+    return movement_check_alert_threshold_rec(mcrItems, mcrProductId, mcrIdx + 1);
+}
+
+fn movement_check_alert_threshold(mcaProductId, mcaThreshold) {
+    let mcaAll = storage.storage_list("movements");
+    let mcaQoh = movement_check_alert_threshold_rec(mcaAll, mcaProductId, 0);
+    if (mcaQoh == false) {
+        return false;
+    }
+    let mcaResult = map.new();
+    map.set(mcaResult, "product_id", mcaProductId);
+    map.set(mcaResult, "current_qoh", mcaQoh);
+    map.set(mcaResult, "threshold", mcaThreshold);
+    if (mcaQoh < mcaThreshold) {
+        map.set(mcaResult, "alert", true);
+    } else {
+        map.set(mcaResult, "alert", false);
+    }
+    return mcaResult;
+}

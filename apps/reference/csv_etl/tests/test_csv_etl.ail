@@ -1,0 +1,97 @@
+import list;
+import map;
+import io;
+import string;
+import convert;
+
+fn normalize_field(value) {
+    let trimmed_val = string.trim(value);
+    string.lowercase(trimmed_val)
+}
+
+fn validate_row(row_data, row_index) {
+    let name_val = map.get(row_data, "name");
+    let email_val = map.get(row_data, "email");
+    let age_val = map.get(row_data, "age");
+    if (string.length(string.trim(name_val)) == 0) { return 0 }
+    if (string.length(string.trim(email_val)) == 0) { return 0 }
+    if (string.length(string.trim(age_val)) == 0) { return 0 }
+    1
+}
+
+fn transform_row(tr_row) {
+    let raw_name = map.get(tr_row, "name");
+    let raw_email = map.get(tr_row, "email");
+    let raw_age = map.get(tr_row, "age");
+    let clean_name = normalize_field(raw_name);
+    let clean_email = string.uppercase(raw_email);
+    let result_row = map.new();
+    map.set(result_row, "name", clean_name);
+    map.set(result_row, "email", clean_email);
+    map.set(result_row, "age", raw_age);
+    result_row
+}
+
+fn test_normalize() {
+    let t_nm = normalize_field("  HELLO  ");
+    let t_len = string.length(t_nm);
+    if (t_len == 5) { io.writeln("PASS: normalize_field trims and lowercases") }
+    0
+}
+
+fn test_validate_valid() {
+    let t_vv = map.new();
+    map.set(t_vv, "name", "alice");
+    map.set(t_vv, "email", "alice@test.com");
+    map.set(t_vv, "age", "30");
+    let t_vres = validate_row(t_vv, 0);
+    if (t_vres == 1) { io.writeln("PASS: validate_row accepts valid row") }
+    0
+}
+
+fn test_validate_empty() {
+    let t_ve = map.new();
+    map.set(t_ve, "name", "");
+    map.set(t_ve, "email", "bob@test.com");
+    map.set(t_ve, "age", "25");
+    let t_eres = validate_row(t_ve, 0);
+    if (t_eres == 0) { io.writeln("PASS: validate_row rejects empty name") }
+    0
+}
+
+fn test_validate_spaces() {
+    let t_vs = map.new();
+    map.set(t_vs, "name", "   ");
+    map.set(t_vs, "email", "carol@test.com");
+    map.set(t_vs, "age", "28");
+    let t_sres = validate_row(t_vs, 0);
+    if (t_sres == 0) { io.writeln("PASS: validate_row rejects whitespace-only name") }
+    0
+}
+
+fn test_transform() {
+    let t_tf = map.new();
+    map.set(t_tf, "name", "  BOB@EXAMPLE.COM  ");
+    map.set(t_tf, "email", "bob@example.com");
+    map.set(t_tf, "age", "25");
+    let t_tres = transform_row(t_tf);
+    let t_tn = map.get(t_tres, "name");
+    let t_te = map.get(t_tres, "email");
+    if (t_tn == "bob@example.com") { io.writeln("PASS: transform normalizes name") }
+    if (t_te == "BOB@EXAMPLE.COM") { io.writeln("PASS: transform uppercases email") }
+    0
+}
+
+fn run_all_tests() {
+    io.writeln("Running CSV ETL Tests...");
+    test_normalize();
+    test_validate_valid();
+    test_validate_empty();
+    test_validate_spaces();
+    test_transform();
+    io.writeln("All tests complete")
+}
+
+fn main() {
+    run_all_tests()
+}

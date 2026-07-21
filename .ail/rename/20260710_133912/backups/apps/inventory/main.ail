@@ -1,0 +1,351 @@
+import system;
+import environment;
+import list;
+import map;
+import string;
+import convert;
+import storage;
+import helpers;
+import auth;
+import audit;
+import product;
+import category;
+import customer;
+import vendor;
+import stock_movement;
+import stock_transfer;
+import stock_valuation;
+import order_sales_order;
+import order_purchase_order;
+import report_stock_report;
+import report_sales_report;
+import report_profit_report;
+import export_csv_export;
+import export_json_export;
+import notification;
+import search;
+import warehouse;
+import stock_aging;
+import reorder;
+import dashboard;
+import currency;
+import returns;
+import shipping;
+import invoice;
+import permission;
+import audit_trail;
+import price_history;
+import supplier;
+import batch;
+import serial_number;
+import tax;
+import payment;
+import stock_reservation;
+import stock_adjustment;
+import notification_reorder;
+import report_trends;
+import workflow;
+import transfer_integration;
+import payment_integration;
+import data_seed;
+import audit_integration;
+
+fn main_demo_create_products() {
+    let cat1 = category.category_create("Electronics", "Electronic devices and accessories", "");
+    let cat2 = category.category_create("Office Supplies", "Paper, pens, and office equipment", "");
+    let cat1Id = helpers.helpers_get_map_value_safe(cat1, "id", "");
+    let cat2Id = helpers.helpers_get_map_value_safe(cat2, "id", "");
+    let prod1 = product.product_create("Laptop", "High-performance laptop", "LAP-001", cat1Id, 1200, 900, "pcs");
+    let prod2 = product.product_create("Mouse", "Wireless mouse", "MOU-001", cat1Id, 25, 15, "pcs");
+    let prod3 = product.product_create("Notebook", "A5 ruled notebook", "NTB-001", cat2Id, 5, 3, "pcs");
+    let prod4 = product.product_create("Desk Lamp", "LED desk lamp", "LMP-001", cat2Id, 45, 30, "pcs");
+    print("Created 2 categories and 4 products");
+    return true;
+}
+
+fn main_demo_create_customers() {
+    let cust1 = customer.customer_create("Alice Corp", "alice@example.com", "555-0101");
+    let cust2 = customer.customer_create("Bob Industries", "bob@example.com", "555-0102");
+    let cust3 = customer.customer_create("Charlie Ltd", "charlie@example.com", "555-0103");
+    print("Created 3 customers");
+    return true;
+}
+
+fn main_demo_create_vendors() {
+    let ven1 = vendor.vendor_create("TechSupply Inc", "info@techsupply.com", "555-0201", "John Vendor");
+    let ven2 = vendor.vendor_create("OfficeMart", "sales@officemart.com", "555-0202", "Jane Vendor");
+    print("Created 2 vendors");
+    return true;
+}
+
+fn main_demo_stock_and_orders() {
+    let allProducts = product.product_list();
+    let prodCount = list.len(allProducts);
+    if (prodCount == 0) {
+        print("No products found. Run init first.");
+        return false;
+    }
+    let firstProd = list.get(allProducts, 0);
+    let firstProdId = helpers.helpers_get_map_value_safe(firstProd, "id", "");
+    stock_movement.movement_create(firstProdId, "inbound", 50, "manual", "", "Initial stock");
+    print("Created inbound movement for first product");
+    let allCustomers = customer.customer_list();
+    if (list.len(allCustomers) > 0) {
+        let firstCust = list.get(allCustomers, 0);
+        let firstCustId = helpers.helpers_get_map_value_safe(firstCust, "id", "");
+        let newOrder = order_sales_order.sales_create(firstCustId, "First test order");
+        let orderId = helpers.helpers_get_map_value_safe(newOrder, "id", "");
+        order_sales_order.sales_add_item(orderId, firstProdId, 2, helpers.helpers_get_map_value_safe(firstProd, "unit_price", 0));
+        print("Created sales order with 1 item");
+    }
+    let allVendors = vendor.vendor_list();
+    if (list.len(allVendors) > 0) {
+        let firstVen = list.get(allVendors, 0);
+        let firstVenId = helpers.helpers_get_map_value_safe(firstVen, "id", "");
+        let newPO = order_purchase_order.purchase_create(firstVenId, "First purchase order");
+        let poId = helpers.helpers_get_map_value_safe(newPO, "id", "");
+        order_purchase_order.purchase_add_item(poId, firstProdId, 10, 850);
+        print("Created purchase order with 1 item");
+    }
+    return true;
+}
+
+fn main_report() {
+    let allProducts = product.product_list();
+    let prodCount = list.len(allProducts);
+    let allCustomers = customer.customer_list();
+    let custCount = list.len(allCustomers);
+    let allVendors = vendor.vendor_list();
+    let venCount = list.len(allVendors);
+    let allMovements = stock_movement.movement_list();
+    let movCount = list.len(allMovements);
+    let allSales = order_sales_order.sales_list();
+    let salesCount = list.len(allSales);
+    let allPurchases = order_purchase_order.purchase_list();
+    let purchaseCount = list.len(allPurchases);
+    print("=== INVENTORY REPORT ===");
+    print("Products: " + convert.to_string(prodCount));
+    print("Categories: " + convert.to_string(list.len(category.category_list())));
+    print("Customers: " + convert.to_string(custCount));
+    print("Vendors: " + convert.to_string(venCount));
+    print("Stock Movements: " + convert.to_string(movCount));
+    print("Sales Orders: " + convert.to_string(salesCount));
+    print("Purchase Orders: " + convert.to_string(purchaseCount));
+    print("=== END REPORT ===");
+    return true;
+}
+
+fn main_export_csv() {
+    let csvProducts = export_csv_export.csv_products();
+    print("=== PRODUCTS CSV ===");
+    print(csvProducts);
+    print("=== END ===");
+    return true;
+}
+
+fn main_export_json() {
+    let jsonProducts = export_json_export.json_export_products();
+    print("=== PRODUCTS JSON ===");
+    print(jsonProducts);
+    print("=== END ===");
+    return true;
+}
+
+fn main_help() {
+    print("Usage: ail run main.ail <command>");
+    print("");
+    print("Commands:");
+    print("  init       - Initialize demo data (products, customers, vendors)");
+    print("  stock      - Create demo stock movements and orders");
+    print("  report     - Show inventory summary report");
+    print("  csv        - Export products as CSV");
+    print("  json       - Export products as JSON");
+    print("  search <q> - Search across all entities");
+    print("  seed       - Seed demo data for all modules");
+    print("  reserve    - Create demo stock reservation");
+    print("  adjust     - Create demo stock adjustment");
+    print("  warehouse  - List warehouses");
+    print("  dashboard  - Show dashboard summary");
+    print("  permission - Demo permission operations");
+    print("  batch      - Demo batch operations");
+    print("  workflow   - Demo workflow operations");
+    print("  audit_full - Show full audit report");
+    print("  help       - Show this help");
+    return true;
+}
+
+fn main_seed() {
+    data_seed.seed_all();
+    return 0;
+}
+
+fn main_reserve() {
+    let mrAllProducts = product.product_list();
+    let mrProdCount = list.len(mrAllProducts);
+    if (mrProdCount == 0) {
+        print("No products found. Run init first.");
+        return false;
+    }
+    let mrFirst = list.get(mrAllProducts, 0);
+    let mrFirstId = helpers.helpers_get_map_value_safe(mrFirst, "id", "");
+    let mrReservation = stock_reservation.reservation_create("DEMO-ORDER", mrFirstId, 5);
+    if (mrReservation == false) {
+        print("Failed to create reservation (insufficient stock)");
+    } else {
+        print("Created demo reservation");
+    }
+    return true;
+}
+
+fn main_adjust() {
+    let maAllProducts = product.product_list();
+    let maProdCount = list.len(maAllProducts);
+    if (maProdCount == 0) {
+        print("No products found. Run init first.");
+        return false;
+    }
+    let maFirst = list.get(maAllProducts, 0);
+    let maFirstId = helpers.helpers_get_map_value_safe(maFirst, "id", "");
+    stock_adjustment.adjustment_create(maFirstId, 100, 95, "Cycle count adjustment", "Demo User");
+    print("Created demo stock adjustment");
+    return true;
+}
+
+fn main_warehouse() {
+    let mwAll = warehouse.warehouse_list();
+    let mwCount = list.len(mwAll);
+    print("Total warehouses: " + convert.to_string(mwCount));
+    return true;
+}
+
+fn main_dashboard() {
+    let mdSummary = dashboard.dashboard_summary();
+    let mdProducts = helpers.helpers_get_map_value_safe(mdSummary, "total_products", 0);
+    let mdCat = helpers.helpers_get_map_value_safe(mdSummary, "total_categories", 0);
+    let mdCust = helpers.helpers_get_map_value_safe(mdSummary, "total_customers", 0);
+    let mdVend = helpers.helpers_get_map_value_safe(mdSummary, "total_vendors", 0);
+    let mdMov = helpers.helpers_get_map_value_safe(mdSummary, "total_movements", 0);
+    let mdSales = helpers.helpers_get_map_value_safe(mdSummary, "total_sales_orders", 0);
+    let mdPurch = helpers.helpers_get_map_value_safe(mdSummary, "total_purchase_orders", 0);
+    let mdWH = helpers.helpers_get_map_value_safe(mdSummary, "total_warehouses", 0);
+    print("=== DASHBOARD SUMMARY ===");
+    print("Products: " + convert.to_string(mdProducts));
+    print("Categories: " + convert.to_string(mdCat));
+    print("Customers: " + convert.to_string(mdCust));
+    print("Vendors: " + convert.to_string(mdVend));
+    print("Stock Movements: " + convert.to_string(mdMov));
+    print("Sales Orders: " + convert.to_string(mdSales));
+    print("Purchase Orders: " + convert.to_string(mdPurch));
+    print("Warehouses: " + convert.to_string(mdWH));
+    print("=== END ===");
+    return true;
+}
+
+fn main_permission() {
+    let mpDefined = permission.permission_define("admin", "products", list.new());
+    permission.permission_add_action("admin", "products", "create");
+    permission.permission_add_action("admin", "products", "read");
+    permission.permission_add_action("admin", "products", "update");
+    permission.permission_add_action("admin", "products", "delete");
+    let mpCheck = permission.permission_check("admin", "products", "create");
+    if (mpCheck) {
+        print("Permission check passed: admin can create products");
+    } else {
+        print("Permission check failed");
+    }
+    return true;
+}
+
+fn main_batch() {
+    let mbAll = batch.batch_list();
+    let mbCount = list.len(mbAll);
+    print("Total batches: " + convert.to_string(mbCount));
+    return true;
+}
+
+fn main_workflow() {
+    let mwAll = workflow.workflow_pending_approvals();
+    let mwCount = list.len(mwAll);
+    print("Pending workflow approvals: " + convert.to_string(mwCount));
+    return true;
+}
+
+fn main_audit_full() {
+    let mafReport = audit_integration.audit_integration_full_report();
+    print(mafReport);
+    return true;
+}
+
+fn main() {
+    let mainArgs = environment.args();
+    let mainArgCount = list.len(mainArgs);
+    if (mainArgCount < 2) {
+        return main_help();
+    }
+    let mainCommand = list.get(mainArgs, 1);
+    if (mainCommand == "init") {
+        main_demo_create_products();
+        main_demo_create_customers();
+        main_demo_create_vendors();
+        return 0;
+    }
+    if (mainCommand == "stock") {
+        main_demo_stock_and_orders();
+        return 0;
+    }
+    if (mainCommand == "report") {
+        main_report();
+        return 0;
+    }
+    if (mainCommand == "csv") {
+        main_export_csv();
+        return 0;
+    }
+    if (mainCommand == "json") {
+        main_export_json();
+        return 0;
+    }
+    if (mainCommand == "seed") {
+        main_seed();
+        return 0;
+    }
+    if (mainCommand == "reserve") {
+        main_reserve();
+        return 0;
+    }
+    if (mainCommand == "adjust") {
+        main_adjust();
+        return 0;
+    }
+    if (mainCommand == "warehouse") {
+        main_warehouse();
+        return 0;
+    }
+    if (mainCommand == "dashboard") {
+        main_dashboard();
+        return 0;
+    }
+    if (mainCommand == "permission") {
+        main_permission();
+        return 0;
+    }
+    if (mainCommand == "batch") {
+        main_batch();
+        return 0;
+    }
+    if (mainCommand == "workflow") {
+        main_workflow();
+        return 0;
+    }
+    if (mainCommand == "audit_full") {
+        main_audit_full();
+        return 0;
+    }
+    if (mainCommand == "help") {
+        main_help();
+        return 0;
+    }
+    print("Unknown command: " + mainCommand);
+    main_help();
+    return 1;
+}

@@ -1,0 +1,53 @@
+import list;
+import map;
+
+fn add_student(students, name, score) {
+    let s = map.new();
+    map.set(s, "name", name);
+    map.set(s, "score", score);
+    list.append(students, s);
+    return students
+}
+
+fn sum_scores_helper(students, i) {
+    if (i >= list.len(students)) { return 0 }
+    let s = list.get(students, i);
+    return map.get(s, "score") + sum_scores_helper(students, i + 1)
+}
+
+fn calc_average(students) {
+    let total = sum_scores_helper(students, 0);
+    return total / list.len(students)
+}
+
+fn find_best_name_helper(students, i, best_name, best_score) {
+    if (i >= list.len(students)) { return best_name }
+    let s = list.get(students, i);
+    let score = map.get(s, "score");
+    let name = map.get(s, "name");
+    if (score > best_score) {
+        return find_best_name_helper(students, i + 1, name, score)
+    }
+    return find_best_name_helper(students, i + 1, best_name, best_score)
+}
+
+fn find_best_score_helper(students, i, best_score) {
+    if (i >= list.len(students)) { return best_score }
+    let s = list.get(students, i);
+    let score = map.get(s, "score");
+    if (score > best_score) {
+        return find_best_score_helper(students, i + 1, score)
+    }
+    return find_best_score_helper(students, i + 1, best_score)
+}
+
+fn main() {
+    print("=== Student Management ===");
+    let students = list.new();
+    students = add_student(students, "Alice", 85);
+    students = add_student(students, "Bob", 92);
+    students = add_student(students, "Charlie", 78);
+    students = add_student(students, "Diana", 95);
+    print("Class average:", calc_average(students));
+    print("Highest:", find_best_name_helper(students, 0, "", 0), "with", find_best_score_helper(students, 0, 0))
+}

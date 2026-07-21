@@ -1,0 +1,149 @@
+import storage;
+import ticket;
+import list;
+import map;
+import convert;
+
+fn test_search_by_title() {
+    storage.storage_clear("tickets");
+    ticket.ticket_create("Server Down", "high", "infra", "Main server issue", 1);
+    ticket.ticket_create("Login Bug", "medium", "auth", "Users cannot login", 1);
+    ticket.ticket_create("DB Problem", "critical", "database", "Primary DB down", 1);
+    let tsResult = ticket.ticket_search("Server");
+    if (list.len(tsResult) != 1) {
+        print("FAIL: search_by_title - expected 1, got " + convert.to_string(list.len(tsResult)));
+        return false;
+    }
+    let tsFirst = list.get(tsResult, 0);
+    if (map.get(tsFirst, "title") != "Server Down") {
+        print("FAIL: search_by_title - wrong ticket");
+        return false;
+    }
+    print("PASS: search_by_title");
+    return true;
+}
+
+fn test_search_by_description() {
+    storage.storage_clear("tickets");
+    ticket.ticket_create("Issue A", "low", "task", "Server is slow", 1);
+    ticket.ticket_create("Issue B", "low", "task", "Login page broken", 1);
+    let tsdResult = ticket.ticket_search("slow");
+    if (list.len(tsdResult) != 1) {
+        print("FAIL: search_by_description - expected 1, got " + convert.to_string(list.len(tsdResult)));
+        return false;
+    }
+    print("PASS: search_by_description");
+    return true;
+}
+
+fn test_search_no_results() {
+    storage.storage_clear("tickets");
+    ticket.ticket_create("Real Ticket", "low", "task", "Real description", 1);
+    let tsnResult = ticket.ticket_search("nonexistent");
+    if (list.len(tsnResult) != 0) {
+        print("FAIL: search_no_results - expected 0, got " + convert.to_string(list.len(tsnResult)));
+        return false;
+    }
+    print("PASS: search_no_results");
+    return true;
+}
+
+fn test_filter_by_status() {
+    storage.storage_clear("tickets");
+    let tfsItem1 = ticket.ticket_create("T1", "low", "task", "D1", 1);
+    let tfsItem2 = ticket.ticket_create("T2", "low", "task", "D2", 1);
+    ticket.ticket_set_status(map.get(tfsItem1, "id"), "resolved");
+    let tfsResult = ticket.ticket_filter("status", "open");
+    if (list.len(tfsResult) != 1) {
+        print("FAIL: filter_by_status - expected 1 open, got " + convert.to_string(list.len(tfsResult)));
+        return false;
+    }
+    let tfsResolved = ticket.ticket_filter("status", "resolved");
+    if (list.len(tfsResolved) != 1) {
+        print("FAIL: filter_by_status - expected 1 resolved, got " + convert.to_string(list.len(tfsResolved)));
+        return false;
+    }
+    print("PASS: filter_by_status");
+    return true;
+}
+
+fn test_filter_by_priority() {
+    storage.storage_clear("tickets");
+    ticket.ticket_create("T1", "low", "task", "D1", 1);
+    ticket.ticket_create("T2", "high", "bug", "D2", 1);
+    ticket.ticket_create("T3", "high", "bug", "D3", 1);
+    ticket.ticket_create("T4", "critical", "infra", "D4", 1);
+    let tfpResult = ticket.ticket_filter("priority", "high");
+    if (list.len(tfpResult) != 2) {
+        print("FAIL: filter_by_priority - expected 2 high, got " + convert.to_string(list.len(tfpResult)));
+        return false;
+    }
+    let tfpCritical = ticket.ticket_filter("priority", "critical");
+    if (list.len(tfpCritical) != 1) {
+        print("FAIL: filter_by_priority - expected 1 critical, got " + convert.to_string(list.len(tfpCritical)));
+        return false;
+    }
+    print("PASS: filter_by_priority");
+    return true;
+}
+
+fn test_count_by_status() {
+    storage.storage_clear("tickets");
+    let tcbsItem1 = ticket.ticket_create("T1", "low", "task", "D1", 1);
+    let tcbsItem2 = ticket.ticket_create("T2", "low", "task", "D2", 1);
+    let tcbsItem3 = ticket.ticket_create("T3", "low", "task", "D3", 1);
+    ticket.ticket_set_status(map.get(tcbsItem1, "id"), "resolved");
+    ticket.ticket_set_status(map.get(tcbsItem2, "id"), "closed");
+    let tcbsResult = ticket.ticket_count_by_status();
+    if (map.get(tcbsResult, "open") != 1) {
+        print("FAIL: count_by_status - expected 1 open, got " + convert.to_string(map.get(tcbsResult, "open")));
+        return false;
+    }
+    if (map.get(tcbsResult, "resolved") != 1) {
+        print("FAIL: count_by_status - expected 1 resolved");
+        return false;
+    }
+    if (map.get(tcbsResult, "closed") != 1) {
+        print("FAIL: count_by_status - expected 1 closed");
+        return false;
+    }
+    print("PASS: count_by_status");
+    return true;
+}
+
+fn test_count_by_priority() {
+    storage.storage_clear("tickets");
+    ticket.ticket_create("T1", "low", "task", "D1", 1);
+    ticket.ticket_create("T2", "low", "task", "D2", 1);
+    ticket.ticket_create("T3", "high", "bug", "D3", 1);
+    let tcbpResult = ticket.ticket_count_by_priority();
+    if (map.get(tcbpResult, "low") != 2) {
+        print("FAIL: count_by_priority - expected 2 low");
+        return false;
+    }
+    if (map.get(tcbpResult, "high") != 1) {
+        print("FAIL: count_by_priority - expected 1 high");
+        return false;
+    }
+    print("PASS: count_by_priority");
+    return true;
+}
+
+fn main() {
+    let tr1 = test_search_by_title();
+    if (tr1 == false) { return 1; }
+    let tr2 = test_search_by_description();
+    if (tr2 == false) { return 1; }
+    let tr3 = test_search_no_results();
+    if (tr3 == false) { return 1; }
+    let tr4 = test_filter_by_status();
+    if (tr4 == false) { return 1; }
+    let tr5 = test_filter_by_priority();
+    if (tr5 == false) { return 1; }
+    let tr6 = test_count_by_status();
+    if (tr6 == false) { return 1; }
+    let tr7 = test_count_by_priority();
+    if (tr7 == false) { return 1; }
+    print("ALL SEARCH TESTS PASSED");
+    return 0;
+}

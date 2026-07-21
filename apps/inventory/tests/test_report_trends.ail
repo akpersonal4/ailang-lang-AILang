@@ -1,0 +1,146 @@
+import list;
+import map;
+import string;
+import convert;
+import helpers;
+import storage;
+import report_trends;
+
+fn trend_find_month_rec(tfmrItems, tfmrTargetMonth, tfmrIdx) {
+    if (tfmrIdx >= list.len(tfmrItems)) {
+        return false;
+    }
+    let tfmrEntry = list.get(tfmrItems, tfmrIdx);
+    let tfmrMonth = helpers.helpers_get_map_value_safe(tfmrEntry, "month", "");
+    if (tfmrMonth == tfmrTargetMonth) {
+        return true;
+    }
+    return trend_find_month_rec(tfmrItems, tfmrTargetMonth, tfmrIdx + 1);
+}
+
+fn test_trend_monthly_sales() {
+    let tmsCat = map.new();
+    map.set(tmsCat, "id", "TREND-TEST-CAT");
+    map.set(tmsCat, "name", "Trend Test Category");
+    storage.storage_add("categories", tmsCat);
+    let tmsOrder1 = map.new();
+    map.set(tmsOrder1, "id", "TREND-SO-1");
+    map.set(tmsOrder1, "customer_id", "TREND-CUST-1");
+    map.set(tmsOrder1, "status", "confirmed");
+    map.set(tmsOrder1, "total", 100);
+    map.set(tmsOrder1, "created_at", "2024-01-15T10:00:00");
+    map.set(tmsOrder1, "updated_at", "2024-01-15T10:00:00");
+    map.set(tmsOrder1, "notes", "");
+    storage.storage_add("sales_orders", tmsOrder1);
+    let tmsOrder2 = map.new();
+    map.set(tmsOrder2, "id", "TREND-SO-2");
+    map.set(tmsOrder2, "customer_id", "TREND-CUST-1");
+    map.set(tmsOrder2, "status", "confirmed");
+    map.set(tmsOrder2, "total", 200);
+    map.set(tmsOrder2, "created_at", "2024-01-20T10:00:00");
+    map.set(tmsOrder2, "updated_at", "2024-01-20T10:00:00");
+    map.set(tmsOrder2, "notes", "");
+    storage.storage_add("sales_orders", tmsOrder2);
+    let tmsMonthly = report_trends.trend_monthly_sales();
+    let tmsLen = list.len(tmsMonthly);
+    if (tmsLen == 0) {
+        print("FAIL: expected at least 1 monthly entry");
+        return false;
+    }
+    let tmsFound = trend_find_month_rec(tmsMonthly, "2024-01", 0);
+    if (tmsFound == false) {
+        print("FAIL: expected month 2024-01 in results");
+        return false;
+    }
+    print("PASS: trend_monthly_sales");
+    return true;
+}
+
+fn test_trend_top_products() {
+    let ttpProd1 = map.new();
+    map.set(ttpProd1, "id", "TREND-TOP-PROD-1");
+    map.set(ttpProd1, "name", "Top Product 1");
+    map.set(ttpProd1, "category_id", "TREND-TOP-CAT");
+    map.set(ttpProd1, "active", true);
+    storage.storage_add("products", ttpProd1);
+    let ttpProd2 = map.new();
+    map.set(ttpProd2, "id", "TREND-TOP-PROD-2");
+    map.set(ttpProd2, "name", "Top Product 2");
+    map.set(ttpProd2, "category_id", "TREND-TOP-CAT");
+    map.set(ttpProd2, "active", true);
+    storage.storage_add("products", ttpProd2);
+    let ttpItem1 = map.new();
+    map.set(ttpItem1, "id", "TREND-SOI-1");
+    map.set(ttpItem1, "order_id", "TREND-SO-TOP");
+    map.set(ttpItem1, "product_id", "TREND-TOP-PROD-1");
+    map.set(ttpItem1, "quantity", 10);
+    map.set(ttpItem1, "unit_price", 50);
+    map.set(ttpItem1, "line_total", 500);
+    storage.storage_add("sales_items", ttpItem1);
+    let ttpItem2 = map.new();
+    map.set(ttpItem2, "id", "TREND-SOI-2");
+    map.set(ttpItem2, "order_id", "TREND-SO-TOP");
+    map.set(ttpItem2, "product_id", "TREND-TOP-PROD-2");
+    map.set(ttpItem2, "quantity", 5);
+    map.set(ttpItem2, "unit_price", 30);
+    map.set(ttpItem2, "line_total", 150);
+    storage.storage_add("sales_items", ttpItem2);
+    let ttpTop = report_trends.trend_top_products(1);
+    let ttpLen = list.len(ttpTop);
+    if (ttpLen != 1) {
+        print("FAIL: expected 1 top product, got " + convert.to_string(ttpLen));
+        return false;
+    }
+    print("PASS: trend_top_products");
+    return true;
+}
+
+fn test_trend_category_breakdown() {
+    let tcbCat = map.new();
+    map.set(tcbCat, "id", "TREND-BREAK-CAT");
+    map.set(tcbCat, "name", "Breakdown Category");
+    storage.storage_add("categories", tcbCat);
+    let tcbProd1 = map.new();
+    map.set(tcbProd1, "id", "TREND-BREAK-PROD-1");
+    map.set(tcbProd1, "name", "Breakdown Product 1");
+    map.set(tcbProd1, "category_id", "TREND-BREAK-CAT");
+    map.set(tcbProd1, "active", true);
+    storage.storage_add("products", tcbProd1);
+    let tcbProd2 = map.new();
+    map.set(tcbProd2, "id", "TREND-BREAK-PROD-2");
+    map.set(tcbProd2, "name", "Breakdown Product 2");
+    map.set(tcbProd2, "category_id", "TREND-BREAK-CAT");
+    map.set(tcbProd2, "active", true);
+    storage.storage_add("products", tcbProd2);
+    let tcbBreakdown = report_trends.trend_category_breakdown();
+    let tcbLen = list.len(tcbBreakdown);
+    if (tcbLen == 0) {
+        print("FAIL: expected at least 1 category entry");
+        return false;
+    }
+    let tcbFirst = list.get(tcbBreakdown, 0);
+    let tcbCount = helpers.helpers_get_map_value_safe(tcbFirst, "count", 0);
+    if (tcbCount < 2) {
+        print("FAIL: expected at least 2 products in category, got " + convert.to_string(tcbCount));
+        return false;
+    }
+    print("PASS: trend_category_breakdown");
+    return true;
+}
+
+fn main() {
+    let tt1 = test_trend_monthly_sales();
+    if (tt1 == false) {
+        return 1;
+    }
+    let tt2 = test_trend_top_products();
+    if (tt2 == false) {
+        return 1;
+    }
+    let tt3 = test_trend_category_breakdown();
+    if (tt3 == false) {
+        return 1;
+    }
+    print("ALL REPORT TRENDS TESTS PASSED");
+    return 0;
+}

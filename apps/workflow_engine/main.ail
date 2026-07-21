@@ -1,0 +1,642 @@
+import environment;
+import string;
+import list;
+import map;
+import json;
+import convert;
+import storage;
+import user;
+import workflow_def;
+import instance;
+import history;
+import session;
+
+fn require_role(action) {
+    let rrUserId = session.session_get_user_id();
+    if (rrUserId == 0) {
+        print("Error: Not logged in. Use 'login <username> <password>' first.");
+        return 0;
+    }
+    let rrHasPerm = user.user_has_permission(rrUserId, action);
+    if (rrHasPerm == false) {
+        print("Error: Insufficient permissions for " + action);
+        return 0;
+    }
+    return rrUserId;
+}
+
+fn cmd_register(args) {
+    let crLen = list.len(args);
+    if (crLen < 4) {
+        print("Usage: register <username> <email> <password>");
+        return true;
+    }
+    let crUsername = list.get(args, 1);
+    let crEmail = list.get(args, 2);
+    let crPassword = list.get(args, 3);
+    let crResult = user.user_create(crUsername, crEmail, crPassword);
+    if (crResult == false) {
+        print("Error: Username or email already exists.");
+        return true;
+    }
+    let crId = map.get(crResult, "id");
+    print("User registered: " + crUsername + " (ID: " + convert.to_string(crId) + ")");
+    return true;
+}
+
+fn cmd_login(args) {
+    let clLen = list.len(args);
+    if (clLen < 3) {
+        print("Usage: login <username> <password>");
+        return true;
+    }
+    let clUsername = list.get(args, 1);
+    let clPassword = list.get(args, 2);
+    let clUser = user.user_authenticate(clUsername, clPassword);
+    if (clUser == false) {
+        print("Error: Invalid username or password.");
+        return true;
+    }
+    let clId = map.get(clUser, "id");
+    let clRole = map.get(clUser, "role");
+    session.session_save(clId, clUsername);
+    print("Logged in as " + clUsername + " (role: " + clRole + ")");
+    return true;
+}
+
+fn cmd_logout(args) {
+    let cloUserId = session.session_get_user_id();
+    if (cloUserId == 0) {
+        print("Error: Not logged in.");
+        return true;
+    }
+    let cloSession = session.session_load();
+    let cloUsername = map.get(cloSession, "username");
+    session.session_clear();
+    print("Logged out " + cloUsername);
+    return true;
+}
+
+fn cmd_create_workflow(args) {
+    let ccwUserId = require_role("create_workflow");
+    if (ccwUserId == 0) {
+        return true;
+    }
+    let ccwLen = list.len(args);
+    if (ccwLen < 4) {
+        print("Usage: create-workflow <name> <description> <states_csv>");
+        print("  states_csv: state1,state2,state3");
+        print("  Example: create-workflow Approval \"Simple approval\" pending,approved,rejected");
+        return true;
+    }
+    let ccwName = list.get(args, 1);
+    let ccwDesc = list.get(args, 2);
+    let ccwStatesCsv = list.get(args, 3);
+    let ccwStates = string.split(ccwStatesCsv, ",");
+    let ccwInitialState = list.get(ccwStates, 0);
+    let ccwTransitions = list.new();
+    let ccwDef = workflow_def.workflow_def_create_with_data(ccwName, ccwDesc, ccwStates, ccwInitialState, ccwTransitions);
+    if (ccwDef == false) {
+        print("Error: Workflow name already exists.");
+        return true;
+    }
+    let ccwId = map.get(ccwDef, "id");
+    print("Workflow created: " + ccwName + " (ID: " + convert.to_string(ccwId) + ")");
+    print("States: " + ccwStatesCsv);
+    print("Use 'add-transition <workflow_id> <from> <to> <action> [role]' to add transitions.");
+    return true;
+}
+
+fn cmd_add_transition(args) {
+    let catUserId = require_role("create_workflow");
+    if (catUserId == 0) {
+        return true;
+    }
+    let catLen = list.len(args);
+    if (catLen < 5) {
+        print("Usage: add-transition <workflow_id> <from_state> <to_state> <action> [required_role]");
+        print("  Example: add-transition 1 pending approved approve operator");
+        return true;
+    }
+    let catWfId = convert.to_int(list.get(args, 1));
+    let catFrom = list.get(args, 2);
+    let catTo = list.get(args, 3);
+    let catAction = list.get(args, 4);
+    let catRole = "operator";
+    if (catLen > 5) {
+        catRole = list.get(args, 5);
+    }
+    let catDef = workflow_def.workflow_def_find_by_id(catWfId);
+    if (catDef == false) {
+        print("Error: Workflow not found.");
+        return true;
+    }
+    let catTrans = map.new();
+    map.set(catTrans, "from_state", catFrom);
+    map.set(catTrans, "to_state", catTo);
+    map.set(catTrans, "action", catAction);
+    map.set(catTrans, "conditions", list.new());
+    map.set(catTrans, "required_role", catRole);
+    let catTransitions = map.get(catDef, "transitions");
+    let catNewTransitions = list.append(catTransitions, catTrans);
+    storage.storage_update_field("workflow_defs", catWfId, "transitions", catNewTransitions);
+    print("Transition added: " + catFrom + " -> " + catTo + " (action: " + catAction + ")");
+    return true;
+}
+
+fn cmd_list_workflows_rec(defs, index) {
+    let clwrLen = list.len(defs);
+    if (index == clwrLen) {
+        return true;
+    }
+    let clwrDef = list.get(defs, index);
+    let clwrId = map.get(clwrDef, "id");
+    let clwrName = map.get(clwrDef, "name");
+    print("  [" + convert.to_string(clwrId) + "] " + clwrName);
+    cmd_list_workflows_rec(defs, math.add(index, 1));
+    return true;
+}
+
+fn cmd_list_workflows(args) {
+    let clwUserId = require_role("list_workflows");
+    if (clwUserId == 0) {
+        return true;
+    }
+    let clwDefs = workflow_def.workflow_def_list_all();
+    let clwLen = list.len(clwDefs);
+    print("--- Workflows (" + convert.to_string(clwLen) + ") ---");
+    cmd_list_workflows_rec(clwDefs, 0);
+    return true;
+}
+
+fn cmd_view_workflow_transitions(trans, index) {
+    let cvwtrLen = list.len(trans);
+    if (index == cvwtrLen) {
+        return true;
+    }
+    let cvwtrT = list.get(trans, index);
+    let cvwtrFrom = map.get(cvwtrT, "from_state");
+    let cvwtrTo = map.get(cvwtrT, "to_state");
+    let cvwtrAction = map.get(cvwtrT, "action");
+    let cvwtrRole = map.get(cvwtrT, "required_role");
+    print("  " + cvwtrFrom + " --(" + cvwtrAction + ")--> " + cvwtrTo + " [" + cvwtrRole + "]");
+    cmd_view_workflow_transitions(trans, math.add(index, 1));
+    return true;
+}
+
+fn cmd_view_workflow(args) {
+    let cvwUserId = require_role("view_workflow");
+    if (cvwUserId == 0) {
+        return true;
+    }
+    let cvwLen = list.len(args);
+    if (cvwLen < 2) {
+        print("Usage: view-workflow <id>");
+        return true;
+    }
+    let cvwId = convert.to_int(list.get(args, 1));
+    let cvwDef = workflow_def.workflow_def_find_by_id(cvwId);
+    if (cvwDef == false) {
+        print("Error: Workflow not found.");
+        return true;
+    }
+    let cvwName = map.get(cvwDef, "name");
+    let cvwDesc = map.get(cvwDef, "description");
+    let cvwStates = map.get(cvwDef, "states");
+    let cvwInit = map.get(cvwDef, "initial_state");
+    let cvwTrans = map.get(cvwDef, "transitions");
+    let cvwTransLen = list.len(cvwTrans);
+    print("--- Workflow " + convert.to_string(cvwId) + " ---");
+    print("Name: " + cvwName);
+    print("Description: " + cvwDesc);
+    print("Initial state: " + cvwInit);
+    print("States: " + json.stringify(cvwStates));
+    print("Transitions (" + convert.to_string(cvwTransLen) + "):");
+    cmd_view_workflow_transitions(cvwTrans, 0);
+    return true;
+}
+
+fn cmd_delete_workflow(args) {
+    let cdwUserId = require_role("delete_workflow");
+    if (cdwUserId == 0) {
+        return true;
+    }
+    let cdwLen = list.len(args);
+    if (cdwLen < 2) {
+        print("Usage: delete-workflow <id>");
+        return true;
+    }
+    let cdwId = convert.to_int(list.get(args, 1));
+    let cdwResult = workflow_def.workflow_def_delete(cdwId);
+    if (cdwResult == false) {
+        print("Error: Workflow not found or has active instances.");
+        return true;
+    }
+    print("Workflow " + convert.to_string(cdwId) + " deleted.");
+    return true;
+}
+
+fn cmd_create_instance(args) {
+    let ciUserId = require_role("create_instance");
+    if (ciUserId == 0) {
+        return true;
+    }
+    let ciLen = list.len(args);
+    if (ciLen < 2) {
+        print("Usage: create-instance <workflow_id>");
+        print("  Instance starts in the workflow's initial state.");
+        return true;
+    }
+    let ciWfId = convert.to_int(list.get(args, 1));
+    let ciData = map.new();
+    let ciDataJson = json.stringify(ciData);
+    let ciResult = instance.instance_create(ciWfId, ciUserId, ciDataJson);
+    if (ciResult == false) {
+        print("Error: Workflow not found.");
+        return true;
+    }
+    let ciId = map.get(ciResult, "id");
+    let ciState = map.get(ciResult, "current_state");
+    print("Instance created: ID " + convert.to_string(ciId) + " in state '" + ciState + "'");
+    return true;
+}
+
+fn cmd_view_instance(args) {
+    let cviUserId = require_role("view_instance");
+    if (cviUserId == 0) {
+        return true;
+    }
+    let cviLen = list.len(args);
+    if (cviLen < 2) {
+        print("Usage: view-instance <id>");
+        return true;
+    }
+    let cviId = convert.to_int(list.get(args, 1));
+    let cviInst = instance.instance_find_by_id(cviId);
+    if (cviInst == false) {
+        print("Error: Instance not found.");
+        return true;
+    }
+    let cviWfId = map.get(cviInst, "workflow_id");
+    let cviState = map.get(cviInst, "current_state");
+    let cviData = map.get(cviInst, "data");
+    let cviCreator = map.get(cviInst, "created_by");
+    let cviCreated = map.get(cviInst, "created_at");
+    print("--- Instance " + convert.to_string(cviId) + " ---");
+    print("Workflow ID: " + convert.to_string(cviWfId));
+    print("Current state: " + cviState);
+    print("Data: " + json.stringify(cviData));
+    print("Created by: " + convert.to_string(cviCreator));
+    print("Created: " + convert.to_string(cviCreated));
+    return true;
+}
+
+fn cmd_list_instances_rec(instances, index) {
+    let clirLen = list.len(instances);
+    if (index == clirLen) {
+        return true;
+    }
+    let clirInst = list.get(instances, index);
+    let clirId = map.get(clirInst, "id");
+    let clirState = map.get(clirInst, "current_state");
+    print("  [" + convert.to_string(clirId) + "] " + clirState);
+    cmd_list_instances_rec(instances, math.add(index, 1));
+    return true;
+}
+
+fn cmd_list_instances(args) {
+    let cliUserId = require_role("view_instance");
+    if (cliUserId == 0) {
+        return true;
+    }
+    let cliLen = list.len(args);
+    if (cliLen < 2) {
+        print("Usage: list-instances <workflow_id>");
+        return true;
+    }
+    let cliWfId = convert.to_int(list.get(args, 1));
+    let cliInstances = instance.instance_list_by_workflow(cliWfId);
+    let cliCount = list.len(cliInstances);
+    print("--- Instances for workflow " + convert.to_string(cliWfId) + " (" + convert.to_string(cliCount) + ") ---");
+    cmd_list_instances_rec(cliInstances, 0);
+    return true;
+}
+
+fn cmd_list_my_instances(args) {
+    let cmiUserId = session.session_get_user_id();
+    if (cmiUserId == 0) {
+        print("Error: Not logged in.");
+        return true;
+    }
+    let cmiInstances = instance.instance_list_by_user(cmiUserId);
+    let cmiCount = list.len(cmiInstances);
+    print("--- My instances (" + convert.to_string(cmiCount) + ") ---");
+    cmd_list_instances_rec(cmiInstances, 0);
+    return true;
+}
+
+fn cmd_transition(args) {
+    let ctUserId = require_role("create_instance");
+    if (ctUserId == 0) {
+        return true;
+    }
+    let ctLen = list.len(args);
+    if (ctLen < 3) {
+        print("Usage: transition <instance_id> <action> [notes]");
+        return true;
+    }
+    let ctInstId = convert.to_int(list.get(args, 1));
+    let ctAction = list.get(args, 2);
+    let ctNotes = "";
+    if (ctLen > 3) {
+        ctNotes = list.get(args, 3);
+    }
+    let ctResult = instance.instance_transition(ctInstId, ctAction, ctUserId, ctNotes);
+    let ctError = map.get_or_default(ctResult, "error", "");
+    if (string.equals(ctError, "invalid_transition")) {
+        print("Error: Invalid transition from current state.");
+        return true;
+    }
+    if (string.equals(ctError, "conditions_not_met")) {
+        print("Error: Transition conditions not met.");
+        return true;
+    }
+    if (string.equals(ctError, "not_found")) {
+        print("Error: Instance not found.");
+        return true;
+    }
+    let ctState = map.get(ctResult, "current_state");
+    print("Instance " + convert.to_string(ctInstId) + " transitioned to '" + ctState + "'");
+    return true;
+}
+
+fn cmd_set_data(args) {
+    let csdUserId = require_role("create_instance");
+    if (csdUserId == 0) {
+        return true;
+    }
+    let csdLen = list.len(args);
+    if (csdLen < 4) {
+        print("Usage: set-data <instance_id> <key> <value>");
+        return true;
+    }
+    let csdInstId = convert.to_int(list.get(args, 1));
+    let csdKey = list.get(args, 2);
+    let csdValue = list.get(args, 3);
+    let csdResult = instance.instance_set_data(csdInstId, csdKey, csdValue);
+    if (csdResult == false) {
+        print("Error: Instance not found.");
+        return true;
+    }
+    print("Instance " + convert.to_string(csdInstId) + " data updated: " + csdKey + " = " + csdValue);
+    return true;
+}
+
+fn cmd_cancel(args) {
+    let ccUserId = require_role("cancel_instance");
+    if (ccUserId == 0) {
+        return true;
+    }
+    let ccLen = list.len(args);
+    if (ccLen < 2) {
+        print("Usage: cancel <instance_id> [notes]");
+        return true;
+    }
+    let ccInstId = convert.to_int(list.get(args, 1));
+    let ccNotes = "";
+    if (ccLen > 2) {
+        ccNotes = list.get(args, 2);
+    }
+    let ccResult = instance.instance_cancel(ccInstId, ccUserId, ccNotes);
+    if (ccResult == false) {
+        print("Error: Instance not found.");
+        return true;
+    }
+    print("Instance " + convert.to_string(ccInstId) + " cancelled.");
+    return true;
+}
+
+fn cmd_history_rec(entries, index) {
+    let chrLen = list.len(entries);
+    if (index == chrLen) {
+        return true;
+    }
+    let chrEntry = list.get(entries, index);
+    let chrFrom = map.get(chrEntry, "from_state");
+    let chrTo = map.get(chrEntry, "to_state");
+    let chrNotes = map.get(chrEntry, "notes");
+    let chrTs = map.get(chrEntry, "timestamp");
+    print("  " + chrFrom + " -> " + chrTo + " (" + chrNotes + ") [" + convert.to_string(chrTs) + "]");
+    cmd_history_rec(entries, math.add(index, 1));
+    return true;
+}
+
+fn cmd_history(args) {
+    let chUserId = require_role("view_history");
+    if (chUserId == 0) {
+        return true;
+    }
+    let chLen = list.len(args);
+    if (chLen < 2) {
+        print("Usage: history <instance_id>");
+        return true;
+    }
+    let chInstId = convert.to_int(list.get(args, 1));
+    let chEntries = history.history_list_by_instance(chInstId);
+    let chCount = list.len(chEntries);
+    print("--- History for instance " + convert.to_string(chInstId) + " (" + convert.to_string(chCount) + ") ---");
+    cmd_history_rec(chEntries, 0);
+    return true;
+}
+
+fn cmd_report_workflow_rec(keys, counts, index) {
+    let crwrLen = list.len(keys);
+    if (index == crwrLen) {
+        return true;
+    }
+    let crwrKey = list.get(keys, index);
+    let crwrCount = map.get(counts, crwrKey);
+    print("  " + crwrKey + ": " + convert.to_string(crwrCount));
+    cmd_report_workflow_rec(keys, counts, math.add(index, 1));
+    return true;
+}
+
+fn cmd_report_workflow(args) {
+    let crwUserId = require_role("report_workflow");
+    if (crwUserId == 0) {
+        return true;
+    }
+    let crwLen = list.len(args);
+    if (crwLen < 2) {
+        print("Usage: report-workflow <workflow_id>");
+        return true;
+    }
+    let crwWfId = convert.to_int(list.get(args, 1));
+    let crwCounts = instance.instance_report_workflow(crwWfId);
+    let crwKeys = map.keys(crwCounts);
+    print("--- Workflow " + convert.to_string(crwWfId) + " Report ---");
+    cmd_report_workflow_rec(crwKeys, crwCounts, 0);
+    return true;
+}
+
+fn cmd_report_activity(args) {
+    let craUserId = require_role("report_activity");
+    if (craUserId == 0) {
+        return true;
+    }
+    let craEntries = instance.instance_report_activity();
+    let craLen = list.len(craEntries);
+    print("--- Activity (last 7 days): " + convert.to_string(craLen) + " transitions ---");
+    cmd_history_rec(craEntries, 0);
+    return true;
+}
+
+fn cmd_export_workflows(args) {
+    let cewUserId = require_role("export_import");
+    if (cewUserId == 0) {
+        return true;
+    }
+    let cewJson = workflow_def.workflow_def_export();
+    print(cewJson);
+    return true;
+}
+
+fn cmd_import_workflows(args) {
+    let ciwUserId = require_role("export_import");
+    if (ciwUserId == 0) {
+        return true;
+    }
+    let ciwLen = list.len(args);
+    if (ciwLen < 2) {
+        print("Usage: import-workflows <json_data>");
+        return true;
+    }
+    let ciwData = list.get(args, 1);
+    let ciwCount = workflow_def.workflow_def_import(ciwData);
+    print("Imported " + convert.to_string(ciwCount) + " workflows.");
+    return true;
+}
+
+fn cmd_help(args) {
+    print("Available commands:");
+    print("  register <username> <email> <password>");
+    print("  login <username> <password>");
+    print("  logout");
+    print("  create-workflow <name> <description> <state1,state2,...>");
+    print("  add-transition <workflow_id> <from> <to> <action> [role]");
+    print("  list-workflows");
+    print("  view-workflow <id>");
+    print("  delete-workflow <id>");
+    print("  create-instance <workflow_id>");
+    print("  view-instance <id>");
+    print("  list-instances <workflow_id>");
+    print("  list-my-instances");
+    print("  transition <instance_id> <action> [notes]");
+    print("  set-data <instance_id> <key> <value>");
+    print("  cancel <instance_id> [notes]");
+    print("  history <instance_id>");
+    print("  report-workflow <workflow_id>");
+    print("  report-activity");
+    print("  export-workflows");
+    print("  import-workflows <json_data>");
+    print("  help");
+    return true;
+}
+
+fn main() {
+    let mArgs = environment.args();
+    let mLen = list.len(mArgs);
+    if (mLen == 0) {
+        print("Workflow Engine v1.0 (AILang)");
+        print("Usage: ail run main.ail <command> [args...]");
+        print("Type 'help' for available commands.");
+        return true;
+    }
+    let mCommand = list.get(mArgs, 0);
+    if (string.equals(mCommand, "register")) {
+        cmd_register(mArgs);
+        return true;
+    }
+    if (string.equals(mCommand, "login")) {
+        cmd_login(mArgs);
+        return true;
+    }
+    if (string.equals(mCommand, "logout")) {
+        cmd_logout(mArgs);
+        return true;
+    }
+    if (string.equals(mCommand, "create-workflow")) {
+        cmd_create_workflow(mArgs);
+        return true;
+    }
+    if (string.equals(mCommand, "add-transition")) {
+        cmd_add_transition(mArgs);
+        return true;
+    }
+    if (string.equals(mCommand, "list-workflows")) {
+        cmd_list_workflows(mArgs);
+        return true;
+    }
+    if (string.equals(mCommand, "view-workflow")) {
+        cmd_view_workflow(mArgs);
+        return true;
+    }
+    if (string.equals(mCommand, "delete-workflow")) {
+        cmd_delete_workflow(mArgs);
+        return true;
+    }
+    if (string.equals(mCommand, "create-instance")) {
+        cmd_create_instance(mArgs);
+        return true;
+    }
+    if (string.equals(mCommand, "view-instance")) {
+        cmd_view_instance(mArgs);
+        return true;
+    }
+    if (string.equals(mCommand, "list-instances")) {
+        cmd_list_instances(mArgs);
+        return true;
+    }
+    if (string.equals(mCommand, "list-my-instances")) {
+        cmd_list_my_instances(mArgs);
+        return true;
+    }
+    if (string.equals(mCommand, "transition")) {
+        cmd_transition(mArgs);
+        return true;
+    }
+    if (string.equals(mCommand, "set-data")) {
+        cmd_set_data(mArgs);
+        return true;
+    }
+    if (string.equals(mCommand, "cancel")) {
+        cmd_cancel(mArgs);
+        return true;
+    }
+    if (string.equals(mCommand, "history")) {
+        cmd_history(mArgs);
+        return true;
+    }
+    if (string.equals(mCommand, "report-workflow")) {
+        cmd_report_workflow(mArgs);
+        return true;
+    }
+    if (string.equals(mCommand, "report-activity")) {
+        cmd_report_activity(mArgs);
+        return true;
+    }
+    if (string.equals(mCommand, "export-workflows")) {
+        cmd_export_workflows(mArgs);
+        return true;
+    }
+    if (string.equals(mCommand, "import-workflows")) {
+        cmd_import_workflows(mArgs);
+        return true;
+    }
+    if (string.equals(mCommand, "help")) {
+        cmd_help(mArgs);
+        return true;
+    }
+    print("Unknown command: " + mCommand + ". Type 'help' for available commands.");
+    return true;
+}

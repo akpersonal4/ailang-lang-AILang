@@ -1,0 +1,5 @@
+BinaryExpression
+  Identifier
+  BinaryExpression
+    Identifier
+    Identifier

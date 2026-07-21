@@ -1,0 +1,94 @@
+import list;
+import map;
+import string;
+import convert;
+import helpers;
+import storage;
+
+fn batch_date_to_int(bdtDateStr) {
+    let bdtParts = string.split(bdtDateStr, "-");
+    let bdtLen = list.len(bdtParts);
+    if (bdtLen < 3) {
+        return 0;
+    }
+    let bdtPart0 = list.get(bdtParts, 0);
+    let bdtPart1 = list.get(bdtParts, 1);
+    let bdtPart2 = list.get(bdtParts, 2);
+    let bdtNumeric = bdtPart0 + bdtPart1 + bdtPart2;
+    return convert.to_int(bdtNumeric);
+}
+
+fn batch_get_expiring_before_rec(gebrItems, gebrExpiryInt, gebrIdx, gebrAcc) {
+    if (gebrIdx >= list.len(gebrItems)) {
+        return gebrAcc;
+    }
+    let gebrItem = list.get(gebrItems, gebrIdx);
+    let gebrItemExpiry = helpers.helpers_get_map_value_safe(gebrItem, "expiry_date", "");
+    let gebrItemExpiryInt = batch_date_to_int(gebrItemExpiry);
+    if (gebrItemExpiryInt < gebrExpiryInt) {
+        list.append(gebrAcc, gebrItem);
+    }
+    return batch_get_expiring_before_rec(gebrItems, gebrExpiryInt, gebrIdx + 1, gebrAcc);
+}
+
+fn batch_get_active_by_product_rec(gabprItems, gabprProductId, gabprIdx, gabprAcc) {
+    if (gabprIdx >= list.len(gabprItems)) {
+        return gabprAcc;
+    }
+    let gabprItem = list.get(gabprItems, gabprIdx);
+    let gabprItemProductId = helpers.helpers_get_map_value_safe(gabprItem, "product_id", "");
+    let gabprItemQty = helpers.helpers_get_map_value_safe(gabprItem, "quantity", 0);
+    if (gabprItemProductId == gabprProductId) {
+        if (gabprItemQty > 0) {
+            list.append(gabprAcc, gabprItem);
+        }
+    }
+    return batch_get_active_by_product_rec(gabprItems, gabprProductId, gabprIdx + 1, gabprAcc);
+}
+
+fn batch_create(btProductId, btBatchNumber, btQuantity, btExpiryDate, btReceivedDate) {
+    let btBatch = map.new();
+    let btId = helpers.helpers_generate_id("BAT-");
+    let btNow = helpers.helpers_current_timestamp();
+    map.set(btBatch, "id", btId);
+    map.set(btBatch, "product_id", btProductId);
+    map.set(btBatch, "batch_number", btBatchNumber);
+    map.set(btBatch, "quantity", btQuantity);
+    map.set(btBatch, "expiry_date", btExpiryDate);
+    map.set(btBatch, "received_date", btReceivedDate);
+    map.set(btBatch, "created_at", btNow);
+    storage.storage_add("batches", btBatch);
+    return btBatch;
+}
+
+fn batch_get_by_id(btBatchId) {
+    return storage.storage_get_by_id("batches", btBatchId);
+}
+
+fn batch_list() {
+    return storage.storage_list("batches");
+}
+
+fn batch_list_by_product(btProductId) {
+    let btAll = storage.storage_list("batches");
+    return list.filter_by_key(btAll, "product_id", btProductId);
+}
+
+fn batch_update_quantity(btBatchId, btNewQty) {
+    let btChanges = map.new();
+    map.set(btChanges, "quantity", btNewQty);
+    return storage.storage_update("batches", btBatchId, btChanges);
+}
+
+fn batch_get_expiring_before(btExpiryDate) {
+    let btAll = storage.storage_list("batches");
+    let btResults = list.new();
+    let btExpiryInt = batch_date_to_int(btExpiryDate);
+    return batch_get_expiring_before_rec(btAll, btExpiryInt, 0, btResults);
+}
+
+fn batch_get_active_by_product(btProductId) {
+    let btAll = storage.storage_list("batches");
+    let btResults = list.new();
+    return batch_get_active_by_product_rec(btAll, btProductId, 0, btResults);
+}

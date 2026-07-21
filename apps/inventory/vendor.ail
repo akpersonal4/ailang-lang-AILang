@@ -1,0 +1,59 @@
+import storage;
+import helpers;
+import list;
+import map;
+import string;
+
+fn vendor_search_rec(vrItems, vrQuery, vrResults, vrIdx) {
+    if (vrIdx >= list.len(vrItems)) {
+        return vrResults;
+    }
+    let vrItem = list.get(vrItems, vrIdx);
+    let vrName = helpers.helpers_get_map_value_safe(vrItem, "name", "");
+    let vrNameLower = string.lowercase(vrName);
+    let vrQueryLower = string.lowercase(vrQuery);
+    if (string.contains(vrNameLower, vrQueryLower)) {
+        list.append(vrResults, vrItem);
+    }
+    return vendor_search_rec(vrItems, vrQuery, vrResults, vrIdx + 1);
+}
+
+fn vendor_create(vcName, vcEmail, vcPhone, vcContact) {
+    let vcVendor = map.new();
+    let vcId = helpers.helpers_generate_id("VEN-");
+    let vcNow = helpers.helpers_current_timestamp();
+    map.set(vcVendor, "id", vcId);
+    map.set(vcVendor, "name", vcName);
+    map.set(vcVendor, "email", vcEmail);
+    map.set(vcVendor, "phone", vcPhone);
+    map.set(vcVendor, "contact_person", vcContact);
+    map.set(vcVendor, "active", true);
+    map.set(vcVendor, "created_at", vcNow);
+    map.set(vcVendor, "updated_at", vcNow);
+    storage.storage_add("vendors", vcVendor);
+    return vcVendor;
+}
+
+fn vendor_get(vgId) {
+    return storage.storage_get_by_id("vendors", vgId);
+}
+
+fn vendor_update(vuId, vuChanges) {
+    let vuNow = helpers.helpers_current_timestamp();
+    map.set(vuChanges, "updated_at", vuNow);
+    return storage.storage_update("vendors", vuId, vuChanges);
+}
+
+fn vendor_delete(vdId) {
+    return storage.storage_delete("vendors", vdId);
+}
+
+fn vendor_list() {
+    return storage.storage_list("vendors");
+}
+
+fn vendor_search(vsQuery) {
+    let vsAll = storage.storage_list("vendors");
+    let vsResults = list.new();
+    return vendor_search_rec(vsAll, vsQuery, vsResults, 0);
+}

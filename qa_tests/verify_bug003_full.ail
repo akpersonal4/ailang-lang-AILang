@@ -1,0 +1,22 @@
+import map;
+import string;
+
+fn main() {
+    // BUG-003: Module name as bare identifier
+    let m = map.new();
+    map.set(m, "k", "v");
+
+    // Verify map.set still works via call syntax
+    let v = map.get(m, "k");
+    print("get:", v);
+
+    // Module function as value (the bug fix)
+    let set_fn = map.set;
+    print("set_fn type:", set_fn);
+
+    // String module functions should also work
+    let s = string.uppercase("hello");
+    print("uppercase:", s);
+
+    return 0
+}

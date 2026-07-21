@@ -1,0 +1,23 @@
+import file;
+import string;
+
+fn validate_config(path) {
+    if (!file.exists(path)) {
+        print("Config file missing:", path);
+        return false
+    }
+    let content = file.read(path);
+    if (string.contains(content, "=")) {
+        print("Config file is valid (contains key=value pairs)")
+    } else {
+        print("Config file missing key=value pairs")
+    };
+    return true
+}
+
+fn main() {
+    print("=== Configuration Reader ===");
+    validate_config("apps/config_reader/main.ail");
+    let content = file.read("apps/config_reader/main.ail");
+    print("Lines:", content)
+}

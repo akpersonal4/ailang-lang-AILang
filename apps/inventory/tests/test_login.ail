@@ -1,0 +1,103 @@
+import list;
+import map;
+import string;
+import convert;
+import storage;
+import helpers;
+import login;
+
+fn test_login_require_auth_no_session() {
+    let lrEmpty = list.new();
+    storage.storage_save("session", lrEmpty);
+    let lrResult = login.login_require_auth("admin");
+    if (lrResult != false) {
+        print("FAIL: require_auth should fail without login");
+        return false;
+    }
+    print("PASS: require_auth_no_session");
+    return true;
+}
+
+fn test_login_valid_admin() {
+    let lvResult = login.login_login("admin", "admin123");
+    if (lvResult == false) {
+        print("FAIL: admin login should succeed");
+        return false;
+    }
+    print("PASS: login_valid_admin");
+    return true;
+}
+
+fn test_login_require_auth_after_login() {
+    let lrResult = login.login_require_auth("admin");
+    if (lrResult == false) {
+        print("FAIL: require_auth should pass after admin login");
+        return false;
+    }
+    print("PASS: require_auth_after_login");
+    return true;
+}
+
+fn test_login_invalid_password() {
+    let liResult = login.login_login("admin", "wrong_password_xyz");
+    if (liResult != false) {
+        print("FAIL: bad password should fail");
+        return false;
+    }
+    print("PASS: login_invalid_password");
+    return true;
+}
+
+fn test_login_unknown_user() {
+    let luResult = login.login_login("nonexistent_user", "anypass");
+    if (luResult != false) {
+        print("FAIL: unknown user should fail");
+        return false;
+    }
+    print("PASS: login_unknown_user");
+    return true;
+}
+
+fn test_login_logout() {
+    let llResult = login.login_logout();
+    if (llResult == false) {
+        print("FAIL: logout should succeed");
+        return false;
+    }
+    let llSession = storage.storage_load("session");
+    if (list.len(llSession) != 0) {
+        print("FAIL: session should be empty after logout");
+        return false;
+    }
+    print("PASS: login_logout");
+    return true;
+}
+
+fn test_login_get_current_user_no_session() {
+    let lgResult = login.login_get_current_user();
+    if (lgResult != false) {
+        print("FAIL: get_current_user should return false without session");
+        return false;
+    }
+    print("PASS: get_current_user_no_session");
+    return true;
+}
+
+fn main() {
+    let t1 = test_login_require_auth_no_session();
+    if (t1 == false) { return 1; }
+    let t2 = test_login_valid_admin();
+    if (t2 == false) { return 1; }
+    let t3 = test_login_require_auth_after_login();
+    if (t3 == false) { return 1; }
+    let t4 = test_login_invalid_password();
+    if (t4 == false) { return 1; }
+    let t5 = test_login_unknown_user();
+    if (t5 == false) { return 1; }
+    let t6 = test_login_logout();
+    if (t6 == false) { return 1; }
+    let t7 = test_login_get_current_user_no_session();
+    if (t7 == false) { return 1; }
+    print("ALL LOGIN TESTS PASSED");
+    return 0;
+}

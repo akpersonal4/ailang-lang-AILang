@@ -1,0 +1,101 @@
+import list;
+import map;
+import string;
+import convert;
+import helpers;
+import storage;
+import audit;
+import audit_trail;
+import audit_integration;
+
+fn test_ai_full_report() {
+    let taifrOld = map.new();
+    let taifrNew = map.new();
+    map.set(taifrNew, "status", "active");
+    audit.audit_log("create", "product", "AIPROD-1", taifrOld, taifrNew, "test_user_ai");
+    audit.audit_log("update", "product", "AIPROD-2", taifrOld, taifrNew, "test_user_ai");
+    let taifrReport = audit_integration.audit_integration_full_report();
+    if (taifrReport == false) {
+        print("FAIL: audit_integration_full_report returned false");
+        return false;
+    }
+    let taifrLen = string.length(taifrReport);
+    if (taifrLen == 0) {
+        print("FAIL: audit_integration_full_report returned empty string");
+        return false;
+    }
+    print("PASS: ai_full_report (length=" + convert.to_string(taifrLen) + ")");
+    return true;
+}
+
+fn test_ai_summary_by_entity() {
+    let taiseOld = map.new();
+    let taiseNew = map.new();
+    map.set(taiseNew, "name", "Entity Test");
+    audit.audit_log("create", "customer", "CUST-AI-1", taiseOld, taiseNew, "entity_user");
+    audit.audit_log("create", "customer", "CUST-AI-2", taiseOld, taiseNew, "entity_user");
+    audit.audit_log("create", "product", "PROD-AI-1", taiseOld, taiseNew, "entity_user");
+    let taiseSummary = audit_integration.audit_integration_summary_by_entity();
+    if (taiseSummary == false) {
+        print("FAIL: audit_integration_summary_by_entity returned false");
+        return false;
+    }
+    let taiseCustomerCount = helpers.helpers_get_map_value_safe(taiseSummary, "customer", 0);
+    if (taiseCustomerCount < 2) {
+        print("FAIL: expected customer >= 2, got " + convert.to_string(taiseCustomerCount));
+        return false;
+    }
+    let taiseProductCount = helpers.helpers_get_map_value_safe(taiseSummary, "product", 0);
+    if (taiseProductCount < 1) {
+        print("FAIL: expected product >= 1, got " + convert.to_string(taiseProductCount));
+        return false;
+    }
+    print("PASS: ai_summary_by_entity (customer=" + convert.to_string(taiseCustomerCount) + ", product=" + convert.to_string(taiseProductCount) + ")");
+    return true;
+}
+
+fn test_ai_recent_activity() {
+    let tairaOld = map.new();
+    let tairaNew = map.new();
+    map.set(tairaNew, "qty", 50);
+    audit.audit_log("update", "inventory", "INV-AI-1", tairaOld, tairaNew, "recent_user");
+    let tairaResults = audit_integration.audit_integration_recent_activity(5);
+    if (tairaResults == false) {
+        print("FAIL: audit_integration_recent_activity returned false");
+        return false;
+    }
+    let tairaLen = list.len(tairaResults);
+    if (tairaLen == 0) {
+        print("FAIL: audit_integration_recent_activity returned empty list");
+        return false;
+    }
+    let tairaFirst = list.get(tairaResults, 0);
+    if (tairaFirst == false) {
+        print("FAIL: recent activity entry is false");
+        return false;
+    }
+    let tairaFirstStr = convert.to_string(tairaFirst);
+    if (tairaFirstStr == "") {
+        print("FAIL: recent activity entry is empty");
+        return false;
+    }
+    print("PASS: ai_recent_activity (" + convert.to_string(tairaLen) + " items)");
+    return true;
+}
+
+fn main() {
+    let ta1 = test_ai_full_report();
+    if (ta1 == false) {
+        return 1;
+    }
+    let ta2 = test_ai_summary_by_entity();
+    if (ta2 == false) {
+        return 1;
+    }
+    let ta3 = test_ai_recent_activity();
+    if (ta3 == false) {
+        return 1;
+    }
+    print("ALL AUDIT INTEGRATION TESTS PASSED");
+    return 0;
+}

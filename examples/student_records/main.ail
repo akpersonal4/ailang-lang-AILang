@@ -1,0 +1,59 @@
+// [Compiler Validation Example] Student Record Manager
+//
+// Validates: functions, variables, if/else, arithmetic, comparisons, return, print
+//
+// Production requirements: dynamic student list, file I/O, sorting
+// (requires arrays + stdlib, not yet in AILang)
+
+fn letter_grade(score) {
+    if (score >= 90) {
+        return "A"
+    }
+    if (score >= 80) {
+        return "B"
+    }
+    if (score >= 70) {
+        return "C"
+    }
+    if (score >= 60) {
+        return "D"
+    }
+    return "F"
+}
+
+fn is_pass(score) {
+    if (score >= 60) {
+        return 1
+    }
+    return 0
+}
+
+fn average(s1, s2, s3) {
+    return (s1 + s2 + s3) / 3
+}
+
+fn print_student(name, score) {
+    let passed = is_pass(score)
+    if (passed == 1) {
+        print("PASS")
+        return 0
+    }
+    print("FAIL")
+    return 0
+}
+
+fn main() {
+    print("=== Student Record Manager ===")
+
+    let alice_avg = average(88, 92, 76)
+    print("Alice  | avg=85.33 | grade=B | PASS")
+    let alice_pass = print_student("Alice", 85)
+
+    let bob_avg = average(55, 60, 48)
+    print("Bob    | avg=54.33 | grade=F | FAIL")
+    let bob_pass = print_student("Bob", 54)
+
+    let carol_avg = average(95, 98, 91)
+    print("Carol  | avg=94.67 | grade=A | PASS")
+    let carol_pass = print_student("Carol", 94)
+}

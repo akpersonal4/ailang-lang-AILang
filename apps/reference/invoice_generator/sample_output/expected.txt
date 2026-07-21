@@ -1,0 +1,13 @@
+=== Invoice Generator ===
+Invoice for: Acme Corp
+Date: 2026-07-15
+---
+Line Items:
+  Keyboard x 1 @ $50 = $50
+  Mouse x 2 @ $25 = $50
+  Monitor x 1 @ $200 = $200
+---
+Subtotal: $300
+Tax (8%): $24
+Total: $324
+Invoice saved to data/invoice.json

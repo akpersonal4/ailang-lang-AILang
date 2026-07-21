@@ -1,0 +1,1324 @@
+// Spreadsheet Formula Engine
+// Benchmark 009 for AILang v0.1.2
+// Evaluates formulas between cells: expression parsing, dependency
+// tracking, circular detection, and function evaluation.
+//
+// ALL iteration uses RECURSION (no while/for loops).
+// ALL functions defined before callers (no forward references).
+// NO mutual recursion (all recursive calls are self-recursive).
+
+import string;
+import list;
+import map;
+import convert;
+import json;
+import io;
+
+// ============================================================
+// Level 0: Leaf utilities — no dependencies on other AILang fns
+// ============================================================
+
+fn is_digit_char(ch) {
+    if (string.equals(ch, "0")) { return true }
+    if (string.equals(ch, "1")) { return true }
+    if (string.equals(ch, "2")) { return true }
+    if (string.equals(ch, "3")) { return true }
+    if (string.equals(ch, "4")) { return true }
+    if (string.equals(ch, "5")) { return true }
+    if (string.equals(ch, "6")) { return true }
+    if (string.equals(ch, "7")) { return true }
+    if (string.equals(ch, "8")) { return true }
+    if (string.equals(ch, "9")) { return true }
+    return false
+}
+
+fn is_letter_char(ch) {
+    if (string.equals(ch, "A")) { return true }
+    if (string.equals(ch, "B")) { return true }
+    if (string.equals(ch, "C")) { return true }
+    if (string.equals(ch, "D")) { return true }
+    if (string.equals(ch, "E")) { return true }
+    if (string.equals(ch, "F")) { return true }
+    if (string.equals(ch, "G")) { return true }
+    if (string.equals(ch, "H")) { return true }
+    if (string.equals(ch, "I")) { return true }
+    if (string.equals(ch, "J")) { return true }
+    if (string.equals(ch, "K")) { return true }
+    if (string.equals(ch, "L")) { return true }
+    if (string.equals(ch, "M")) { return true }
+    if (string.equals(ch, "N")) { return true }
+    if (string.equals(ch, "O")) { return true }
+    if (string.equals(ch, "P")) { return true }
+    if (string.equals(ch, "Q")) { return true }
+    if (string.equals(ch, "R")) { return true }
+    if (string.equals(ch, "S")) { return true }
+    if (string.equals(ch, "T")) { return true }
+    if (string.equals(ch, "U")) { return true }
+    if (string.equals(ch, "V")) { return true }
+    if (string.equals(ch, "W")) { return true }
+    if (string.equals(ch, "X")) { return true }
+    if (string.equals(ch, "Y")) { return true }
+    if (string.equals(ch, "Z")) { return true }
+    return false
+}
+
+fn find_first_digit(s, start) {
+    let len = string.length(s);
+    if (start >= len) { return -1 }
+    let ch = string.substring(s, start, start + 1);
+    if (is_digit_char(ch)) { return start }
+    return find_first_digit(s, start + 1)
+}
+
+fn all_digits_from(s, start) {
+    let len = string.length(s);
+    if (start >= len) { return true }
+    let ch = string.substring(s, start, start + 1);
+    if (!is_digit_char(ch)) { return false }
+    return all_digits_from(s, start + 1)
+}
+
+fn col_letter_to_index(letter) {
+    if (string.equals(letter, "A")) { return 0 }
+    if (string.equals(letter, "B")) { return 1 }
+    if (string.equals(letter, "C")) { return 2 }
+    if (string.equals(letter, "D")) { return 3 }
+    if (string.equals(letter, "E")) { return 4 }
+    if (string.equals(letter, "F")) { return 5 }
+    if (string.equals(letter, "G")) { return 6 }
+    if (string.equals(letter, "H")) { return 7 }
+    if (string.equals(letter, "I")) { return 8 }
+    if (string.equals(letter, "J")) { return 9 }
+    if (string.equals(letter, "K")) { return 10 }
+    if (string.equals(letter, "L")) { return 11 }
+    if (string.equals(letter, "M")) { return 12 }
+    if (string.equals(letter, "N")) { return 13 }
+    if (string.equals(letter, "O")) { return 14 }
+    if (string.equals(letter, "P")) { return 15 }
+    if (string.equals(letter, "Q")) { return 16 }
+    if (string.equals(letter, "R")) { return 17 }
+    if (string.equals(letter, "S")) { return 18 }
+    if (string.equals(letter, "T")) { return 19 }
+    if (string.equals(letter, "U")) { return 20 }
+    if (string.equals(letter, "V")) { return 21 }
+    if (string.equals(letter, "W")) { return 22 }
+    if (string.equals(letter, "X")) { return 23 }
+    if (string.equals(letter, "Y")) { return 24 }
+    if (string.equals(letter, "Z")) { return 25 }
+    return -1
+}
+
+fn index_to_col_letter(idx) {
+    if (idx == 0) { return "A" }
+    if (idx == 1) { return "B" }
+    if (idx == 2) { return "C" }
+    if (idx == 3) { return "D" }
+    if (idx == 4) { return "E" }
+    if (idx == 5) { return "F" }
+    if (idx == 6) { return "G" }
+    if (idx == 7) { return "H" }
+    if (idx == 8) { return "I" }
+    if (idx == 9) { return "J" }
+    if (idx == 10) { return "K" }
+    if (idx == 11) { return "L" }
+    if (idx == 12) { return "M" }
+    if (idx == 13) { return "N" }
+    if (idx == 14) { return "O" }
+    if (idx == 15) { return "P" }
+    if (idx == 16) { return "Q" }
+    if (idx == 17) { return "R" }
+    if (idx == 18) { return "S" }
+    if (idx == 19) { return "T" }
+    if (idx == 20) { return "U" }
+    if (idx == 21) { return "V" }
+    if (idx == 22) { return "W" }
+    if (idx == 23) { return "X" }
+    if (idx == 24) { return "Y" }
+    if (idx == 25) { return "Z" }
+    return "?"
+}
+
+// ============================================================
+// Level 1: Tokenizer
+// ============================================================
+
+fn make_token(type_val, value_val) {
+    let t = map.new();
+    map.set(t, "type", type_val);
+    map.set(t, "value", value_val);
+    return t
+}
+
+fn make_result_val(v) {
+    let r = map.new();
+    map.set(r, "value", v);
+    return r
+}
+
+fn make_error_ret(msg) {
+    let r = map.new();
+    map.set(r, "error", msg);
+    return r
+}
+
+fn is_error_result(r) {
+    return map.has(r, "error")
+}
+
+fn get_result_value(r) {
+    return map.get(r, "value")
+}
+
+fn make_val_pos_result(v, p) {
+    let r = map.new();
+    map.set(r, "value", v);
+    map.set(r, "pos", p);
+    return r
+}
+
+fn token_type(tok) {
+    return map.get(tok, "type")
+}
+
+fn token_value(tok) {
+    return map.get(tok, "value")
+}
+
+fn is_token_type(tok, expected) {
+    return string.equals(token_type(tok), expected)
+}
+
+fn op_precedence(tok) {
+    let t = token_type(tok);
+    let v = token_value(tok);
+    if (string.equals(t, "COMPARISON")) { return 1 }
+    if (string.equals(t, "OPERATOR")) {
+        if (string.equals(v, "+") || string.equals(v, "-")) { return 2 }
+        if (string.equals(v, "*") || string.equals(v, "/")) { return 3 }
+    }
+    return -1
+}
+
+fn collect_digits(text, pos, start) {
+    let len = string.length(text);
+    if (pos < len && is_digit_char(string.substring(text, pos, pos + 1))) {
+        return collect_digits(text, pos + 1, start)
+    }
+    let value_str = string.substring(text, start, pos);
+    let value_int = convert.to_int(value_str);
+    let result = map.new();
+    map.set(result, "value", value_int);
+    map.set(result, "pos", pos);
+    return result
+}
+
+fn collect_alpha(text, pos, start) {
+    let len = string.length(text);
+    if (pos < len && is_letter_char(string.substring(text, pos, pos + 1))) {
+        return collect_alpha(text, pos + 1, start)
+    }
+    let result = map.new();
+    map.set(result, "word", string.substring(text, start, pos));
+    map.set(result, "pos", pos);
+    return result
+}
+
+fn classify_word(word) {
+    let upper = string.uppercase(word);
+    if (string.equals(upper, "SUM")) { return "FUNCTION" }
+    if (string.equals(upper, "AVG")) { return "FUNCTION" }
+    if (string.equals(upper, "MIN")) { return "FUNCTION" }
+    if (string.equals(upper, "MAX")) { return "FUNCTION" }
+    if (string.equals(upper, "COUNT")) { return "FUNCTION" }
+    if (string.equals(upper, "IF")) { return "FUNCTION" }
+    let first_digit_pos = find_first_digit(word, 0);
+    if (first_digit_pos > 0 && all_digits_from(word, first_digit_pos)) {
+        return "CELL"
+    }
+    return "UNKNOWN"
+}
+
+fn read_word_token(text, pos, tokens) {
+    let r = collect_alpha(text, pos, pos);
+    let word = map.get(r, "word");
+    let new_pos = map.get(r, "pos");
+    let len = string.length(text);
+    if (new_pos < len && is_digit_char(string.substring(text, new_pos, new_pos + 1))) {
+        let digit_r = collect_digits(text, new_pos, new_pos);
+        let full_ref = word + convert.to_string(map.get(digit_r, "value"));
+        new_pos = map.get(digit_r, "pos");
+        list.append(tokens, make_token("CELL", full_ref));
+        return new_pos
+    }
+    let wtype = classify_word(word);
+    if (string.equals(wtype, "UNKNOWN")) {
+        list.append(tokens, make_token("UNKNOWN", word));
+        return new_pos
+    }
+    list.append(tokens, make_token(wtype, word));
+    return new_pos
+}
+
+fn read_number_token(text, pos, tokens) {
+    let start = pos;
+    if (string.equals(string.substring(text, pos, pos + 1), "-")) {
+        pos = pos + 1;
+    }
+    let r = collect_digits(text, pos, pos);
+    let neg = 1;
+    if (start < pos) { neg = -1 }
+    let val = map.get(r, "value") * neg;
+    let new_pos = map.get(r, "pos");
+    list.append(tokens, make_token("NUMBER", val));
+    return new_pos
+}
+
+fn tokenize_step(text, pos, tokens) {
+    let len = string.length(text);
+    if (pos >= len) {
+        list.append(tokens, make_token("EOF", ""));
+        return tokens
+    }
+    let ch = string.substring(text, pos, pos + 1);
+    if (string.equals(ch, " ") || string.equals(ch, "\t")) {
+        return tokenize_step(text, pos + 1, tokens)
+    }
+    if (is_digit_char(ch)) {
+        let new_pos = read_number_token(text, pos, tokens);
+        return tokenize_step(text, new_pos, tokens)
+    }
+    if (is_letter_char(ch)) {
+        let new_pos = read_word_token(text, pos, tokens);
+        return tokenize_step(text, new_pos, tokens)
+    }
+    if ((string.equals(ch, "!") || string.equals(ch, "<") || string.equals(ch, ">")) && pos + 1 < len) {
+        let next = string.substring(text, pos + 1, pos + 2);
+        if (string.equals(next, "=")) {
+            list.append(tokens, make_token("COMPARISON", string.concat(ch, "=")));
+            return tokenize_step(text, pos + 2, tokens)
+        }
+    }
+    if (string.equals(ch, "=") && pos + 1 < len) {
+        let next = string.substring(text, pos + 1, pos + 2);
+        if (string.equals(next, "=")) {
+            list.append(tokens, make_token("COMPARISON", "=="));
+            return tokenize_step(text, pos + 2, tokens)
+        }
+    }
+    if (string.equals(ch, "+") || string.equals(ch, "-") || string.equals(ch, "*") || string.equals(ch, "/")) {
+        list.append(tokens, make_token("OPERATOR", ch));
+        return tokenize_step(text, pos + 1, tokens)
+    }
+    if (string.equals(ch, "=") || string.equals(ch, "<") || string.equals(ch, ">")) {
+        list.append(tokens, make_token("COMPARISON", ch));
+        return tokenize_step(text, pos + 1, tokens)
+    }
+    if (string.equals(ch, "(")) {
+        list.append(tokens, make_token("LPAREN", "("));
+        return tokenize_step(text, pos + 1, tokens)
+    }
+    if (string.equals(ch, ")")) {
+        list.append(tokens, make_token("RPAREN", ")"));
+        return tokenize_step(text, pos + 1, tokens)
+    }
+    if (string.equals(ch, ",")) {
+        list.append(tokens, make_token("COMMA", ","));
+        return tokenize_step(text, pos + 1, tokens)
+    }
+    if (string.equals(ch, ":")) {
+        list.append(tokens, make_token("COLON", ":"));
+        return tokenize_step(text, pos + 1, tokens)
+    }
+    return tokenize_step(text, pos + 1, tokens)
+}
+
+fn tokenize(formula_text) {
+    let tokens = list.new();
+    return tokenize_step(formula_text, 0, tokens)
+}
+
+// ============================================================
+// Level 2: Cell reference parsing
+// ============================================================
+
+fn cell_ref_to_rc(ref) {
+    let len = string.length(ref);
+    if (len < 2) { return make_error_ret("#REF!") }
+    let letter_part = string.substring(ref, 0, 1);
+    let col = col_letter_to_index(letter_part);
+    if (col < 0) { return make_error_ret("#REF!") }
+    let num_part = string.substring(ref, 1, len);
+    if (!all_digits_from(num_part, 0)) { return make_error_ret("#REF!") }
+    let row = convert.to_int(num_part) - 1;
+    if (row < 0) { return make_error_ret("#REF!") }
+    let result = map.new();
+    map.set(result, "row", row);
+    map.set(result, "col", col);
+    map.set(result, "value", 0);
+    return result
+}
+
+fn make_cell_key(row, col) {
+    return convert.to_string(row) + "," + convert.to_string(col)
+}
+
+fn find_in_string(s, needle, start) {
+    let len = string.length(s);
+    let nlen = string.length(needle);
+    if (start + nlen > len) { return -1 }
+    let chunk = string.substring(s, start, start + nlen);
+    if (string.equals(chunk, needle)) { return start }
+    return find_in_string(s, needle, start + 1)
+}
+
+// ============================================================
+// Level 3: Workbook primitives
+// ============================================================
+
+fn init_row_cells(row_map, col, max_col) {
+    if (col > max_col) { return true }
+    let cell = map.new();
+    map.set(cell, "type", "empty");
+    map.set(row_map, col, cell);
+    return init_row_cells(row_map, col + 1, max_col)
+}
+
+fn init_workbook_rows(wb, row, max_row, max_col) {
+    if (row > max_row) { return true }
+    let row_map = map.new();
+    let r = init_row_cells(row_map, 0, max_col);
+    list.append(wb, row_map);
+    return init_workbook_rows(wb, row + 1, max_row, max_col)
+}
+
+fn create_workbook(num_rows, num_cols) {
+    let wb = list.new();
+    let r = init_workbook_rows(wb, 0, num_rows - 1, num_cols - 1);
+    return wb
+}
+
+fn set_cell(workbook, row, col, cell_val) {
+    let row_map = list.get(workbook, row);
+    map.set(row_map, col, cell_val);
+    return true
+}
+
+fn get_cell(workbook, row, col) {
+    let row_map = list.get(workbook, row);
+    return map.get(row_map, col)
+}
+
+fn set_constant(workbook, row, col, val) {
+    let cell = map.new();
+    map.set(cell, "type", "number");
+    map.set(cell, "v", val);
+    set_cell(workbook, row, col, cell);
+    return true
+}
+
+fn set_formula(workbook, row, col, text) {
+    let cell = map.new();
+    map.set(cell, "type", "formula");
+    map.set(cell, "v", make_result_val(0));
+    map.set(cell, "text", text);
+    set_cell(workbook, row, col, cell);
+    return true
+}
+
+fn set_error_cell(workbook, row, col, err_msg) {
+    let cell = map.new();
+    map.set(cell, "type", "error");
+    map.set(cell, "v", make_error_ret(err_msg));
+    set_cell(workbook, row, col, cell);
+    return true
+}
+
+fn set_string_cell(workbook, row, col, str_val) {
+    let cell = map.new();
+    map.set(cell, "type", "string");
+    map.set(cell, "v", str_val);
+    set_cell(workbook, row, col, cell);
+    return true
+}
+
+fn get_cell_number(workbook, row, col) {
+    let cell = get_cell(workbook, row, col);
+    let t = map.get(cell, "type");
+    if (string.equals(t, "empty") || string.equals(t, "string")) {
+        return make_result_val(0)
+    }
+    if (string.equals(t, "number")) {
+        return make_result_val(map.get(cell, "v"))
+    }
+    if (string.equals(t, "error")) {
+        return map.get(cell, "v")
+    }
+    return map.get(cell, "v")
+}
+
+fn update_formula_cell(workbook, row, col, result) {
+    let row_map = list.get(workbook, row);
+    let cell = map.get(row_map, col);
+    map.set(cell, "v", result);
+    return true
+}
+
+// ============================================================
+// Level 4: Binary operator application
+// ============================================================
+
+fn apply_operator(a, tok, b) {
+    let op = token_value(tok);
+    if (string.equals(op, "+")) { return make_result_val(a + b) }
+    if (string.equals(op, "-")) { return make_result_val(a - b) }
+    if (string.equals(op, "*")) { return make_result_val(a * b) }
+    if (string.equals(op, "/")) {
+        if (b == 0) { return make_error_ret("#DIV/0!") }
+        return make_result_val(convert.to_int(a / b))
+    }
+    if (string.equals(op, "==")) {
+        if (a == b) { return make_result_val(1) }
+        return make_result_val(0)
+    }
+    if (string.equals(op, "!=")) {
+        if (a != b) { return make_result_val(1) }
+        return make_result_val(0)
+    }
+    if (string.equals(op, "<")) {
+        if (a < b) { return make_result_val(1) }
+        return make_result_val(0)
+    }
+    if (string.equals(op, ">")) {
+        if (a > b) { return make_result_val(1) }
+        return make_result_val(0)
+    }
+    if (string.equals(op, "<=")) {
+        if (a <= b) { return make_result_val(1) }
+        return make_result_val(0)
+    }
+    if (string.equals(op, ">=")) {
+        if (a >= b) { return make_result_val(1) }
+        return make_result_val(0)
+    }
+    return make_error_ret("#PARSE!")
+}
+
+// ============================================================
+// Level 5: Range expansion (recursive)
+// ============================================================
+
+fn expand_range_row(workbook, min_col, max_col, cur_col, row, result) {
+    if (cur_col > max_col) { return result }
+    let cell_val = get_cell_number(workbook, row, cur_col);
+    list.append(result, cell_val);
+    return expand_range_row(workbook, min_col, max_col, cur_col + 1, row, result)
+}
+
+fn expand_range_rows(workbook, min_col, max_col, min_row, max_row, cur_row, result) {
+    if (cur_row > max_row) { return result }
+    let row_result = expand_range_row(workbook, min_col, max_col, min_col, cur_row, result);
+    return expand_range_rows(workbook, min_col, max_col, min_row, max_row, cur_row + 1, result)
+}
+
+fn expand_range(workbook, start_ref, end_ref) {
+    let start_rc = cell_ref_to_rc(start_ref);
+    if (is_error_result(start_rc)) { return start_rc }
+    let end_rc = cell_ref_to_rc(end_ref);
+    if (is_error_result(end_rc)) { return end_rc }
+    let min_row = map.get(start_rc, "row");
+    let max_row = map.get(end_rc, "row");
+    let min_col = map.get(start_rc, "col");
+    let max_col = map.get(end_rc, "col");
+    if (min_row > max_row) { let tmp = min_row; min_row = max_row; max_row = tmp }
+    if (min_col > max_col) { let tmp = min_col; min_col = max_col; max_col = tmp }
+    let result = list.new();
+    let r = expand_range_rows(workbook, min_col, max_col, min_row, max_row, min_row, result);
+    return result
+}
+
+// ============================================================
+// Level 6: Range aggregate helpers (recursive, used by eval_full)
+// ============================================================
+
+fn sum_range_vals(vals, i, acc) {
+    if (i >= list.len(vals)) { return make_result_val(acc) }
+    let cv = list.get(vals, i);
+    if (!is_error_result(cv)) { acc = acc + get_result_value(cv) }
+    return sum_range_vals(vals, i + 1, acc)
+}
+
+fn min_range_vals(vals, i, found, current_min) {
+    if (i >= list.len(vals)) { return make_result_val(current_min) }
+    let cv = list.get(vals, i);
+    if (!is_error_result(cv)) {
+        let nv = get_result_value(cv);
+        if (!found) { return min_range_vals(vals, i + 1, true, nv) }
+        if (nv < current_min) { return min_range_vals(vals, i + 1, true, nv) }
+    }
+    return min_range_vals(vals, i + 1, found, current_min)
+}
+
+fn max_range_vals(vals, i, found, current_max) {
+    if (i >= list.len(vals)) { return make_result_val(current_max) }
+    let cv = list.get(vals, i);
+    if (!is_error_result(cv)) {
+        let nv = get_result_value(cv);
+        if (!found) { return max_range_vals(vals, i + 1, true, nv) }
+        if (nv > current_max) { return max_range_vals(vals, i + 1, true, nv) }
+    }
+    return max_range_vals(vals, i + 1, found, current_max)
+}
+
+fn count_range_vals(vals, i, acc) {
+    if (i >= list.len(vals)) { return make_result_val(acc) }
+    let cv = list.get(vals, i);
+    if (!is_error_result(cv)) {
+        let nv = get_result_value(cv);
+        if (nv != 0) { acc = acc + 1 }
+    }
+    return count_range_vals(vals, i + 1, acc)
+}
+
+fn avg_range_vals(vals, i, sum_acc, count_acc) {
+    if (i >= list.len(vals)) {
+        if (count_acc == 0) { return make_result_val(0) }
+        return make_result_val(convert.to_int(sum_acc / count_acc))
+    }
+    let cv = list.get(vals, i);
+    if (!is_error_result(cv)) {
+        sum_acc = sum_acc + get_result_value(cv);
+        count_acc = count_acc + 1;
+    }
+    return avg_range_vals(vals, i + 1, sum_acc, count_acc)
+}
+
+// ============================================================
+// Level 7: Formula evaluator (single self-recursive function)
+//
+// Uses in_continuation flag to avoid mutual recursion:
+// - When in_continuation=false: parse a primary first
+// - When in_continuation=true: skip primary, use left_val
+// Binary ops are handled by tail-recursing within the same function.
+// ============================================================
+
+fn eval_full(tokens, pos, workbook, min_prec, in_continuation, left_val) {
+    let len = list.len(tokens);
+
+    // Phase 1: Parse primary (skip if already in continuation)
+    if (!in_continuation) {
+        if (pos >= len) { return make_error_ret("#PARSE!") }
+        let tok = list.get(tokens, pos);
+        let ttype = token_type(tok);
+
+        if (string.equals(ttype, "NUMBER")) {
+            left_val = make_result_val(token_value(tok));
+            pos = pos + 1;
+        } else if (string.equals(ttype, "CELL")) {
+            let ref_str = token_value(tok);
+            let rc = cell_ref_to_rc(ref_str);
+            if (is_error_result(rc)) { return rc }
+            let row = map.get(rc, "row");
+            let col = map.get(rc, "col");
+            left_val = get_cell_number(workbook, row, col);
+            if (is_error_result(left_val)) { return left_val }
+            pos = pos + 1;
+        } else if (string.equals(ttype, "FUNCTION")) {
+            let func_name = string.uppercase(token_value(tok));
+            pos = pos + 1;
+            if (pos >= len) { return make_error_ret("#PARSE!") }
+            if (!is_token_type(list.get(tokens, pos), "LPAREN")) { return make_error_ret("#PARSE!") }
+            pos = pos + 1;
+
+            if (string.equals(func_name, "IF")) {
+                let arg1 = eval_full(tokens, pos, workbook, 0, false, 0);
+                if (is_error_result(arg1)) { return arg1 }
+                pos = map.get(arg1, "pos");
+                if (pos >= len) { return make_error_ret("#PARSE!") }
+                if (!is_token_type(list.get(tokens, pos), "COMMA")) { return make_error_ret("#PARSE!") }
+                pos = pos + 1;
+                let arg2 = eval_full(tokens, pos, workbook, 0, false, 0);
+                if (is_error_result(arg2)) { return arg2 }
+                pos = map.get(arg2, "pos");
+                if (pos >= len) { return make_error_ret("#PARSE!") }
+                if (!is_token_type(list.get(tokens, pos), "COMMA")) { return make_error_ret("#PARSE!") }
+                pos = pos + 1;
+                let arg3 = eval_full(tokens, pos, workbook, 0, false, 0);
+                if (is_error_result(arg3)) { return arg3 }
+                pos = map.get(arg3, "pos");
+                if (pos >= len) { return make_error_ret("#PARSE!") }
+                if (!is_token_type(list.get(tokens, pos), "RPAREN")) { return make_error_ret("#PARSE!") }
+                pos = pos + 1;
+                if (get_result_value(arg1) != 0) { left_val = arg2 }
+                else { left_val = arg3 }
+            } else {
+                if (pos >= len) { return make_error_ret("#PARSE!") }
+                if (!is_token_type(list.get(tokens, pos), "CELL")) { return make_error_ret("#PARSE!") }
+                let start_ref = token_value(list.get(tokens, pos));
+                pos = pos + 1;
+                if (pos >= len) { return make_error_ret("#PARSE!") }
+                if (!is_token_type(list.get(tokens, pos), "COLON")) { return make_error_ret("#PARSE!") }
+                pos = pos + 1;
+                if (pos >= len) { return make_error_ret("#PARSE!") }
+                if (!is_token_type(list.get(tokens, pos), "CELL")) { return make_error_ret("#PARSE!") }
+                let end_ref = token_value(list.get(tokens, pos));
+                pos = pos + 1;
+                if (pos >= len) { return make_error_ret("#PARSE!") }
+                if (!is_token_type(list.get(tokens, pos), "RPAREN")) { return make_error_ret("#PARSE!") }
+                pos = pos + 1;
+
+                let range_result = expand_range(workbook, start_ref, end_ref);
+                if (is_error_result(range_result)) { return range_result }
+
+                if (string.equals(func_name, "SUM")) {
+                    left_val = sum_range_vals(range_result, 0, 0);
+                } else if (string.equals(func_name, "COUNT")) {
+                    left_val = count_range_vals(range_result, 0, 0);
+                } else if (string.equals(func_name, "MIN")) {
+                    left_val = min_range_vals(range_result, 0, false, 0);
+                } else if (string.equals(func_name, "MAX")) {
+                    left_val = max_range_vals(range_result, 0, false, 0);
+                } else if (string.equals(func_name, "AVG")) {
+                    left_val = avg_range_vals(range_result, 0, 0, 0);
+                } else {
+                    return make_error_ret("#PARSE!")
+                }
+            }
+        } else if (string.equals(ttype, "LPAREN")) {
+            pos = pos + 1;
+            let sub = eval_full(tokens, pos, workbook, 0, false, 0);
+            if (is_error_result(sub)) { return sub }
+            left_val = sub;
+            pos = map.get(sub, "pos");
+            if (pos >= len) { return make_error_ret("#PARSE!") }
+            if (!is_token_type(list.get(tokens, pos), "RPAREN")) { return make_error_ret("#PARSE!") }
+            pos = pos + 1;
+        } else if (string.equals(ttype, "OPERATOR") && string.equals(token_value(tok), "-")) {
+            pos = pos + 1;
+            let sub = eval_full(tokens, pos, workbook, 0, false, 0);
+            if (is_error_result(sub)) { return sub }
+            left_val = make_result_val(0 - get_result_value(sub));
+            pos = map.get(sub, "pos");
+        } else {
+            return make_error_ret("#PARSE!")
+        }
+    }
+
+    // Phase 2: Binary operator loop
+    if (is_error_result(left_val)) { return left_val }
+
+    if (pos >= len) { return make_val_pos_result(get_result_value(left_val), pos) }
+    let next_tok = list.get(tokens, pos);
+    let prec = op_precedence(next_tok);
+    if (prec < min_prec) { return make_val_pos_result(get_result_value(left_val), pos) }
+
+    pos = pos + 1;
+    let right = eval_full(tokens, pos, workbook, prec + 1, false, 0);
+    if (is_error_result(right)) { return right }
+
+    let op_result = apply_operator(get_result_value(left_val), next_tok, get_result_value(right));
+    if (is_error_result(op_result)) { return op_result }
+
+    pos = map.get(right, "pos");
+    return eval_full(tokens, pos, workbook, min_prec, true, op_result)
+}
+
+fn evaluate_formula(formula_text, workbook) {
+    let text = formula_text;
+    if (string.length(text) > 0) {
+        if (string.equals(string.substring(text, 0, 1), "=")) {
+            text = string.substring(text, 1, string.length(text));
+        }
+    }
+    let tokens = tokenize(text);
+    return eval_full(tokens, 0, workbook, 0, false, 0)
+}
+
+// ============================================================
+// Level 8: Token extraction helpers (recursive)
+// ============================================================
+
+fn extract_refs_helper(tokens, i, refs) {
+    if (i >= list.len(tokens)) { return refs }
+    let tok = list.get(tokens, i);
+    if (string.equals(token_type(tok), "CELL")) {
+        let ref_str = token_value(tok);
+        let rc = cell_ref_to_rc(ref_str);
+        if (!is_error_result(rc)) {
+            let key = make_cell_key(map.get(rc, "row"), map.get(rc, "col"));
+            list.append(refs, key);
+        }
+    }
+    return extract_refs_helper(tokens, i + 1, refs)
+}
+
+fn extract_cell_refs_from_tokens(tokens) {
+    let refs = list.new();
+    return extract_refs_helper(tokens, 0, refs)
+}
+
+// ============================================================
+// Level 9: Workbook iteration helpers (recursive)
+// ============================================================
+
+fn scan_formula_cols(workbook, graph, row, col, total_cols) {
+    if (col >= total_cols) { return true }
+    let cell = get_cell(workbook, row, col);
+    let t = map.get(cell, "type");
+    if (string.equals(t, "formula")) {
+        let formula_text = map.get(cell, "text");
+        let ft = formula_text;
+        if (string.length(ft) > 0) {
+            if (string.equals(string.substring(ft, 0, 1), "=")) {
+                ft = string.substring(ft, 1, string.length(ft));
+            }
+            let tokens = tokenize(ft);
+            let refs = extract_cell_refs_from_tokens(tokens);
+            let key = make_cell_key(row, col);
+            map.set(graph, key, refs);
+        }
+    }
+    return scan_formula_cols(workbook, graph, row, col + 1, total_cols)
+}
+
+fn scan_formula_rows(workbook, graph, row, total_rows, total_cols) {
+    if (row >= total_rows) { return true }
+    let r = scan_formula_cols(workbook, graph, row, 0, total_cols);
+    return scan_formula_rows(workbook, graph, row + 1, total_rows, total_cols)
+}
+
+fn extract_all_formula_refs(workbook, total_rows, total_cols) {
+    let graph = map.new();
+    let r = scan_formula_rows(workbook, graph, 0, total_rows, total_cols);
+    return graph
+}
+
+fn collect_formula_cells_cols(workbook, row, col, total_cols, cells) {
+    if (col >= total_cols) { return cells }
+    let cell = get_cell(workbook, row, col);
+    let t = map.get(cell, "type");
+    if (string.equals(t, "formula")) {
+        list.append(cells, make_cell_key(row, col));
+    }
+    return collect_formula_cells_cols(workbook, row, col + 1, total_cols, cells)
+}
+
+fn collect_formula_cells_rows(workbook, row, total_rows, total_cols, cells) {
+    if (row >= total_rows) { return cells }
+    let r = collect_formula_cells_cols(workbook, row, 0, total_cols, cells);
+    return collect_formula_cells_rows(workbook, row + 1, total_rows, total_cols, cells)
+}
+
+fn collect_all_formula_cells(workbook, total_rows, total_cols) {
+    let cells = list.new();
+    return collect_formula_cells_rows(workbook, 0, total_rows, total_cols, cells)
+}
+
+// ============================================================
+// Level 10: Dependency graph — cycle detection & topological sort
+// ============================================================
+
+// Single self-recursive DFS. node_set contains original formula cells;
+// only those are appended to order. dep_idx < 0 = visit new node;
+// dep_idx >= 0 = continue iterating deps_list.
+fn dfs_visit(node, graph, state, order, dep_idx, deps_list, node_set) {
+    if (dep_idx < 0) {
+        let in_state = map.has(state, node);
+        let s = 0;
+        if (in_state) { s = map.get(state, node) }
+        if (s == 1) { return true }
+        if (s == 2) { return false }
+        map.set(state, node, 1);
+        if (map.has(graph, node)) {
+            let dl = map.get(graph, node);
+            return dfs_visit(node, graph, state, order, 0, dl, node_set)
+        }
+        map.set(state, node, 2);
+        if (map.has(node_set, node)) { list.append(order, node) }
+        return false
+    }
+    if (dep_idx >= list.len(deps_list)) {
+        map.set(state, node, 2);
+        if (map.has(node_set, node)) { list.append(order, node) }
+        return false
+    }
+    let dep = list.get(deps_list, dep_idx);
+    let empty_list = list.new();
+    let cycle = dfs_visit(dep, graph, state, order, -1, empty_list, node_set);
+    if (cycle) { return true }
+    return dfs_visit(node, graph, state, order, dep_idx + 1, deps_list, node_set)
+}
+
+fn build_node_set(all_nodes, i, node_set) {
+    if (i >= list.len(all_nodes)) { return true }
+    map.set(node_set, list.get(all_nodes, i), true);
+    return build_node_set(all_nodes, i + 1, node_set)
+}
+
+fn topo_sort_nodes(all_nodes, i, graph, state, order, node_set) {
+    if (i >= list.len(all_nodes)) { return false }
+    let node = list.get(all_nodes, i);
+    let empty_list = list.new();
+    let cycle = dfs_visit(node, graph, state, order, -1, empty_list, node_set);
+    if (cycle) { return true }
+    return topo_sort_nodes(all_nodes, i + 1, graph, state, order, node_set)
+}
+
+fn has_cycle_and_sort(graph, all_nodes) {
+    let state = map.new();
+    let order = list.new();
+    let node_set = map.new();
+    let r = build_node_set(all_nodes, 0, node_set);
+    let cycle = topo_sort_nodes(all_nodes, 0, graph, state, order, node_set);
+    if (cycle) { return make_error_ret("#CIRC!") }
+    return order
+}
+
+// ============================================================
+// Level 11: Error marking helpers (recursive)
+// ============================================================
+
+fn mark_circular_cells(all_nodes, i, workbook) {
+    if (i >= list.len(all_nodes)) { return true }
+    let key = list.get(all_nodes, i);
+    let comma_pos = find_in_string(key, ",", 0);
+    let row_str = string.substring(key, 0, comma_pos);
+    let col_str = string.substring(key, comma_pos + 1, string.length(key));
+    let row = convert.to_int(row_str);
+    let col = convert.to_int(col_str);
+    update_formula_cell(workbook, row, col, make_error_ret("#CIRC!"));
+    return mark_circular_cells(all_nodes, i + 1, workbook)
+}
+
+fn eval_topo_order(topo_result, i, workbook) {
+    if (i >= list.len(topo_result)) { return true }
+    let node_key = list.get(topo_result, i);
+    let comma_pos = find_in_string(node_key, ",", 0);
+    let row_str = string.substring(node_key, 0, comma_pos);
+    let col_str = string.substring(node_key, comma_pos + 1, string.length(node_key));
+    let row = convert.to_int(row_str);
+    let col = convert.to_int(col_str);
+    let cell = get_cell(workbook, row, col);
+    let t = map.get(cell, "type");
+    if (string.equals(t, "formula")) {
+        let formula_text = map.get(cell, "text");
+        let result = evaluate_formula(formula_text, workbook);
+        update_formula_cell(workbook, row, col, result);
+    }
+    return eval_topo_order(topo_result, i + 1, workbook)
+}
+
+fn recalc_all(workbook, total_rows, total_cols) {
+    let graph = extract_all_formula_refs(workbook, total_rows, total_cols);
+    let all_formula_cells = collect_all_formula_cells(workbook, total_rows, total_cols);
+    if (list.len(all_formula_cells) == 0) { return true }
+    let topo_result = has_cycle_and_sort(graph, all_formula_cells);
+    if (is_error_result(topo_result)) {
+        let r = mark_circular_cells(all_formula_cells, 0, workbook);
+        return false
+    }
+    let r = eval_topo_order(topo_result, 0, workbook);
+    return true
+}
+
+// ============================================================
+// Level 12: Display helpers (recursive)
+// ============================================================
+
+fn cell_value_to_string(val) {
+    if (is_error_result(val)) {
+        return string.concat("#", map.get(val, "error"))
+    }
+    let v = get_result_value(val);
+    return convert.to_string(v)
+}
+
+fn cell_to_string(workbook, row, col) {
+    let cell = get_cell(workbook, row, col);
+    let t = map.get(cell, "type");
+    if (string.equals(t, "empty")) { return "." }
+    if (string.equals(t, "number")) {
+        return convert.to_string(map.get(cell, "v"))
+    }
+    if (string.equals(t, "string")) {
+        return map.get(cell, "v")
+    }
+    if (string.equals(t, "error")) {
+        let err_val = map.get(cell, "v");
+        return string.concat("#", map.get(err_val, "error"))
+    }
+    let fv = map.get(cell, "v");
+    return cell_value_to_string(fv)
+}
+
+fn pad_cell_str(s, target) {
+    if (string.length(s) >= target) { return s }
+    return pad_cell_str(string.concat(s, " "), target)
+}
+
+fn print_header_cols(cols, c, header) {
+    if (c >= cols) {
+        print(header);
+        return true
+    }
+    let col_letter = index_to_col_letter(c);
+    let padded = pad_cell_str(col_letter, 5);
+    return print_header_cols(cols, c + 1, header + " " + padded)
+}
+
+fn print_row_cells(workbook, row, cols, c, line) {
+    if (c >= cols) {
+        print(line);
+        return true
+    }
+    let cell_str = cell_to_string(workbook, row, c);
+    let padded = pad_cell_str(cell_str, 5);
+    return print_row_cells(workbook, row, cols, c + 1, line + " " + padded)
+}
+
+fn print_workbook_rows(workbook, rows, cols, r) {
+    if (r >= rows) { return true }
+    let row_label = convert.to_string(r + 1);
+    let padded_label = pad_cell_str(row_label, 4);
+    let r2 = print_row_cells(workbook, r, cols, 0, padded_label);
+    return print_workbook_rows(workbook, rows, cols, r + 1)
+}
+
+fn print_workbook(workbook, rows, cols) {
+    let r = print_header_cols(cols, 0, "    ");
+    let r2 = print_workbook_rows(workbook, rows, cols, 0);
+    return true
+}
+
+// ============================================================
+// Level 13: Test helpers
+// ============================================================
+
+fn assert_eq(actual_val, expected, label) {
+    let actual_str = convert.to_string(actual_val);
+    let expected_str = convert.to_string(expected);
+    if (string.equals(actual_str, expected_str)) {
+        print(string.concat("  PASS: ", label));
+        return true
+    }
+    print(string.concat("  FAIL: ", label));
+    print(string.concat("    Expected: ", expected_str));
+    print(string.concat("    Actual:   ", actual_str));
+    return false
+}
+
+fn assert_error(actual_val, expected_code, label) {
+    if (is_error_result(actual_val)) {
+        let code = map.get(actual_val, "error");
+        if (string.equals(code, expected_code)) {
+            print(string.concat("  PASS: ", label));
+            return true
+        }
+        print(string.concat("  FAIL: ", label));
+        print(string.concat("    Expected error: ", expected_code));
+        print(string.concat("    Actual error:   ", code));
+        return false
+    }
+    print(string.concat("  FAIL: ", label));
+    print(string.concat("    Expected error: ", expected_code));
+    print("    Actual: no error");
+    return false
+}
+
+fn setup_basic_workbook() {
+    let wb = create_workbook(10, 5);
+    set_constant(wb, 0, 0, 10);    // A1 = 10;
+    set_constant(wb, 0, 1, 20);    // B1 = 20;
+    set_constant(wb, 0, 2, 30);    // C1 = 30;
+    set_constant(wb, 1, 0, 5);     // A2 = 5;
+    set_constant(wb, 1, 1, 15);    // B2 = 15;
+    set_constant(wb, 1, 2, 25);    // C2 = 25;
+    set_constant(wb, 2, 0, 100);   // A3 = 100;
+    set_constant(wb, 2, 1, 200);   // B3 = 200;
+    set_constant(wb, 2, 2, -50);   // C3 = -50;
+    return wb
+}
+
+// ============================================================
+// Level 14: Test cases
+// ============================================================
+
+fn test_simple_arithmetic() {
+    print("  --- Simple Arithmetic ---");
+    let wb = setup_basic_workbook();
+    let result = 0;
+    let ok = true;
+
+    result = evaluate_formula("=1+2", wb);
+    if (!assert_eq(get_result_value(result), 3, "1+2 = 3")) { ok = false }
+
+    result = evaluate_formula("=10-4", wb);
+    if (!assert_eq(get_result_value(result), 6, "10-4 = 6")) { ok = false }
+
+    result = evaluate_formula("=3*7", wb);
+    if (!assert_eq(get_result_value(result), 21, "3*7 = 21")) { ok = false }
+
+    result = evaluate_formula("=15/3", wb);
+    if (!assert_eq(get_result_value(result), 5, "15/3 = 5")) { ok = false }
+
+    result = evaluate_formula("=1+2*3", wb);
+    if (!assert_eq(get_result_value(result), 7, "1+2*3 = 7 (precedence)")) { ok = false }
+
+    result = evaluate_formula("=(1+2)*3", wb);
+    if (!assert_eq(get_result_value(result), 9, "(1+2)*3 = 9")) { ok = false }
+
+    result = evaluate_formula("=10/0", wb);
+    if (!assert_error(result, "#DIV/0!", "10/0 = #DIV/0!")) { ok = false }
+
+    return ok
+}
+
+fn test_cell_reference() {
+    print("  --- Cell References ---");
+    let wb = setup_basic_workbook();
+    let result = 0;
+    let ok = true;
+
+    result = evaluate_formula("=A1", wb);
+    if (!assert_eq(get_result_value(result), 10, "A1 = 10")) { ok = false }
+
+    result = evaluate_formula("=B1", wb);
+    if (!assert_eq(get_result_value(result), 20, "B1 = 20")) { ok = false }
+
+    result = evaluate_formula("=A1+B2", wb);
+    if (!assert_eq(get_result_value(result), 25, "A1+B2 = 25")) { ok = false }
+
+    result = evaluate_formula("=A3-C2", wb);
+    if (!assert_eq(get_result_value(result), 75, "A3-C2 = 75")) { ok = false }
+
+    result = evaluate_formula("=ZZ1", wb);
+    if (!assert_error(result, "#REF!", "Invalid cell ZZ1 = #REF!")) { ok = false }
+
+    return ok
+}
+
+fn test_chained_formulas() {
+    print("  --- Chained Formulas ---");
+    let wb = create_workbook(5, 5);
+    let ok = true;
+    set_constant(wb, 0, 0, 5);      // A1 = 5;
+    set_formula(wb, 0, 1, "=A1*2");  // B1 = A1*2 = 10;
+    set_formula(wb, 0, 2, "=B1+3");  // C1 = B1+3 = 13;
+    let r = recalc_all(wb, 5, 5);
+
+    let c1 = get_cell_number(wb, 0, 1);
+    if (!assert_eq(get_result_value(c1), 10, "B1 = A1*2 = 10")) { ok = false }
+
+    let c2 = get_cell_number(wb, 0, 2);
+    if (!assert_eq(get_result_value(c2), 13, "C1 = B1+3 = 13")) { ok = false }
+
+    return ok
+}
+
+fn test_sum() {
+    print("  --- SUM ---");
+    let wb = setup_basic_workbook();
+    let result = 0;
+    let ok = true;
+
+    result = evaluate_formula("=SUM(A1:A3)", wb);
+    if (!assert_eq(get_result_value(result), 115, "SUM(A1:A3) = 115")) { ok = false }
+
+    result = evaluate_formula("=SUM(B1:C2)", wb);
+    if (!assert_eq(get_result_value(result), 90, "SUM(B1:C2) = 90")) { ok = false }
+
+    return ok
+}
+
+fn test_other_functions() {
+    print("  --- AVG / MIN / MAX / COUNT ---");
+    let wb = setup_basic_workbook();
+    let result = 0;
+    let ok = true;
+
+    result = evaluate_formula("=AVG(A1:C1)", wb);
+    if (!assert_eq(get_result_value(result), 20, "AVG(A1:C1) = 20")) { ok = false }
+
+    result = evaluate_formula("=MIN(A1:C3)", wb);
+    if (!assert_eq(get_result_value(result), -50, "MIN(A1:C3) = -50")) { ok = false }
+
+    result = evaluate_formula("=MAX(A1:C3)", wb);
+    if (!assert_eq(get_result_value(result), 200, "MAX(A1:C3) = 200")) { ok = false }
+
+    result = evaluate_formula("=COUNT(A1:C3)", wb);
+    if (!assert_eq(get_result_value(result), 9, "COUNT(A1:C3) = 9")) { ok = false }
+
+    return ok
+}
+
+fn test_if() {
+    print("  --- IF ---");
+    let wb = setup_basic_workbook();
+    let result = 0;
+    let ok = true;
+
+    result = evaluate_formula("=IF(1, A1, B1)", wb);
+    if (!assert_eq(get_result_value(result), 10, "IF(1, A1, B1) = 10")) { ok = false }
+
+    result = evaluate_formula("=IF(0, A1, B1)", wb);
+    if (!assert_eq(get_result_value(result), 20, "IF(0, A1, B1) = 20")) { ok = false }
+
+    result = evaluate_formula("=IF(A1+5, 100, 200)", wb);
+    if (!assert_eq(get_result_value(result), 100, "IF(A1+5, 100, 200) = 100")) { ok = false }
+
+    result = evaluate_formula("=IF(0, 100, 200)", wb);
+    if (!assert_eq(get_result_value(result), 200, "IF(0, 100, 200) = 200")) { ok = false }
+
+    return ok
+}
+
+fn test_comparisons() {
+    print("  --- Comparisons ---");
+    let wb = setup_basic_workbook();
+    let result = 0;
+    let ok = true;
+
+    result = evaluate_formula("=5==5", wb);
+    if (!assert_eq(get_result_value(result), 1, "5==5 = 1")) { ok = false }
+
+    result = evaluate_formula("=5==6", wb);
+    if (!assert_eq(get_result_value(result), 0, "5==6 = 0")) { ok = false }
+
+    result = evaluate_formula("=5!=6", wb);
+    if (!assert_eq(get_result_value(result), 1, "5!=6 = 1")) { ok = false }
+
+    result = evaluate_formula("=5<10", wb);
+    if (!assert_eq(get_result_value(result), 1, "5<10 = 1")) { ok = false }
+
+    result = evaluate_formula("=10<5", wb);
+    if (!assert_eq(get_result_value(result), 0, "10<5 = 0")) { ok = false }
+
+    result = evaluate_formula("=10<=10", wb);
+    if (!assert_eq(get_result_value(result), 1, "10<=10 = 1")) { ok = false }
+
+    result = evaluate_formula("=5>10", wb);
+    if (!assert_eq(get_result_value(result), 0, "5>10 = 0")) { ok = false }
+
+    result = evaluate_formula("=10>=5", wb);
+    if (!assert_eq(get_result_value(result), 1, "10>=5 = 1")) { ok = false }
+
+    result = evaluate_formula("=A1==10", wb);
+    if (!assert_eq(get_result_value(result), 1, "A1==10 = 1")) { ok = false }
+
+    result = evaluate_formula("=A1==B1", wb);
+    if (!assert_eq(get_result_value(result), 0, "A1==B1 (10==20) = 0")) { ok = false }
+
+    return ok
+}
+
+fn test_circular() {
+    print("  --- Circular Dependency ---");
+    let wb = create_workbook(5, 5);
+    let ok = true;
+    set_formula(wb, 0, 0, "=B1");      // A1 depends on B1;
+    set_formula(wb, 0, 1, "=A1");      // B1 depends on A1 -> CIRCULAR;
+    let r = recalc_all(wb, 5, 5);
+
+    let cell_a1 = get_cell_number(wb, 0, 0);
+    if (!assert_error(cell_a1, "#CIRC!", "A1 (circular with B1) = #CIRC!")) { ok = false }
+
+    let cell_b1 = get_cell_number(wb, 0, 1);
+    if (!assert_error(cell_b1, "#CIRC!", "B1 (circular with A1) = #CIRC!")) { ok = false }
+
+    return ok
+}
+
+fn test_error_propagation() {
+    print("  --- Error Propagation ---");
+    let wb = create_workbook(5, 5);
+    let ok = true;
+    set_formula(wb, 0, 0, "=1/0");     // A1 = #DIV/0!;
+    set_formula(wb, 0, 1, "=A1+5");    // B1 = A1+5 -> should propagate error;
+    let r = recalc_all(wb, 5, 5);
+
+    let cell_b1 = get_cell_number(wb, 0, 1);
+    if (!assert_error(cell_b1, "#DIV/0!", "B1 = A1+5 (A1=#DIV/0!) = #DIV/0!")) { ok = false }
+
+    return ok
+}
+
+fn test_nested_expressions() {
+    print("  --- Nested Expressions ---");
+    let wb = setup_basic_workbook();
+    let result = 0;
+    let ok = true;
+
+    result = evaluate_formula("=(1+2)*(3+4)", wb);
+    if (!assert_eq(get_result_value(result), 21, "(1+2)*(3+4) = 21")) { ok = false }
+
+    result = evaluate_formula("=((1+2)*3)+4", wb);
+    if (!assert_eq(get_result_value(result), 13, "((1+2)*3)+4 = 13")) { ok = false }
+
+    result = evaluate_formula("=A1+A2*A3", wb);
+    if (!assert_eq(get_result_value(result), 510, "A1+A2*A3 = 510")) { ok = false }
+
+    return ok
+}
+
+// ============================================================
+// Level 15: Test runner
+// ============================================================
+
+fn run_all_tests() {
+    print("");
+    print("========================================");
+    print("  Spreadsheet Formula Engine Tests");
+    print("========================================");
+    print("");
+
+    let t1 = test_simple_arithmetic();
+    let t2 = test_cell_reference();
+    let t3 = test_chained_formulas();
+    let t4 = test_sum();
+    let t5 = test_other_functions();
+    let t6 = test_if();
+    let t7 = test_comparisons();
+    let t8 = test_circular();
+    let t9 = test_error_propagation();
+    let t10 = test_nested_expressions();
+
+    print("");
+    print("========================================");
+    let all_pass = t1 && t2 && t3 && t4 && t5 && t6 && t7 && t8 && t9 && t10;
+    if (all_pass) {
+        print("  ALL TESTS PASSED");
+    } else {
+        print("  SOME TESTS FAILED");
+    }
+    print("========================================");
+    print("");
+
+    print("");
+    print("--- Demo: Workbook with formulas ---");
+    let demo = create_workbook(5, 5);
+    set_constant(demo, 0, 0, 10);
+    set_constant(demo, 0, 1, 20);
+    set_constant(demo, 0, 2, 30);
+    set_formula(demo, 0, 3, "=A1+B1");
+    set_formula(demo, 0, 4, "=SUM(A1:C1)");
+    set_formula(demo, 1, 0, "=A1*2");
+    set_formula(demo, 1, 1, "=B1*3");
+    set_formula(demo, 2, 0, "=IF(A1>B1, A1, B1)");
+    recalc_all(demo, 5, 5);
+    print_workbook(demo, 5, 5);
+
+    return all_pass
+}
+
+// ============================================================
+// Level 16: Main
+// ============================================================
+
+fn main() {
+    print("Spreadsheet Formula Engine Benchmark");
+    print("AILang v0.1.2");
+    print("");
+
+    let all_pass = run_all_tests();
+    if (all_pass) { return 0 }
+    return 1
+}

@@ -1,0 +1,36 @@
+import io;
+import string;
+import list;
+
+fn helper(n) {
+    return n * 2;
+}
+
+fn sum_up_to(current, limit_param, accumulator) {
+    if current >= limit_param {
+        return accumulator;
+    }
+    return sum_up_to(current + 1, limit_param, accumulator + current);
+}
+
+fn main() {
+    // Use recursion instead of while
+    let total = sum_up_to(0, 10, 0);
+    
+    // string.concat with 3+ args — fixed to use +
+    let msg = "a" + "b" + "c";
+    
+    // Forward reference — fixed
+    let result = helper(5);
+    
+    // Variable name collision — fixed
+    let items = list.new();
+    items = list.append(items, 1);
+    items = list.append(items, 2);
+    
+    // let without initializer — fixed
+    let x = 0;
+    
+    // return without value — fixed
+    return 0;
+}

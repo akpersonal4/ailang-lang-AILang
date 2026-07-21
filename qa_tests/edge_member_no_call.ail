@@ -1,0 +1,2 @@
+import string;
+fn main() { let x = string.length; print(x); return 0 }

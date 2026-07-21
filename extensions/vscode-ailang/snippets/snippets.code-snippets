@@ -1,0 +1,91 @@
+{
+  "Main function": {
+    "scope": "ailang",
+    "prefix": "main",
+    "body": [
+      "fn main() {",
+      "\t${1:print(\"Hello, AILang!\");}",
+      "\treturn ${2:0}",
+      "}"
+    ],
+    "description": "Insert main() entry point function"
+  },
+  "Function declaration": {
+    "scope": "ailang",
+    "prefix": "fn",
+    "body": [
+      "fn ${1:name}(${2:params}) {",
+      "\t${3:// body}",
+      "\treturn ${4:value}",
+      "}"
+    ],
+    "description": "Insert a function declaration"
+  },
+  "If statement": {
+    "scope": "ailang",
+    "prefix": "if",
+    "body": [
+      "if (${1:condition}) {",
+      "\t${2:// body}",
+      "}"
+    ],
+    "description": "Insert an if statement"
+  },
+  "If-else statement": {
+    "scope": "ailang",
+    "prefix": "ifelse",
+    "body": [
+      "if (${1:condition}) {",
+      "\t${2:// true branch}",
+      "} else {",
+      "\t${3:// false branch}",
+      "}"
+    ],
+    "description": "Insert an if-else statement"
+  },
+  "Import module": {
+    "scope": "ailang",
+    "prefix": "import",
+    "body": [
+      "import ${1:module_name};"
+    ],
+    "description": "Insert an import declaration"
+  },
+  "Return statement": {
+    "scope": "ailang",
+    "prefix": "return",
+    "body": [
+      "return ${1:value};"
+    ],
+    "description": "Insert a return statement"
+  },
+  "Recursion template": {
+    "scope": "ailang",
+    "prefix": "recur",
+    "body": [
+      "fn ${1:name}(${2:n}) {",
+      "\tif (${2:n} == ${3:0}) {",
+      "\t\treturn ${4:base_case}",
+      "\t}",
+      "\treturn ${1:name}(${2:n} - 1) + ${5:operation}",
+      "}"
+    ],
+    "description": "Insert a recursive function template"
+  },
+  "Variable declaration": {
+    "scope": "ailang",
+    "prefix": "let",
+    "body": [
+      "let ${1:name} = ${2:value};"
+    ],
+    "description": "Insert a variable declaration"
+  },
+  "Comment block": {
+    "scope": "ailang",
+    "prefix": "comment",
+    "body": [
+      "// ${1:comment}"
+    ],
+    "description": "Insert a single-line comment"
+  }
+}

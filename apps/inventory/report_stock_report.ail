@@ -1,0 +1,53 @@
+import storage;
+import helpers;
+import list;
+import map;
+import string;
+import convert;
+
+fn stock_report_calc_rec(srMovements, srProductId, srIdx, srTotal) {
+    if (srIdx >= list.len(srMovements)) {
+        return srTotal;
+    }
+    let srItem = list.get(srMovements, srIdx);
+    let srItemProdId = helpers.helpers_get_map_value_safe(srItem, "product_id", "");
+    if (srItemProdId == srProductId) {
+        let srItemQty = helpers.helpers_get_map_value_safe(srItem, "quantity", 0);
+        return stock_report_calc_rec(srMovements, srProductId, srIdx + 1, srTotal + srItemQty);
+    }
+    return stock_report_calc_rec(srMovements, srProductId, srIdx + 1, srTotal);
+}
+
+fn stock_report_get_qty(sgProductId) {
+    let sgMovements = storage.storage_list("movements");
+    return stock_report_calc_rec(sgMovements, sgProductId, 0, 0);
+}
+
+fn stock_report_valuation() {
+    return storage.storage_list("valuations");
+}
+
+fn stock_report_aging_rec(saMovements, saIdx, saResult) {
+    if (saIdx >= list.len(saMovements)) {
+        return saResult;
+    }
+    let saItem = list.get(saMovements, saIdx);
+    let saType = helpers.helpers_get_map_value_safe(saItem, "type", "");
+    if (saType == "inbound") {
+        let saQty = convert.to_int(helpers.helpers_get_map_value_safe(saItem, "quantity", 0));
+        if (saQty > 0) {
+            list.append(saResult, saItem);
+        }
+    }
+    return stock_report_aging_rec(saMovements, saIdx + 1, saResult);
+}
+
+fn stock_report_aging() {
+    let saAll = storage.storage_list("movements");
+    let saResult = list.new();
+    return stock_report_aging_rec(saAll, 0, saResult);
+}
+
+fn stock_report_all_products() {
+    return storage.storage_list("products");
+}

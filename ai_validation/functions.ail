@@ -1,0 +1,15 @@
+fn greet(name) {
+    print("Hello,", name);
+    return 0
+}
+
+fn add(a, b) {
+    return a + b
+}
+
+fn main() {
+    greet("Alice");
+    let sum = add(3, 4);
+    print("3 + 4 =", sum);
+    return 0
+}

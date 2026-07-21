@@ -1,0 +1,44 @@
+import list;
+import io;
+import environment;
+import convert;
+
+fn is_even(value) {
+    return value % 2 == 0;
+}
+
+fn sum_even_helper(numbers, index, accumulator, threshold) {
+    let len = list.len(numbers);
+    if index >= len {
+        return accumulator;
+    }
+    let value = list.get(numbers, index);
+    if is_even(value) && value > threshold {
+        return sum_even_helper(numbers, index + 1, accumulator + value, threshold);
+    }
+    return sum_even_helper(numbers, index + 1, accumulator, threshold);
+}
+
+fn sum_even_numbers(numbers, threshold) {
+    return sum_even_helper(numbers, 0, 0, threshold);
+}
+
+fn main() {
+    let test = list.new();
+    test = list.append(test, 1);
+    test = list.append(test, 2);
+    test = list.append(test, 3);
+    test = list.append(test, 4);
+    test = list.append(test, 5);
+    test = list.append(test, 6);
+    let args = environment.args();
+    let argCount = list.len(args);
+    let threshold = 0;
+    if argCount >= 2 {
+        let rawValue = list.get(args, 1);
+        threshold = convert.to_int(rawValue);
+    }
+    let result = sum_even_numbers(test, threshold);
+    io.println(result);
+    return 0;
+}

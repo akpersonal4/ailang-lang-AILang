@@ -1,0 +1,87 @@
+// Dependency Graph Pattern
+// Builds an adjacency list and finds all transitive dependencies
+// Uses single-function recursion with mode flag (no mutual recursion)
+//
+// Mode: deps_list == false means "start visiting new node"
+//       deps_list != false means "iterating deps of current node"
+//
+// fn add_dep(graph, node, dep) { ... }
+// fn collect_all_deps(graph, start) { ... }
+
+import map;
+import list;
+
+fn add_dep(graph, node, dep) {
+    if (map.has(graph, node)) {
+        let deps = map.get(graph, node);
+        list.append(deps, dep)
+    } else {
+        let deps = list.new();
+        list.append(deps, dep);
+        map.set(graph, node, deps)
+    }
+    return graph
+}
+
+fn build_graph() {
+    let g = map.new();
+    g = add_dep(g, "main", "parse");
+    g = add_dep(g, "main", "render");
+    g = add_dep(g, "parse", "tokenize");
+    g = add_dep(g, "parse", "validate");
+    g = add_dep(g, "render", "format");
+    g = add_dep(g, "tokenize", "read_file");
+    g = add_dep(g, "validate", "read_file");
+    return g
+}
+
+fn find_next_unprocessed(graph, visited, keys, ki) {
+    if (ki >= list.len(keys)) { return false }
+    let node = list.get(keys, ki);
+    if (!map.has(visited, node)) { return node }
+    return find_next_unprocessed(graph, visited, keys, ki + 1)
+}
+
+fn process_deps(graph, visited, order, start_node, di) {
+    map.set(visited, start_node, true);
+    if (di < 0) {
+        if (map.has(graph, start_node)) {
+            let deps = map.get(graph, start_node);
+            let dl = list.len(deps);
+            if (dl > 0) { return process_deps(graph, visited, order, start_node, 0) }
+        }
+        list.append(order, start_node);
+        return order
+    }
+    let deps = map.get(graph, start_node);
+    if (di >= list.len(deps)) {
+        list.append(order, start_node);
+        return order
+    }
+    let dep = list.get(deps, di);
+    if (!map.has(visited, dep)) {
+        let dummy = process_deps(graph, visited, order, dep, -1)
+    }
+    return process_deps(graph, visited, order, start_node, di + 1)
+}
+
+fn collect_all_deps(graph, start) {
+    let visited = map.new();
+    let order = list.new();
+    let dummy = process_deps(graph, visited, order, start, -1);
+    return order
+}
+
+fn print_deps(deps, i) {
+    if (i >= list.len(deps)) { return 0 }
+    print("  ", list.get(deps, i));
+    return print_deps(deps, i + 1)
+}
+
+fn main() {
+    let graph = build_graph();
+    let deps = collect_all_deps(graph, "main");
+    print("Dependencies of main (including transitives):");
+    print_deps(deps, 0);
+    print("")
+}

@@ -1,0 +1,10 @@
+fn main() {
+    if (true) {
+        if (false) {
+            let x = helper();
+        }
+    }
+}
+fn helper() {
+    return 0;
+}

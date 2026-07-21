@@ -1,0 +1,83 @@
+import random;
+import list;
+import map;
+import math;
+import convert;
+
+fn roll_die(sides) {
+    return random.int(1, sides)
+}
+
+fn roll_multiple(count, sides, acc) {
+    if (count <= 0) { return acc }
+    list.append(acc, roll_die(sides));
+    return roll_multiple(count - 1, sides, acc)
+}
+
+fn sum_list(nums, i) {
+    if (i >= list.len(nums)) { return 0 }
+    return list.get(nums, i) + sum_list(nums, i + 1)
+}
+
+fn min_list(nums, i) {
+    if (i >= list.len(nums)) { return 999 }
+    let val = list.get(nums, i);
+    let rest = min_list(nums, i + 1);
+    if (val < rest) { return val }
+    return rest
+}
+
+fn max_list(nums, i) {
+    if (i >= list.len(nums)) { return 0 }
+    let val = list.get(nums, i);
+    let rest = max_list(nums, i + 1);
+    if (val > rest) { return val }
+    return rest
+}
+
+fn count_value(nums, target, i) {
+    if (i >= list.len(nums)) { return 0 }
+    let c = 0;
+    if (list.get(nums, i) == target) { c = 1 }
+    return c + count_value(nums, target, i + 1)
+}
+
+fn build_freq_map(nums, sides, i, freq) {
+    if (i > sides) { return freq }
+    map.set(freq, convert.to_string(i), count_value(nums, i, 0));
+    return build_freq_map(nums, sides, i + 1, freq)
+}
+
+fn build_bar(count, i, acc) {
+    if (i >= count) { return acc }
+    return build_bar(count, i + 1, acc + "#")
+}
+
+fn print_freq_helper(freq, i, sides) {
+    if (i > sides) { return 0 }
+    let key = convert.to_string(i);
+    let bar = "";
+    if (map.has(freq, key)) {
+        let count = map.get(freq, key);
+        bar = build_bar(count, 0, "")
+    }
+    print(i, ":", bar, "(", map.get(freq, key), ")");
+    return print_freq_helper(freq, i + 1, sides)
+}
+
+fn main() {
+    print("=== Dice Roller & Statistics ===");
+    let sides = 6;
+    let rolls = 20;
+    print("Rolling", rolls, "dice with", sides, "sides...");
+    let results = roll_multiple(rolls, sides, list.new());
+    print("Results:", results);
+    let total = sum_list(results, 0);
+    let avg = convert.to_int(total / rolls);
+    print("Sum:", total, "| Average:", avg);
+    print("Min:", min_list(results, 0), "| Max:", max_list(results, 0));
+    print("");
+    print("Frequency Distribution:");
+    let freq = build_freq_map(results, sides, 1, map.new());
+    print_freq_helper(freq, 1, sides)
+}

@@ -1,0 +1,83 @@
+import list;
+import map;
+import json;
+import file;
+import io;
+import string;
+import convert;
+
+fn uppercase_field(rec, fld) {
+    let val = map.get(rec, fld);
+    let upper = string.uppercase(val);
+    upper;
+}
+
+fn normalize_record(original) {
+    let name_val = uppercase_field(original, "name");
+    let city_val = uppercase_field(original, "city");
+    let score_val = map.get(original, "score");
+    let normalized = map.new();
+    map.set(normalized, "name", name_val);
+    map.set(normalized, "city", city_val);
+    map.set(normalized, "score", score_val);
+    normalized;
+}
+
+fn normalize_records_helper(recs_list, idx, result) {
+    if (idx >= list.len(recs_list)) {
+        return result;
+    }
+    let current = list.get(recs_list, idx);
+    let updated = normalize_record(current);
+    list.append(result, updated);
+    normalize_records_helper(recs_list, idx + 1, result);
+}
+
+fn normalize_records(recs) {
+    let result = list.new();
+    normalize_records_helper(recs, 0, result);
+    return result;
+}
+
+fn build_output(raw_json) {
+    let parsed = json.parse(raw_json);
+    let result = normalize_records(parsed);
+    result;
+}
+
+fn display_results_helper(items, pos) {
+    if (pos >= list.len(items)) {
+        return items;
+    }
+    let item = list.get(items, pos);
+    let item_name = map.get(item, "name");
+    let item_city = map.get(item, "city");
+    let item_score = map.get(item, "score");
+    let score_str = convert.to_string(item_score);
+    let line = string.concat(string.concat(string.concat(string.concat(item_name, " | "), item_city), " | "), score_str);
+    io.writeln(line);
+    display_results_helper(items, pos + 1);
+}
+
+fn display_results(all_recs) {
+    display_results_helper(all_recs, 0);
+}
+
+fn transform_file(in_path, out_path) {
+    let data = file.read(in_path);
+    let records = build_output(data);
+    let count = list.len(records);
+    io.writeln("=== JSON Transformer ===");
+    io.writeln("Loaded " + convert.to_string(count) + " records");
+    io.writeln("Normalized:");
+    display_results(records);
+    let json_str = json.stringify(records);
+    file.write(out_path, json_str);
+    io.writeln("Output written to " + out_path);
+}
+
+fn main() {
+    let input_file = "sample_input/raw_data.json";
+    let output_file = "data/normalized.json";
+    transform_file(input_file, output_file);
+}

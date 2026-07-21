@@ -1,0 +1,91 @@
+fn new() {
+    return list_new()
+}
+
+fn append(values, value) {
+    return list_append(values, value)
+}
+
+fn len(values) {
+    return list_len(values)
+}
+
+fn get(values, index) {
+    return list_get(values, index)
+}
+
+fn contains(values, value) {
+    return list_contains(values, value)
+}
+
+fn remove(values, value) {
+    return list_remove(values, value)
+}
+
+fn clear(values) {
+    return list_clear(values)
+}
+
+fn sum(values) {
+    return list_sum(values)
+}
+
+fn find_by_key(values, key, value) {
+    return list_find_by_key(values, key, value)
+}
+
+fn sort(values) {
+    return list_sort(values)
+}
+
+fn sort_by_key(values, key) {
+    return list_sort(values, key)
+}
+
+fn copy(values) {
+    return list_copy(values)
+}
+
+fn find(values, key, value) {
+    return list_find_by_key(values, key, value)
+}
+
+fn filter(values, key, value) {
+    return list_filter_by_key(values, key, value)
+}
+
+fn filter_by_key(values, key, value) {
+    return list_filter_by_key(values, key, value)
+}
+
+fn filter_by_contains(values, key, substring) {
+    return list_filter_by_contains(values, key, substring)
+}
+
+fn collect_key(values, key) {
+    return list_collect_key(values, key)
+}
+
+fn group_by_key(values, key) {
+    return list_group_by_key(values, key)
+}
+
+fn sum_by_key(values, key) {
+    return list_sum_by_key(values, key)
+}
+
+fn take(values, n) {
+    return list_take(values, n)
+}
+
+fn skip(values, n) {
+    return list_skip(values, n)
+}
+
+fn search_by_name(values, query) {
+    return list_search_by_name(values, query)
+}
+
+fn exists_by_key(values, key, value) {
+    return list_exists_by_key(values, key, value)
+}

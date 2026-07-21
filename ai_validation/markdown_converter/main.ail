@@ -1,0 +1,267 @@
+import string;
+import list;
+import convert;
+
+// ============================================================================
+// 1. CHARACTER & STRING UTILITIES
+// ============================================================================
+
+// Returns true if the character at the specified index matches the target string
+fn char_at_equals(str, index, target) {
+    if (index + string.length(target) > string.length(str)) {
+        return false
+    }
+    let sub = string.substring(str, index, index + string.length(target));
+    return string.equals(sub, target)
+}
+
+// HTML escaping utility (<, >, &)
+fn escape_html_chars(str, index, acc) {
+    if (index >= string.length(str)) {
+        return acc
+    }
+    if (char_at_equals(str, index, "&")) {
+        return escape_html_chars(str, index + 1, string.concat(acc, "&amp;"))
+    }
+    if (char_at_equals(str, index, "<")) {
+        return escape_html_chars(str, index + 1, string.concat(acc, "&lt;"))
+    }
+    if (char_at_equals(str, index, ">")) {
+        return escape_html_chars(str, index + 1, string.concat(acc, "&gt;"))
+    }
+    let char = string.substring(str, index, index + 1);
+    return escape_html_chars(str, index + 1, string.concat(acc, char))
+}
+
+// ============================================================================
+// 2. INLINE MARKDOWN PARSER (Bold, Italic, Code, Links, Images)
+// ============================================================================
+
+// Scans ahead to find a matching closing delimiter string
+fn find_closing_delimiter(str, index, delim) {
+    if (index >= string.length(str)) {
+        return -1
+    }
+    if (char_at_equals(str, index, delim)) {
+        return index
+    }
+    return find_closing_delimiter(str, index + 1, delim)
+}
+
+// Parses inline elements: `code`, **bold**, *italic*, ![img](src), [link](href)
+fn parse_inline(str, index, acc) {
+    if (index >= string.length(str)) {
+        return acc
+    }
+
+    // 1. Inline Code (`code`)
+    if (char_at_equals(str, index, "`")) {
+        let close = find_closing_delimiter(str, index + 1, "`");
+        if (close > -1) {
+            let content = string.substring(str, index + 1, close);
+            let tag = string.concat("<code>", string.concat(content, "</code>"));
+            return parse_inline(str, close + 1, string.concat(acc, tag))
+        }
+    }
+
+    // 2. Bold (**bold**)
+    if (char_at_equals(str, index, "**")) {
+        let close = find_closing_delimiter(str, index + 2, "**");
+        if (close > -1) {
+            let content = string.substring(str, index + 2, close);
+            let tag = string.concat("<strong>", string.concat(parse_inline(content, 0, ""), "</strong>"));
+            return parse_inline(str, close + 2, string.concat(acc, tag))
+        }
+    }
+
+    // 3. Italic (*italic*)
+    if (char_at_equals(str, index, "*")) {
+        let close = find_closing_delimiter(str, index + 1, "*");
+        if (close > -1) {
+            let content = string.substring(str, index + 1, close);
+            let tag = string.concat("<em>", string.concat(parse_inline(content, 0, ""), "</em>"));
+            return parse_inline(str, close + 1, string.concat(acc, tag))
+        }
+    }
+
+    // 4. Image Elements (![alt](src))
+    if (char_at_equals(str, index, "![")) {
+        let close_alt = find_closing_delimiter(str, index + 2, "]");
+        if (close_alt > -1) {
+            if (char_at_equals(str, close_alt + 1, "(")) {
+                let close_src = find_closing_delimiter(str, close_alt + 2, ")");
+                if (close_src > -1) {
+                    let alt = string.substring(str, index + 2, close_alt);
+                    let src = string.substring(str, close_alt + 2, close_src);
+                    let tag = string.concat("<img src=\"", string.concat(src, string.concat("\" alt=\"", string.concat(alt, "\" />"))));
+                    return parse_inline(str, close_src + 1, string.concat(acc, tag))
+                }
+            }
+        }
+    }
+
+    // 5. Link Elements ([text](url))
+    if (char_at_equals(str, index, "[")) {
+        let close_text = find_closing_delimiter(str, index + 1, "]");
+        if (close_text > -1) {
+            if (char_at_equals(str, close_text + 1, "(")) {
+                let close_url = find_closing_delimiter(str, close_text + 2, ")");
+                if (close_url > -1) {
+                    let text = string.substring(str, index + 1, close_text);
+                    let url = string.substring(str, close_text + 2, close_url);
+                    let tag = string.concat("<a href=\"", string.concat(url, string.concat("\">", string.concat(parse_inline(text, 0, ""), "</a>"))));
+                    return parse_inline(str, close_url + 1, string.concat(acc, tag))
+                }
+            }
+        }
+    }
+
+    // Advance single character
+    let current_char = string.substring(str, index, index + 1);
+    return parse_inline(str, index + 1, string.concat(acc, current_char))
+}
+
+// ============================================================================
+// 3. BLOCK PARSER & STATE MACHINE
+// ============================================================================
+
+// state: 0 = normal, 1 = code block, 2 = unordered list, 3 = ordered list
+fn parse_blocks(lines, index, state, result_list) {
+    if (index >= list.len(lines)) {
+        if (state == 1) { list.append(result_list, "</code></pre>") }
+        if (state == 2) { list.append(result_list, "</ul>") }
+        if (state == 3) { list.append(result_list, "</ol>") }
+        return result_list
+    }
+
+    let raw_line = list.get(lines, index);
+    let trimmed = string.trim(raw_line);
+
+    // --- State: Inside Fenced Code Block ---
+    if (state == 1) {
+        if (string.starts_with(trimmed, "```")) {
+            list.append(result_list, "</code></pre>");
+            return parse_blocks(lines, index + 1, 0, result_list)
+        }
+        list.append(result_list, escape_html_chars(raw_line, 0, ""));
+        return parse_blocks(lines, index + 1, 1, result_list)
+    }
+
+    // Handle Fenced Code Block Transition
+    if (string.starts_with(trimmed, "```")) {
+        if (state == 2) { list.append(result_list, "</ul>") }
+        if (state == 3) { list.append(result_list, "</ol>") }
+        list.append(result_list, "<pre><code>");
+        return parse_blocks(lines, index + 1, 1, result_list)
+    }
+
+    // --- State: List Closures due to structural breaks ---
+    if (state == 2) {
+        if (string.starts_with(trimmed, "* ") == false) {
+            list.append(result_list, "</ul>");
+            return parse_blocks(lines, index, 0, result_list)
+        }
+    }
+    if (state == 3) {
+        if (string.starts_with(trimmed, "1. ") == false) {
+            list.append(result_list, "</ol>");
+            return parse_blocks(lines, index, 0, result_list)
+        }
+    }
+
+    // --- Structural Match Processing ---
+    if (string.length(trimmed) == 0) {
+        return parse_blocks(lines, index + 1, 0, result_list)
+    }
+
+    if (string.equals(trimmed, "---")) {
+        list.append(result_list, "<hr />");
+        return parse_blocks(lines, index + 1, 0, result_list)
+    }
+
+    if (string.starts_with(trimmed, "### ")) {
+        let content = string.substring(trimmed, 4, string.length(trimmed));
+        list.append(result_list, string.concat("<h3>", string.concat(parse_inline(content, 0, ""), "</h3>")));
+        return parse_blocks(lines, index + 1, 0, result_list)
+    }
+    if (string.starts_with(trimmed, "## ")) {
+        let content = string.substring(trimmed, 3, string.length(trimmed));
+        list.append(result_list, string.concat("<h2>", string.concat(parse_inline(content, 0, ""), "</h2>")));
+        return parse_blocks(lines, index + 1, 0, result_list)
+    }
+    if (string.starts_with(trimmed, "# ")) {
+        let content = string.substring(trimmed, 2, string.length(trimmed));
+        list.append(result_list, string.concat("<h1>", string.concat(parse_inline(content, 0, ""), "</h1>")));
+        return parse_blocks(lines, index + 1, 0, result_list)
+    }
+
+    if (string.starts_with(trimmed, "> ")) {
+        let content = string.substring(trimmed, 2, string.length(trimmed));
+        list.append(result_list, string.concat("<blockquote>", string.concat(parse_inline(content, 0, ""), "</blockquote>")));
+        return parse_blocks(lines, index + 1, 0, result_list)
+    }
+
+    if (string.starts_with(trimmed, "* ")) {
+        let content = string.substring(trimmed, 2, string.length(trimmed));
+        let item = string.concat("<li>", string.concat(parse_inline(content, 0, ""), "</li>"));
+        if (state == 0) {
+            list.append(result_list, "<ul>")
+        }
+        list.append(result_list, item);
+        return parse_blocks(lines, index + 1, 2, result_list)
+    }
+
+    if (string.starts_with(trimmed, "1. ")) {
+        let content = string.substring(trimmed, 3, string.length(trimmed));
+        let item = string.concat("<li>", string.concat(parse_inline(content, 0, ""), "</li>"));
+        if (state == 0) {
+            list.append(result_list, "<ol>")
+        }
+        list.append(result_list, item);
+        return parse_blocks(lines, index + 1, 3, result_list)
+    }
+
+    // Default Paragraph Fallback
+    list.append(result_list, string.concat("<p>", string.concat(parse_inline(trimmed, 0, ""), "</p>")));
+    return parse_blocks(lines, index + 1, 0, result_list)
+}
+
+// Top-level function for array iteration to completely avoid nested declarations
+fn print_results(elements, current_idx) {
+    if (current_idx >= list.len(elements)) {
+        return 0
+    }
+    print(list.get(elements, current_idx));
+    return print_results(elements, current_idx + 1)
+}
+
+// ============================================================================
+// 4. MAIN ENTRY POINT
+// ============================================================================
+
+fn main() {
+    let markdown_document = list.new();
+    
+    list.append(markdown_document, "# Heading 1 with **Bold**");
+    list.append(markdown_document, "## Heading 2 with *Italic*");
+    list.append(markdown_document, "### Heading 3 with `inline code`");
+    list.append(markdown_document, "---");
+    list.append(markdown_document, "This is a paragraph featuring a [Link Component](https://example.com) and an image element: ![Alt Text](logo.png).");
+    list.append(markdown_document, "> A blockquote block element displaying structural content.");
+    list.append(markdown_document, "* Unordered list line one");
+    list.append(markdown_document, "* Unordered list line two");
+    list.append(markdown_document, "1. Ordered list item one");
+    list.append(markdown_document, "1. Ordered list item two");
+    list.append(markdown_document, "```");
+    list.append(markdown_document, "fn test_code() {");
+    list.append(markdown_document, "    if (x < 5) { print(x) }");
+    list.append(markdown_document, "}");
+    list.append(markdown_document, "```");
+
+    let html_results = list.new();
+    parse_blocks(markdown_document, 0, 0, html_results);
+
+    print("--- Generated Complete Static HTML Execution Output ---");
+    print_results(html_results, 0);
+    return 0
+}

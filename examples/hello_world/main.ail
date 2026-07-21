@@ -1,0 +1,4 @@
+// Hello World - Basic program structure
+fn main() {
+    print("Hello, World!")
+}

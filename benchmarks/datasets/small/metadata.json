@@ -1,0 +1,14 @@
+{
+  "name": "small",
+  "description": "Calculator app - simple arithmetic expressions",
+  "language": "ailang",
+  "loc": 13,
+  "file_count": 1,
+  "module_count": 1,
+  "symbol_count": 6,
+  "function_count": 6,
+  "variable_count": 0,
+  "doc_size_bytes": 372,
+  "dependency_count": 0,
+  "path": "apps/calculator"
+}

@@ -1,0 +1,253 @@
+import list;
+import map;
+import json;
+import file;
+import csv;
+import string;
+import time;
+
+// Task management functions
+
+fn create_task(id, title, priority, category, due_date, notes) {
+    let task = map.new();
+    map.set(task, "id", id);
+    map.set(task, "title", title);
+    map.set(task, "priority", priority);
+    map.set(task, "category", category);
+    map.set(task, "due_date", due_date);
+    map.set(task, "notes", notes);
+    map.set(task, "completed", false);
+    return task
+}
+
+fn add_task(tasks, id, title, priority, category, due_date, notes) {
+    let task = create_task(id, title, priority, category, due_date, notes);
+    list.append(tasks, task);
+    return tasks
+}
+
+fn find_task_index_helper(tasks, i, id) {
+    if (i >= list.len(tasks)) { return -1 }
+    let task = list.get(tasks, i);
+    if (map.get(task, "id") == id) { return i }
+    return find_task_index_helper(tasks, i + 1, id)
+}
+
+fn find_task_index(tasks, id) {
+    return find_task_index_helper(tasks, 0, id)
+}
+
+fn edit_task(tasks, id, title, priority, category, due_date, notes) {
+    let idx = find_task_index(tasks, id);
+    if (idx == -1) { return tasks }
+    let task = list.get(tasks, idx);
+    if (title != "") { map.set(task, "title", title) }
+    if (priority != "") { map.set(task, "priority", priority) }
+    if (category != "") { map.set(task, "category", category) }
+    if (due_date != "") { map.set(task, "due_date", due_date) }
+    if (notes != "") { map.set(task, "notes", notes) }
+    return tasks
+}
+
+fn delete_task(tasks, id) {
+    let idx = find_task_index(tasks, id);
+    if (idx == -1) { return tasks }
+    let task = list.get(tasks, idx);
+    list.remove(tasks, task);
+    return tasks
+}
+
+fn complete_task(tasks, id) {
+    let idx = find_task_index(tasks, id);
+    if (idx == -1) { return tasks }
+    let task = list.get(tasks, idx);
+    map.set(task, "completed", true);
+    return tasks
+}
+
+fn pending_task(tasks, id) {
+    let idx = find_task_index(tasks, id);
+    if (idx == -1) { return tasks }
+    let task = list.get(tasks, idx);
+    map.set(task, "completed", false);
+    return tasks
+}
+
+fn search_tasks_helper_recursive(tasks, i, query, results) {
+    if (i >= list.len(tasks)) { return results }
+    let task = list.get(tasks, i);
+    let title = map.get(task, "title");
+    let notes = map.get(task, "notes");
+    let category = map.get(task, "category");
+    if (string.contains(title, query) || string.contains(notes, query) || string.contains(category, query)) {
+        list.append(results, task)
+    }
+    return search_tasks_helper_recursive(tasks, i + 1, query, results)
+}
+
+fn search_tasks(tasks, query) {
+    let results = list.new();
+    return search_tasks_helper_recursive(tasks, 0, query, results)
+}
+
+fn count_by_status_helper(tasks, i, completed) {
+    if (i >= list.len(tasks)) { return 0 }
+    let task = list.get(tasks, i);
+    if (map.get(task, "completed") == completed) {
+        return 1 + count_by_status_helper(tasks, i + 1, completed)
+    }
+    return count_by_status_helper(tasks, i + 1, completed)
+}
+
+fn count_by_status(tasks, completed) {
+    return count_by_status_helper(tasks, 0, completed)
+}
+
+fn count_by_priority_helper(tasks, i, priority) {
+    if (i >= list.len(tasks)) { return 0 }
+    let task = list.get(tasks, i);
+    if (map.get(task, "priority") == priority) {
+        return 1 + count_by_priority_helper(tasks, i + 1, priority)
+    }
+    return count_by_priority_helper(tasks, i + 1, priority)
+}
+
+fn count_by_priority(tasks, priority) {
+    return count_by_priority_helper(tasks, 0, priority)
+}
+
+fn count_by_category_helper(tasks, i, category) {
+    if (i >= list.len(tasks)) { return 0 }
+    let task = list.get(tasks, i);
+    if (map.get(task, "category") == category) {
+        return 1 + count_by_category_helper(tasks, i + 1, category)
+    }
+    return count_by_category_helper(tasks, i + 1, category)
+}
+
+fn count_by_category(tasks, category) {
+    return count_by_category_helper(tasks, 0, category)
+}
+
+fn print_task_helper(tasks, i) {
+    if (i >= list.len(tasks)) { return true }
+    let task = list.get(tasks, i);
+    let status = "Pending";
+    if (map.get(task, "completed")) { status = "Completed" }
+    print("ID:", map.get(task, "id"), "Title:", map.get(task, "title"));
+    print("  Priority:", map.get(task, "priority"));
+    print("  Category:", map.get(task, "category"));
+    print("  Due:", map.get(task, "due_date"));
+    print("  Notes:", map.get(task, "notes"));
+    print("  Status:", status);
+    print("---");
+    print_task_helper(tasks, i + 1)
+}
+
+fn print_tasks(tasks) {
+    print_task_helper(tasks, 0)
+}
+
+fn save_to_json(tasks, filename) {
+    let content = json.stringify(tasks);
+    return file.write(filename, content)
+}
+
+fn load_from_json(filename) {
+    if (!file.exists(filename)) { return list.new() }
+    let content = file.read(filename);
+    let data = json.parse(content);
+    return data
+}
+
+fn build_csv_rows(tasks, i, csv_data) {
+    if (i >= list.len(tasks)) { return csv_data }
+    let task = list.get(tasks, i);
+    let row = list.new();
+    list.append(row, map.get(task, "id"));
+    list.append(row, map.get(task, "title"));
+    list.append(row, map.get(task, "priority"));
+    list.append(row, map.get(task, "category"));
+    list.append(row, map.get(task, "due_date"));
+    list.append(row, map.get(task, "notes"));
+    list.append(row, map.get(task, "completed"));
+    list.append(csv_data, row);
+    return build_csv_rows(tasks, i + 1, csv_data)
+}
+
+fn export_to_csv(tasks, filename) {
+    let csv_data = list.new();
+    csv_data = build_csv_rows(tasks, 0, csv_data);
+    return csv.stringify(csv_data)
+}
+
+fn print_statistics(tasks) {
+    print("=== Task Statistics ===");
+    print("Total tasks:", list.len(tasks));
+    print("Completed tasks:", count_by_status(tasks, true));
+    print("Pending tasks:", count_by_status(tasks, false));
+    print("High priority:", count_by_priority(tasks, "High"));
+    print("Medium priority:", count_by_priority(tasks, "Medium"));
+    print("Low priority:", count_by_priority(tasks, "Low"))
+}
+
+fn main() {
+    print("=== Personal Task Manager ===");
+    
+    let tasks = list.new();
+    
+    // Add tasks
+    print("Adding tasks...");
+    tasks = add_task(tasks, 1, "Complete project report", "High", "Work", "2024-12-31", "Write the Q4 report");
+    tasks = add_task(tasks, 2, "Buy groceries", "Medium", "Personal", "2024-12-25", "Milk, eggs, bread");
+    tasks = add_task(tasks, 3, "Schedule dentist appointment", "Low", "Health", "2025-01-15", "Annual checkup");
+    tasks = add_task(tasks, 4, "Review code", "High", "Work", "2024-12-20", "Review PR #123");
+    tasks = add_task(tasks, 5, "Call mom", "Medium", "Personal", "2024-12-22", "Weekly call");
+    
+    print("All tasks:");
+    print_tasks(tasks);
+    
+    // Edit task
+    print("Editing task 2...");
+    tasks = edit_task(tasks, 2, "Buy groceries and cook dinner", "High", "", "", "");
+    
+    // Complete task
+    print("Completing task 2...");
+    tasks = complete_task(tasks, 2);
+    
+    // Pending task
+    print("Setting task 1 back to pending...");
+    tasks = pending_task(tasks, 1);
+    
+    // Search tasks
+    print("Searching for Work...");
+    let work_tasks = search_tasks(tasks, "Work");
+    print("Found", list.len(work_tasks), "tasks");
+    
+    // Statistics
+    print_statistics(tasks);
+    
+    // Save to JSON
+    print("Saving to JSON...");
+    save_to_json(tasks, "tasks.json");
+    print("Saved to tasks.json");
+    
+    // Load from JSON
+    print("Loading from JSON...");
+    let loaded = load_from_json("tasks.json");
+    print("Loaded", list.len(loaded), "tasks");
+    
+    // Export to CSV
+    print("Exporting to CSV...");
+    let csv_content = export_to_csv(tasks, "tasks.csv");
+    print("CSV content preview:");
+    print(csv_content);
+    
+    // Delete task
+    print("Deleting task 3...");
+    tasks = delete_task(tasks, 3);
+    
+    print("Final task count:", list.len(tasks));
+    
+    return 0
+}

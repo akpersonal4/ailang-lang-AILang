@@ -1,0 +1,7 @@
+fn testDivZero() {
+    let myX = 10;
+    let myY = 0;
+    let myResult = myX / myY;
+    print("Result = " + myResult);
+}
+fn main() { testDivZero(); }

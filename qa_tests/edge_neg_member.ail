@@ -1,0 +1,6 @@
+import math;
+
+fn main() {
+    print("abs:", math.abs(-42));
+    return 0
+}

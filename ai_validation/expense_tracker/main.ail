@@ -1,0 +1,357 @@
+// main.ail - Personal Expense Tracker
+// A complete expense tracking application using only documented AILang features.
+
+import list;
+import map;
+import math;
+import convert;
+import string;
+import time;
+import file;
+import json;
+import csv;
+
+// ============================================================
+// UTILITIES
+// ============================================================
+
+fn is_empty(s) {
+    return string.length(s) == 0
+}
+
+fn format_currency(amount) {
+    return string.concat("Rs.", convert.to_string(amount))
+}
+
+// ============================================================
+// TRANSACTION OPERATIONS
+// ============================================================
+
+fn make_transaction(trans_type, amount, category, description, timestamp) {
+    let t = map.new();
+    map.set(t, "type", trans_type);
+    map.set(t, "amount", amount);
+    map.set(t, "category", category);
+    map.set(t, "description", description);
+    map.set(t, "timestamp", timestamp);
+    return t
+}
+
+fn add_transaction(transactions, trans_type, amount, category, description) {
+    let t = make_transaction(trans_type, amount, category, description, time.now());
+    list.append(transactions, t);
+    return transactions
+}
+
+// ============================================================
+// CALCULATIONS (recursive, AILang has no loops)
+// ============================================================
+
+fn sum_by_type(transactions, index, trans_type, acc) {
+    if (list.len(transactions) == index) {
+        return acc
+    }
+    let t = list.get(transactions, index);
+    if (string.equals(map.get(t, "type"), trans_type)) {
+        return sum_by_type(transactions, index + 1, trans_type, acc + map.get(t, "amount"))
+    }
+    return sum_by_type(transactions, index + 1, trans_type, acc)
+}
+
+fn total_income(transactions) {
+    return sum_by_type(transactions, 0, "income", 0)
+}
+
+fn total_expense(transactions) {
+    return sum_by_type(transactions, 0, "expense", 0)
+}
+
+fn calculate_balance(transactions) {
+    return total_income(transactions) - total_expense(transactions)
+}
+
+// ============================================================
+// SEARCH (recursive, AILang has no loops)
+// ============================================================
+
+fn filter_by_category(results, transactions, index, category) {
+    if (list.len(transactions) == index) {
+        return results
+    }
+    let t = list.get(transactions, index);
+    if (string.equals(map.get(t, "category"), category)) {
+        list.append(results, t);
+    }
+    return filter_by_category(results, transactions, index + 1, category)
+}
+
+fn search_by_category(transactions, category) {
+    let results = list.new();
+    return filter_by_category(results, transactions, 0, category)
+}
+
+fn filter_by_description(results, transactions, index, keyword) {
+    if (list.len(transactions) == index) {
+        return results
+    }
+    let t = list.get(transactions, index);
+    if (string.contains(map.get(t, "description"), keyword)) {
+        list.append(results, t);
+    }
+    return filter_by_description(results, transactions, index + 1, keyword)
+}
+
+fn search_by_description(transactions, keyword) {
+    let results = list.new();
+    return filter_by_description(results, transactions, 0, keyword)
+}
+
+// ============================================================
+// CATEGORY SUMMARY (recursive, AILang has no loops)
+// ============================================================
+
+fn build_category_summary(summary, transactions, index) {
+    if (list.len(transactions) == index) {
+        return summary
+    }
+    let t = list.get(transactions, index);
+    let cat = map.get(t, "category");
+    let amount = map.get(t, "amount");
+    let trans_type = map.get(t, "type");
+
+    if (string.equals(trans_type, "expense")) {
+        amount = 0 - amount
+    }
+
+    if (map.has(summary, cat)) {
+        map.set(summary, cat, map.get(summary, cat) + amount)
+    } else {
+        map.set(summary, cat, amount)
+    }
+
+    return build_category_summary(summary, transactions, index + 1)
+}
+
+fn category_summary(transactions) {
+    let summary = map.new();
+    return build_category_summary(summary, transactions, 0)
+}
+
+// ============================================================
+// PERSISTENCE: JSON
+// ============================================================
+
+fn data_file_path() {
+    return "expenses.json"
+}
+
+fn save_to_json(transactions) {
+    let json_text = json.stringify(transactions);
+    file.write(data_file_path(), json_text);
+    return 1
+}
+
+fn load_from_json() {
+    if (!file.exists(data_file_path())) {
+        return list.new()
+    }
+    let json_text = file.read(data_file_path());
+    let data = json.parse(json_text);
+    let null_str = json.stringify(json.parse("null"));
+    let data_str = json.stringify(data);
+    if (string.equals(data_str, null_str)) {
+        return list.new()
+    }
+    return data
+}
+
+// ============================================================
+// PERSISTENCE: CSV
+// ============================================================
+
+fn csv_file_path() {
+    return "expenses_report.csv"
+}
+
+fn add_csv_rows(rows, transactions, index) {
+    if (list.len(transactions) == index) {
+        return rows
+    }
+    let t = list.get(transactions, index);
+    let row = list.new();
+    list.append(row, map.get(t, "type"));
+    list.append(row, convert.to_string(map.get(t, "amount")));
+    list.append(row, map.get(t, "category"));
+    list.append(row, map.get(t, "description"));
+    list.append(row, map.get(t, "timestamp"));
+    list.append(rows, row);
+    return add_csv_rows(rows, transactions, index + 1)
+}
+
+fn export_to_csv(transactions) {
+    let rows = list.new();
+    let header = list.new();
+    list.append(header, "Type");
+    list.append(header, "Amount");
+    list.append(header, "Category");
+    list.append(header, "Description");
+    list.append(header, "Timestamp");
+    list.append(rows, header);
+    add_csv_rows(rows, transactions, 0);
+    let csv_text = csv.stringify(rows);
+    file.write(csv_file_path(), csv_text);
+    return 1
+}
+
+fn parse_csv_rows(transactions, rows, index) {
+    if (list.len(rows) == index) {
+        return transactions
+    }
+    let row = list.get(rows, index);
+    let t = map.new();
+    map.set(t, "type", list.get(row, 0));
+    map.set(t, "amount", convert.to_int(list.get(row, 1)));
+    map.set(t, "category", list.get(row, 2));
+    map.set(t, "description", list.get(row, 3));
+    map.set(t, "timestamp", list.get(row, 4));
+    list.append(transactions, t);
+    return parse_csv_rows(transactions, rows, index + 1)
+}
+
+fn import_from_csv() {
+    if (!file.exists(csv_file_path())) {
+        return list.new()
+    }
+    let csv_text = file.read(csv_file_path());
+    let rows = csv.parse(csv_text);
+    let transactions = list.new();
+    return parse_csv_rows(transactions, rows, 1)
+}
+
+// ============================================================
+// DISPLAY HELPERS
+// ============================================================
+
+fn print_transaction(t) {
+    let ts = map.get(t, "timestamp");
+    let ty = map.get(t, "type");
+    let ca = map.get(t, "category");
+    let am = format_currency(map.get(t, "amount"));
+    let de = map.get(t, "description");
+    print(ts, ty, ca, am, de);
+    return 0
+}
+
+fn print_transactions_helper(transactions, index) {
+    if (list.len(transactions) == index) {
+        return 0
+    }
+    print_transaction(list.get(transactions, index));
+    return print_transactions_helper(transactions, index + 1)
+}
+
+fn print_transactions(transactions) {
+    return print_transactions_helper(transactions, 0)
+}
+
+fn print_summary_helper(summary, keys, index) {
+    if (list.len(keys) == index) {
+        return 0
+    }
+    let cat = list.get(keys, index);
+    let amount = map.get(summary, cat);
+    print(cat, format_currency(amount));
+    return print_summary_helper(summary, keys, index + 1)
+}
+
+fn print_summary(summary) {
+    let keys = map.keys(summary);
+    return print_summary_helper(summary, keys, 0)
+}
+
+// ============================================================
+// DEMO DATA
+// ============================================================
+
+fn create_demo_data(transactions) {
+    add_transaction(transactions, "income", 50000, "Salary", "Monthly salary");
+    add_transaction(transactions, "expense", 12000, "Rent", "Monthly rent payment");
+    add_transaction(transactions, "expense", 3500, "Food", "Groceries");
+    add_transaction(transactions, "expense", 2000, "Transport", "Fuel");
+    add_transaction(transactions, "income", 8000, "Freelance", "Project payment");
+    add_transaction(transactions, "expense", 1500, "Food", "Dining out");
+    add_transaction(transactions, "expense", 3000, "Utilities", "Electricity bill");
+    add_transaction(transactions, "expense", 2500, "Transport", "Metro pass");
+    return transactions
+}
+
+// ============================================================
+// MAIN
+// ============================================================
+
+fn main() {
+    print("========================================");
+    print("Personal Expense Tracker");
+    print("========================================");
+
+    let transactions = list.new();
+
+    print("Loading data...");
+    let loaded = load_from_json();
+    if (list.len(loaded) > 0) {
+        print("Loaded", convert.to_string(list.len(loaded)), "transactions from JSON.");
+        transactions = loaded
+    } else {
+        print("No existing data found. Creating demo data...");
+        create_demo_data(transactions)
+    }
+
+    print("---");
+    print("All Transactions:");
+    print_transactions(transactions);
+
+    print("---");
+    print("Financial Summary:");
+    print("Total Income:", format_currency(total_income(transactions)));
+    print("Total Expense:", format_currency(total_expense(transactions)));
+    print("Balance:", format_currency(calculate_balance(transactions)));
+
+    print("---");
+    print("Category Summary:");
+    let summary = category_summary(transactions);
+    print_summary(summary);
+
+    print("---");
+    print("Search: Food Category");
+    let food_results = search_by_category(transactions, "Food");
+    print("Found", convert.to_string(list.len(food_results)), "transactions:");
+    print_transactions(food_results);
+
+    print("---");
+    print("Search: Description contains rent");
+    let desc_results = search_by_description(transactions, "rent");
+    print("Found", convert.to_string(list.len(desc_results)), "transactions:");
+    print_transactions(desc_results);
+
+    print("---");
+    print("Saving to JSON...");
+    save_to_json(transactions);
+    print("Saved to", data_file_path());
+
+    print("---");
+    print("Exporting to CSV...");
+    export_to_csv(transactions);
+    print("Exported to", csv_file_path());
+
+    print("---");
+    print("Importing from CSV...");
+    let imported = import_from_csv();
+    print("Imported", convert.to_string(list.len(imported)), "transactions from CSV.");
+
+    print("---");
+    print("========================================");
+    print("Expense Tracker Complete");
+    print("========================================");
+
+    return 0
+}

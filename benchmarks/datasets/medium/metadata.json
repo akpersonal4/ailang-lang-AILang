@@ -1,0 +1,14 @@
+{
+  "name": "medium",
+  "description": "Inventory management app - CRUD operations with stock tracking",
+  "language": "ailang",
+  "loc": 1099,
+  "file_count": 1,
+  "module_count": 1,
+  "symbol_count": 309,
+  "function_count": 75,
+  "variable_count": 234,
+  "doc_size_bytes": 38368,
+  "dependency_count": 9,
+  "path": "apps/inventory_mgmt"
+}

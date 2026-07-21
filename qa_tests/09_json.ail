@@ -1,0 +1,14 @@
+import json;
+import string;
+
+fn main() {
+    let data = json.parse("{\"a\": 1, \"b\": \"hello\"}");
+    print("parsed:", data);
+    let sv = json.stringify(data);
+    print("stringified:", sv);
+    let arr = json.parse("[1, 2, 3]");
+    print("array:", arr);
+    let sv2 = json.stringify(arr);
+    print("arr stringified:", sv2);
+    return 0
+}

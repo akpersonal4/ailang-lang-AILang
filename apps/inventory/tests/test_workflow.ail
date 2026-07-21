@@ -1,0 +1,161 @@
+import list;
+import map;
+import string;
+import convert;
+import helpers;
+import storage;
+import workflow;
+
+fn test_wf_create_and_get() {
+    let twfWf = workflow.workflow_create("WF-TEST-ORDER-1", "sales", 1000);
+    if (twfWf == false) {
+        print("FAIL: workflow_create returned false");
+        return false;
+    }
+    let twfId = helpers.helpers_get_map_value_safe(twfWf, "id", "");
+    if (twfId == "") {
+        print("FAIL: workflow has no id");
+        return false;
+    }
+    let twfFetched = workflow.workflow_get_by_id(twfId);
+    if (twfFetched == false) {
+        print("FAIL: could not fetch workflow by id");
+        return false;
+    }
+    let twfStage = helpers.helpers_get_map_value_safe(twfFetched, "stage", "");
+    if (twfStage != "pending") {
+        print("FAIL: expected stage pending, got " + twfStage);
+        return false;
+    }
+    print("PASS: workflow_create and get_by_id");
+    return true;
+}
+
+fn test_wf_get_by_order() {
+    let twgoWf = workflow.workflow_create("WF-TEST-ORDER-2", "purchase", 2000);
+    let twgoFound = workflow.workflow_get_by_order("WF-TEST-ORDER-2");
+    if (twgoFound == false) {
+        print("FAIL: could not find workflow by order");
+        return false;
+    }
+    print("PASS: workflow_get_by_order");
+    return true;
+}
+
+fn test_wf_approve_manager_auto() {
+    let twamWf = workflow.workflow_create("WF-TEST-ORDER-3", "sales", 3000);
+    let twamId = helpers.helpers_get_map_value_safe(twamWf, "id", "");
+    let twamResult = workflow.workflow_approve_manager(twamId, "manager1");
+    if (twamResult == false) {
+        print("FAIL: approve_manager returned false");
+        return false;
+    }
+    let twamStage = workflow.workflow_get_stage(twamId);
+    if (twamStage != "approved") {
+        print("FAIL: expected auto-approve stage approved, got " + twamStage);
+        return false;
+    }
+    print("PASS: workflow_approve_manager auto-approve");
+    return true;
+}
+
+fn test_wf_approve_manager_pending() {
+    let twampWf = workflow.workflow_create("WF-TEST-ORDER-4", "sales", 10000);
+    let twampId = helpers.helpers_get_map_value_safe(twampWf, "id", "");
+    let twampResult = workflow.workflow_approve_manager(twampId, "manager1");
+    if (twampResult == false) {
+        print("FAIL: approve_manager returned false");
+        return false;
+    }
+    let twampStage = workflow.workflow_get_stage(twampId);
+    if (twampStage != "approved_by_manager") {
+        print("FAIL: expected stage approved_by_manager, got " + twampStage);
+        return false;
+    }
+    let twampDirResult = workflow.workflow_approve_director(twampId, "director1");
+    if (twampDirResult == false) {
+        print("FAIL: approve_director returned false");
+        return false;
+    }
+    let twampDirStage = workflow.workflow_get_stage(twampId);
+    if (twampDirStage != "approved_by_director") {
+        print("FAIL: expected stage approved_by_director, got " + twampDirStage);
+        return false;
+    }
+    print("PASS: workflow_approve_manager and director");
+    return true;
+}
+
+fn test_wf_fulfill_and_close() {
+    let twfcWf = workflow.workflow_create("WF-TEST-ORDER-5", "sales", 500);
+    let twfcId = helpers.helpers_get_map_value_safe(twfcWf, "id", "");
+    workflow.workflow_approve_manager(twfcId, "manager1");
+    let twfcFulfill = workflow.workflow_fulfill(twfcId);
+    if (twfcFulfill == false) {
+        print("FAIL: fulfill returned false");
+        return false;
+    }
+    let twfcStage = workflow.workflow_get_stage(twfcId);
+    if (twfcStage != "fulfilled") {
+        print("FAIL: expected stage fulfilled, got " + twfcStage);
+        return false;
+    }
+    let twfcClose = workflow.workflow_close(twfcId);
+    if (twfcClose == false) {
+        print("FAIL: close returned false");
+        return false;
+    }
+    let twfcClosedStage = workflow.workflow_get_stage(twfcId);
+    if (twfcClosedStage != "closed") {
+        print("FAIL: expected stage closed, got " + twfcClosedStage);
+        return false;
+    }
+    print("PASS: workflow_fulfill and close");
+    return true;
+}
+
+fn test_wf_reject() {
+    let twrWf = workflow.workflow_create("WF-TEST-ORDER-6", "purchase", 15000);
+    let twrId = helpers.helpers_get_map_value_safe(twrWf, "id", "");
+    let twrResult = workflow.workflow_reject(twrId, "Budget exceeded");
+    if (twrResult == false) {
+        print("FAIL: reject returned false");
+        return false;
+    }
+    let twrStage = workflow.workflow_get_stage(twrId);
+    if (twrStage != "rejected") {
+        print("FAIL: expected stage rejected, got " + twrStage);
+        return false;
+    }
+    print("PASS: workflow_reject");
+    return true;
+}
+
+fn main() {
+    let tw1 = test_wf_create_and_get();
+    if (tw1 == false) {
+        return 1;
+    }
+    let tw2 = test_wf_get_by_order();
+    if (tw2 == false) {
+        return 1;
+    }
+    let tw3 = test_wf_approve_manager_auto();
+    if (tw3 == false) {
+        return 1;
+    }
+    let tw4 = test_wf_approve_manager_pending();
+    if (tw4 == false) {
+        return 1;
+    }
+    let tw5 = test_wf_fulfill_and_close();
+    if (tw5 == false) {
+        return 1;
+    }
+    let tw6 = test_wf_reject();
+    if (tw6 == false) {
+        return 1;
+    }
+    print("ALL WORKFLOW TESTS PASSED");
+    return 0;
+}

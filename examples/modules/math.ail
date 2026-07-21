@@ -1,0 +1,4 @@
+// Math module - provides add function
+fn add(a, b) {
+    return a + b
+}

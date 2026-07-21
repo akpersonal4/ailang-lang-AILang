@@ -1,0 +1,9 @@
+import list;
+import list;
+
+fn main() {
+    let l = list.new();
+    list.append(l, 1);
+    print("len:", list.len(l));
+    return 0
+}

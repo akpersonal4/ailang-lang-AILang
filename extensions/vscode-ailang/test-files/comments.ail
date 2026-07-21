@@ -1,0 +1,10 @@
+// This is a single-line comment
+// Another comment
+
+fn main() {
+    // Inline comment before statement
+    let x = 42;  // Inline comment after statement
+    // Comments in blocks
+    return 0
+}
+// Final comment

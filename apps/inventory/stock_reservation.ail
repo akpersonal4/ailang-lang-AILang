@@ -1,0 +1,73 @@
+import list;
+import map;
+import string;
+import convert;
+import helpers;
+import storage;
+import stock_movement;
+
+fn reservation_check_availability(rcaProductId, rcaRequestedQty) {
+    let rcaQoh = stock_movement.movement_get_quantity_on_hand(rcaProductId);
+    return rcaQoh >= rcaRequestedQty;
+}
+
+fn reservation_create(rscOrderId, rscProductId, rscQuantity) {
+    let rscAvailable = reservation_check_availability(rscProductId, rscQuantity);
+    if (rscAvailable == false) {
+        return false;
+    }
+    let rscReservation = map.new();
+    let rscId = helpers.helpers_generate_id("RES-");
+    let rscNow = helpers.helpers_current_timestamp();
+    map.set(rscReservation, "id", rscId);
+    map.set(rscReservation, "order_id", rscOrderId);
+    map.set(rscReservation, "product_id", rscProductId);
+    map.set(rscReservation, "quantity", rscQuantity);
+    map.set(rscReservation, "status", "active");
+    map.set(rscReservation, "created_at", rscNow);
+    map.set(rscReservation, "updated_at", rscNow);
+    storage.storage_add("reservations", rscReservation);
+    return rscReservation;
+}
+
+fn reservation_get_by_id(rgiId) {
+    return storage.storage_get_by_id("reservations", rgiId);
+}
+
+fn reservation_list() {
+    return storage.storage_list("reservations");
+}
+
+fn reservation_list_by_order(rloOrderId) {
+    let rloAll = storage.storage_list("reservations");
+    return list.filter_by_key(rloAll, "order_id", rloOrderId);
+}
+
+fn reservation_fulfill(rsfId) {
+    let rsfReservation = storage.storage_get_by_id("reservations", rsfId);
+    if (rsfReservation == false) {
+        return false;
+    }
+    let rsfChanges = map.new();
+    map.set(rsfChanges, "status", "fulfilled");
+    let rsfNow = helpers.helpers_current_timestamp();
+    map.set(rsfChanges, "updated_at", rsfNow);
+    return storage.storage_update("reservations", rsfId, rsfChanges);
+}
+
+fn reservation_cancel(rccId) {
+    let rccReservation = storage.storage_get_by_id("reservations", rccId);
+    if (rccReservation == false) {
+        return false;
+    }
+    let rccChanges = map.new();
+    map.set(rccChanges, "status", "cancelled");
+    let rccNow = helpers.helpers_current_timestamp();
+    map.set(rccChanges, "updated_at", rccNow);
+    return storage.storage_update("reservations", rccId, rccChanges);
+}
+
+fn reservation_list_by_product(rlpProductId) {
+    let rlpAll = storage.storage_list("reservations");
+    return list.filter_by_key(rlpAll, "product_id", rlpProductId);
+}

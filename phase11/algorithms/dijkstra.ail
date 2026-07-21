@@ -1,0 +1,125 @@
+import environment;
+import convert;
+import list;
+import map;
+
+fn build_graph() {
+    let g = map.new();
+    let a_edges = map.new();
+    map.set(a_edges, "b", 4);
+    map.set(a_edges, "c", 2);
+    map.set(g, "a", a_edges);
+    let b_edges = map.new();
+    map.set(b_edges, "d", 5);
+    map.set(g, "b", b_edges);
+    let c_edges = map.new();
+    map.set(c_edges, "b", 1);
+    map.set(c_edges, "d", 8);
+    map.set(g, "c", c_edges);
+    let d_edges = map.new();
+    map.set(g, "d", d_edges);
+    return g;
+}
+
+fn init_distances(distances, nodes, idx, start) {
+    if (idx >= list.len(nodes)) {
+        return distances;
+    }
+    let node = list.get(nodes, idx);
+    if (node == start) {
+        map.set(distances, node, 0);
+    } else {
+        map.set(distances, node, 999999);
+    }
+    return init_distances(distances, nodes, idx + 1, start);
+}
+
+fn init_unvisited(unvisited, nodes, idx) {
+    if (idx >= list.len(nodes)) {
+        return unvisited;
+    }
+    list.append(unvisited, list.get(nodes, idx));
+    return init_unvisited(unvisited, nodes, idx + 1);
+}
+
+fn find_min_dist_helper(distances, unvisited, idx, best_node, best_dist) {
+    if (idx >= list.len(unvisited)) {
+        return best_node;
+    }
+    let node = list.get(unvisited, idx);
+    let dist = map.get(distances, node);
+    if (dist < best_dist) {
+        return find_min_dist_helper(distances, unvisited, idx + 1, node, dist);
+    }
+    return find_min_dist_helper(distances, unvisited, idx + 1, best_node, best_dist);
+}
+
+fn find_min_dist(distances, unvisited) {
+    if (list.len(unvisited) == 0) {
+        return "";
+    }
+    let first = list.get(unvisited, 0);
+    let first_dist = map.get(distances, first);
+    return find_min_dist_helper(distances, unvisited, 1, first, first_dist);
+}
+
+fn remove_node(unvisited, target, idx, result) {
+    if (idx >= list.len(unvisited)) {
+        return result;
+    }
+    let node = list.get(unvisited, idx);
+    if (node != target) {
+        list.append(result, node);
+    }
+    return remove_node(unvisited, target, idx + 1, result);
+}
+
+fn update_distances(distances, edges, edge_nodes, idx, current_dist) {
+    if (idx >= list.len(edge_nodes)) {
+        return distances;
+    }
+    let neighbor = list.get(edge_nodes, idx);
+    let new_dist = current_dist + map.get(edges, neighbor);
+    if (new_dist < map.get(distances, neighbor)) {
+        map.set(distances, neighbor, new_dist);
+    }
+    return update_distances(distances, edges, edge_nodes, idx + 1, current_dist);
+}
+
+fn step(unvisited, graph, distances, end) {
+    if (list.len(unvisited) == 0) {
+        return map.get(distances, end);
+    }
+    let current = find_min_dist(distances, unvisited);
+    if (current == "") {
+        return map.get(distances, end);
+    }
+    let current_dist = map.get(distances, current);
+    if (current_dist == 999999) {
+        return map.get(distances, end);
+    }
+    let new_unvisited = remove_node(unvisited, current, 0, list.new());
+    let edges = map.get(graph, current);
+    let edge_nodes = map.keys(edges);
+    update_distances(distances, edges, edge_nodes, 0, current_dist);
+    return step(new_unvisited, graph, distances, end);
+}
+
+fn dijkstra(graph, start, end) {
+    let distances = map.new();
+    let nodes = map.keys(graph);
+    init_distances(distances, nodes, 0, start);
+    let unvisited = list.new();
+    init_unvisited(unvisited, nodes, 0);
+    return step(unvisited, graph, distances, end);
+}
+
+fn main() {
+    let args = environment.args();
+    let start = list.get(args, 0);
+    let end = list.get(args, 1);
+    let graph = build_graph();
+    let dist = dijkstra(graph, start, end);
+    print("Shortest distance from " + start + " to " + end + ": " + convert.to_string(dist));
+    return 0;
+}

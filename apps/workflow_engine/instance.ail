@@ -1,0 +1,138 @@
+import storage;
+import map;
+import list;
+import string;
+import time;
+import workflow_def;
+import conditions;
+import history;
+
+fn instance_list_by_workflow(workflowId) {
+    let ilwAll = storage.storage_load("instances");
+    return list.filter_by_key(ilwAll, "workflow_id", workflowId);
+}
+
+fn instance_list_by_user(userId) {
+    let iluAll = storage.storage_load("instances");
+    return list.filter_by_key(iluAll, "created_by", userId);
+}
+
+fn instance_create(workflowId, createdBy, dataJson) {
+    let icDef = workflow_def.workflow_def_find_by_id(workflowId);
+    if (icDef == false) {
+        return false;
+    }
+    let icInitialState = map.get(icDef, "initial_state");
+    let icData = json.parse(dataJson);
+    let icInst = map.new();
+    map.set(icInst, "id", storage.storage_next_id("instances"));
+    map.set(icInst, "workflow_id", workflowId);
+    map.set(icInst, "current_state", icInitialState);
+    map.set(icInst, "data", icData);
+    map.set(icInst, "created_by", createdBy);
+    map.set(icInst, "created_at", time.timestamp());
+    map.set(icInst, "updated_at", time.timestamp());
+    storage.storage_append("instances", icInst);
+    history.history_add(map.get(icInst, "id"), "start", icInitialState, createdBy, "Instance created");
+    return icInst;
+}
+
+fn instance_find_by_id(instanceId) {
+    return storage.storage_find_by_id("instances", instanceId);
+}
+
+fn instance_list_all() {
+    return storage.storage_load("instances");
+}
+
+fn instance_transition(instanceId, action, performedBy, notes) {
+    let itInst = instance_find_by_id(instanceId);
+    if (itInst == false) {
+        let itError = map.new();
+        map.set(itError, "error", "not_found");
+        return itError;
+    }
+    let itDefId = map.get(itInst, "workflow_id");
+    let itCurrentState = map.get(itInst, "current_state");
+    let itTrans = workflow_def.workflow_def_validate_transition(itDefId, itCurrentState, action);
+    if (itTrans == false) {
+        let itError2 = map.new();
+        map.set(itError2, "error", "invalid_transition");
+        return itError2;
+    }
+    let itConditions = map.get(itTrans, "conditions");
+    let itCondResult = conditions.conditions_check(itConditions, itInst);
+    if (itCondResult == false) {
+        let itError3 = map.new();
+        map.set(itError3, "error", "conditions_not_met");
+        return itError3;
+    }
+    let itToState = map.get(itTrans, "to_state");
+    map.set(itInst, "current_state", itToState);
+    map.set(itInst, "updated_at", time.timestamp());
+    storage.storage_update_field("instances", instanceId, "current_state", itToState);
+    storage.storage_update_field("instances", instanceId, "updated_at", time.timestamp());
+    history.history_add(instanceId, itCurrentState, itToState, performedBy, notes);
+    return itInst;
+}
+
+fn instance_set_data(instanceId, key, value) {
+    let isdInst = instance_find_by_id(instanceId);
+    if (isdInst == false) {
+        return false;
+    }
+    let isdData = map.get(isdInst, "data");
+    map.set(isdData, key, value);
+    storage.storage_update_field("instances", instanceId, "data", isdData);
+    return true;
+}
+
+fn instance_cancel(instanceId, performedBy, notes) {
+    let icInst = instance_find_by_id(instanceId);
+    if (icInst == false) {
+        return false;
+    }
+    let icCurrentState = map.get(icInst, "current_state");
+    map.set(icInst, "current_state", "cancelled");
+    map.set(icInst, "updated_at", time.timestamp());
+    storage.storage_update_field("instances", instanceId, "current_state", "cancelled");
+    storage.storage_update_field("instances", instanceId, "updated_at", time.timestamp());
+    history.history_add(instanceId, icCurrentState, "cancelled", performedBy, notes);
+    return true;
+}
+
+fn instance_count_groups_rec(keys, grouped, idx, counts) {
+    if (idx == list.len(keys)) {
+        return counts;
+    }
+    let key = list.get(keys, idx);
+    let group = map.get(grouped, key);
+    map.set(counts, key, list.len(group));
+    return instance_count_groups_rec(keys, grouped, math.add(idx, 1), counts);
+}
+
+fn instance_report_workflow(workflowId) {
+    let irwAll = instance_list_by_workflow(workflowId);
+    let irwGrouped = list.group_by_key(irwAll, "current_state");
+    let irwKeys = map.keys(irwGrouped);
+    return instance_count_groups_rec(irwKeys, irwGrouped, 0, map.new());
+}
+
+fn instance_filter_activity_rec(all, cutoff, idx, acc) {
+    if (idx == list.len(all)) {
+        return acc;
+    }
+    let entry = list.get(all, idx);
+    let ts = map.get(entry, "timestamp");
+    if (ts >= cutoff) {
+        list.append(acc, entry);
+    }
+    return instance_filter_activity_rec(all, cutoff, math.add(idx, 1), acc);
+}
+
+fn instance_report_activity() {
+    let iraAll = storage.storage_load("history");
+    let iraNow = time.timestamp();
+    let iraCutoff = math.sub(iraNow, 604800);
+    return instance_filter_activity_rec(iraAll, iraCutoff, 0, list.new());
+}

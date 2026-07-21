@@ -1,0 +1,11 @@
+// top-level comment
+import string; // import string module
+// another comment
+import math;
+// function comment
+fn greet(name) {
+    // inside function
+    let msg = string.concat("Hello, ", name);
+    return msg; // return the greeting
+}
+// trailing comment

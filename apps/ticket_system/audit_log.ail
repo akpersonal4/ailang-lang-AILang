@@ -1,0 +1,29 @@
+import storage;
+import json;
+import time;
+import list;
+import map;
+import convert;
+
+fn audit_log_add(alTicketId, alUserId, alAction, alOldValue, alNewValue) {
+    let alEntry = map.new();
+    let alNewId = storage.storage_next_id("audit_log");
+    map.set(alEntry, "id", alNewId);
+    map.set(alEntry, "ticket_id", alTicketId);
+    map.set(alEntry, "user_id", alUserId);
+    map.set(alEntry, "action", alAction);
+    map.set(alEntry, "old_value", alOldValue);
+    map.set(alEntry, "new_value", alNewValue);
+    map.set(alEntry, "timestamp", time.timestamp());
+    storage.storage_append("audit_log", alEntry);
+    return alEntry;
+}
+
+fn audit_log_list_by_ticket(alTicketId) {
+    let alLogs = storage.storage_load("audit_log");
+    return list.filter_by_key(alLogs, "ticket_id", alTicketId);
+}
+
+fn audit_log_list_all() {
+    return storage.storage_load("audit_log");
+}

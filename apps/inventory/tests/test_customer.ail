@@ -1,0 +1,97 @@
+import list;
+import map;
+import string;
+import convert;
+import helpers;
+import storage;
+import customer;
+
+fn test_customer_create() {
+    let tccResult = customer.customer_create("Test Customer", "test@customer.com", "555-1000");
+    if (tccResult == false) {
+        print("FAIL: customer_create returned false");
+        return false;
+    }
+    let tccId = helpers.helpers_get_map_value_safe(tccResult, "id", "");
+    if (tccId == "") {
+        print("FAIL: customer_create - no id");
+        return false;
+    }
+    let tccName = helpers.helpers_get_map_value_safe(tccResult, "name", "");
+    if (tccName != "Test Customer") {
+        print("FAIL: customer_create - name mismatch");
+        return false;
+    }
+    let tccEmail = helpers.helpers_get_map_value_safe(tccResult, "email", "");
+    if (tccEmail != "test@customer.com") {
+        print("FAIL: customer_create - email mismatch");
+        return false;
+    }
+    let tccPhone = helpers.helpers_get_map_value_safe(tccResult, "phone", "");
+    if (tccPhone != "555-1000") {
+        print("FAIL: customer_create - phone mismatch");
+        return false;
+    }
+    print("PASS: customer_create");
+    return true;
+}
+
+fn test_customer_get_by_id_missing() {
+    let tcgmResult = customer.customer_get("NONEXISTENT-CUSTOMER-ID");
+    if (tcgmResult != false) {
+        print("FAIL: customer_get_by_id_missing - expected false");
+        return false;
+    }
+    print("PASS: customer_get_by_id_missing");
+    return true;
+}
+
+fn test_customer_get_by_id() {
+    let tcgCreated = customer.customer_create("GetTest Customer", "gettest@example.com", "555-2000");
+    let tcgId = helpers.helpers_get_map_value_safe(tcgCreated, "id", "");
+    let tcgFound = customer.customer_get(tcgId);
+    if (tcgFound == false) {
+        print("FAIL: customer_get_by_id returned false for existing customer");
+        return false;
+    }
+    let tcgName = helpers.helpers_get_map_value_safe(tcgFound, "name", "");
+    if (tcgName != "GetTest Customer") {
+        print("FAIL: customer_get_by_id - name mismatch");
+        return false;
+    }
+    print("PASS: customer_get_by_id");
+    return true;
+}
+
+fn test_customer_list() {
+    customer.customer_create("ListTest C1", "c1@test.com", "555-3001");
+    customer.customer_create("ListTest C2", "c2@test.com", "555-3002");
+    let tclAll = customer.customer_list();
+    if (list.len(tclAll) == 0) {
+        print("FAIL: customer_list returned empty list");
+        return false;
+    }
+    print("PASS: customer_list (" + convert.to_string(list.len(tclAll)) + " items)");
+    return true;
+}
+
+fn main() {
+    let tcr1 = test_customer_create();
+    if (tcr1 == false) {
+        return 1;
+    }
+    let tcr2 = test_customer_get_by_id_missing();
+    if (tcr2 == false) {
+        return 1;
+    }
+    let tcr3 = test_customer_get_by_id();
+    if (tcr3 == false) {
+        return 1;
+    }
+    let tcr4 = test_customer_list();
+    if (tcr4 == false) {
+        return 1;
+    }
+    print("ALL CUSTOMER TESTS PASSED");
+    return 0;
+}

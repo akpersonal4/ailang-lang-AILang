@@ -1,0 +1,27 @@
+import storage;
+import file;
+import json;
+import path;
+import list;
+import map;
+import string;
+import helpers;
+import product;
+
+// Ensure data dir
+let dataDir = "data";
+if (file.exists(dataDir) == false) {
+    file.mkdir(dataDir);
+}
+
+// Create product
+let pid1 = product.product_create("Widget", 100, 50);
+print("Created: " + pid1);
+
+// Search for product
+let allProds = storage.storage_list("products");
+let results = list.new();
+let found = product.product_search("Widget", allProds, 0, results);
+if (list.len(found) > 0) {
+    print("Found: " + list.len(found));
+}

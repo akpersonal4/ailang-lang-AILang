@@ -1,0 +1,7 @@
+import search;
+
+fn benchmark_search() {
+    // Search for a common term (e.g., "Test")
+    search.search_all("Test");
+    return true;
+}

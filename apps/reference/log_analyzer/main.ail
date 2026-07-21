@@ -1,0 +1,137 @@
+import list;
+import map;
+import file;
+import string;
+import io;
+import convert;
+
+fn create_log_entry(lev, msg) {
+    let entry_map = map.new();
+    map.set(entry_map, "level", lev);
+    map.set(entry_map, "message", msg);
+    entry_map;
+}
+
+fn parse_log_line(line_src) {
+    let toks = string.split(line_src, " ");
+    let lvl = list.get(toks, 2);
+    let dt = list.get(toks, 0);
+    let tm = list.get(toks, 1);
+    let pfx = convert.to_int(string.length(dt) + string.length(tm) + string.length(lvl) + 3);
+    let msg_out = string.substring(line_src, pfx, string.length(line_src));
+    create_log_entry(lvl, msg_out);
+}
+
+fn parse_lines_helper(lines_src, seq_parse, acc_parse) {
+    if (seq_parse >= list.len(lines_src)) {
+        return acc_parse;
+    }
+    let one_line = list.get(lines_src, seq_parse);
+    if (string.length(one_line) == 0) {
+        return parse_lines_helper(lines_src, seq_parse + 1, acc_parse);
+    }
+    let new_entry = parse_log_line(one_line);
+    list.append(acc_parse, new_entry);
+    parse_lines_helper(lines_src, seq_parse + 1, acc_parse);
+}
+
+fn parse_lines(all_lines) {
+    parse_lines_helper(all_lines, 0, list.new());
+}
+
+fn count_errors_helper(entries_err, idx_err) {
+    if (idx_err >= list.len(entries_err)) {
+        return 0;
+    }
+    let item_err = list.get(entries_err, idx_err);
+    let lvl_err = map.get(item_err, "level");
+    if (lvl_err == "ERROR") {
+        return 1 + count_errors_helper(entries_err, idx_err + 1);
+    }
+    count_errors_helper(entries_err, idx_err + 1);
+}
+
+fn count_errors(entries_err_count) {
+    count_errors_helper(entries_err_count, 0);
+}
+
+fn count_warnings_helper(entries_wrn, idx_wrn) {
+    if (idx_wrn >= list.len(entries_wrn)) {
+        return 0;
+    }
+    let item_wrn = list.get(entries_wrn, idx_wrn);
+    let lvl_wrn = map.get(item_wrn, "level");
+    if (lvl_wrn == "WARN") {
+        return 1 + count_warnings_helper(entries_wrn, idx_wrn + 1);
+    }
+    count_warnings_helper(entries_wrn, idx_wrn + 1);
+}
+
+fn count_warnings(entries_wrn_count) {
+    count_warnings_helper(entries_wrn_count, 0);
+}
+
+fn display_entries_helper(entries_dsp, seq_dsp) {
+    if (seq_dsp >= list.len(entries_dsp)) {
+        return 0;
+    }
+    let dsp_entry = list.get(entries_dsp, seq_dsp);
+    let dsp_lvl = map.get(dsp_entry, "level");
+    let dsp_msg = map.get(dsp_entry, "message");
+    io.writeln("  [" + dsp_lvl + "] " + dsp_msg);
+    display_entries_helper(entries_dsp, seq_dsp + 1);
+}
+
+fn display_entries(entries_dsp_all) {
+    display_entries_helper(entries_dsp_all, 0);
+}
+
+fn generate_report_helper(entries_rpt, rmap_rpt, seq_rpt) {
+    if (seq_rpt >= list.len(entries_rpt)) {
+        return rmap_rpt;
+    }
+    let cur_rpt = list.get(entries_rpt, seq_rpt);
+    let cur_lvl = map.get(cur_rpt, "level");
+    let prev_cnt = map.get(rmap_rpt, cur_lvl);
+    map.set(rmap_rpt, cur_lvl, prev_cnt + 1);
+    generate_report_helper(entries_rpt, rmap_rpt, seq_rpt + 1);
+}
+
+fn generate_report(entries_rpt_report) {
+    let rmap_init = map.new();
+    map.set(rmap_init, "INFO", 0);
+    map.set(rmap_init, "DEBUG", 0);
+    map.set(rmap_init, "WARN", 0);
+    map.set(rmap_init, "ERROR", 0);
+    generate_report_helper(entries_rpt_report, rmap_init, 0);
+}
+
+fn display_report_helper(keys_lst, rmap_dsp, seq_dsp_rpt) {
+    if (seq_dsp_rpt >= list.len(keys_lst)) {
+        return 0;
+    }
+    let k_name = list.get(keys_lst, seq_dsp_rpt);
+    let k_val = map.get(rmap_dsp, k_name);
+    io.writeln("  " + k_name + ": " + convert.to_string(k_val));
+    display_report_helper(keys_lst, rmap_dsp, seq_dsp_rpt + 1);
+}
+
+fn analyze_log(log_filename) {
+    let raw_content = file.read(log_filename);
+    let raw_lines = string.split(raw_content, "\n");
+    let parsed_entries = parse_lines(raw_lines);
+    io.writeln("=== Log Analyzer ===");
+    io.writeln("Loaded " + convert.to_string(list.len(parsed_entries)) + " log entries");
+    let error_count = count_errors(parsed_entries);
+    let warning_count = count_warnings(parsed_entries);
+    io.writeln("Errors: " + convert.to_string(error_count));
+    io.writeln("Warnings: " + convert.to_string(warning_count));
+    io.writeln("Report:");
+    let final_report = generate_report(parsed_entries);
+    let report_keys = map.keys(final_report);
+    display_report_helper(report_keys, final_report, 0);
+}
+
+fn main() {
+    analyze_log("sample_input/sample.log");
+}

@@ -1,0 +1,46 @@
+import storage;
+import helpers;
+import list;
+import map;
+import string;
+import convert;
+
+fn notification_check_low_stock_rec(nlItems, nlThreshold, nlIdx, nlResult) {
+    if (nlIdx >= list.len(nlItems)) {
+        return nlResult;
+    }
+    let nlItem = list.get(nlItems, nlIdx);
+    if (map.has(nlItem, "quantity_on_hand")) {
+        let nlQty = map.get(nlItem, "quantity_on_hand");
+        if (nlQty < nlThreshold) {
+            list.append(nlResult, nlItem);
+        }
+    }
+    return notification_check_low_stock_rec(nlItems, nlThreshold, nlIdx + 1, nlResult);
+}
+
+fn notification_check_low_stock(nlThreshold) {
+    let nlItems = storage.storage_list("valuations");
+    let nlResult = list.new();
+    return notification_check_low_stock_rec(nlItems, nlThreshold, 0, nlResult);
+}
+
+fn notification_check_out_of_stock_rec(nsItems, nsIdx, nsResult) {
+    if (nsIdx >= list.len(nsItems)) {
+        return nsResult;
+    }
+    let nsItem = list.get(nsItems, nsIdx);
+    if (map.has(nsItem, "quantity_on_hand")) {
+        let nsQty = convert.to_int(map.get(nsItem, "quantity_on_hand"));
+        if (nsQty == 0) {
+            list.append(nsResult, nsItem);
+        }
+    }
+    return notification_check_out_of_stock_rec(nsItems, nsIdx + 1, nsResult);
+}
+
+fn notification_check_out_of_stock() {
+    let nsItems = storage.storage_list("valuations");
+    let nsResult = list.new();
+    return notification_check_out_of_stock_rec(nsItems, 0, nsResult);
+}

@@ -1,0 +1,95 @@
+import file;
+import csv;
+import list;
+import map;
+import string;
+import convert;
+import storage;
+import helpers;
+import validation;
+
+fn import_save_all_rec(isaItems, isaCollectionName, isaIdx) {
+    if (isaIdx >= list.len(isaItems)) {
+        return true;
+    }
+    let isaItem = list.get(isaItems, isaIdx);
+    if (map.has(isaItem, "name")) {
+        let isaName = map.get(isaItem, "name");
+        let isaNameError = validation.validate_required("name", isaName);
+        if (isaNameError != "") {
+            print(isaNameError);
+            return false;
+        }
+    }
+    if (map.has(isaItem, "price")) {
+        let isaPrice = map.get(isaItem, "price");
+        let isaPriceResult = validation.validate_positive_number("price", isaPrice);
+        if (isaPriceResult != "") {
+            print(isaPriceResult);
+            return false;
+        }
+    }
+    if (map.has(isaItem, "email")) {
+        let isaEmail = map.get(isaItem, "email");
+        let isaEmailResult = validation.validate_email("email", isaEmail);
+        if (isaEmailResult != "") {
+            print(isaEmailResult);
+            return false;
+        }
+    }
+    if (map.has(isaItem, "quantity")) {
+        let isaQty = map.get(isaItem, "quantity");
+        let isaQtyResult = validation.validate_positive_number("quantity", isaQty);
+        if (isaQtyResult != "") {
+            print(isaQtyResult);
+            return false;
+        }
+    }
+    let isaId = helpers.helpers_generate_id("IMP-");
+    map.set(isaItem, "id", isaId);
+    map.set(isaItem, "created_at", helpers.helpers_current_timestamp());
+    map.set(isaItem, "imported", "true");
+    storage.storage_add(isaCollectionName, isaItem);
+    return import_save_all_rec(isaItems, isaCollectionName, isaIdx + 1);
+}
+
+fn import_generic(igCollectionName, igFilePath) {
+    if (file.exists(igFilePath) == false) {
+        print("Error: File not found: " + igFilePath);
+        return false;
+    }
+    let igContent = file.read(igFilePath);
+    if (string.length(igContent) == 0) {
+        print("Error: File is empty: " + igFilePath);
+        return false;
+    }
+    let igRows = csv.parse_header(igContent);
+    let igCount = list.len(igRows);
+    if (igCount == 0) {
+        print("No data rows found in " + igFilePath);
+        return true;
+    }
+    let igSaved = import_save_all_rec(igRows, igCollectionName, 0);
+    if (igSaved == false) {
+        print("Import failed: validation errors in " + igFilePath);
+        return false;
+    }
+    print("Imported " + convert.to_string(igCount) + " items into " + igCollectionName);
+    return true;
+}
+
+fn import_products() {
+    return import_generic("products", "imports/products.csv");
+}
+
+fn import_customers() {
+    return import_generic("customers", "imports/customers.csv");
+}
+
+fn import_vendors() {
+    return import_generic("vendors", "imports/vendors.csv");
+}
+
+fn import_movements() {
+    return import_generic("movements", "imports/movements.csv");
+}

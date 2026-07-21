@@ -1,0 +1,92 @@
+import storage;
+import ticket;
+import csv;
+import file;
+import path;
+import time;
+import convert;
+import list;
+import map;
+import string;
+
+fn csv_export_rows_rec(ceTickets, ceRows, ceIdx) {
+    if (ceIdx >= list.len(ceTickets)) {
+        return ceRows;
+    }
+    let ceT = list.get(ceTickets, ceIdx);
+    let ceRow = list.new();
+    list.append(ceRow, convert.to_string(map.get(ceT, "id")));
+    list.append(ceRow, map.get(ceT, "title"));
+    list.append(ceRow, map.get(ceT, "description"));
+    list.append(ceRow, map.get(ceT, "status"));
+    list.append(ceRow, map.get(ceT, "priority"));
+    list.append(ceRow, convert.to_string(map.get(ceT, "creator_id")));
+    list.append(ceRow, convert.to_string(map.get(ceT, "assignee_id")));
+    list.append(ceRow, map.get(ceT, "category"));
+    list.append(ceRow, convert.to_string(map.get(ceT, "created_at")));
+    list.append(ceRow, convert.to_string(map.get(ceT, "updated_at")));
+    list.append(ceRow, convert.to_string(map.get(ceT, "resolved_at")));
+    list.append(ceRows, ceRow);
+    return csv_export_rows_rec(ceTickets, ceRows, ceIdx + 1);
+}
+
+fn csv_export_tickets(ceFilename) {
+    let ceTickets = ticket.ticket_list_all();
+    let ceCount = list.len(ceTickets);
+    if (ceCount == 0) {
+        return false;
+    }
+    let ceRows = list.new();
+    let ceHeader = list.new();
+    list.append(ceHeader, "id");
+    list.append(ceHeader, "title");
+    list.append(ceHeader, "description");
+    list.append(ceHeader, "status");
+    list.append(ceHeader, "priority");
+    list.append(ceHeader, "creator_id");
+    list.append(ceHeader, "assignee_id");
+    list.append(ceHeader, "category");
+    list.append(ceHeader, "created_at");
+    list.append(ceHeader, "updated_at");
+    list.append(ceHeader, "resolved_at");
+    list.append(ceRows, ceHeader);
+    csv_export_rows_rec(ceTickets, ceRows, 0);
+    let ceContent = csv.stringify(ceRows);
+    file.write(ceFilename, ceContent);
+    return true;
+}
+
+fn csv_import_rows_rec(ciRows, ciCount, ciIdx, ciImported) {
+    if (ciIdx >= ciCount) {
+        return ciImported;
+    }
+    let ciRow = list.get(ciRows, ciIdx);
+    let ciTicket = map.new();
+    let ciNewId = storage.storage_next_id("tickets");
+    map.set(ciTicket, "id", ciNewId);
+    map.set(ciTicket, "title", list.get(ciRow, 1));
+    map.set(ciTicket, "description", list.get(ciRow, 2));
+    map.set(ciTicket, "status", list.get(ciRow, 3));
+    map.set(ciTicket, "priority", list.get(ciRow, 4));
+    map.set(ciTicket, "creator_id", convert.to_int(list.get(ciRow, 5)));
+    map.set(ciTicket, "assignee_id", convert.to_int(list.get(ciRow, 6)));
+    map.set(ciTicket, "category", list.get(ciRow, 7));
+    map.set(ciTicket, "created_at", convert.to_int(list.get(ciRow, 8)));
+    map.set(ciTicket, "updated_at", convert.to_int(list.get(ciRow, 9)));
+    map.set(ciTicket, "resolved_at", convert.to_int(list.get(ciRow, 10)));
+    storage.storage_append("tickets", ciTicket);
+    return csv_import_rows_rec(ciRows, ciCount, ciIdx + 1, ciImported + 1);
+}
+
+fn csv_import_tickets(ciFilename) {
+    if (file.exists(ciFilename) == false) {
+        return 0;
+    }
+    let ciContent = file.read(ciFilename);
+    if (string.length(ciContent) == 0) {
+        return 0;
+    }
+    let ciRows = csv.parse(ciContent);
+    let ciCount = list.len(ciRows);
+    return csv_import_rows_rec(ciRows, ciCount, 1, 0);
+}

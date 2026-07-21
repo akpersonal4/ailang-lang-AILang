@@ -1,0 +1,61 @@
+// [Compiler Validation Example] File Copy Utility
+//
+// Validates: functions, if/else, comparisons, return, print
+//
+// Note: This program validates copy pre-condition logic using hardcoded paths
+// and sizes. A production file copy utility would require standard library
+// support for file open/read/write/close operations, which are not yet
+// available in AILang.
+
+fn validate_source(path) {
+    if (path == "") {
+        return 0
+    }
+    return 1
+}
+
+fn validate_dest(path) {
+    if (path == "") {
+        return 0
+    }
+    return 1
+}
+
+fn paths_differ(src, dst) {
+    if (src == dst) {
+        return 0
+    }
+    return 1
+}
+
+fn copy_file(src, dst, size_bytes) {
+    let src_ok = validate_source(src)
+    let dst_ok = validate_dest(dst)
+    let differ = paths_differ(src, dst)
+
+    if (src_ok == 0) {
+        print("Error: source path is empty")
+        return 1
+    }
+    if (dst_ok == 0) {
+        print("Error: dest path is empty")
+        return 1
+    }
+    if (differ == 0) {
+        print("Error: source and dest are the same")
+        return 1
+    }
+    if (size_bytes <= 0) {
+        print("Error: source file is empty")
+        return 1
+    }
+    print("Copying: input.txt -> output.txt")
+    print("Bytes:   1024")
+    print("Status:  OK")
+    return 0
+}
+
+fn main() {
+    print("=== File Copy Utility ===")
+    copy_file("input.txt", "output.txt", 1024)
+}

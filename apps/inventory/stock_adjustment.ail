@@ -1,0 +1,107 @@
+import list;
+import map;
+import string;
+import convert;
+import helpers;
+import storage;
+import stock_movement;
+import stock_valuation;
+
+fn adj_list_by_product_rec(alprItems, alprProductId, alprResults, alprIdx) {
+    if (alprIdx >= list.len(alprItems)) {
+        return alprResults;
+    }
+    let alprItem = list.get(alprItems, alprIdx);
+    let alprProdId = helpers.helpers_get_map_value_safe(alprItem, "product_id", "");
+    if (alprProdId == alprProductId) {
+        list.append(alprResults, alprItem);
+    }
+    return adj_list_by_product_rec(alprItems, alprProductId, alprResults, alprIdx + 1);
+}
+
+fn adj_get_discrepancies_rec(agdrItems, agdrThreshold, agdrResults, agdrIdx) {
+    if (agdrIdx >= list.len(agdrItems)) {
+        return agdrResults;
+    }
+    let agdrItem = list.get(agdrItems, agdrIdx);
+    let agdrDiff = helpers.helpers_get_map_value_safe(agdrItem, "difference", 0);
+    if (agdrDiff < 0) {
+        let agdrAbsDiff = 0 - agdrDiff;
+        if (agdrAbsDiff > agdrThreshold) {
+            list.append(agdrResults, agdrItem);
+        }
+    } else if (agdrDiff > agdrThreshold) {
+        list.append(agdrResults, agdrItem);
+    }
+    return adj_get_discrepancies_rec(agdrItems, agdrThreshold, agdrResults, agdrIdx + 1);
+}
+
+fn adj_summary_rec(asrItems, asrIdx, asrAcc) {
+    if (asrIdx >= list.len(asrItems)) {
+        return asrAcc;
+    }
+    let asrItem = list.get(asrItems, asrIdx);
+    let asrDiff = helpers.helpers_get_map_value_safe(asrItem, "difference", 0);
+    let asrTotal = helpers.helpers_get_map_value_safe(asrAcc, "total_adjustments", 0);
+    map.set(asrAcc, "total_adjustments", asrTotal + 1);
+    if (asrDiff > 0) {
+        let asrPos = helpers.helpers_get_map_value_safe(asrAcc, "total_positive", 0);
+        map.set(asrAcc, "total_positive", asrPos + asrDiff);
+    } else {
+        let asrNeg = helpers.helpers_get_map_value_safe(asrAcc, "total_negative", 0);
+        map.set(asrAcc, "total_negative", asrNeg + asrDiff);
+    }
+    let asrNet = helpers.helpers_get_map_value_safe(asrAcc, "net_change", 0);
+    map.set(asrAcc, "net_change", asrNet + asrDiff);
+    return adj_summary_rec(asrItems, asrIdx + 1, asrAcc);
+}
+
+fn adjustment_create(acProductId, acExpectedQty, acActualQty, acReason, acAdjustedBy) {
+    let acDifference = acActualQty - acExpectedQty;
+    let acAdjustment = map.new();
+    let acId = helpers.helpers_generate_id("ADJ-");
+    let acNow = helpers.helpers_current_timestamp();
+    map.set(acAdjustment, "id", acId);
+    map.set(acAdjustment, "product_id", acProductId);
+    map.set(acAdjustment, "expected_qty", acExpectedQty);
+    map.set(acAdjustment, "actual_qty", acActualQty);
+    map.set(acAdjustment, "difference", acDifference);
+    map.set(acAdjustment, "reason", acReason);
+    map.set(acAdjustment, "adjusted_by", acAdjustedBy);
+    map.set(acAdjustment, "created_at", acNow);
+    if (acDifference != 0) {
+        stock_movement.movement_create(acProductId, "adjustment", acDifference, "adjustment", acId, acReason);
+    }
+    storage.storage_add("adjustments", acAdjustment);
+    return acAdjustment;
+}
+
+fn adjustment_get_by_id(agiId) {
+    return storage.storage_get_by_id("adjustments", agiId);
+}
+
+fn adjustment_list() {
+    return storage.storage_list("adjustments");
+}
+
+fn adjustment_list_by_product(alpProductId) {
+    let alpAll = storage.storage_list("adjustments");
+    let alpResults = list.new();
+    return adj_list_by_product_rec(alpAll, alpProductId, alpResults, 0);
+}
+
+fn adjustment_get_discrepancies(agdThreshold) {
+    let agdAll = storage.storage_list("adjustments");
+    let agdResults = list.new();
+    return adj_get_discrepancies_rec(agdAll, agdThreshold, agdResults, 0);
+}
+
+fn adjustment_summary() {
+    let asAll = storage.storage_list("adjustments");
+    let asAcc = map.new();
+    map.set(asAcc, "total_adjustments", 0);
+    map.set(asAcc, "total_positive", 0);
+    map.set(asAcc, "total_negative", 0);
+    map.set(asAcc, "net_change", 0);
+    return adj_summary_rec(asAll, 0, asAcc);
+}

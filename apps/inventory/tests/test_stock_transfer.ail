@@ -1,0 +1,118 @@
+import list;
+import map;
+import string;
+import convert;
+import helpers;
+import storage;
+import stock_movement;
+import stock_transfer;
+
+fn test_st_get_nonexistent() {
+    let stnResult = stock_transfer.transfer_get("NONEXISTENT-TRF");
+    if (stnResult != false) {
+        print("FAIL: expected false for nonexistent transfer");
+        return false;
+    }
+    print("PASS: transfer_get_nonexistent");
+    return true;
+}
+
+fn test_st_transfer_create_and_get() {
+    let stpProd = map.new();
+    map.set(stpProd, "id", "ST-PROD-1");
+    map.set(stpProd, "name", "Transfer Test Prod");
+    storage.storage_add("products", stpProd);
+    let stpTrf = stock_transfer.transfer_create("ST-PROD-1", "WH-A", "WH-B", 50, "pending");
+    if (stpTrf == false) {
+        print("FAIL: transfer_create returned false");
+        return false;
+    }
+    let stpId = helpers.helpers_get_map_value_safe(stpTrf, "id", "");
+    let stpGot = stock_transfer.transfer_get(stpId);
+    if (stpGot == false) {
+        print("FAIL: transfer_get returned false");
+        return false;
+    }
+    let stpStatus = helpers.helpers_get_map_value_safe(stpGot, "status", "");
+    if (stpStatus != "pending") {
+        print("FAIL: expected status pending, got " + stpStatus);
+        return false;
+    }
+    let stpSource = helpers.helpers_get_map_value_safe(stpGot, "source_location", "");
+    if (stpSource != "WH-A") {
+        print("FAIL: expected source WH-A, got " + stpSource);
+        return false;
+    }
+    let stpDest = helpers.helpers_get_map_value_safe(stpGot, "destination_location", "");
+    if (stpDest != "WH-B") {
+        print("FAIL: expected destination WH-B, got " + stpDest);
+        return false;
+    }
+    print("PASS: transfer_create and transfer_get");
+    return true;
+}
+
+fn test_st_transfer_complete() {
+    let stcProd = map.new();
+    map.set(stcProd, "id", "ST-PROD-2");
+    map.set(stcProd, "name", "Complete Test Prod");
+    storage.storage_add("products", stcProd);
+    let stcTrf = stock_transfer.transfer_create("ST-PROD-2", "WH-A", "WH-C", 25, "pending");
+    let stcId = helpers.helpers_get_map_value_safe(stcTrf, "id", "");
+    let stcCompleted = stock_transfer.transfer_complete(stcId);
+    if (stcCompleted == false) {
+        print("FAIL: transfer_complete returned false");
+        return false;
+    }
+    let stcStatus = helpers.helpers_get_map_value_safe(stcCompleted, "status", "");
+    if (stcStatus != "completed") {
+        print("FAIL: expected status completed, got " + stcStatus);
+        return false;
+    }
+    let stcCompletedAt = helpers.helpers_get_map_value_safe(stcCompleted, "completed_at", "");
+    if (stcCompletedAt == "") {
+        print("FAIL: completed_at should not be empty");
+        return false;
+    }
+    print("PASS: transfer_complete");
+    return true;
+}
+
+fn test_st_transfer_cancel() {
+    let stxProd = map.new();
+    map.set(stxProd, "id", "ST-PROD-3");
+    map.set(stxProd, "name", "Cancel Test Prod");
+    storage.storage_add("products", stxProd);
+    let stxTrf = stock_transfer.transfer_create("ST-PROD-3", "WH-B", "WH-C", 10, "pending");
+    let stxId = helpers.helpers_get_map_value_safe(stxTrf, "id", "");
+    stock_transfer.transfer_cancel(stxId);
+    let stxGot = stock_transfer.transfer_get(stxId);
+    let stxStatus = helpers.helpers_get_map_value_safe(stxGot, "status", "");
+    if (stxStatus != "cancelled") {
+        print("FAIL: expected status cancelled, got " + stxStatus);
+        return false;
+    }
+    print("PASS: transfer_cancel");
+    return true;
+}
+
+fn main() {
+    let st1 = test_st_get_nonexistent();
+    if (st1 == false) {
+        return 1;
+    }
+    let st2 = test_st_transfer_create_and_get();
+    if (st2 == false) {
+        return 1;
+    }
+    let st3 = test_st_transfer_complete();
+    if (st3 == false) {
+        return 1;
+    }
+    let st4 = test_st_transfer_cancel();
+    if (st4 == false) {
+        return 1;
+    }
+    print("ALL STOCK TRANSFER TESTS PASSED");
+    return 0;
+}
