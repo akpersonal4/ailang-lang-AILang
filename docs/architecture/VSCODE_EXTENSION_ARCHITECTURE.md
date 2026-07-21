@@ -1,7 +1,7 @@
 # M83A — VS Code Extension Architecture
 
 **Status:** Implementation Complete (M83A–M83C)
-**Version:** 1.1.0
+**Version:** 1.1.1
 **Date:** 2026-07-20
 **Depends On:** M81 (formatting baseline), M82 (onboarding documentation)
 
@@ -614,7 +614,7 @@ The architecture is complete when:
 
 ---
 
-## Appendix A: Existing LSP Server Capabilities (v1.1.0)
+## Appendix A: Existing LSP Server Capabilities (v1.1.1)
 
 ```json
 {
@@ -641,7 +641,7 @@ The architecture is complete when:
     },
     "serverInfo": {
         "name": "ailang-lsp",
-        "version": "1.1.0"
+        "version": "1.1.1"
     }
 }
 ```

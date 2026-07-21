@@ -3,7 +3,7 @@
 // Validates: functions, variables, arithmetic, if/else, comparisons, return, print
 //
 // Production requirements: user input, unit conversion, historical tracking
-// (requires user input + stdlib math, not yet in AILang)
+// (user input requires runtime support not yet available)
 
 fn bmi(weight_kg, height_m_times_100) {
     // height_m_times_100 = height in cm (avoids float literal in call)

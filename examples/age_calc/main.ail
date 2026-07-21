@@ -2,8 +2,8 @@
 //
 // Validates: functions, variables, arithmetic, if/else, comparisons, return, print
 //
-// Production requirements: current date from system clock (requires stdlib
-// date/time module, not yet in AILang). Current year is hardcoded.
+// Production requirements: current date from system clock.
+// This example hardcodes the current year. Use `import time` for dynamic year lookup.
 
 fn current_year() {
     return 2024

@@ -3,7 +3,7 @@
 // Validates: functions, variables, arithmetic, if/else, comparisons, boolean logic (&&, ||), return, print
 //
 // Production requirements: official identity API or database registration check
-// (requires HTTP client + database drivers + stdlib, not yet in AILang)
+// (HTTP and database require runtime support)
 
 fn is_citizen(has_id) {
     if (has_id == 1) {

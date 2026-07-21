@@ -3,7 +3,6 @@
 // Validates: functions, variables, arithmetic, if/else, comparisons, return, print
 //
 // Production requirements: employee database, payslip generation
-// (requires file I/O + arrays, not yet in AILang)
 
 fn gross_salary(base, hra_pct, da_pct) {
     let hra = base * hra_pct / 100

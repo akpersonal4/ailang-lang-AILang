@@ -1095,6 +1095,31 @@ def cmd_version(args: list[str]) -> int:
 
 _NEW_PROJECT_TEMPLATES: dict[str, str] = {
     "main.ail": """\
+fn main() {
+    print("Hello, AILang!");
+    return 0
+}
+""",
+    "README.md": """\
+# {project_name}
+
+An AILang project.
+
+## Quick start
+
+    ail run main.ail
+
+## Next steps
+
+- Edit `main.ail` to try your own code
+- Run `ail fmt main.ail` to format
+- Run `ail build main.ail` to check for errors
+- Run `ail --help` to see all commands
+""",
+}
+
+_INVENTORY_PROJECT_TEMPLATES: dict[str, str] = {
+    "main.ail": """\
 import file;
 import json;
 import list;
@@ -1126,6 +1151,7 @@ fn main() {
         print("Loaded sample items:");
         show_all(items, 0);
     }
+    return 0
 }
 """,
     "config/app.ail": """\
@@ -1140,27 +1166,9 @@ let debug_mode = false;
 ]
 """,
     "README.md": """\
-# Inventory
+# {project_name}
 
-An AILang project.
-
-## Quick start
-
-    ail run main.ail
-""",
-}
-
-_TEMPLATE_EMPTY_PROJECT: dict[str, str] = {
-    "main.ail": """\
-import io;
-import string;
-
-fn main() {
-    print("Hello from AILang!");
-}
-""",
-    "README.md": """\
-# My AILang Project
+An AILang project with sample data.
 
 ## Quick start
 
@@ -1197,7 +1205,8 @@ def _create_project_dir(project_name: str, templates: dict[str, str]) -> int:
     for rel_path, content in templates.items():
         full = project_path / rel_path
         full.parent.mkdir(parents=True, exist_ok=True)
-        full.write_text(content, encoding="utf-8")
+        formatted = content.replace("{project_name}", project_name)
+        full.write_text(formatted, encoding="utf-8")
         print(f"  Created: {full.name}")
 
     # Generate ail.toml with snake_case package name
@@ -1224,26 +1233,29 @@ def cmd_new(args: list[str]) -> int:
     """Scaffold a new AILang project.
 
     Usage:
-        ail new <project_name>
-        ail new <project_name> --empty      Minimal skeleton (no sample data)
+        ail new <project_name>           Create a hello-world project
+        ail new <project_name> --full    Create a sample app with data files
     """
-    empty_mode = False
+    full_mode = False
     positional: list[str] = []
 
     remaining = list(args)
     while remaining:
         arg = remaining.pop(0)
-        if arg == "--empty":
-            empty_mode = True
+        if arg == "--full":
+            full_mode = True
+        elif arg == "--empty":
+            # Backward compat: --empty now means the same as default
+            pass
         elif arg.startswith("-"):
-            print(f"Usage: {PROG} new [--empty] <project_name>", file=sys.stderr)
+            print(f"Usage: {PROG} new [--full] <project_name>", file=sys.stderr)
             return 1
         else:
             positional.append(arg)
 
     if not positional:
         print("Error: missing project name", file=sys.stderr)
-        print(f"Usage: {PROG} new [--empty] <project_name>", file=sys.stderr)
+        print(f"Usage: {PROG} new [--full] <project_name>", file=sys.stderr)
         return 1
 
     project_name = positional[0]
@@ -1251,7 +1263,7 @@ def cmd_new(args: list[str]) -> int:
         print(f"Error: '{project_name}' is not a valid project name", file=sys.stderr)
         return 1
 
-    templates = _TEMPLATE_EMPTY_PROJECT if empty_mode else _NEW_PROJECT_TEMPLATES
+    templates = _INVENTORY_PROJECT_TEMPLATES if full_mode else _NEW_PROJECT_TEMPLATES
     return _create_project_dir(project_name, templates)
 
 

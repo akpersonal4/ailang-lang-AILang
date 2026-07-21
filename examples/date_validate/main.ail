@@ -3,7 +3,7 @@
 // Validates: functions, variables, arithmetic, if/else, comparisons, return, print
 //
 // Production requirements: regex, calendar parser, localization support
-// (requires datetime module + regex library from stdlib, not yet in AILang)
+// (regex not yet in stdlib)
 
 fn is_leap_year(year) {
     // Leap year if divisible by 4, but not by 100 unless also by 400

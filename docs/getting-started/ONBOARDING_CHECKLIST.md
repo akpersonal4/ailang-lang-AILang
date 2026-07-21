@@ -8,7 +8,7 @@ A step-by-step guide for new developers joining the AILang project.
 
 - [ ] **Install Python 3.11+** — verify with `python --version`
 - [ ] **Install AILang** — `pip install ailang-lang`
-- [ ] **Verify CLI** — `ail version` should print `AILang v1.1.0`
+- [ ] **Verify CLI** — `ail version` should print `AILang v1.1.1`
 - [ ] **Run the environment check** — `ail doctor` (look for score > 0/100)
 - [ ] **Clone the repo** — `git clone https://github.com/akpersonal4/ailang-lang-AILang.git`
 - [ ] **Install dev dependencies** — `pip install -e .` then `pip install pytest black ruff`

@@ -3,7 +3,7 @@
 // Validates: functions, variables, if/else, comparisons, return, print
 //
 // Production requirements: regex, character inspection (isalpha, isdigit, isupper), string length
-// (requires string module + regex library from stdlib, not yet in AILang)
+// (regex not yet in stdlib)
 
 fn check_length(len) {
     if (len >= 8) {

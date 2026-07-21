@@ -4,7 +4,7 @@
 //            nested calls, return, print
 //
 // Production requirements: compound interest math (requires pow/exp from
-// stdlib math module, not yet in AILang). This example validates the
+// the math module). This example validates the
 // pre-condition logic and simple interest approximation instead.
 
 fn monthly_rate(annual_rate_pct) {

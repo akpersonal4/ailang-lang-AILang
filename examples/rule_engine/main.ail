@@ -3,7 +3,7 @@
 // Validates: functions, variables, if/else, comparisons, boolean logic (&&, ||), return, print
 //
 // Production requirements: dynamic rule parsing, JSON schema, database repository
-// (requires JSON parser + database/file I/O + dynamic dispatch, not yet in AILang)
+// (database drivers require runtime support)
 
 fn rule_premium_discount(age, years_member, is_vip) {
     // Rule: Member is eligible for Premium discount if they are a VIP,

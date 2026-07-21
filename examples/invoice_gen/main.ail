@@ -3,7 +3,6 @@
 // Validates: functions, variables, arithmetic, if/else, nested calls, return, print
 //
 // Production requirements: template engine, PDF generation, client database
-// (requires string formatting + file I/O, not yet in AILang)
 
 fn line_amount(qty, unit_price) {
     return qty * unit_price

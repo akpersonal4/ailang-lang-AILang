@@ -148,16 +148,18 @@ import list;
 import map;
 
 fn filter_by_status(items, status) {
-    let result = list.new();
-    let idx = 0;
-    while (idx < list.len(items)) {
-        let item = list.get(items, idx);
-        if (map.get(item, "status") == status) {
-            list.append(result, item);
-        }
-        idx = idx + 1;
+    return filter_recursive(items, status, list.new(), 0)
+}
+
+fn filter_recursive(items, status, result, idx) {
+    if (idx >= list.len(items)) {
+        return result
     }
-    return result;
+    let item = list.get(items, idx);
+    if (map.get(item, "status") == status) {
+        list.append(result, item);
+    }
+    return filter_recursive(items, status, result, idx + 1)
 }
 ```
 
@@ -168,19 +170,21 @@ import list;
 import map;
 
 fn count_by_status(items) {
-    let counts = map.new();
-    let idx = 0;
-    while (idx < list.len(items)) {
-        let item = list.get(items, idx);
-        let status = map.get(item, "status");
-        let current = 0;
-        if (map.has(counts, status)) {
-            current = map.get(counts, status);
-        }
-        map.set(counts, status, current + 1);
-        idx = idx + 1;
+    return count_recursive(items, map.new(), 0)
+}
+
+fn count_recursive(items, counts, idx) {
+    if (idx >= list.len(items)) {
+        return counts
     }
-    return counts;
+    let item = list.get(items, idx);
+    let status = map.get(item, "status");
+    let current = 0;
+    if (map.has(counts, status)) {
+        current = map.get(counts, status);
+    }
+    map.set(counts, status, current + 1);
+    return count_recursive(items, counts, idx + 1)
 }
 ```
 

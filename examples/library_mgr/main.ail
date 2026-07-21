@@ -3,7 +3,7 @@
 // Validates: functions, variables, arithmetic, if/else, comparisons, return, print
 //
 // Production requirements: book catalog (arrays), member database,
-// date arithmetic via stdlib calendar module (not yet in AILang)
+// (uses simple date math with the time module)
 
 fn fine_per_day() {
     return 2

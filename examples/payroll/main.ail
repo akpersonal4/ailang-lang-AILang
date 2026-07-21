@@ -4,7 +4,7 @@
 //            nested calls, return, print
 //
 // Production requirements: employee database, attendance integration,
-// payslip generation (requires file I/O + arrays, not yet in AILang)
+// payslip generation
 
 fn basic_pay(ctc) {
     return ctc * 40 / 100

@@ -1,9 +1,6 @@
 // [Compiler Validation Example] Simple Banking System
 //
 // Validates: functions, variables, if/else, arithmetic, comparisons, return, print
-//
-// Production requirements: persistent storage, user authentication,
-// transaction history (requires arrays/maps + file I/O, not yet in AILang)
 
 fn get_balance(initial) {
     return initial

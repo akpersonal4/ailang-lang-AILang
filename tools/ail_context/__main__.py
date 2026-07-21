@@ -9,7 +9,7 @@ import argparse
 import json
 from pathlib import Path
 
-VERSION = "1.1.0"
+VERSION = "1.1.1"
 
 LANGUAGE_RULES = {
     "no_loops": {

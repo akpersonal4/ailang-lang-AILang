@@ -3,7 +3,6 @@
 // Validates: functions, variables, arithmetic, if/else, comparisons, return, print
 //
 // Production requirements: tokenization, parser stack, float/integer evaluation engine
-// (requires collections/stack + string parsing from stdlib, not yet in AILang)
 
 fn eval_binary(op, left, right) {
     if (op == "+") {

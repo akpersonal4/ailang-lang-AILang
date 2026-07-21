@@ -3,7 +3,7 @@
 // Validates: functions, variables, arithmetic, if/else, comparisons, return, print
 //
 // Production requirements: tax regime selection, deductions input, form filing
-// (requires user input + file I/O, not yet in AILang)
+// (user input requires runtime support)
 
 fn standard_deduction() {
     return 50000

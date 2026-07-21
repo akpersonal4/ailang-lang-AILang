@@ -3,7 +3,6 @@
 // Validates: functions, variables, if/else, arithmetic, comparisons, return, print
 //
 // Production requirements: dynamic student list, file I/O, sorting
-// (requires arrays + stdlib, not yet in AILang)
 
 fn letter_grade(score) {
     if (score >= 90) {

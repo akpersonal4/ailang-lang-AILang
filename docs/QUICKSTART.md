@@ -39,9 +39,7 @@ my_app/
 ├── ail.toml        ← project manifest
 ├── ail.lock        ← dependency lock file
 ├── main.ail        ← your entry point
-├── README.md
-└── data/
-    └── sample.json
+└── README.md
 ```
 
 ---
@@ -55,9 +53,7 @@ ail run main.ail
 Expected output:
 
 ```
-Welcome to inventory!
-
-Get started by editing main.ail
+Hello, AILang!
 ```
 
 ---
@@ -110,7 +106,7 @@ The standard library is bundled. If you see this, ensure you're in the project d
 
 ### "No ail.toml found"
 
-Run `ail new <project_name>` to scaffold, or `ail init` in an existing directory.
+Run `ail new <project_name>` to scaffold a new project.
 
 ### "ail: command not found"
 

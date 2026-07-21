@@ -3,7 +3,7 @@
 // Validates: functions, variables, arithmetic, if/else, comparisons, return, print
 //
 // Production requirements: live exchange rate API, internet access
-// (requires HTTP client + stdlib, not yet in AILang)
+// (HTTP API calls require runtime support)
 
 fn usd_to_inr(amount) {
     return amount * 83

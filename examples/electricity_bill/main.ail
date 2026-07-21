@@ -3,7 +3,6 @@
 // Validates: functions, variables, arithmetic, if/else, comparisons, return, print
 //
 // Production requirements: meter reading history, bill generation, payment tracking
-// (requires file I/O, not yet in AILang)
 
 fn units_consumed(current_reading, previous_reading) {
     return current_reading - previous_reading

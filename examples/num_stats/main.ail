@@ -3,7 +3,6 @@
 // Validates: functions, variables, arithmetic, if/else, comparisons, return, print
 //
 // Production requirements: dynamic arrays/lists, standard math functions, file input
-// (requires dynamic arrays + stdlib math + file I/O, not yet in AILang)
 
 fn get_min(a, b, c) {
     let min = a

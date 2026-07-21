@@ -21,13 +21,13 @@ The pre-built extension package is included in the repository.
 ### Windows
 
 ```bash
-code --install-extension extensions/vscode-ailang/vscode-ailang-0.3.0.vsix
+code --install-extension extensions/vscode-ailang/vscode-ailang-1.1.0.vsix
 ```
 
 ### macOS / Linux
 
 ```bash
-code --install-extension extensions/vscode-ailang/vscode-ailang-0.3.0.vsix
+code --install-extension extensions/vscode-ailang/vscode-ailang-1.1.0.vsix
 ```
 
 ### Manual install
@@ -35,7 +35,7 @@ code --install-extension extensions/vscode-ailang/vscode-ailang-0.3.0.vsix
 1. Open VS Code
 2. Press `Ctrl+Shift+P` (or `Cmd+Shift+P` on macOS)
 3. Type "Extensions: Install from VSIX..."
-4. Navigate to `extensions/vscode-ailang/vscode-ailang-0.3.0.vsix`
+4. Navigate to `extensions/vscode-ailang/vscode-ailang-1.1.0.vsix`
 5. Click "Install"
 
 ---
@@ -46,7 +46,7 @@ code --install-extension extensions/vscode-ailang/vscode-ailang-0.3.0.vsix
 cd extensions/vscode-ailang
 npm install
 vsce package
-code --install-extension vscode-ailang-0.3.0.vsix
+code --install-extension vscode-ailang-1.1.0.vsix
 ```
 
 ---

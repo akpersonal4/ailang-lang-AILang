@@ -3,7 +3,6 @@
 // Validates: functions, variables, arithmetic, if/else, comparisons, return, print
 //
 // Production requirements: database system or file I/O for historical attendance records
-// (requires file I/O + collections, not yet in AILang)
 
 fn attendance_percentage(attended, total) {
     if (total <= 0) {

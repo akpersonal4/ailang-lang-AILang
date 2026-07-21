@@ -4,7 +4,7 @@
 //            nested function calls, return, print
 //
 // Production requirements: dynamic item list (arrays), product catalog,
-// persistent cart (file I/O) -- not yet in AILang
+// persistent cart (file I/O)
 
 fn item_total(qty, price) {
     return qty * price
