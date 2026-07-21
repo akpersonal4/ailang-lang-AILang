@@ -403,14 +403,25 @@ class TypeChecker:
         callee_type = self._infer_expression(node.callee)
         if isinstance(callee_type, FunctionType):
             if len(node.arguments) != len(callee_type.parameter_types):
-                self._report_error(
-                    f"Function call expects "
-                    f"{len(callee_type.parameter_types)} arguments, "
-                    f"got {len(node.arguments)}",
-                    "TYP011",
-                    node.start_span,
-                    node.end_span,
+                # Skip TYP011 if SEM003 (semantic arity check) already reported
+                # the same mismatch.  SEM003 runs before type checking and
+                # fires when param_count is known from the symbol table.
+                sem003_present = (
+                    self.reporter is not None
+                    and any(
+                        d.error_code.code == "SEM003"
+                        for d in self.reporter.diagnostics
+                    )
                 )
+                if not sem003_present:
+                    self._report_error(
+                        f"Function call expects "
+                        f"{len(callee_type.parameter_types)} arguments, "
+                        f"got {len(node.arguments)}",
+                        "TYP011",
+                        node.start_span,
+                        node.end_span,
+                    )
             else:
                 for arg, expected_type in zip(
                     node.arguments, callee_type.parameter_types

@@ -307,8 +307,23 @@ class CompilationSession:
                         sub_path = self._resolver.resolve(tuple(segments))
                         self._discover_recursive(sub_path, module_name, reporter)
                     except Exception:
-                        # Will be reported during semantic analysis
-                        pass
+                        # Module not found — emit MOD003 diagnostic
+                        if reporter is not None:
+                            from compiler.diagnostics import (
+                                MOD003_MODULE_NOT_FOUND,
+                                Diagnostic,
+                                Severity,
+                            )
+
+                            mod_name = ".".join(segments)
+                            reporter.report(
+                                Diagnostic(
+                                    Severity.ERROR,
+                                    MOD003_MODULE_NOT_FOUND,
+                                    f"Module not found: {mod_name}",
+                                    file_path=module_name,
+                                )
+                            )
 
     def _compile_all(self, reporter: DiagnosticReporter | None = None) -> None:
         """Compile all discovered modules in dependency order."""
@@ -404,6 +419,10 @@ class CompilationSession:
         # can resolve the module name, regardless of whether a top-level
         # declaration shares the module name.
         for module_name, ast in self._asts.items():
+            if module_name in self._sources:
+                source = self._sources[module_name]
+                symbol_table.set_source_text(source.text)
+                symbol_table.set_file_path(str(source.path))
             symbol_table.declare_module_namespace(module_name)
             for child in ast.children:
                 self._register_export(symbol_table, child, module_name)

@@ -1,5 +1,21 @@
 # Changelog
 
+## v1.1.1
+
+### M83I — Enterprise Validation Fixes
+
+- **`ail rename` project root detection**: Fixed `ail rename` to detect the user's project root by walking CWD upward for `ail.toml` or `.ail` markers, instead of using the AILang package's stdlib parent. Renaming now correctly scans the user's project files.
+- **Unknown flag handling**: `ail --invalid-flag` now reports `Error: unknown option '--invalid-flag'` with a general usage hint, instead of dispatching to `cmd_run` which showed the run-specific usage.
+- **SEM001 diagnostic location consistency**: Pre-registration of module exports now sets `file_path` and source text on the symbol table, so duplicate declaration errors always include the source file path.
+- **LEX002 cascade suppression**: Unterminated string errors (LEX002) now suppress downstream parser cascade errors (PAR001), reducing diagnostic noise from 7+ errors to 1.
+- **SEM003/TYP011 deduplication**: The type checker now skips TYP011 (arity mismatch) when SEM003 (semantic arity check) already reported the same error, eliminating confusing dual error codes.
+- **Suggested fixes for LEX002 and SEM001**: Added actionable next-step suggestions ("Add a closing quote..." for LEX002, "Rename one of the duplicate declarations..." for SEM001).
+- **MOD003 module-not-found diagnostic**: Import resolution failures now emit MOD003 (Module not found) instead of silently falling through to MOD004 (Symbol not found in module).
+
+### Tests
+
+- 16 new regression tests covering all 7 fixes (test_m83i_fixes.py)
+
 ## v1.1.0
 
 ### M77.1 — Local Package Management MVP

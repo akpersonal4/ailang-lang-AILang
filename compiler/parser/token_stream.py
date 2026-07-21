@@ -1,6 +1,11 @@
 from __future__ import annotations
 
-from compiler.diagnostics import Diagnostic, DiagnosticReporter, ErrorCode, Severity
+from compiler.diagnostics import (
+    Diagnostic,
+    DiagnosticReporter,
+    ErrorCode,
+    Severity,
+)
 from compiler.lexer import Token, TokenKind
 
 
@@ -19,6 +24,17 @@ class TokenStream:
         self.source_path = source_path
         self.experimental_loops = experimental_loops
         self.index = 0
+        # Suppress PAR001 cascade errors after an unterminated string (LEX002).
+        self._suppress_cascade = False
+        if reporter is not None:
+            for d in reporter.diagnostics:
+                if (
+                    d.error_code.code == "LEX002"
+                    and d.severity == Severity.ERROR
+                    and (d.file_path == source_path or source_path is None)
+                ):
+                    self._suppress_cascade = True
+                    break
 
     def current(self) -> Token:
         return self._token_at(self.index)
@@ -60,6 +76,8 @@ class TokenStream:
         return self.tokens[index]
 
     def _report_error(self, message: str, code: str) -> None:
+        if self._suppress_cascade and code == "PAR001":
+            return
         diagnostic = Diagnostic(
             Severity.ERROR,
             ErrorCode(code, message),

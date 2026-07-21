@@ -178,6 +178,23 @@ def _find_stdlib() -> Path:
     return pkg_dir / "stdlib"
 
 
+def _find_project_root(start: Path) -> Path:
+    """Walk upward from *start* to find the AILang project root.
+
+    A project root is identified by the presence of ``ail.toml`` or an
+    ``.ail`` directory.  Falls back to *start* itself when no marker
+    is found.
+    """
+    current = start.resolve()
+    while True:
+        if (current / "ail.toml").is_file() or (current / ".ail").is_dir():
+            return current
+        if current == current.parent:
+            break
+        current = current.parent
+    return start.resolve()
+
+
 def _get_version() -> str:
     return f"AILang v{__version__}"
 
@@ -209,9 +226,6 @@ def _compile(
     if not source_path.exists():
         print(f"Error: File not found: {source_path}", file=sys.stderr)
         return None, DiagnosticReporter()
-
-    stdlib_dir = _find_stdlib()
-    root_dir = stdlib_dir.parent
 
     session = CompilationSession(experimental_loops=experimental_loops)
     if root_override:
@@ -1247,7 +1261,7 @@ def cmd_pkg_install(args: list[str]) -> int:
     Delegates to the package manager tool.
     """
     # Add the project root to PYTHONPATH so tools.* is importable
-    project_root = _find_stdlib().parent
+    project_root = _find_project_root(Path.cwd())
     env = os.environ.copy()
     pythonpath = env.get("PYTHONPATH", "")
     root_str = str(project_root)
@@ -1269,7 +1283,7 @@ def cmd_pkg_add(args: list[str]) -> int:
         ail add <package> --path /loc  Add local dependency
         ail add <package> --git URL    Add git dependency
     """
-    project_root = _find_stdlib().parent
+    project_root = _find_project_root(Path.cwd())
     env = os.environ.copy()
     pythonpath = env.get("PYTHONPATH", "")
     root_str = str(project_root)
@@ -1288,7 +1302,7 @@ def cmd_pkg_remove(args: list[str]) -> int:
     Usage:
         ail remove <package>
     """
-    project_root = _find_stdlib().parent
+    project_root = _find_project_root(Path.cwd())
     env = os.environ.copy()
     pythonpath = env.get("PYTHONPATH", "")
     root_str = str(project_root)
@@ -1308,7 +1322,7 @@ def cmd_pkg_update(args: list[str]) -> int:
         ail update              Update all dependencies
         ail update <package>    Update a specific dependency
     """
-    project_root = _find_stdlib().parent
+    project_root = _find_project_root(Path.cwd())
     env = os.environ.copy()
     pythonpath = env.get("PYTHONPATH", "")
     root_str = str(project_root)
@@ -1329,7 +1343,7 @@ def cmd_pkg_list(args: list[str]) -> int:
         ail list --tree        Show dependency tree
         ail list --outdated    Show outdated packages
     """
-    project_root = _find_stdlib().parent
+    project_root = _find_project_root(Path.cwd())
     env = os.environ.copy()
     pythonpath = env.get("PYTHONPATH", "")
     root_str = str(project_root)
@@ -1721,7 +1735,7 @@ def cmd_rename(args: list[str]) -> int:
         print(f"Error: '{new_name}' is not a valid AILang identifier", file=sys.stderr)
         return 4
 
-    root_dir = _find_stdlib().parent
+    root_dir = _find_project_root(Path.cwd())
     tool = RenameTool(root_dir)
 
     refs = tool.scan(old_name, include_strings=include_strings)
@@ -1835,7 +1849,7 @@ def cmd_watch(args: list[str]) -> int:
 
 def _run_dx_tool(module_name: str, args: list[str]) -> int:
     """Helper to run a DX tool by shelling out to its __main__ module."""
-    project_root = _find_stdlib().parent
+    project_root = _find_project_root(Path.cwd())
     env = os.environ.copy()
     pythonpath = env.get("PYTHONPATH", "")
     root_str = str(project_root)
@@ -2127,6 +2141,13 @@ def main(argv: list[str] | None = None) -> int:
     if command in commands:
         handler = commands[command]
         return handler(rest)
+
+    # Unknown flag – report error instead of treating it as a file
+    if command.startswith("-"):
+        print(f"Error: unknown option '{command}'", file=sys.stderr)
+        print(f"Usage: {PROG} <command> [args]", file=sys.stderr)
+        print(f"Run '{PROG} help' for available commands.", file=sys.stderr)
+        return 1
 
     # Otherwise treat it as a file -> shorthand for `run`
     return cmd_run(argv)

@@ -62,7 +62,10 @@ _NEXT_STEPS: dict[str, str] = {
     "TYP006": "  ail explain TYP006",
     "TYP007": "  ail explain TYP007",
     "TYP008": "  ail explain TYP008\n  ail heal",
+    # Lexical errors
+    "LEX002": '  Add a closing quote (") at the end of the string literal',
     # Semantic errors
+    "SEM001": "  Rename one of the duplicate declarations to a unique name",
     "SEM002": "  ail docs AGENTS.md\n  ail fmt",
     "SEM003": "  ail explain SEM003\n  ail heal",
     "SEM004": "  ail docs STDLIB_REFERENCE.md",
@@ -80,6 +83,8 @@ _ERROR_DESCRIPTIONS: dict[str, str] = {
     "TYP006": "Comparison requires matching types",
     "TYP007": "Logical operator requires bool",
     "TYP008": "Assignment type mismatch",
+    "LEX002": "Unterminated string literal",
+    "SEM001": "Duplicate declaration",
     "SEM002": "Forward reference",
     "SEM003": "Wrong number of arguments",
     "SEM004": "Unknown stdlib function",
