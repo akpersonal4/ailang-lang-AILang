@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import Any
 
-VERSION = "1.1.2"
+VERSION = "1.1.3"
 
 LANGUAGE_RULES = {
     "no_loops": {

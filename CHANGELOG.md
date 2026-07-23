@@ -1,5 +1,25 @@
 # Changelog
 
+## v1.1.3
+
+### M92 — Release Polish & New Developer Tools
+
+- **5 new development tools added**:
+  - `ail_doc_verify`: Documentation verification
+  - `ail_dx_audit`: Developer experience audit
+  - `ail_release_verify`: Release verification
+  - `ail_stdlib_audit`: Standard library audit
+  - `ail_validate`: Validation pipeline runner
+- **Examples remediated**: All 50+ examples verified with consistent formatting and output
+- **Validation pipeline**: New `validation_pipeline.json` for automated quality gates
+- **Documentation cleanup**: Version references synchronized, stale links fixed
+- **AI Developer Guide**: New comprehensive guide for AI-assisted development
+
+### Tests
+
+- Test assertions updated for version 1.1.3
+- All existing tests continue to pass
+
 ## v1.1.2
 
 ### M91 — Release Engineering Recovery

@@ -16,7 +16,7 @@ from .docs_adapter import get_document, list_documents
 from .examples_adapter import get_examples
 from .stdlib_adapter import get_stdlib
 
-VERSION = "1.1.2"
+VERSION = "1.1.3"
 
 TOOLS = [
     {

@@ -10,7 +10,7 @@ until this document has been reviewed. Update AGENTS.md reading order after revi
 
 | Attribute | Value |
 |:----------|:------|
-| **Current Version** | v1.1.2 |
+| **Current Version** | v1.1.3 |
 | **Current Milestone** | M83C — VS Code Extension Release |
 | **Project Phase** | Public Beta |
 
