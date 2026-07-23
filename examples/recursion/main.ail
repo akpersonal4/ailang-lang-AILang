@@ -5,6 +5,7 @@ fn factorial(n) {
     }
     return n * factorial(n - 1);
 }
+
 fn main() {
     return factorial(5);
 }

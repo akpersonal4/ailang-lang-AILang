@@ -1,58 +1,50 @@
 // [Compiler Validation Example] Shopping Cart Calculator
-//
+// 
 // Validates: functions, variables, arithmetic, if/else, comparisons,
-//            nested function calls, return, print
-//
+// nested function calls, return, print
+// 
 // Production requirements: dynamic item list (arrays), product catalog,
 // persistent cart (file I/O)
-
 fn item_total(qty, price) {
-    return qty * price
+    return qty * price;
 }
 
 fn apply_discount(total, discount_pct) {
     if (discount_pct <= 0) {
-        return total
+        return total;
     }
     if (discount_pct > 100) {
-        return 0
+        return 0;
     }
-    return total - (total * discount_pct / 100)
+    return total - total * discount_pct / 100;
 }
 
 fn apply_tax(subtotal, tax_pct) {
-    return subtotal + (subtotal * tax_pct / 100)
+    return subtotal + subtotal * tax_pct / 100;
 }
 
 fn shipping_cost(subtotal, free_shipping_threshold) {
     if (subtotal >= free_shipping_threshold) {
-        return 0
+        return 0;
     }
-    return 50
+    return 50;
 }
 
 fn main() {
-    print("=== Shopping Cart Calculator ===")
-
-    let book_total    = item_total(2, 450)
-    let pen_total     = item_total(5, 30)
-    let bag_total     = item_total(1, 1200)
-
-    print("Books  (2 x 450)  : 900")
-    print("Pens   (5 x  30)  : 150")
-    print("Bag    (1 x 1200) : 1200")
-
-    let subtotal    = book_total + pen_total + bag_total
-    print("Subtotal          : 2250")
-
-    let discounted  = apply_discount(subtotal, 10)
-    print("After 10% discount: 2025")
-
-    let with_tax    = apply_tax(discounted, 18)
-    print("After 18% GST     : 2389.5")
-
-    let ship        = shipping_cost(discounted, 1500)
-    print("Shipping          : 0 (free)")
-
-    print("Order total       : 2389.5")
+    print("=== Shopping Cart Calculator ===");
+    let book_total = item_total(2, 450);
+    let pen_total = item_total(5, 30);
+    let bag_total = item_total(1, 1200);
+    print("Books  (2 x 450)  : 900");
+    print("Pens   (5 x  30)  : 150");
+    print("Bag    (1 x 1200) : 1200");
+    let subtotal = book_total + pen_total + bag_total;
+    print("Subtotal          : 2250");
+    let discounted = apply_discount(subtotal, 10);
+    print("After 10% discount: 2025");
+    let with_tax = apply_tax(discounted, 18);
+    print("After 18% GST     : 2389.5");
+    let ship = shipping_cost(discounted, 1500);
+    print("Shipping          : 0 (free)");
+    print("Order total       : 2389.5");
 }

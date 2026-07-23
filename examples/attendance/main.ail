@@ -1,57 +1,54 @@
 // [Compiler Validation Example] Attendance Calculator
-//
+// 
 // Validates: functions, variables, arithmetic, if/else, comparisons, return, print
-//
+// 
 // Production requirements: database system or file I/O for historical attendance records
-
 fn attendance_percentage(attended, total) {
     if (total <= 0) {
-        return 0
+        return 0;
     }
-    return (attended * 100) / total
+    return attended * 100 / total;
 }
 
 fn minimum_required() {
-    return 75
+    return 75;
 }
 
 fn eligibility_status(percentage) {
-    let required = minimum_required()
+    let required = minimum_required();
     if (percentage >= required) {
-        return "ELIGIBLE"
+        return "ELIGIBLE";
     }
-    return "NOT_ELIGIBLE"
+    return "NOT_ELIGIBLE";
 }
 
 fn shortage_classes(attended, total) {
-    let required = minimum_required()
+    let required = minimum_required();
     // Find classes needed to reach required %:
     // (attended + X) / (total + X) >= required / 100
     // 100 * attended + 100 * X >= required * total + required * X
     // (100 - required) * X >= required * total - 100 * attended
     // X >= (required * total - 100 * attended) / (100 - required)
-    let percentage = attendance_percentage(attended, total)
+    let percentage = attendance_percentage(attended, total);
     if (percentage >= required) {
-        return 0
+        return 0;
     }
-    let numerator = (required * total) - (100 * attended)
-    let denominator = 100 - required
-    return numerator / denominator
+    let numerator = required * total - 100 * attended;
+    let denominator = 100 - required;
+    return numerator / denominator;
 }
 
 fn main() {
-    print("=== Attendance Calculator ===")
-
-    let total = 40
-    let attended = 26
-    let pct = attendance_percentage(attended, total)
-    let status = eligibility_status(pct)
-    let needed = shortage_classes(attended, total)
-
-    print("Total classes       : 40")
-    print("Classes attended    : 26")
-    print("Attendance rate     : 65%")
-    print("Required threshold  : 75%")
-    print("Status              : NOT_ELIGIBLE")
-    print("Needed classes      : 16")
+    print("=== Attendance Calculator ===");
+    let total = 40;
+    let attended = 26;
+    let pct = attendance_percentage(attended, total);
+    let status = eligibility_status(pct);
+    let needed = shortage_classes(attended, total);
+    print("Total classes       : 40");
+    print("Classes attended    : 26");
+    print("Attendance rate     : 65%");
+    print("Required threshold  : 75%");
+    print("Status              : NOT_ELIGIBLE");
+    print("Needed classes      : 16");
 }

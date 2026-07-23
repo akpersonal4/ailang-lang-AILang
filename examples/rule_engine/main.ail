@@ -1,65 +1,62 @@
 // [Compiler Validation Example] Mini Rule Engine
-//
+// 
 // Validates: functions, variables, if/else, comparisons, boolean logic (&&, ||), return, print
-//
+// 
 // Production requirements: dynamic rule parsing, JSON schema, database repository
 // (database drivers require runtime support)
-
 fn rule_premium_discount(age, years_member, is_vip) {
     // Rule: Member is eligible for Premium discount if they are a VIP,
     // OR if they are older than 50 AND have been a member for at least 5 years.
     if (is_vip == 1) {
-        return 1
+        return 1;
     }
     if (age > 50) {
         if (years_member >= 5) {
-            return 1
+            return 1;
         }
     }
-    return 0
+    return 0;
 }
 
 fn rule_free_shipping(order_value, distance_miles, is_vip) {
     // Rule: Free shipping if order value > 100, or if VIP and distance < 50 miles.
     if (order_value > 100) {
-        return 1
+        return 1;
     }
     if (is_vip == 1) {
         if (distance_miles < 50) {
-            return 1
+            return 1;
         }
     }
-    return 0
+    return 0;
 }
 
 fn main() {
-    print("=== Mini Rule Engine ===")
-
-    print("-- User 1: Age 55, Member 6 years, Not VIP. Order: 80, Distance: 10 miles --")
-    let discount1 = rule_premium_discount(55, 6, 0)
-    let shipping1 = rule_free_shipping(80, 10, 0)
+    print("=== Mini Rule Engine ===");
+    print("-- User 1: Age 55, Member 6 years, Not VIP. Order: 80, Distance: 10 miles --");
+    let discount1 = rule_premium_discount(55, 6, 0);
+    let shipping1 = rule_free_shipping(80, 10, 0);
     if (discount1 == 1) {
-        print("Premium Discount: YES")
+        print("Premium Discount: YES");
     } else {
-        print("Premium Discount: NO")
+        print("Premium Discount: NO");
     }
     if (shipping1 == 1) {
-        print("Free Shipping:    YES")
+        print("Free Shipping:    YES");
     } else {
-        print("Free Shipping:    NO")
+        print("Free Shipping:    NO");
     }
-
-    print("-- User 2: Age 25, Member 1 year, VIP. Order: 50, Distance: 30 miles --")
-    let discount2 = rule_premium_discount(25, 1, 1)
-    let shipping2 = rule_free_shipping(50, 30, 1)
+    print("-- User 2: Age 25, Member 1 year, VIP. Order: 50, Distance: 30 miles --");
+    let discount2 = rule_premium_discount(25, 1, 1);
+    let shipping2 = rule_free_shipping(50, 30, 1);
     if (discount2 == 1) {
-        print("Premium Discount: YES")
+        print("Premium Discount: YES");
     } else {
-        print("Premium Discount: NO")
+        print("Premium Discount: NO");
     }
     if (shipping2 == 1) {
-        print("Free Shipping:    YES")
+        print("Free Shipping:    YES");
     } else {
-        print("Free Shipping:    NO")
+        print("Free Shipping:    NO");
     }
 }

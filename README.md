@@ -34,15 +34,62 @@ ail run hello.ail
 
 ## Core Commands
 
+### Compilation & Execution
+
 ```bash
-ail run <file.ail>       # Run a program
-ail fmt <file.ail>       # Format code (one style, no config)
+ail run <file.ail>       # Compile and run an AILang program
+ail build <file.ail>     # Compile and check for errors (no execution)
+ail check <file.ail>     # Check for forward references and ordering violations
+ail fmt <file_or_dir>    # Format AILang source file(s)
 ail fmt --check <file>   # Check if formatted
+ail watch [<file>]       # Watch for changes, recompile incrementally
+```
+
+### Project Management
+
+```bash
+ail new <project>         # Create a new AILang project scaffold
+ail rename <old> <new>   # Rename identifier repository-wide
+ail order <target>       # Analyze dependency ordering of .ail files
+```
+
+### Testing
+
+```bash
+ail test [<file_or_dir>]  # Run test_*.ail files
+```
+
+### Package Management
+
+```bash
+ail install              # Install dependencies from ail.toml
+ail add <package>        # Add a dependency to ail.toml
+ail remove <package>     # Remove a dependency from ail.toml
+ail update               # Re-resolve all dependencies
+ail list                 # List installed dependencies
+ail publish             # Publish project to package registry
+```
+
+### Developer Tools
+
+```bash
 ail doctor               # Diagnose environment issues
-ail context --json       # Get machine-readable language context
-ail docs <NAME>          # Read documentation (AGENTS, LANGUAGE_SPEC, STDLIB_REFERENCE)
-ail test <file_or_dir>   # Run tests
+ail heal                 # Get fix suggestions for common errors
+ail explain <CODE>       # Explain a compiler error code in detail
+ail docs [<name>]        # Read documentation (AGENTS, LANGUAGE_SPEC, STDLIB_REFERENCE)
+ail context [--json]     # Get machine-readable language context
 ail mcp                  # Start MCP server for AI tool integration
+ail static-analyzer      # Run static analysis on AILang source
+ail benchmark            # Run the AILang benchmark suite
+ail testgen              # Generate test cases for AILang apps
+```
+
+### Other
+
+```bash
+ail lsp                  # Start the LSP server (stdin/stdout)
+ail version              # Print version information
+ail --version            # Print version information
 ```
 
 ## Running Tests

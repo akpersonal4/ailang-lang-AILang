@@ -2,17 +2,13 @@ import time;
 
 fn main() {
     print("=== Time Demo ===");
-
     print("Current time:");
     print(time.now());
-
     let ts = time.timestamp();
     print("Unix timestamp:");
     print(ts);
-
     print("Formatted:");
     print(time.format(ts));
-
     print("Sleeping for 500ms...");
     time.sleep(500);
     print("Done!");

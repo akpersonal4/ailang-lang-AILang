@@ -2,5 +2,5 @@
 import math.add;
 
 fn main() {
-    print(math.add(10, 20))
+    print(math.add(10, 20));
 }

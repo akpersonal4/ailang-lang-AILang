@@ -1,75 +1,72 @@
 // [Compiler Validation Example] Income Tax Calculator
-//
+// 
 // Validates: functions, variables, arithmetic, if/else, comparisons, return, print
-//
+// 
 // Production requirements: tax regime selection, deductions input, form filing
 // (user input requires runtime support)
-
 fn standard_deduction() {
-    return 50000
+    return 50000;
 }
 
 fn taxable_income(gross, deductions) {
-    let net = gross - deductions - standard_deduction()
+    let net = gross - deductions - standard_deduction();
     if (net < 0) {
-        return 0
+        return 0;
     }
-    return net
+    return net;
 }
 
 fn income_tax(taxable) {
     // Old regime slabs (India FY2024-25):
-    //     0 - 250000 : 0%
+    // 0 - 250000 : 0%
     // 250001 - 500000 : 5%
     // 500001 - 750000 : 10% (on slab portion only - simplified here)
     // 750001 -1000000 : 15%
-    //1000001 -1250000 : 20%
-    //1250001 -1500000 : 25%
-    //    1500001+     : 30%
+    // 1000001 -1250000 : 20%
+    // 1250001 -1500000 : 25%
+    // 1500001+     : 30%
     if (taxable <= 250000) {
-        return 0
+        return 0;
     }
     if (taxable <= 500000) {
-        return (taxable - 250000) * 5 / 100
+        return (taxable - 250000) * 5 / 100;
     }
     if (taxable <= 750000) {
-        return 12500 + (taxable - 500000) * 10 / 100
+        return 12500 + (taxable - 500000) * 10 / 100;
     }
     if (taxable <= 1000000) {
-        return 37500 + (taxable - 750000) * 15 / 100
+        return 37500 + (taxable - 750000) * 15 / 100;
     }
     if (taxable <= 1250000) {
-        return 75000 + (taxable - 1000000) * 20 / 100
+        return 75000 + (taxable - 1000000) * 20 / 100;
     }
     if (taxable <= 1500000) {
-        return 125000 + (taxable - 1250000) * 25 / 100
+        return 125000 + (taxable - 1250000) * 25 / 100;
     }
-    return 187500 + (taxable - 1500000) * 30 / 100
+    return 187500 + (taxable - 1500000) * 30 / 100;
 }
 
 fn education_cess(tax) {
-    return tax * 4 / 100
+    return tax * 4 / 100;
 }
 
 fn total_tax(tax, cess) {
-    return tax + cess
+    return tax + cess;
 }
 
 fn main() {
-    print("=== Income Tax Calculator ===")
-
-    let gross      = 1200000
-    let deductions = 150000
-    let taxable    = taxable_income(gross, deductions)
-    let tax        = income_tax(taxable)
-    let cess       = education_cess(tax)
-    let total      = total_tax(tax, cess)
-
-    print("Gross income     : 1200000")
-    print("Deductions       :  150000")
-    print("Standard ded.    :   50000")
-    print("Taxable income   : 1000000")
-    print("Income tax       :   75000")
-    print("Education cess   :    3000")
-    print("Total tax        :   78000")
+    print("=== Income Tax Calculator ===");
+    let gross = 1200000;
+    let deductions = 150000;
+    let taxable = taxable_income(gross, deductions);
+    let tax = income_tax(taxable);
+    let cess = education_cess(tax);
+    let total = total_tax(tax, cess);
+    print("Gross income     : 1200000");
+    print("Deductions       :  150000");
+    print("Standard ded.    :   50000");
+    print("Taxable income   : 1000000");
+    print("Income tax       :   75000");
+    print("Education cess   :    3000");
+    print("Total tax        :   78000");
 }

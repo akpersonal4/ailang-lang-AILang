@@ -1,93 +1,107 @@
 // [Compiler Validation Example] Date Validation Logic
-//
+// 
 // Validates: functions, variables, arithmetic, if/else, comparisons, return, print
-//
+// 
 // Production requirements: regex, calendar parser, localization support
 // (regex not yet in stdlib)
-
 fn is_leap_year(year) {
     // Leap year if divisible by 4, but not by 100 unless also by 400
-    let div4 = 0
-    let div100 = 0
-    let div400 = 0
-
+    let div4 = 0;
+    let div100 = 0;
+    let div400 = 0;
     if (year % 4 == 0) {
-        div4 = 1
+        div4 = 1;
     }
     if (year % 100 == 0) {
-        div100 = 1
+        div100 = 1;
     }
     if (year % 400 == 0) {
-        div400 = 1
+        div400 = 1;
     }
-
     if (div4 == 1) {
         if (div100 == 0) {
-            return 1
+            return 1;
         }
         if (div400 == 1) {
-            return 1
+            return 1;
         }
     }
-    return 0
+    return 0;
 }
 
 fn max_days_in_month(month, year) {
-    if (month == 1) { return 31 }
-    if (month == 3) { return 31 }
-    if (month == 5) { return 31 }
-    if (month == 7) { return 31 }
-    if (month == 8) { return 31 }
-    if (month == 10) { return 31 }
-    if (month == 12) { return 31 }
-
-    if (month == 4) { return 30 }
-    if (month == 6) { return 30 }
-    if (month == 9) { return 30 }
-    if (month == 11) { return 30 }
-
-    if (month == 2) {
-        let leap = is_leap_year(year)
-        if (leap == 1) {
-            return 29
-        }
-        return 28
+    if (month == 1) {
+        return 31;
     }
-    return 0
+    if (month == 3) {
+        return 31;
+    }
+    if (month == 5) {
+        return 31;
+    }
+    if (month == 7) {
+        return 31;
+    }
+    if (month == 8) {
+        return 31;
+    }
+    if (month == 10) {
+        return 31;
+    }
+    if (month == 12) {
+        return 31;
+    }
+    if (month == 4) {
+        return 30;
+    }
+    if (month == 6) {
+        return 30;
+    }
+    if (month == 9) {
+        return 30;
+    }
+    if (month == 11) {
+        return 30;
+    }
+    if (month == 2) {
+        let leap = is_leap_year(year);
+        if (leap == 1) {
+            return 29;
+        }
+        return 28;
+    }
+    return 0;
 }
 
 fn validate_date(day, month, year) {
     if (year < 1) {
-        return 0
+        return 0;
     }
     if (month < 1) {
-        return 0
+        return 0;
     }
     if (month > 12) {
-        return 0
+        return 0;
     }
-    let max_days = max_days_in_month(month, year)
+    let max_days = max_days_in_month(month, year);
     if (day < 1) {
-        return 0
+        return 0;
     }
     if (day > max_days) {
-        return 0
+        return 0;
     }
-    return 1
+    return 1;
 }
 
 fn main() {
-    print("=== Date Validation Logic ===")
-
-    print("29/2/2024 (Leap Year) -> 1 (Valid)")
-    let d1 = validate_date(29, 2, 2024)
-    print(d1)
-
-    print("29/2/2023 (Non-Leap)  -> 0 (Invalid)")
-    let d2 = validate_date(29, 2, 2023)
-    print(d2)
-
-    print("31/4/2024 (April)     -> 0 (Invalid)")
-    let d3 = validate_date(31, 4, 2024)
-    print(d3)
+    print("=== Date Validation Logic ===");
+    print("29/2/2024 (Leap Year) -> 1 (Valid)");
+    let d1 = validate_date(29, 2, 2024);
+    print(d1);
+    print("29/2/2023 (Non-Leap)  -> 0 (Invalid)");
+    let d2 = validate_date(29, 2, 2023);
+    print(d2);
+    print("31/4/2024 (April)     -> 0 (Invalid)");
+    let d3 = validate_date(31, 4, 2024);
+    print(d3);
 }

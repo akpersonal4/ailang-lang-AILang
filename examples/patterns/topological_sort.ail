@@ -1,26 +1,27 @@
 // Topological Sort Pattern (DFS-based, single recursion)
 // Sorts nodes so dependencies come before dependents
 // All deps of a node are visited before the node itself is added to order
-//
+// 
 // fn add_dep(graph, node, dep) { ... }
 // fn build_sample_graph() { ... }
 // fn visit(node, graph, state, order, deps_cache, di) { ... }
 // fn topological_sort(graph) { ... }
-
 import map;
 import list;
 
 fn add_dep(graph, node, dep) {
     if (map.has(graph, node)) {
         let deps = map.get(graph, node);
-        list.append(deps, dep)
+        list.append(deps, dep);
     } else {
         let deps = list.new();
         list.append(deps, dep);
-        map.set(graph, node, deps)
+        map.set(graph, node, deps);
     }
-    if (!map.has(graph, dep)) { map.set(graph, dep, list.new()) }
-    return graph
+    if (!map.has(graph, dep)) {
+        map.set(graph, dep, list.new());
+    }
+    return graph;
 }
 
 fn build_sample_graph() {
@@ -29,54 +30,63 @@ fn build_sample_graph() {
     g = add_dep(g, "main", "render");
     g = add_dep(g, "parse", "tokenize");
     g = add_dep(g, "tokenize", "read");
-    return g
+    return g;
 }
 
 fn visit(node, graph, state, order, deps_cache, di) {
     map.set(state, node, true);
     if (deps_cache == false) {
-        if (map.has(graph, node)) { let d = map.get(graph, node); return visit(node, graph, state, order, d, 0) }
+        if (map.has(graph, node)) {
+            let d = map.get(graph, node);
+            return visit(node, graph, state, order, d, 0);
+        }
         list.append(order, node);
-        return order
+        return order;
     }
     if (di >= list.len(deps_cache)) {
         list.append(order, node);
-        return order
+        return order;
     }
     let dep = list.get(deps_cache, di);
     if (!map.get(state, dep)) {
-        let dummy = visit(dep, graph, state, order, false, 0)
+        let dummy = visit(dep, graph, state, order, false, 0);
     }
-    return visit(node, graph, state, order, deps_cache, di + 1)
+    return visit(node, graph, state, order, deps_cache, di + 1);
 }
 
 fn init_state(graph, state, keys, ki) {
-    if (ki >= list.len(keys)) { return state }
+    if (ki >= list.len(keys)) {
+        return state;
+    }
     let node = list.get(keys, ki);
     map.set(state, node, false);
-    return init_state(graph, state, keys, ki + 1)
+    return init_state(graph, state, keys, ki + 1);
 }
 
 fn sort_all(state, graph, order, keys, ki) {
-    if (ki >= list.len(keys)) { return order }
+    if (ki >= list.len(keys)) {
+        return order;
+    }
     let node = list.get(keys, ki);
     if (!map.get(state, node)) {
-        let dummy = visit(node, graph, state, order, false, 0)
+        let dummy = visit(node, graph, state, order, false, 0);
     }
-    return sort_all(state, graph, order, keys, ki + 1)
+    return sort_all(state, graph, order, keys, ki + 1);
 }
 
 fn topological_sort(graph) {
     let keys = map.keys(graph);
     let state = init_state(graph, map.new(), keys, 0);
     let order = list.new();
-    return sort_all(state, graph, order, keys, 0)
+    return sort_all(state, graph, order, keys, 0);
 }
 
 fn print_order(order, i) {
-    if (i >= list.len(order)) { return 0 }
+    if (i >= list.len(order)) {
+        return 0;
+    }
     print("  ", i, ":", list.get(order, i));
-    return print_order(order, i + 1)
+    return print_order(order, i + 1);
 }
 
 fn main() {
@@ -84,5 +94,5 @@ fn main() {
     let order = topological_sort(graph);
     print("Topological order (deps first):");
     print_order(order, 0);
-    print("")
+    print("");
 }

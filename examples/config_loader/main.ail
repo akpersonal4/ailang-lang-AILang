@@ -1,29 +1,28 @@
 // [Compiler Validation Example] Config Loader
-//
+// 
 // Validates: functions, variables, return, print
-//
+// 
 // Note: This program uses hardcoded configuration values. A production config
 // loader would require standard library support for file I/O, string splitting,
 // and key/value parsing, which are not yet available in AILang.
-
 fn get_host() {
-    return "localhost"
+    return "localhost";
 }
 
 fn get_port() {
-    return 8080
+    return 8080;
 }
 
 fn get_debug() {
-    return 1
+    return 1;
 }
 
 fn main() {
-    print("=== Config Loader ===")
-    let host = get_host()
-    let port = get_port()
-    let debug = get_debug()
-    print("host=localhost")
-    print("port=8080")
-    print("debug=true")
+    print("=== Config Loader ===");
+    let host = get_host();
+    let port = get_port();
+    let debug = get_debug();
+    print("host=localhost");
+    print("port=8080");
+    print("debug=true");
 }

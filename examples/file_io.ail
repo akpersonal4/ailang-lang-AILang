@@ -2,23 +2,18 @@ import file;
 
 fn main() {
     print("=== File I/O Demo ===");
-
     file.write("hello.txt", "Hello, AILang!");
     print("Created hello.txt");
-
     let content = file.read("hello.txt");
     print("Read back:");
     print(content);
-
     file.append("hello.txt", " Appended line.");
     let updated = file.read("hello.txt");
     print("After append:");
     print(updated);
-
     let exists = file.exists("hello.txt");
     print("File exists:");
     print(exists);
-
     file.remove("hello.txt");
     let gone = file.exists("hello.txt");
     print("After removal, exists:");

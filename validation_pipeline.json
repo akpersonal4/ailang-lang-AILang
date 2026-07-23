@@ -1,0 +1,39 @@
+{
+  "tool": "ail validate",
+  "version": "1.0.0",
+  "root": "C:\\Users\\aleckhan\\Projects\\AiLang_New",
+  "summary": {
+    "overall_passed": false,
+    "checks_run": 4,
+    "checks_passed": 0,
+    "checks_failed": 4,
+    "total_issues": 2834,
+    "total_elapsed_seconds": 40.2
+  },
+  "checks": [
+    {
+      "name": "Documentation Verification",
+      "passed": false,
+      "issues": 2782,
+      "elapsed_seconds": 1.89
+    },
+    {
+      "name": "Standard Library Audit",
+      "passed": false,
+      "issues": 52,
+      "elapsed_seconds": 1.21
+    },
+    {
+      "name": "Release Verification",
+      "passed": false,
+      "issues": 0,
+      "elapsed_seconds": 35.81
+    },
+    {
+      "name": "Developer Experience Audit",
+      "passed": false,
+      "issues": 0,
+      "elapsed_seconds": 1.29
+    }
+  ]
+}

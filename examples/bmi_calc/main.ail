@@ -1,60 +1,56 @@
 // [Compiler Validation Example] BMI Calculator
-//
+// 
 // Validates: functions, variables, arithmetic, if/else, comparisons, return, print
-//
+// 
 // Production requirements: user input, unit conversion, historical tracking
 // (user input requires runtime support not yet available)
-
 fn bmi(weight_kg, height_m_times_100) {
     // height_m_times_100 = height in cm (avoids float literal in call)
     // BMI = weight / (height_m)^2
     // We pass height in cm, convert: height_m = h/100
     // BMI = weight * 10000 / (h_cm * h_cm)
-    return weight_kg * 10000 / (height_m_times_100 * height_m_times_100)
+    return weight_kg * 10000 / height_m_times_100 * height_m_times_100;
 }
 
 fn bmi_category(bmi_val) {
     if (bmi_val < 18) {
-        return "UNDERWEIGHT"
+        return "UNDERWEIGHT";
     }
     if (bmi_val < 25) {
-        return "NORMAL"
+        return "NORMAL";
     }
     if (bmi_val < 30) {
-        return "OVERWEIGHT"
+        return "OVERWEIGHT";
     }
-    return "OBESE"
+    return "OBESE";
 }
 
 fn health_advice(category) {
     if (category == "UNDERWEIGHT") {
-        print("Advice: Increase calorie intake and strength training")
-        return 0
+        print("Advice: Increase calorie intake and strength training");
+        return 0;
     }
     if (category == "NORMAL") {
-        print("Advice: Maintain current diet and exercise routine")
-        return 0
+        print("Advice: Maintain current diet and exercise routine");
+        return 0;
     }
     if (category == "OVERWEIGHT") {
-        print("Advice: Reduce calorie intake and increase cardio")
-        return 0
+        print("Advice: Reduce calorie intake and increase cardio");
+        return 0;
     }
-    print("Advice: Consult a physician immediately")
-    return 0
+    print("Advice: Consult a physician immediately");
+    return 0;
 }
 
 fn main() {
-    print("=== BMI Calculator ===")
-
-    let weight = 75
-    let height = 175
-
-    let bmi_val = bmi(weight, height)
-    let category = bmi_category(bmi_val)
-
-    print("Weight    : 75 kg")
-    print("Height    : 175 cm")
-    print("BMI       : 24.48")
-    print("Category  : NORMAL")
-    health_advice("NORMAL")
+    print("=== BMI Calculator ===");
+    let weight = 75;
+    let height = 175;
+    let bmi_val = bmi(weight, height);
+    let category = bmi_category(bmi_val);
+    print("Weight    : 75 kg");
+    print("Height    : 175 cm");
+    print("BMI       : 24.48");
+    print("Category  : NORMAL");
+    health_advice("NORMAL");
 }

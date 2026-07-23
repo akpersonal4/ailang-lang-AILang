@@ -1,62 +1,58 @@
 // [Compiler Validation Example] Password Validation Logic
-//
+// 
 // Validates: functions, variables, if/else, comparisons, return, print
-//
+// 
 // Production requirements: regex, character inspection (isalpha, isdigit, isupper), string length
 // (regex not yet in stdlib)
-
 fn check_length(len) {
     if (len >= 8) {
-        return 1
+        return 1;
     }
-    return 0
+    return 0;
 }
 
 fn has_digit(digit_flag) {
     if (digit_flag == 1) {
-        return 1
+        return 1;
     }
-    return 0
+    return 0;
 }
 
 fn has_special(special_flag) {
     if (special_flag == 1) {
-        return 1
+        return 1;
     }
-    return 0
+    return 0;
 }
 
 fn validate_password(len, digit_flag, special_flag) {
-    let len_ok = check_length(len)
-    let digit_ok = has_digit(digit_flag)
-    let special_ok = has_special(special_flag)
-
+    let len_ok = check_length(len);
+    let digit_ok = has_digit(digit_flag);
+    let special_ok = has_special(special_flag);
     if (len_ok == 1) {
         if (digit_ok == 1) {
             if (special_ok == 1) {
-                return 1
+                return 1;
             }
         }
     }
-    return 0
+    return 0;
 }
 
 fn main() {
-    print("=== Password Validation Logic ===")
-
-    print("-- Test 1: P@ss1234 (Length: 8, Digit: Yes, Special: Yes) --")
-    let r1 = validate_password(8, 1, 1)
+    print("=== Password Validation Logic ===");
+    print("-- Test 1: P@ss1234 (Length: 8, Digit: Yes, Special: Yes) --");
+    let r1 = validate_password(8, 1, 1);
     if (r1 == 1) {
-        print("Result: VALID")
+        print("Result: VALID");
     } else {
-        print("Result: INVALID")
+        print("Result: INVALID");
     }
-
-    print("-- Test 2: simple (Length: 6, Digit: No, Special: No) --")
-    let r2 = validate_password(6, 0, 0)
+    print("-- Test 2: simple (Length: 6, Digit: No, Special: No) --");
+    let r2 = validate_password(6, 0, 0);
     if (r2 == 1) {
-        print("Result: VALID")
+        print("Result: VALID");
     } else {
-        print("Result: INVALID")
+        print("Result: INVALID");
     }
 }

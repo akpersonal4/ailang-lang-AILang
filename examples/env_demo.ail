@@ -2,14 +2,11 @@ import environment;
 
 fn main() {
     print("=== Environment Demo ===");
-
     print("Current working directory:");
     print(environment.cwd());
-
     let path = environment.get("PATH");
     print("PATH variable:");
     print(path);
-
     let home = environment.get("HOME");
     print("HOME variable:");
     print(home);

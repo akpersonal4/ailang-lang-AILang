@@ -2,9 +2,11 @@
 fn square(x) {
     return x * x;
 }
+
 fn cube(x) {
     return x * x * x;
 }
+
 fn main() {
     return square(3) + cube(2);
 }

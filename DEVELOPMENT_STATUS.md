@@ -10,7 +10,7 @@ until this document has been reviewed. Update AGENTS.md reading order after revi
 
 | Attribute | Value |
 |:----------|:------|
-| **Current Version** | v1.1.1 |
+| **Current Version** | v1.1.2 |
 | **Current Milestone** | M83C — VS Code Extension Release |
 | **Project Phase** | Public Beta |
 
@@ -496,5 +496,5 @@ Every document type has exactly one owner. If you need to add information, first
 | Field | Value |
 |:------|:------|
 | **Date** | 2026-07-20 |
-| **Version** | v1.1.1 |
+| **Version** | v1.1.2 |
 | **Milestone** | M83C — VS Code Extension Release |

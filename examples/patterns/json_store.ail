@@ -1,12 +1,11 @@
 // JSON Store Pattern
 // Read/write structured data as JSON files
 // Data is stored as list of maps
-//
+// 
 // fn load_data(filepath) { ... }
 // fn save_data(filepath, data) { ... }
 // fn add_record(data, record) { ... }
 // fn find_by_key(data, key, value, i) { ... }
-
 import json;
 import file;
 import list;
@@ -14,47 +13,61 @@ import map;
 import string;
 
 fn load_data(filepath) {
-    if (!file.exists(filepath)) { return list.new() }
+    if (!file.exists(filepath)) {
+        return list.new();
+    }
     let content = file.read(filepath);
-    if (string.length(content) == 0) { return list.new() }
-    return json.parse(content)
+    if (string.length(content) == 0) {
+        return list.new();
+    }
+    return json.parse(content);
 }
 
 fn save_data(filepath, data) {
     let text = json.stringify(data);
     file.write(filepath, text);
-    return 0
+    return 0;
 }
 
 fn add_record(data, record) {
     list.append(data, record);
-    return data
+    return data;
 }
 
 fn find_by_key(data, key, value, i) {
-    if (i >= list.len(data)) { return false }
+    if (i >= list.len(data)) {
+        return false;
+    }
     let record = list.get(data, i);
     if (map.has(record, key)) {
-        if (map.get(record, key) == value) { return record }
+        if (map.get(record, key) == value) {
+            return record;
+        }
     }
-    return find_by_key(data, key, value, i + 1)
+    return find_by_key(data, key, value, i + 1);
 }
 
 fn print_records(data, i) {
-    if (i >= list.len(data)) { return 0 }
+    if (i >= list.len(data)) {
+        return 0;
+    }
     let r = list.get(data, i);
     let keys = map.keys(r);
     let k0 = list.get(keys, 0);
     let k1 = list.get(keys, 1);
     print(i + 1, ":", map.get(r, k0), "|", map.get(r, k1));
-    return print_records(data, i + 1)
+    return print_records(data, i + 1);
 }
 
 fn main() {
     let test_path = "data.json";
     let data = list.new();
-    let r1 = map.new(); map.set(r1, "id", 1); map.set(r1, "name", "Alice");
-    let r2 = map.new(); map.set(r2, "id", 2); map.set(r2, "name", "Bob");
+    let r1 = map.new();
+    map.set(r1, "id", 1);
+    map.set(r1, "name", "Alice");
+    let r2 = map.new();
+    map.set(r2, "id", 2);
+    map.set(r2, "name", "Bob");
     data = add_record(data, r1);
     data = add_record(data, r2);
     save_data(test_path, data);
@@ -62,6 +75,8 @@ fn main() {
     print("Loaded records:", list.len(loaded));
     print_records(loaded, 0);
     let found = find_by_key(loaded, "name", "Alice", 0);
-    if (found) { print("Found Alice, id:", map.get(found, "id")) };
-    file.remove(test_path)
+    if (found) {
+        print("Found Alice, id:", map.get(found, "id"));
+    }
+    file.remove(test_path);
 }

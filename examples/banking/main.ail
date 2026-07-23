@@ -1,57 +1,52 @@
 // [Compiler Validation Example] Simple Banking System
-//
+// 
 // Validates: functions, variables, if/else, arithmetic, comparisons, return, print
-
 fn get_balance(initial) {
-    return initial
+    return initial;
 }
 
 fn deposit(balance, amount) {
     if (amount <= 0) {
-        print("Error: deposit amount must be positive")
-        return balance
+        print("Error: deposit amount must be positive");
+        return balance;
     }
-    return balance + amount
+    return balance + amount;
 }
 
 fn withdraw(balance, amount) {
     if (amount <= 0) {
-        print("Error: withdrawal amount must be positive")
-        return balance
+        print("Error: withdrawal amount must be positive");
+        return balance;
     }
     if (amount > balance) {
-        print("Error: insufficient funds")
-        return balance
+        print("Error: insufficient funds");
+        return balance;
     }
-    return balance - amount
+    return balance - amount;
 }
 
 fn print_balance(balance) {
     if (balance >= 10000) {
-        print("Balance: HIGH")
-        return 0
+        print("Balance: HIGH");
+        return 0;
     }
     if (balance >= 1000) {
-        print("Balance: MEDIUM")
-        return 0
+        print("Balance: MEDIUM");
+        return 0;
     }
-    print("Balance: LOW")
-    return 0
+    print("Balance: LOW");
+    return 0;
 }
 
 fn main() {
-    print("=== Simple Banking System ===")
-    let balance = get_balance(5000)
-    print("Opening balance: 5000")
-
-    balance = deposit(balance, 2000)
-    print("After deposit 2000: 7000")
-
-    balance = withdraw(balance, 1500)
-    print("After withdraw 1500: 5500")
-
-    balance = withdraw(balance, 9999)
-
-    print("Final balance: 5500")
-    print_balance(5500)
+    print("=== Simple Banking System ===");
+    let balance = get_balance(5000);
+    print("Opening balance: 5000");
+    balance = deposit(balance, 2000);
+    print("After deposit 2000: 7000");
+    balance = withdraw(balance, 1500);
+    print("After withdraw 1500: 5500");
+    balance = withdraw(balance, 9999);
+    print("Final balance: 5500");
+    print_balance(5500);
 }
