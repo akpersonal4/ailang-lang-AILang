@@ -22,7 +22,7 @@ Verify it worked:
 ail version
 ```
 
-You should see `AILang v1.1.1`.
+You should see `AILang v1.1.2`.
 
 ---
 

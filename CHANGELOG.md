@@ -1,5 +1,28 @@
 # Changelog
 
+## v1.1.2
+
+### M91 — Release Engineering Recovery
+
+- **Version synchronization**: All version references now consistently show v1.1.2 (pyproject.toml, compiler/_version.py, tools, README badge)
+- **Release automation**: Integrated generate_version.py into the release workflow
+- **Automated verification**: Release pipeline verifies version consistency before building
+
+### M89 — External Validation Remediation (from v1.1.1 release)
+
+- **Version synchronization**: All public version references now consistently show v1.1.2 (README, CHANGELOG, CLI, ail.toml, package metadata)
+- **Template repair**: Generated `main.ail` now includes semicolon on `return` statement; ail.toml language version updated to match package version
+- **Official examples remediated**: 3 member_access examples verified working with dot syntax; recursive_map renamed to avoid stdlib name collision
+- **Showcase applications remediated**: hotel_management and kanban renamed functions colliding with stdlib builtins (`list_find_by_key`, `list_filter_by_key`, `list_filter_by_contains`, `list_copy`)
+- **CLI help consistency**: Core commands (`run`, `build`, `fmt`, `test`, `new`, `check`, `rename`, `watch`) now support `--help` flag with consistent exit code 0
+- **Silent examples improved**: 5 examples that produced no output now include `print()` calls demonstrating their behavior
+- **Documentation synchronized**: Member access examples verified, version references updated across all documentation
+
+### Tests
+
+- All existing tests continue to pass (1079+)
+- Regression tests added for template output, example compilation, and CLI help behavior
+
 ## v1.1.1
 
 ### M83I — Enterprise Validation Fixes

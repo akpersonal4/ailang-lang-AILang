@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ailang-lang"
-version = "1.1.1"
+version = "1.1.2"
 description = "Deterministic business application platform optimized for AI-assisted development"
 readme = "README.md"
 requires-python = ">=3.11"
