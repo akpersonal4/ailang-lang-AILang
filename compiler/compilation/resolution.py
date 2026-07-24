@@ -5,12 +5,48 @@ Resolves module paths to file paths and manages the module dependency graph.
 
 from __future__ import annotations
 
+import site
 from pathlib import Path
 
 try:
     import tomllib
 except ModuleNotFoundError:
     tomllib = None  # type: ignore[assignment]
+
+
+def _find_stdlib_root() -> Path | None:
+    """Locate the stdlib directory in the installed package.
+
+    Mirrors the logic in compiler.cli.main:_find_stdlib() to ensure
+    module resolution can find stdlib modules even when running from
+    outside the project tree (e.g., from a temp directory).
+
+    Search order:
+    1. Next to the compiler package (site-packages/stdlib/) — installed wheel
+    2. Next to the package parent (repo-root/stdlib/) — editable/dev install
+    3. Bundled in site-packages (site-packages/ailang_lang-*/stdlib/)
+
+    Returns:
+        Path to the stdlib directory if found, None otherwise.
+    """
+    try:
+        import compiler
+
+        compiler_path = Path(compiler.__file__).resolve()
+        pkg_dir = compiler_path.parent.parent
+
+        candidate = pkg_dir / "stdlib"
+        if candidate.is_dir() and list(candidate.iterdir()):
+            return candidate
+    except (ImportError, ValueError):
+        pass
+
+    for site_dir in site.getsitepackages():
+        bundled = Path(site_dir) / "stdlib"
+        if bundled.is_dir() and list(bundled.iterdir()):
+            return bundled
+
+    return None
 
 
 class ModuleResolutionError(Exception):
@@ -113,7 +149,12 @@ class ModuleResolver:
         raise ModuleResolutionError(f"Module not found: {module_key}")
 
     def _candidate_roots(self) -> list[Path]:
-        """Return search roots, preferring the project root and its stdlib dir."""
+        """Return search roots, preferring the project root and its stdlib dir.
+
+        Includes the installed package's stdlib as a fallback so that
+        stdlib modules can be resolved even when running from outside
+        the project tree (e.g., from a temp directory).
+        """
         roots: list[Path] = []
         seen: set[Path] = set()
         current = self.root.resolve()
@@ -125,8 +166,6 @@ class ModuleResolver:
                     roots.append(resolved)
                     seen.add(resolved)
 
-            # Also add each installed package directory under lib/ as a root,
-            # so internal imports (e.g. lib/mylib/greet.ail from main.ail) resolve.
             lib_dir = current / "lib"
             if lib_dir.is_dir():
                 for sub in sorted(lib_dir.iterdir()):
@@ -139,5 +178,12 @@ class ModuleResolver:
             if current == current.parent:
                 break
             current = current.parent
+
+        installed_stdlib = _find_stdlib_root()
+        if installed_stdlib is not None:
+            stdlib_resolved = installed_stdlib.resolve()
+            if stdlib_resolved not in seen:
+                roots.append(stdlib_resolved)
+                seen.add(stdlib_resolved)
 
         return roots

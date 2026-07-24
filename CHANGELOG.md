@@ -1,5 +1,26 @@
 # Changelog
 
+## v1.1.4
+
+### Bug Fix — Stdlib Module Resolution (MOD003)
+
+- **Fixed MOD003: stdlib module resolution from outside project tree**. Programs importing stdlib modules (`string`, `math`, `list`, `map`, `json`, etc.) can now be compiled and run from any directory, not just from within the project tree. Previously, running from a temp directory or other location outside the repo would fail with `ERROR MOD003: Module not found`.
+- **Root cause**: `ModuleResolver._candidate_roots()` did not include the installed package's stdlib directory as a fallback search path.
+- **Fix**: Added `_find_stdlib_root()` helper to `compiler/compilation/resolution.py` and updated `_candidate_roots()` to include installed stdlib as a fallback.
+- **New regression test**: `tests/test_mod003_stdlib_resolution.py` permanently protects against this issue.
+
+### No Changes
+
+- No language changes
+- No breaking changes
+- No API changes
+- No new features
+
+### Tests
+
+- 4 new integration tests protecting against MOD003 regression
+- All 1018 tests pass
+
 ## v1.1.3
 
 ### M92 — Release Polish & New Developer Tools
