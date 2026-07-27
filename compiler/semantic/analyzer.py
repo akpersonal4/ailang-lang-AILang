@@ -27,6 +27,7 @@ from compiler.ast.nodes import (
     VariableDeclarationNode,
 )
 from compiler.diagnostics import (
+    ErrorCode,
     SEM003_WRONG_ARG_COUNT,
     Diagnostic,
     Severity,
@@ -263,6 +264,10 @@ class SemanticAnalyzer:
             func_name = callee.receiver.name + "." + callee.member.name
             active = self.symbol_table.scopes[-1]
             symbol = active.resolve(func_name) if active else None
+
+            # Detect known unavailable stdlib functions
+            if symbol is None and self.symbol_table.reporter is not None:
+                self._report_unavailable_stdlib(func_name, callee)
         else:
             return
 
@@ -286,6 +291,37 @@ class SemanticAnalyzer:
                     file_path=self.symbol_table._file_path,
                 )
                 self.symbol_table.reporter.report(diagnostic)
+
+    def _report_unavailable_stdlib(
+        self, func_name: str, node: MemberAccessNode
+    ) -> None:
+        """Report a helpful error for known unavailable stdlib functions."""
+        from compiler.diagnostics import (
+            LANG002_LIST_SET_UNAVAILABLE,
+            LANG003_STRING_REPLACE_UNAVAILABLE,
+        )
+
+        unavailable: dict[str, tuple[ErrorCode, str]] = {
+            "list.set": (
+                LANG002_LIST_SET_UNAVAILABLE,
+                "list.set() does not exist in AILang. Use map.set() for key-value storage, or list.append() to add to the end of a list.",
+            ),
+            "string.replace": (
+                LANG003_STRING_REPLACE_UNAVAILABLE,
+                "string.replace() does not exist in AILang. Use string.substring() + string.concat() to build modified strings.",
+            ),
+        }
+        if func_name in unavailable:
+            code, message = unavailable[func_name]
+            diagnostic = Diagnostic(
+                Severity.ERROR,
+                code,
+                message,
+                node.start_span,
+                node.end_span,
+                file_path=self.symbol_table._file_path,
+            )
+            self.symbol_table.reporter.report(diagnostic)
 
     # ------------------------------------------------------------------
     # Literals and identifiers

@@ -1,26 +1,56 @@
-import storage;
+// Product example - demonstrates map operations and search
 import map;
-import helpers;
+import list;
+import string;
 
 fn product_create(pName, pPrice, pQty) {
     let prod = map.new();
-    let pid = helpers.helpers_generate_id("PROD-");
+    let pid = "PROD-" + string.from_int(pPrice);
     map.set(prod, "id", pid);
     map.set(prod, "name", pName);
     map.set(prod, "price", pPrice);
     map.set(prod, "qty", pQty);
-    storage.storage_add("products", prod);
-    return pid;
+    return pid
 }
 
 fn product_search(term, items, idx, acc) {
     if (idx >= list.len(items)) {
-        return acc;
+        return acc
     }
     let item = list.get(items, idx);
-    let name = helpers.helpers_get_map_value_safe(item, "name", "");
-    if (string.find(name, term) != false) {
+    let name = map.get(item, "name");
+    if (string.contains(name, term)) {
         list.append(acc, item);
     }
-    return product_search(term, items, idx + 1, acc);
+    return product_search(term, items, idx + 1, acc)
+}
+
+fn main() {
+    let products = list.new();
+
+    let pid1 = product_create("Widget", 100, 50);
+    let pid2 = product_create("Gadget", 200, 25);
+    let pid3 = product_create("Widget Pro", 300, 10);
+
+    let prod1 = map.new();
+    map.set(prod1, "id", pid1);
+    map.set(prod1, "name", "Widget");
+    list.append(products, prod1);
+
+    let prod2 = map.new();
+    map.set(prod2, "id", pid2);
+    map.set(prod2, "name", "Gadget");
+    list.append(products, prod2);
+
+    let prod3 = map.new();
+    map.set(prod3, "id", pid3);
+    map.set(prod3, "name", "Widget Pro");
+    list.append(products, prod3);
+
+    let results = list.new();
+    let found = product_search("Widget", products, 0, results);
+
+    print("Found " + list.len(found) + " products matching 'Widget'");
+
+    return 0
 }

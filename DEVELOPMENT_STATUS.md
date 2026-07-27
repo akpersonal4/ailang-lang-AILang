@@ -496,5 +496,5 @@ Every document type has exactly one owner. If you need to add information, first
 | Field | Value |
 |:------|:------|
 | **Date** | 2026-07-20 |
-| **Version** | v1.1.2 |
+| **Version** | v1.1.4 |
 | **Milestone** | M83C — VS Code Extension Release |

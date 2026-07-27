@@ -1,2 +1,0 @@
-fn test() { return }
-fn main() { return 0 }

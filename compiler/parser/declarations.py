@@ -21,6 +21,22 @@ def parse_variable_declaration(stream: TokenStream) -> CSTNode:
 def parse_function_declaration(stream: TokenStream) -> CSTNode:
     from compiler.parser.statements import parse_block
 
+    # Detect nested function declarations
+    if stream._nesting_depth > 0:
+        from compiler.diagnostics import Diagnostic, LANG001_NESTED_FN, Severity
+
+        fn_token = stream.current()
+        diagnostic = Diagnostic(
+            Severity.ERROR,
+            LANG001_NESTED_FN,
+            "Nested functions are not allowed in AILang. All functions must be at the top level.",
+            fn_token.line,
+            fn_token.column,
+            stream.source_path,
+        )
+        if stream.reporter is not None:
+            stream.reporter.report(diagnostic)
+
     declaration = CSTNode("FunctionDeclaration")
     declaration.start_span = stream.current().start_offset
     stream.expect(TokenKind.FN)
@@ -28,7 +44,9 @@ def parse_function_declaration(stream: TokenStream) -> CSTNode:
     stream.expect(TokenKind.LPAREN)
     declaration.children.append(parse_parameter_list(stream))
     stream.expect(TokenKind.RPAREN)
+    stream._nesting_depth += 1
     declaration.children.append(parse_block(stream))
+    stream._nesting_depth -= 1
     declaration.end_span = stream.previous().end_offset
     return declaration
 

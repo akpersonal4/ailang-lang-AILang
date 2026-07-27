@@ -289,7 +289,18 @@ def cmd_run(args: list[str]) -> int:
     remaining = list(args)
     while remaining:
         arg = remaining.pop(0)
-        if arg == "--experimental-loops":
+        if arg in ("-h", "--help"):
+            print(
+                f"Usage: {PROG} run [--experimental-loops] [--no-check] <file> [args..]"
+            )
+            print()
+            print("Compile and run an AILang program.")
+            print()
+            print("Options:")
+            print("  --experimental-loops  Enable experimental for-in loop syntax")
+            print("  --no-check            Skip pre-flight ordering check")
+            return 0
+        elif arg == "--experimental-loops":
             experimental_loops = True
         elif arg == "--no-check":
             no_check = True
@@ -415,7 +426,16 @@ def cmd_build(args: list[str]) -> int:
     remaining = list(args)
     while remaining:
         arg = remaining.pop(0)
-        if arg == "--json":
+        if arg in ("-h", "--help"):
+            print(f"Usage: {PROG} build [--json] [--experimental-loops] <file>")
+            print()
+            print("Compile an AILang program and check for errors without executing.")
+            print()
+            print("Options:")
+            print("  --json              Output results as JSON")
+            print("  --experimental-loops  Enable experimental for-in loop syntax")
+            return 0
+        elif arg == "--json":
             json_mode = True
         elif arg == "--experimental-loops":
             experimental_loops = True
@@ -476,7 +496,21 @@ def cmd_check(args: list[str]) -> int:
     remaining = list(args)
     while remaining:
         arg = remaining.pop(0)
-        if arg == "--json":
+        if arg in ("-h", "--help"):
+            print(
+                f"Usage: {PROG} check [--json] [--recursive] <file_or_dir>"
+            )
+            print()
+            print(
+                "Check AILang source for semantic errors, type errors,"
+            )
+            print("forward references, and ordering violations.")
+            print()
+            print("Options:")
+            print("  --json       Output results as JSON")
+            print("  --recursive  Check all .ail files recursively")
+            return 0
+        elif arg == "--json":
             json_mode = True
         elif arg == "--recursive":
             recursive = True
@@ -555,7 +589,8 @@ def cmd_check(args: list[str]) -> int:
         }
         print(json.dumps(result, indent=2))
     else:
-        if total_errors == 0:
+        has_warnings = any(r.warning_count > 0 for _, r in all_reporters)
+        if total_errors == 0 and not has_warnings:
             print(
                 f"Check passed: {len(files_to_check)} file(s) checked, no errors found."
             )
@@ -564,10 +599,16 @@ def cmd_check(args: list[str]) -> int:
             for file_path, reporter in all_reporters:
                 for diag in reporter.diagnostics:
                     print(formatter.format(diag), file=sys.stderr)
-            print(
-                f"\nTotal: {total_errors} error(s) in {len(files_to_check)} file(s)",
-                file=sys.stderr,
-            )
+            if total_errors > 0:
+                print(
+                    f"\nTotal: {total_errors} error(s) in {len(files_to_check)} file(s)",
+                    file=sys.stderr,
+                )
+            elif has_warnings:
+                print(
+                    f"\nCheck passed with warnings: {len(files_to_check)} file(s) checked.",
+                    file=sys.stderr,
+                )
 
     return 1 if total_errors > 0 else 0
 
@@ -971,7 +1012,21 @@ def cmd_fmt(args: list[str]) -> int:
     remaining: list[str] = list(args)
     while remaining:
         arg = remaining.pop(0)
-        if arg == "--stdin":
+        if arg in ("-h", "--help"):
+            print(
+                f"Usage: {PROG} fmt [--check] [--diff] [--stdin] [--quiet] "
+                f"[<file_or_dir>]"
+            )
+            print()
+            print("Format AILang source files in-place (or check/diff).")
+            print()
+            print("Options:")
+            print("  --check   Check if files are formatted (exit 0/1)")
+            print("  --diff    Show unified diff of formatting changes")
+            print("  --stdin   Read from stdin, write formatted to stdout")
+            print("  --quiet   Suppress status output")
+            return 0
+        elif arg == "--stdin":
             stdin_mode = True
         elif arg == "--check":
             check_mode = True
@@ -1080,6 +1135,12 @@ def cmd_fmt(args: list[str]) -> int:
 
 def cmd_lsp(args: list[str]) -> int:
     """Start the AILang Language Server Protocol server."""
+    if args and args[0] in ("-h", "--help"):
+        print(f"Usage: {PROG} lsp")
+        print()
+        print("Start the AILang Language Server Protocol server.")
+        print("Communicates via stdin/stdout using the LSP protocol.")
+        return 0
     from compiler.lsp.server import LspServer
 
     server = LspServer()
@@ -1089,6 +1150,11 @@ def cmd_lsp(args: list[str]) -> int:
 
 def cmd_version(args: list[str]) -> int:
     """Print version information."""
+    if args and args[0] in ("-h", "--help"):
+        print(f"Usage: {PROG} version")
+        print()
+        print("Print the AILang version number.")
+        return 0
     print(_get_version())
     return 0
 
@@ -1230,19 +1296,22 @@ def _create_project_dir(project_name: str, templates: dict[str, str]) -> int:
 
 
 def cmd_new(args: list[str]) -> int:
-    """Scaffold a new AILang project.
-
-    Usage:
-        ail new <project_name>           Create a hello-world project
-        ail new <project_name> --full    Create a sample app with data files
-    """
+    """Scaffold a new AILang project."""
     full_mode = False
     positional: list[str] = []
 
     remaining = list(args)
     while remaining:
         arg = remaining.pop(0)
-        if arg == "--full":
+        if arg in ("-h", "--help"):
+            print(f"Usage: {PROG} new [--full] <project_name>")
+            print()
+            print("Scaffold a new AILang project with starter files.")
+            print()
+            print("Options:")
+            print("  --full  Create a sample app with config, data, and README files")
+            return 0
+        elif arg == "--full":
             full_mode = True
         elif arg == "--empty":
             # Backward compat: --empty now means the same as default
@@ -1268,10 +1337,12 @@ def cmd_new(args: list[str]) -> int:
 
 
 def cmd_pkg_install(args: list[str]) -> int:
-    """Install dependencies from ail.toml.
-
-    Delegates to the package manager tool.
-    """
+    """Install dependencies from ail.toml."""
+    if args and args[0] in ("-h", "--help"):
+        print(f"Usage: {PROG} install")
+        print()
+        print("Install dependencies declared in ail.toml.")
+        return 0
     # Add the project root to PYTHONPATH so tools.* is importable
     project_root = _find_project_root(Path.cwd())
     env = os.environ.copy()
@@ -1287,14 +1358,17 @@ def cmd_pkg_install(args: list[str]) -> int:
 
 
 def cmd_pkg_add(args: list[str]) -> int:
-    """Add a dependency to ail.toml.
-
-    Usage:
-        ail add <package>              Add with default version (*)
-        ail add <package> --version X  Add with specific version
-        ail add <package> --path /loc  Add local dependency
-        ail add <package> --git URL    Add git dependency
-    """
+    """Add a dependency to ail.toml."""
+    if args and args[0] in ("-h", "--help"):
+        print(f"Usage: {PROG} add <package> [--version X] [--path DIR] [--git URL]")
+        print()
+        print("Add a dependency to ail.toml.")
+        print()
+        print("Options:")
+        print("  --version X   Use specific version (default: *)")
+        print("  --path DIR    Add local dependency from path")
+        print("  --git URL     Add git dependency from URL")
+        return 0
     project_root = _find_project_root(Path.cwd())
     env = os.environ.copy()
     pythonpath = env.get("PYTHONPATH", "")
@@ -1309,11 +1383,12 @@ def cmd_pkg_add(args: list[str]) -> int:
 
 
 def cmd_pkg_remove(args: list[str]) -> int:
-    """Remove a dependency from ail.toml.
-
-    Usage:
-        ail remove <package>
-    """
+    """Remove a dependency from ail.toml."""
+    if args and args[0] in ("-h", "--help"):
+        print(f"Usage: {PROG} remove <package>")
+        print()
+        print("Remove a dependency from ail.toml and delete installed files.")
+        return 0
     project_root = _find_project_root(Path.cwd())
     env = os.environ.copy()
     pythonpath = env.get("PYTHONPATH", "")
@@ -1328,12 +1403,13 @@ def cmd_pkg_remove(args: list[str]) -> int:
 
 
 def cmd_pkg_update(args: list[str]) -> int:
-    """Update dependencies.
-
-    Usage:
-        ail update              Update all dependencies
-        ail update <package>    Update a specific dependency
-    """
+    """Update dependencies."""
+    if args and args[0] in ("-h", "--help"):
+        print(f"Usage: {PROG} update [<package>]")
+        print()
+        print("Re-resolve and update dependencies.")
+        print("Without arguments, updates all dependencies.")
+        return 0
     project_root = _find_project_root(Path.cwd())
     env = os.environ.copy()
     pythonpath = env.get("PYTHONPATH", "")
@@ -1348,13 +1424,16 @@ def cmd_pkg_update(args: list[str]) -> int:
 
 
 def cmd_pkg_list(args: list[str]) -> int:
-    """List installed dependencies.
-
-    Usage:
-        ail list               List all dependencies
-        ail list --tree        Show dependency tree
-        ail list --outdated    Show outdated packages
-    """
+    """List installed dependencies."""
+    if args and args[0] in ("-h", "--help"):
+        print(f"Usage: {PROG} list [--tree] [--outdated]")
+        print()
+        print("List installed dependencies.")
+        print()
+        print("Options:")
+        print("  --tree       Show dependency tree")
+        print("  --outdated   Show packages with available updates")
+        return 0
     project_root = _find_project_root(Path.cwd())
     env = os.environ.copy()
     pythonpath = env.get("PYTHONPATH", "")
@@ -1369,17 +1448,20 @@ def cmd_pkg_list(args: list[str]) -> int:
 
 
 def cmd_publish(args: list[str]) -> int:
-    """Pack and publish the current project to a registry.
-
-    Usage:
-        ail publish                      Publish to default registry
-        ail publish --registry <url>     Publish to a specific registry
-    """
+    """Pack and publish the current project to a registry."""
     registry_url: str | None = None
     remaining = list(args)
     while remaining:
         arg = remaining.pop(0)
-        if arg == "--registry":
+        if arg in ("-h", "--help"):
+            print(f"Usage: {PROG} publish [--registry <url>]")
+            print()
+            print("Pack and publish the current project to a registry.")
+            print()
+            print("Options:")
+            print("  --registry URL  Publish to a specific registry (default: ail.toml)")
+            return 0
+        elif arg == "--registry":
             if remaining:
                 registry_url = remaining.pop(0)
             else:
@@ -1471,7 +1553,19 @@ def cmd_test(args: list[str]) -> int:
     remaining = list(args)
     while remaining:
         arg = remaining.pop(0)
-        if arg == "--verbose":
+        if arg in ("-h", "--help"):
+            print(
+                f"Usage: {PROG} test [--verbose] [--no-check] [--root <dir>] [<file_or_dir>]"
+            )
+            print()
+            print("Discover and run test files (test_*.ail).")
+            print()
+            print("Options:")
+            print("  --verbose   Print per-test names and output")
+            print("  --no-check  Skip pre-flight ordering check")
+            print("  --root DIR  Set project root for module resolution")
+            return 0
+        elif arg == "--verbose":
             verbose = True
         elif arg == "--no-check":
             no_check = True
@@ -1693,23 +1787,19 @@ def cmd_test(args: list[str]) -> int:
 
 def cmd_order(args: list[str]) -> int:
     """Run the dependency ordering assistant."""
+    if args and args[0] in ("-h", "--help"):
+        print(f"Usage: {PROG} order [<target>]")
+        print()
+        print("Analyze and display the dependency ordering of .ail files.")
+        print("Useful for understanding project structure and build order.")
+        return 0
     return subprocess.run(
         [sys.executable, "-m", "tools.ail_order"] + list(args)
     ).returncode
 
 
 def cmd_rename(args: list[str]) -> int:
-    """Rename an identifier repository-wide.
-
-    Usage:
-        ail rename <old_name> <new_name>
-        ail rename --dry-run <old_name> <new_name>
-        ail rename --diff <old_name> <new_name>
-        ail rename --strings <old_name> <new_name>
-        ail rename --no-verify <old_name> <new_name>
-    """
-    from compiler.rename import RenameTool
-
+    """Rename an identifier repository-wide."""
     dry_run = False
     diff_mode = False
     include_strings = False
@@ -1719,7 +1809,18 @@ def cmd_rename(args: list[str]) -> int:
     remaining = list(args)
     while remaining:
         arg = remaining.pop(0)
-        if arg == "--dry-run":
+        if arg in ("-h", "--help"):
+            print(f"Usage: {PROG} rename [--dry-run] [--diff] [--strings] [--no-verify] <old> <new>")
+            print()
+            print("Rename an identifier across all .ail files in the project.")
+            print()
+            print("Options:")
+            print("  --dry-run     Show what would change without modifying files")
+            print("  --diff        Show unified diff of changes")
+            print("  --strings     Also rename inside string literals")
+            print("  --no-verify   Skip post-rename compiler verification")
+            return 0
+        elif arg == "--dry-run":
             dry_run = True
         elif arg == "--diff":
             diff_mode = True
@@ -1801,14 +1902,7 @@ def cmd_rename(args: list[str]) -> int:
 
 
 def cmd_watch(args: list[str]) -> int:
-    """Watch for file changes and recompile incrementally.
-
-    Usage:
-        ail watch [<entry_file>]
-        ail watch --poll
-        ail watch --json
-        ail watch --no-initial
-    """
+    """Watch for file changes and recompile incrementally."""
     from compiler.watch import run_watch
 
     poll = False
@@ -1821,7 +1915,18 @@ def cmd_watch(args: list[str]) -> int:
     remaining = list(args)
     while remaining:
         arg = remaining.pop(0)
-        if arg == "--poll":
+        if arg in ("-h", "--help"):
+            print(f"Usage: {PROG} watch [--poll] [--json] [--no-initial] [--verbose] [<file>]")
+            print()
+            print("Watch for file changes and recompile incrementally.")
+            print()
+            print("Options:")
+            print("  --poll           Use polling instead of filesystem events")
+            print("  --json           Output results as JSON")
+            print("  --no-initial     Skip initial compilation on start")
+            print("  --verbose        Print detailed output")
+            return 0
+        elif arg == "--poll":
             poll = True
         elif arg == "--json":
             json_mode = True
@@ -1874,12 +1979,14 @@ def _run_dx_tool(module_name: str, args: list[str]) -> int:
 
 
 def cmd_heal(args: list[str]) -> int:
-    """Get fix suggestions for common errors.
-
-    Usage:
-        ail heal                  List available topics
-        ail heal <topic>          Show fix suggestions for a topic
-    """
+    """Get fix suggestions for common errors."""
+    if args and args[0] in ("-h", "--help"):
+        print(f"Usage: {PROG} heal [<topic>]")
+        print()
+        print("Get fix suggestions for common AILang errors.")
+        print()
+        print("Run 'ail heal' without arguments to see available topics.")
+        return 0
     return _run_dx_tool("tools.ail_heal", args)
 
 
@@ -1921,62 +2028,66 @@ def cmd_doctor(args: list[str]) -> int:
 
 
 def cmd_docs(args: list[str]) -> int:
-    """Retrieve AILang documentation without filesystem access.
-
-    Usage:
-        ail docs                  List available documents
-        ail docs <name>           Print document content
-        ail docs --json           Machine-readable output
-    """
+    """Retrieve AILang documentation without filesystem access."""
+    if args and args[0] in ("-h", "--help"):
+        print(f"Usage: {PROG} docs [<name>] [--json]")
+        print()
+        print("Retrieve AILang documentation without filesystem access.")
+        print("Run 'ail docs' without arguments to list available documents.")
+        return 0
     return _run_dx_tool("tools.ail_docs", args)
 
 
 def cmd_context(args: list[str]) -> int:
-    """Generate AI-friendly project context.
-
-    Usage:
-        ail context          Generate PROJECT_CONTEXT.md (human-readable)
-        ail context --json   Output machine-readable JSON to stdout
-    """
+    """Generate AI-friendly project context."""
+    if args and args[0] in ("-h", "--help"):
+        print(f"Usage: {PROG} context [--json]")
+        print()
+        print("Generate AI-friendly project context.")
+        print("Outputs PROJECT_CONTEXT.md or machine-readable JSON.")
+        return 0
     return _run_dx_tool("tools.ail_context", args)
 
 
 def cmd_static_analyzer(args: list[str]) -> int:
-    """Run static analysis on AILang source files.
-
-    Usage:
-        ail static-analyzer [<target>] [options]
-    """
+    """Run static analysis on AILang source files."""
+    if args and args[0] in ("-h", "--help"):
+        print(f"Usage: {PROG} static-analyzer [<target>] [options]")
+        print()
+        print("Run static analysis on AILang source files.")
+        print("Reports complexity metrics, code smells, and suggestions.")
+        return 0
     return _run_dx_tool("tools.ail_static_analyzer", args)
 
 
 def cmd_benchmark(args: list[str]) -> int:
-    """Run the AILang benchmark suite.
-
-    Usage:
-        ail benchmark [options]
-    """
+    """Run the AILang benchmark suite."""
+    if args and args[0] in ("-h", "--help"):
+        print(f"Usage: {PROG} benchmark [options]")
+        print()
+        print("Run the AILang benchmark suite to measure compiler performance.")
+        return 0
     return _run_dx_tool("tools.ail_benchmark", args)
 
 
 def cmd_testgen(args: list[str]) -> int:
-    """Generate test cases for AILang applications.
-
-    Usage:
-        ail testgen [options]
-    """
+    """Generate test cases for AILang applications."""
+    if args and args[0] in ("-h", "--help"):
+        print(f"Usage: {PROG} testgen [options]")
+        print()
+        print("Generate test cases for AILang applications.")
+        return 0
     return _run_dx_tool("tools.ail_testgen", args)
 
 
 def cmd_mcp(args: list[str]) -> int:
-    """Start the AILang MCP server on stdio transport.
-
-    Usage:
-        ail mcp
-
-    Starts a Model Context Protocol server that exposes AILang compiler
-    capabilities to AI tools via stdio transport.
-    """
+    """Start the AILang MCP server on stdio transport."""
+    if args and args[0] in ("-h", "--help"):
+        print(f"Usage: {PROG} mcp")
+        print()
+        print("Start a Model Context Protocol server that exposes AILang")
+        print("compiler capabilities to AI tools via stdio transport.")
+        return 0
     return _run_dx_tool("tools.ail_mcp", args)
 
 
@@ -1993,7 +2104,7 @@ def cmd_help(args: list[str]) -> int:
     print("  -v, --version       Show version information")
     print()
     print("Commands:")
-    print("  run <file>          Compile and run an AILang program")
+    print("  run <file> [args..] Compile and run an AILang program")
     print("  build <file>        Compile and check for errors (no execution)")
     print("  check <file>        Check for forward references and ordering violations")
     print("  fmt <file_or_dir>   Format AILang source file(s)")
@@ -2032,16 +2143,28 @@ def cmd_help(args: list[str]) -> int:
     print("  help                Print this help message")
     print()
     print("Examples:")
-    print(f"  {PROG} run hello.ail")
-    print(f"  {PROG} build hello.ail")
-    print(f"  {PROG} fmt hello.ail")
-    print(f"  {PROG} test tests/")
-    print(f"  {PROG} new myproject")
-    print(f"  {PROG} doctor")
-    print(f"  {PROG} --version")
-    print(f"  {PROG} --help")
+    print(f"  {PROG} new myproject           # Create a new project")
+    print(f"  {PROG} run main.ail            # Compile and run")
+    print(f"  {PROG} run hello.ail one two   # Run with CLI arguments")
+    print(f"  {PROG} build main.ail          # Compile without running")
+    print(f"  {PROG} check main.ail          # Check for ordering errors")
+    print(f"  {PROG} fmt src/                # Format all .ail files in src/")
+    print(f"  {PROG} test tests/             # Run test files")
+    print(f"  {PROG} explain WHILE001        # Explain an error code")
+    print(f"  {PROG} docs STDLIB_REFERENCE   # View stdlib documentation")
     print()
-    print("New to AILang?")
+    print("Quick Start:")
+    print()
+    print(f"  {PROG} new myapp && cd myapp")
+    print(f"  {PROG} run main.ail")
+    print()
+    print("Documentation:")
+    print("  ail docs AGENTS              # AI agent instructions (read first)")
+    print("  ail docs STDLIB_REFERENCE    # Standard library reference")
+    print("  ail docs LANGUAGE_SPEC       # Language specification")
+    print("  ail docs GETTING_STARTED     # Getting started guide")
+    print("  ail explain <CODE>           # Detailed error explanations")
+    print("  ail doctor                   # Environment health check")
     print()
     print("Recommended workflow:")
     print()

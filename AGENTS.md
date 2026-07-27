@@ -116,14 +116,14 @@ ail test --no-check <file_or_dir>
 
 | Rule | Detail |
 |------|--------|
-| No loops | Use recursion only (`while`/`for` don't exist) |
+| No loops (default) | Use recursion only. `for-in` is experimental behind `--experimental-loops` (lowered to recursion at compile time) |
 | No nested functions | All functions at top level |
 | No forward references | Callee must be defined before caller |
 | Bottom-up ordering | Write in dependency order (Level 0 → main) |
 | `let` needs initializer | `let x = value`, never `let x;` |
 | `return` needs value | `return expr`, never `return;` |
 | `import` at top level only | Never inside a function body |
-| Unique variable names | No reuse of `i`, `x`, `result`, `acc` across functions |
+| Unique variable names | No reuse of `i`, `x`, `result`, `acc` within the same function. Reusing names across different functions is OK (block-scoped). |
 | `map.get` needs `map.has` guard | Always check key existence first |
 | `list.get` needs `list.len` check | Guard against empty list access |
 | `string.concat` takes exactly 2 args | Use `+` for 3+ strings |
@@ -134,9 +134,9 @@ ail test --no-check <file_or_dir>
 ## 5. Common Pitfalls
 
 - **Forward reference:** `Undefined identifier: X` → move X before its caller
-- **Missing stdlib:** `sort`, `list.copy` don't exist → write custom (see Playbook)
+- **Missing stdlib:** Check `docs/reference/STDLIB_REFERENCE.md` before reimplementing — `list.sort`, `list.copy`, and many others already exist
 - **Wrong map key:** Keys mismatch between `map.set` and `map.get` → audit key names
-- **Variable collision:** `let i = 0` in multiple functions → use unique names
+- **Variable collision:** `let i = 0` in multiple functions is OK (block-scoped). `let i = 0` and `let i = 1` in the *same* function → use unique names
 - **File too large:** ~100 functions / 1000+ LOC → forward reference ordering becomes error-prone; plan to split early
 
 ---
@@ -149,7 +149,7 @@ ail test --no-check <file_or_dir>
 | 2 | Dependency graph created (Level 0 → N) |
 | 3 | Stdlib audited (no manual reimplementation of existing APIs) |
 | 4 | Guards verified (`map.has` before `map.get`, `list.len` before `list.get`, `&&` safe) |
-| 5 | Variable names unique across all functions |
+| 5 | Variable names unique within each function |
 | 6 | `string.concat` has ≤2 args (use `+` for 3+) |
 | 7 | `let` has initializer (`let x = value`) |
 | 8 | `return` has value (`return expr`) |

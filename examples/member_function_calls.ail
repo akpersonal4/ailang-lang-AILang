@@ -1,3 +1,20 @@
-// Member function calls example
-let math = {"max": fn(x, y) { if x > y { x } else { y } }};
-math.max(10, 20)
+// Member function calls example - demonstrates calling functions from maps
+import map;
+
+fn max_func(x, y) {
+    if (x > y) {
+        return x
+    } else {
+        return y
+    }
+}
+
+fn main() {
+    let math = map.new();
+    map.set(math, "max", max_func);
+
+    let maxFn = map.get(math, "max");
+    print(maxFn(10, 20));
+
+    return 0
+}

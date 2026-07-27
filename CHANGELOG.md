@@ -1,5 +1,40 @@
 # Changelog
 
+## v1.1.5
+
+### Production Release — Independent Certification Complete
+
+This release incorporates critical production readiness fixes and passes independent certification. AILang v1.1.5 is now PRODUCTION READY.
+
+- **Security Hardening**:
+  - Implemented comprehensive runtime sandboxing for file I/O, environment access, and recursion limits (`compiler/runtime/sandbox.py`).
+  - Patched Zip Slip vulnerability in `tarfile.extractall()` across package management tools.
+  - Blocked dangerous dunder attribute access in the interpreter (`__class__`, `__subclasses__`, etc.) to prevent sandbox escapes.
+- **Diagnostics Completion**:
+  - All 37 compiler error codes now have named constants and detailed explanations (`compiler/diagnostics.py`).
+  - Removed obsolete diagnostic code (`MOD005`).
+- **CLI Usability Improvements**:
+  - All 27 CLI commands now consistently support the `--help` flag, providing clear usage information.
+  - `ail lsp --help` now displays help instead of starting the server.
+- **Documentation Synchronization**:
+  - Corrected README.md test counts (1047 passing).
+  - Updated AGENTS.md with accurate claims regarding stdlib functions (`list.sort`, `list.copy`) and loop rules.
+  - Ensured version consistency across `LANGUAGE_SPEC.md`, `README.md`, and internal tool versions.
+- **Packaging Improvements**:
+  - VS Code extension version bumped to 1.1.5.
+  - Synchronized compiler and tool versions across the repository.
+  - `.gitignore` updated to exclude profiler outputs and generated project context files.
+- **Test Suite**:
+  - All 1047 tests are passing, including new security regression tests.
+  - Resolved minor version mismatch issues in test assertions.
+
+### No Changes
+
+- No language changes
+- No breaking changes
+- No new features
+- No API changes
+
 ## v1.1.4
 
 ### Bug Fix — Stdlib Module Resolution (MOD003)

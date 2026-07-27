@@ -1,37 +1,27 @@
-import storage;
+// Root main example - demonstrates file I/O and list operations
 import file;
-import json;
-import path;
 import list;
-import map;
-import string;
-import helpers;
-import product;
+import json;
 
-// Ensure data dir
+fn main() {
+    let dataDir = "data";
 
-let dataDir = "data";
+    if (file.exists(dataDir) == false) {
+        file.write(dataDir + "/.gitkeep", "");
+    }
 
-if (file.exists(dataDir) == false) {
-    file.mkdir(dataDir);
-}
+    let items = list.new();
+    list.append(items, "Widget");
+    list.append(items, "Gadget");
+    list.append(items, "Doohickey");
 
-// Create product
+    print("Created " + list.len(items) + " items");
 
-let pid1 = product.product_create("Widget", 100, 50);
+    let jsonData = json.stringify(items);
+    file.write(dataDir + "/items.json", jsonData);
 
-print("Created: " + pid1);
+    let loaded = json.parse(file.read(dataDir + "/items.json"));
+    print("Loaded " + list.len(loaded) + " items");
 
-// Search for product
-
-let allProds = storage.storage_list("products");
-
-
-let results = list.new();
-
-
-let found = product.product_search("Widget", allProds, 0, results);
-
-if (list.len(found) > 0) {
-    print("Found: " + list.len(found));
+    return 0
 }

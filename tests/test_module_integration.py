@@ -183,8 +183,13 @@ def test_duplicate_import_diagnostic() -> None:
         session.discover(main_file)
         session.analyze(reporter)
 
-        # Note: MOD002 may not trigger because each import creates its own scope
-        # This test documents the expected behavior
+        # MOD002 should now be reported for duplicate imports
+        mod002_warnings = [
+            d for d in reporter.diagnostics if d.error_code.code == "MOD002"
+        ]
+        assert len(mod002_warnings) == 1, (
+            f"Expected 1 MOD002 warning for duplicate import, got {len(mod002_warnings)}"
+        )
 
 
 def test_runtime_module_initialization() -> None:

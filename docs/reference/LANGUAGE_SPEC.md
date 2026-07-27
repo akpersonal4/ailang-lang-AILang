@@ -1,6 +1,6 @@
 # AILang Language Specification
 
-**Version:** 1.1.2  
+**Version:** 1.1.4  
 **Status:** Complete — Implementation Reference  
 **Canonical Source:** This document is the single source of truth for the AILang language.
 
@@ -727,7 +727,8 @@ Every phase is deterministic: the same input always produces the same output.
 
 ## 14. Language Limitations
 
-- No `while` or `for` loops — use recursion for iteration.
+- No `while` loops — use recursion for iteration.
+- `for-in` loops are available behind the `--experimental-loops` flag (lowered to recursive calls at compile time). Not available by default.
 - No string indexing (`s[i]`) — use `string` module functions.
 - No character type — use single-character strings.
 - No array/list/set literal syntax — use module functions.
@@ -885,7 +886,7 @@ fn main() {
 | 0.3.0 | M63 | Pre-flight check integration. `ail check` auto-runs before `ail run` and `ail test`. `--no-check` flag. |
 | 0.4.0 | M64 | CLI tooling. `ail fmt`, `ail lsp`, `ail rename`, `ail watch`, `ail new`. |
 | 0.5.0 | M65 | Stdlib expansion. `list.group_by_key`, `list.sum_by_key`, `list.take`, `list.skip`, `list.search_by_name`, `list.exists_by_key`, `map.values`, `map.get_or_default`, `map.safe_get`. |
-| 1.0.0 | M66 | Bounded deterministic iteration. `for-in` loops promoted to stable. ADR-00X. |
+| 1.0.0 | M66 | Experimental `for-in` loop syntax added (behind `--experimental-loops` flag, lowered to recursive calls at compile time). ADR-00X. |
 
 ---
 

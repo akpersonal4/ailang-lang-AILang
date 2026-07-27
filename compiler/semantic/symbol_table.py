@@ -10,6 +10,8 @@ from compiler.diagnostics import (
     DiagnosticReporter,
     ErrorCode,
     Severity,
+    LANG002_LIST_SET_UNAVAILABLE,
+    LANG003_STRING_REPLACE_UNAVAILABLE,
 )
 
 
@@ -146,6 +148,28 @@ class SymbolTable:
                 f"AILang requires bottom-up ordering. Move '{name}' above "
                 f"the function that calls it."
             )
+        elif name == "list.set":
+            diagnostic = Diagnostic(
+                Severity.ERROR,
+                LANG002_LIST_SET_UNAVAILABLE,
+                "list.set() does not exist in AILang. Use map.set() for key-value storage, or list.append() to add to the end of a list.",
+                None,
+                None,
+                self._file_path,
+            )
+            self.reporter.report(diagnostic)
+            return None
+        elif name == "string.replace":
+            diagnostic = Diagnostic(
+                Severity.ERROR,
+                LANG003_STRING_REPLACE_UNAVAILABLE,
+                "string.replace() does not exist in AILang. Use string.substring() + string.concat() to build modified strings.",
+                None,
+                None,
+                self._file_path,
+            )
+            self.reporter.report(diagnostic)
+            return None
         else:
             msg = f"Undefined identifier: {name}"
 

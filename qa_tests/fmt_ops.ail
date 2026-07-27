@@ -1,3 +1,0 @@
-fn calc(a, b) {
-    return a + b * c - d / e % f;
-}

@@ -39,7 +39,10 @@ class Runtime:
     """Execute a lowered IR program with lexical scopes and frames."""
 
     def __init__(self, module_bundle: Any = None) -> None:
-        sys.setrecursionlimit(50000)
+        from .sandbox import get_policy
+
+        policy = get_policy()
+        sys.setrecursionlimit(policy.max_recursion)
         self._global_environment = Environment()
         self._frame_stack: list[StackFrame] = []
         self._functions: dict[str, FunctionIR] = {}
@@ -183,10 +186,15 @@ class Runtime:
                 if func is not None:
                     return func
             # Handle dict-style access
-            if isinstance(receiver, dict):
-                return receiver.get(member)
-            if hasattr(receiver, member):
-                return getattr(receiver, member)
+                if isinstance(receiver, dict):
+                    return receiver.get(member)
+                if hasattr(receiver, member):
+                    # Restrict attribute access to safe attributes only
+                    if member.startswith("__") and member.endswith("__"):
+                        raise AttributeError(
+                            f"Access to dunder attribute '{member}' is not allowed"
+                        )
+                    return getattr(receiver, member)
             return receiver
         if isinstance(expression, UnaryOperationIR):
             operand = self._evaluate_expression(expression.operand)
@@ -337,6 +345,19 @@ class Runtime:
                 if isinstance(receiver, dict):
                     return receiver.get(member)
                 if hasattr(receiver, member):
+                    # Restrict access to attributes that could enable sandbox escape
+                    # Allow safe dunders (__len__, __str__, etc.) but block dangerous ones
+                    _BLOCKED_DUNDER = frozenset({
+                        "__class__", "__subclasses__", "__bases__", "__mro__",
+                        "__globals__", "__code__", "__closure__", "__defaults__",
+                        "__annotations__", "__dict__", "__qualname__",
+                        "__import__", "__build_class__", "__loader__",
+                        "__spec__", "__file__", "__cached__", "__package__",
+                    })
+                    if member in _BLOCKED_DUNDER:
+                        raise AttributeError(
+                            f"Access to attribute '{member}' is not allowed"
+                        )
                     return getattr(receiver, member)
 
             module_env = self._modules.get(base_name)

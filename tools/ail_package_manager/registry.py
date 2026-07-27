@@ -286,6 +286,15 @@ def download_package_archive(
 
     buf = _io.BytesIO(archive_bytes)
     with tarfile.open(fileobj=buf, mode="r:gz") as tar:
+        for member in tar.getmembers():
+            member_path = os.path.join(str(dest_dir), member.name)
+            abs_dest = os.path.abspath(str(dest_dir))
+            abs_member = os.path.abspath(member_path)
+            if not abs_member.startswith(abs_dest + os.sep) and abs_member != abs_dest:
+                raise RegistryError(
+                    f"Unsafe path in archive: {member.name} "
+                    f"resolves outside destination"
+                )
         tar.extractall(path=str(dest_dir))
 
     print(f"  Downloaded {name} v{version} to {dest_dir}")
@@ -334,6 +343,15 @@ def download_from_local_registry(
 
     buf = _io.BytesIO(archive_bytes)
     with tarfile.open(fileobj=buf, mode="r:gz") as tar:
+        for member in tar.getmembers():
+            member_path = os.path.join(str(dest_dir), member.name)
+            abs_dest = os.path.abspath(str(dest_dir))
+            abs_member = os.path.abspath(member_path)
+            if not abs_member.startswith(abs_dest + os.sep) and abs_member != abs_dest:
+                raise RegistryError(
+                    f"Unsafe path in archive: {member.name} "
+                    f"resolves outside destination"
+                )
         tar.extractall(path=str(dest_dir))
 
     print(f"  Downloaded {name} v{version} to {dest_dir}")

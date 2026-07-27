@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from compiler.diagnostics import Severity
 from compiler.lexer import TokenKind
 from compiler.parser.declarations import (
     parse_function_declaration,
@@ -44,6 +45,47 @@ def parse_block(stream: TokenStream) -> CSTNode:
                 stream.report(
                     "Use of 'for' requires --experimental-loops flag", "PAR012"
                 )
+        elif (
+            stream.current().kind is TokenKind.IDENTIFIER
+            and stream.current().value == "while"
+            and stream._token_at(stream.index + 1).kind is TokenKind.LPAREN
+        ):
+            # Detect "while(...)" — AILang has no while loops
+            from compiler.diagnostics import Diagnostic, WHILE001_NO_WHILE_LOOPS
+
+            cur = stream.current()
+            diagnostic = Diagnostic(
+                Severity.ERROR,
+                WHILE001_NO_WHILE_LOOPS,
+                "AILang has no while loops. Use recursion instead.",
+                cur.line,
+                cur.column,
+                stream.source_path,
+            )
+            if stream.reporter is not None:
+                stream.reporter.report(diagnostic)
+            # In all cases, synchronize to avoid cascading errors
+            from compiler.parser.recovery import synchronize as _sync
+
+            _sync(stream)
+        elif stream.current().kind is TokenKind.IMPORT:
+            from compiler.diagnostics import (
+                Diagnostic,
+                LANG004_IMPORT_IN_FUNCTION,
+            )
+
+            cur = stream.current()
+            diagnostic = Diagnostic(
+                Severity.ERROR,
+                LANG004_IMPORT_IN_FUNCTION,
+                "Import statements are only allowed at the top level, not inside functions or blocks.",
+                cur.line,
+                cur.column,
+                stream.source_path,
+            )
+            if stream.reporter is not None:
+                stream.reporter.report(diagnostic)
+            synchronize(stream)
         elif stream.current().kind is TokenKind.LBRACE:
             # Nested block
             block.children.append(parse_block(stream))

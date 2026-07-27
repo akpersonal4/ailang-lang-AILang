@@ -1,3 +1,10 @@
 // Chained member access example
-let config = {"db": {"port": 5432}};
-config.db.port
+import map;
+
+let config = map.new();
+let db = map.new();
+map.set(db, "port", 5432);
+map.set(config, "db", db);
+
+let dbConfig = map.get(config, "db");
+print(map.get(dbConfig, "port"))

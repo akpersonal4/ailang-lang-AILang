@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any, cast
 
 from .values import RuntimeValue
+from .sandbox import get_policy
 
 # Will be set by CLI before running a program so env_args() returns
 # only the user's arguments, not the CLI-internal plumbing.
@@ -278,32 +279,53 @@ def set_clear(args: tuple[RuntimeValue, ...]) -> set[RuntimeValue]:
 
 
 def file_exists(args: tuple[RuntimeValue, ...]) -> bool:
-    return os.path.exists(str(args[0]))
+    policy = get_policy()
+    path = policy.check_path(str(args[0]))
+    return os.path.exists(path)
 
 
 def file_read(args: tuple[RuntimeValue, ...]) -> str:
-    with open(str(args[0]), encoding="utf-8") as f:
+    policy = get_policy()
+    path = policy.check_path(str(args[0]))
+    if os.path.exists(path):
+        size = os.path.getsize(path)
+        if not policy.check_read_size(size):
+            raise PermissionError(
+                f"Sandbox: file too large ({size} bytes, "
+                f"limit {policy.max_read_bytes})"
+            )
+    with open(path, encoding="utf-8") as f:
         return f.read()
 
 
 def file_write(args: tuple[RuntimeValue, ...]) -> int:
-    Path(str(args[0])).parent.mkdir(parents=True, exist_ok=True)
-    with open(str(args[0]), "w", encoding="utf-8") as f:
+    policy = get_policy()
+    path = policy.check_path(str(args[0]))
+    policy.check_parent_creation(path)
+    Path(path).parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
         return f.write(str(args[1]))
 
 
 def file_append(args: tuple[RuntimeValue, ...]) -> int:
-    Path(str(args[0])).parent.mkdir(parents=True, exist_ok=True)
-    with open(str(args[0]), "a", encoding="utf-8") as f:
+    policy = get_policy()
+    path = policy.check_path(str(args[0]))
+    policy.check_parent_creation(path)
+    Path(path).parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "a", encoding="utf-8") as f:
         return f.write(str(args[1]))
 
 
 def file_remove(args: tuple[RuntimeValue, ...]) -> None:
-    os.remove(str(args[0]))
+    policy = get_policy()
+    path = policy.check_path(str(args[0]))
+    os.remove(path)
 
 
 def file_listdir(args: tuple[RuntimeValue, ...]) -> list[str]:
-    return sorted(os.listdir(str(args[0])))
+    policy = get_policy()
+    path = policy.check_path(str(args[0]))
+    return sorted(os.listdir(path))
 
 
 def path_join(args: tuple[RuntimeValue, ...]) -> str:
@@ -348,7 +370,14 @@ def time_format(args: tuple[RuntimeValue, ...]) -> str:
 
 
 def env_get(args: tuple[RuntimeValue, ...]) -> str:
-    return os.environ.get(str(args[0]), "")
+    key = str(args[0])
+    policy = get_policy()
+    if not policy.check_env_key(key):
+        raise PermissionError(
+            f"Sandbox: environment variable '{key}' is not accessible. "
+            f"Only '{policy.env_prefix}*' variables are allowed."
+        )
+    return os.environ.get(key, "")
 
 
 def env_cwd(args: tuple[RuntimeValue, ...]) -> str:

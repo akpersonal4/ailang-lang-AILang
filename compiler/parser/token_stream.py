@@ -24,6 +24,8 @@ class TokenStream:
         self.source_path = source_path
         self.experimental_loops = experimental_loops
         self.index = 0
+        # Tracks function nesting depth for nested-fn detection.
+        self._nesting_depth = 0
         # Suppress PAR001 cascade errors after an unterminated string (LEX002).
         self._suppress_cascade = False
         if reporter is not None:

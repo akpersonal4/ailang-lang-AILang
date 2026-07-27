@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from compiler.diagnostics import DiagnosticReporter
+from compiler.diagnostics import DiagnosticReporter, WHILE001_NO_WHILE_LOOPS
 from compiler.lexer import Token, TokenKind
 from compiler.parser.declarations import (
     parse_function_declaration,
@@ -110,6 +110,26 @@ class Parser:
                     synchronize(self.stream)
             elif cur.kind is TokenKind.IMPORT:
                 program.children.append(self._parse_import_declaration())
+            elif (
+                cur.kind is TokenKind.IDENTIFIER
+                and cur.value == "while"
+                and self.stream._token_at(self.stream.index + 1).kind is TokenKind.LPAREN
+            ):
+                # Detect "while(...)" — AILang has no while loops
+                from compiler.diagnostics import Diagnostic, ErrorCode, Severity
+
+                diagnostic = Diagnostic(
+                    Severity.ERROR,
+                    WHILE001_NO_WHILE_LOOPS,
+                    "AILang has no while loops. Use recursion instead.",
+                    cur.line,
+                    cur.column,
+                    self.stream.source_path,
+                )
+                if self.stream.reporter is not None:
+                    self.stream.reporter.report(diagnostic)
+                # Always synchronize to avoid cascading errors
+                synchronize(self.stream)
             elif cur.kind in {
                 TokenKind.IDENTIFIER,
                 TokenKind.NUMBER,

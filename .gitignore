@@ -47,5 +47,15 @@ benchmarks/results/
 # Verification environments
 verify_env/
 
+# Generated project context
+PROJECT_CONTEXT.md
+
+# Node modules (top-level)
+node_modules/
+
+# Profiler data (auto-generated, contains hardcoded paths)
+tools/profile_*.json
+tools/python_profile_data.json
+
 # PyPI credentials
 ~/.pypirc

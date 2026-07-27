@@ -384,6 +384,118 @@ ERROR_DATABASE: dict[str, ErrorExplanation] = {
         related_commands=["ail docs STDLIB_REFERENCE.md", "ail heal missing_import"],
         heal_topic="missing_import",
     ),
+    "WHILE001": ErrorExplanation(
+        code="WHILE001",
+        description="AILang has no while loops. Use recursion instead.",
+        common_causes=[
+            "Using while(condition) { body } syntax from Python/JavaScript/C.",
+            "Attempting to write iterative logic.",
+        ],
+        examples=[
+            Example(
+                broken="let i = 0;\nwhile (i < 10) {\n    print(i);\n    i = i + 1;\n}",
+                fixed="fn count_up(n) {\n    if (n == 0) {\n        return 0;\n    }\n    print(n);\n    return count_up(n - 1);\n}\ncount_up(10);",
+                explanation="Replace while with a recursive function that calls itself with a decreasing counter.",
+            ),
+        ],
+        fixes=[
+            "Convert the while loop to a recursive function.",
+            "Use an if statement as the base case to stop recursion.",
+            "Pass decreasing parameters to avoid infinite recursion.",
+            "See LANGUAGE_SPEC.md for the recursion pattern.",
+        ],
+        related_commands=["ail docs AGENTS.md", "ail docs LANGUAGE_SPEC.md"],
+        heal_topic=None,
+    ),
+    "LANG001": ErrorExplanation(
+        code="LANG001",
+        description="Nested functions are not allowed in AILang. All functions must be at the top level.",
+        common_causes=[
+            "Defining a function inside another function body.",
+            "Python习惯: defining helper functions inside main().",
+        ],
+        examples=[
+            Example(
+                broken="fn main() {\n    fn helper() { return 1; }\n    let x = helper();\n}",
+                fixed="fn helper() { return 1; }\nfn main() {\n    let x = helper();\n}",
+                explanation="Move the inner function to the top level, above the function that calls it.",
+            ),
+        ],
+        fixes=[
+            "Move the inner function to the top level of the file.",
+            "Use bottom-up ordering: define helper functions before their callers.",
+            "Rename functions to avoid name collisions at the top level.",
+        ],
+        related_commands=["ail docs AGENTS.md", "ail fmt"],
+        heal_topic=None,
+    ),
+    "LANG002": ErrorExplanation(
+        code="LANG002",
+        description="list.set() does not exist in AILang. Use map.set() or list.append() instead.",
+        common_causes=[
+            "Trying to set a value at a specific index in a list.",
+            "Python habit: my_list[index] = value.",
+        ],
+        examples=[
+            Example(
+                broken="import list;\nlet items = list.new();\nlist.set(items, 0, 42);",
+                fixed='import map;\nlet m = map.new();\nmap.set(m, "key", 42);',
+                explanation="Use map.set() for key-value storage. For lists, use list.append() to add to the end.",
+            ),
+        ],
+        fixes=[
+            "Use map.set(key, value) for key-value storage.",
+            "Use list.append(value) to add to the end of a list.",
+            "For indexed access, use list.get(list, index) to read.",
+            "See STDLIB_REFERENCE.md for available list functions.",
+        ],
+        related_commands=["ail docs STDLIB_REFERENCE.md", "ail explain MOD004"],
+        heal_topic=None,
+    ),
+    "LANG003": ErrorExplanation(
+        code="LANG003",
+        description="string.replace() does not exist in AILang. Use string.substring() and string.concat() instead.",
+        common_causes=[
+            "Trying to replace part of a string.",
+            "Python habit: my_string.replace(old, new).",
+        ],
+        examples=[
+            Example(
+                broken='import string;\nlet s = string.replace("hello world", "world", "AILang");',
+                fixed='import string;\nlet before = string.substring("hello world", 0, 6);\nlet after = string.substring("hello world", 11, 11);\nlet s = string.concat(before, "AILang");\ns = string.concat(s, after);',
+                explanation="Build modified strings by extracting substrings and concatenating.",
+            ),
+        ],
+        fixes=[
+            "Use string.substring() to extract parts before and after the target.",
+            "Use string.concat() to join the parts with the replacement.",
+            "For simple cases, build a new string from scratch.",
+            "See STDLIB_REFERENCE.md for string function details.",
+        ],
+        related_commands=["ail docs STDLIB_REFERENCE.md", "ail explain MOD004"],
+        heal_topic=None,
+    ),
+    "LANG004": ErrorExplanation(
+        code="LANG004",
+        description="Import statements are only allowed at the top level, not inside functions or blocks.",
+        common_causes=[
+            "Placing an import statement inside a function body.",
+            "Placing an import statement inside an if/else block.",
+        ],
+        examples=[
+            Example(
+                broken='fn main() {\n    import string;\n    let x = string.uppercase("hello");\n}',
+                fixed='import string;\n\nfn main() {\n    let x = string.uppercase("hello");\n}',
+                explanation="Move the import to the top of the file, outside any function or block.",
+            ),
+        ],
+        fixes=[
+            "Move the import statement to the top of the file, before any function definitions.",
+            "AILang imports are file-level declarations, not scoped to functions.",
+        ],
+        related_commands=["ail docs AGENTS.md", "ail docs LANGUAGE_SPEC.md"],
+        heal_topic=None,
+    ),
 }
 
 

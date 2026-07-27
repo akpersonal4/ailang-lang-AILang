@@ -23,6 +23,13 @@ def find_markdown_files(root: Path) -> list[Path]:
         ".pytest_cache",
         ".ruff_cache",
         "node_modules",
+        "verify_env",
+        "dist",
+        "build",
+        ".ail",
+        "backups",
+        ".github",
+        "archived",
     }
     markdown_files = []
     for path in root.rglob("*.md"):
@@ -43,6 +50,15 @@ def find_all_files(root: Path) -> list[Path]:
         "node_modules",
         "__pycache__",
         "ailang.egg-info",
+        "verify_env",
+        "dist",
+        "build",
+        ".ail",
+        "backups",
+        ".github",
+        "archived",
+        "data",
+        "verify_env",
     }
     all_files = []
     for path in root.rglob("*"):
