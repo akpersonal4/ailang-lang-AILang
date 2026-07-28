@@ -122,7 +122,6 @@ def generate_test_program(target_lines: int) -> str:
     lines.append("fn main() {")
     # call some functions
     calls = min(n_fns, 20)
-    result_var = "r"
     for i in range(calls):
         if i == 0:
             lines.append(f"    let r = fn_{i}({i});")

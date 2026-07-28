@@ -56,7 +56,6 @@ def reorder_functions(content: str, levels: dict[int, list[str]]) -> str:
     lines = content.split("\n")
 
     # Separate into header (imports/lets/comments) and functions
-    header_lines: list[str] = []
     function_blocks: list[tuple[int, int, str]] = []
 
     # Extract function blocks
@@ -66,7 +65,6 @@ def reorder_functions(content: str, levels: dict[int, list[str]]) -> str:
         if func_pattern.match(line):
             # Start of a function - find its extent
             brace_count = 0
-            block_start = line_num
             block_lines = []
 
             for j in range(line_num, len(lines)):

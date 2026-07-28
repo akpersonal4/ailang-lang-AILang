@@ -16,7 +16,6 @@ Generates machine-readable reports and a unified validation summary.
 
 import argparse
 import json
-import sys
 import time
 from pathlib import Path
 

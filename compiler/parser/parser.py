@@ -116,7 +116,7 @@ class Parser:
                 and self.stream._token_at(self.stream.index + 1).kind is TokenKind.LPAREN
             ):
                 # Detect "while(...)" — AILang has no while loops
-                from compiler.diagnostics import Diagnostic, ErrorCode, Severity
+                from compiler.diagnostics import Diagnostic, Severity
 
                 diagnostic = Diagnostic(
                     Severity.ERROR,

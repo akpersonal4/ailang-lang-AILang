@@ -19,6 +19,7 @@ from __future__ import annotations
 import hashlib
 import io
 import json
+import os
 import tarfile
 import urllib.error
 import urllib.request
@@ -62,8 +63,6 @@ def load_registry_url(project_root: Path) -> str:
             return str(reg["url"])
 
     # Fallback to env var
-    import os
-
     return os.environ.get("AIL_REGISTRY", "https://registry.ailang.dev")
 
 
@@ -88,8 +87,6 @@ def pack_project(project_root: Path) -> tuple[bytes, str]:
     manifest_path = project_root / "ail.toml"
     if not manifest_path.exists():
         raise RegistryError("No ail.toml found in project root")
-
-    manifest = parse_manifest(manifest_path)
 
     buf = io.BytesIO()
     with tarfile.open(fileobj=buf, mode="w:gz") as tar:

@@ -166,10 +166,6 @@ def main() -> int:
 
     # Determine exit code
     if isinstance(analysis, FileAnalysis):
-        has_errors = any(
-            f.severity == analysis.findings[0].severity if analysis.findings else None
-            for f in analysis.findings
-        )
         for f in analysis.findings:
             if f.severity.value == "error":
                 return ExitCode.FAILURE

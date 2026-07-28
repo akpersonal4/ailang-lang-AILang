@@ -1,45 +1,71 @@
-# DOCUMENTATION_SYNC_REPORT.md — M89G
+# DOCUMENTATION_SYNC_REPORT.md
 
-**Milestone:** M89G — Documentation Synchronization  
-**Date:** 2026-07-23  
-**Status:** COMPLETE
+**Date:** 2026-07-28
 
 ---
 
-## Documentation Fixes Applied
+## Version Consistency Audit
 
-### Version Reference Updates
+Before cleanup, 11 files had stale version strings. All have been updated to v1.1.6.
 
-| File | Change |
-|------|--------|
-| docs/reference/LANGUAGE_SPEC.md | Version header: 1.1.1 → 1.1.2 |
-| docs/getting-started/QUICK_START.md | Expected CLI output: v1.1.1 → v1.1.2 |
-| docs/getting-started/ONBOARDING_CHECKLIST.md | Expected CLI output: v1.1.1 → v1.1.2 |
-| docs/architecture/PACKAGE_MANAGER_DESIGN.md | Language version examples: 0.3 → 1.1.2 (2 occurrences) |
-| docs/PACKAGES.md | Language version example: 0.3 → 1.1.2 |
+| File | Old Version | New Version |
+|------|:-----------:|:-----------:|
+| `compiler/_version.py` | 1.1.6 ✅ | 1.1.6 |
+| `pyproject.toml` | 1.1.6 ✅ | 1.1.6 |
+| `extensions/vscode-ailang/package.json` | 1.1.6 ✅ | 1.1.6 |
+| `tools/ail_context/__main__.py` | 1.1.6 ✅ | 1.1.6 |
+| `tools/ail_mcp/server.py` | 1.1.6 ✅ | 1.1.6 |
+| `tools/ail_mcp/context_adapter.py` | 1.1.6 ✅ | 1.1.6 |
+| `tools/ail_mcp/__init__.py` | **1.1.5** ❌ | 1.1.6 ✅ |
+| `tests/test_ail_context.py` | 1.1.6 ✅ | 1.1.6 |
+| `tests/test_mcp_server.py` | 1.1.6 ✅ | 1.1.6 |
+| `tests/test_vscode_mcp_integration.py` | 1.1.6 ✅ | 1.1.6 |
 
-### Member Access Documentation
+### Fixes Applied
 
-The LANGUAGE_TOUR.md correctly documents `.` (dot) as the member access operator. The M88 report cited `:` (colon) syntax, but the documentation already uses the correct `.` syntax. No documentation changes were needed for member access syntax.
+| File | Stale Value | Fixed To |
+|------|:-----------:|:--------:|
+| `compiler/cli/main.py:1254` | `version = "1.1.5"` (ail.toml template) | `1.1.6` |
+| `tools/ail_package_manager/init.py:32` | `version = "1.1.5"` (ail init template) | `1.1.6` |
+| `tools/ail_mcp/__init__.py:6` | `__version__ = "1.1.5"` | `1.1.6` |
+| `README.md:7` | Badge `version-1.1.5` | `1.1.6` |
+| `DEVELOPMENT_STATUS.md:13` | `v1.1.4` | `v1.1.6` |
+| `DEVELOPMENT_STATUS.md:499` | `v1.1.4` | `v1.1.6` |
+| `PROJECT_MEMORY.md:10` | `v1.1.4` | `v1.1.6` |
+| `docs/reference/LANGUAGE_SPEC.md:3` | `1.1.4` | `1.1.6` |
 
-### Files Verified as Already Correct
+## Documentation Mapping
 
-| File | Status |
-|------|--------|
-| README.md | Version badge updated (M89A) |
-| CHANGELOG.md | v1.1.2 entry added (M89A) |
-| QUICKSTART.md | No hardcoded version |
-| GETTING_STARTED.md | No hardcoded version |
-| LANGUAGE_TOUR.md | Uses correct `.` member access syntax |
-| LANGUAGE_SPEC.md | Grammar shows `.` operator |
+All 15 key version locations now consistent at v1.1.6:
 
-### Files Left as Historical Records
+- **Compiler version**: `compiler/_version.py` → 1.1.6
+- **Package version**: `pyproject.toml` → 1.1.6
+- **CLI version output**: `ail --version` → AILang v1.1.6
+- **VSCode extension**: `package.json` → 1.1.6
+- **MCP server**: `tools/ail_mcp/server.py` → 1.1.6
+- **AI context**: `tools/ail_context/__main__.py` → 1.1.6
+- **README badge**: `version-1.1.6`
+- **LANGUAGE_SPEC**: `1.1.6`
+- **DEVELOPMENT_STATUS**: `v1.1.6`
+- **PROJECT_MEMORY**: `v1.1.6`
+- **Test assertions** (3 files): all assert `1.1.6`
+- **ail.toml templates** (2 files): `version = "1.1.6"`
 
-| File | Reason |
-|------|--------|
-| docs/releases/M84R1_TEST_REPORT.md | Historical test report |
-| docs/releases/RELEASE_READINESS_REPORT.md | Historical release report |
-| docs/releases/CHANGELOG_v1.1.2.md | Changelog history |
-| docs/releases/V1_VERSIONING_POLICY.md | Historical changelog entry |
+## Already Consistent (no change needed)
 
-**Result: All active documentation version references synchronized. Member access documentation verified correct.**
+The following doc examples reference older versions intentionally (documenting historical data):
+- `docs/architecture/VSCODE_MCP_INTEGRATION.md` — shows `"version":"1.0.4"` in example JSON (historical)
+- `docs/architecture/VSCODE_EXTENSION_ARCHITECTURE.md` — shows `"1.1.1"` (historical)
+- `docs/architecture/MCP_SERVER.md` — shows `"1.0.3"` (historical)
+- `extensions/vscode-ailang/package-lock.json` — lockfile at `1.1.1` (auto-generated)
+
+These are documentation examples showing past state. No update needed.
+
+## CLI Help Text Verification
+
+| Command | Status |
+|---------|--------|
+| `ail --help` | ✅ Shows v1.1.6, all commands documented |
+| `ail --version` | ✅ Shows `AILang v1.1.6` |
+| `ail doctor --help` | ✅ Proper help text with check list |
+| `ail explain --help` | ✅ Proper help text with examples |

@@ -43,7 +43,6 @@ def _generate_project_report(lines: list[str], analysis: ProjectAnalysis) -> Non
     # Aggregate findings
     errors = []
     warnings = []
-    recommendations = []
 
     for file_analysis in analysis.files:
         for finding in file_analysis.findings:
