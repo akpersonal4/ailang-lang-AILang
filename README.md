@@ -2,12 +2,12 @@
 
 **AI-first programming language — deterministic, specification-driven, and compiler-friendly.**
 
-[![Tests](https://img.shields.io/badge/tests-1037%20passing-brightgreen)](#)
+[![Tests](https://img.shields.io/badge/tests-1136%20passing-brightgreen)](#)
 [![Python](https://img.shields.io/badge/python-3.11%2B-blue)](#)
 [![Version](https://img.shields.io/badge/version-1.1.5-brightgreen)](#)
 [![License](https://img.shields.io/badge/license-Apache%202.0-green)](#)
 
-AILang is an AI-first programming language designed to be deterministic, specification-first, and easy for both humans and AI systems to reason about. It features a complete compiler pipeline, a 16-module standard library, and has been validated through 1037 tests, stress testing up to 10,000 LOC, and AI-generated program verification with 100% first-pass success.
+AILang is an AI-first programming language designed to be deterministic, specification-first, and easy for both humans and AI systems to reason about. It features a complete compiler pipeline, a 16-module standard library, and has been validated through 1136 tests, stress testing up to 10,000 LOC, and AI-generated program verification with 100% first-pass success.
 
 ## Quick Start
 

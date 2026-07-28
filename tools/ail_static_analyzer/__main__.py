@@ -244,7 +244,7 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    root = get_project_root()
+    root = Path.cwd()
 
     # Determine what to analyze
     target_path = Path(args.target)

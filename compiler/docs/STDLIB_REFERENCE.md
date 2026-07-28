@@ -30,9 +30,10 @@ import string;
 ```
 
 ### `concat(a, b)`
-Concatenates two strings.
+Concatenates two strings (exactly 2 arguments). Use `+` for 3+ strings.
 ```ail
 string.concat("hello", " world")  // "hello world"
+let greeting = "Hello" + " " + "World";  // 3+ strings use +
 ```
 
 ### `equals(a, b)`

@@ -28,6 +28,7 @@ from pathlib import Path
 from compiler import __version__
 from compiler.compilation import CompilationSession
 from compiler.diagnostics import DiagnosticFormatter, DiagnosticReporter
+from compiler.rename import RenameTool
 from compiler.runtime import builtins as runtime_builtins
 from compiler.runtime.interpreter import Runtime
 
@@ -1250,7 +1251,7 @@ description = "{description}"
 entry = "main.ail"
 
 [language]
-version = "0.3"
+version = "1.1.5"
 """
 
 _AIL_LOCK_TEMPLATE = """\
@@ -1972,6 +1973,7 @@ def _run_dx_tool(module_name: str, args: list[str]) -> int:
     root_str = str(project_root)
     if root_str not in pythonpath:
         env["PYTHONPATH"] = root_str + (";" + pythonpath if pythonpath else "")
+    env["PYTHONIOENCODING"] = "utf-8"
     return subprocess.run(
         [sys.executable, "-m", module_name] + list(args),
         env=env,
@@ -2002,9 +2004,23 @@ def cmd_explain(args: list[str]) -> int:
         ail explain SEM002
         ail explain MOD004
     """
+    if args and args[0] in ("-h", "--help"):
+        print(f"Usage: {PROG} explain [<CODE>]")
+        print()
+        print("Explain a compiler error code in detail.")
+        print()
+        print("Run 'ail explain' without arguments to list all known codes.")
+        print("Run 'ail explain <CODE>' to show detailed explanation for a code.")
+        print()
+        print("Examples:")
+        print("  ail explain TYP001")
+        print("  ail explain SEM002")
+        print("  ail explain MOD004")
+        return 0
+
     from compiler.cli.explain import explain, list_codes
 
-    if not args or args[0] in ("-h", "--help"):
+    if not args:
         print(list_codes())
         return 0
 
@@ -2024,6 +2040,19 @@ def cmd_doctor(args: list[str]) -> int:
     Usage:
         ail doctor
     """
+    if args and args[0] in ("-h", "--help"):
+        print(f"Usage: {PROG} doctor")
+        print()
+        print("Run repository health checks for AILang projects.")
+        print()
+        print("Checks:")
+        print("  Python version compatibility")
+        print("  Package installation status")
+        print("  Standard library availability")
+        print("  Embedded documentation")
+        print("  MCP and LSP server availability")
+        print("  File consistency and version")
+        return 0
     return _run_dx_tool("tools.ail_doctor", args)
 
 

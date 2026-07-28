@@ -9,7 +9,7 @@ import argparse
 import json
 from pathlib import Path
 
-VERSION = "1.1.5"
+VERSION = "1.1.6"
 
 LANGUAGE_RULES = {
     "no_loops": {
@@ -68,22 +68,31 @@ DIAGNOSTICS = {
     "LEX001": "Unexpected character",
     "LEX002": "Unterminated string literal",
     "LEX003": "Invalid escape sequence",
-    "SEM001": "Undefined identifier",
-    "SEM002": "Forward reference",
-    "SEM003": "Duplicate variable declaration",
-    "TYP001": "Type mismatch in assignment",
-    "TYP002": "Invalid operator for type",
-    "TYP003": "Invalid arithmetic operand types",
-    "TYP004": "Invalid comparison operand types",
-    "TYP005": "Invalid arithmetic result type",
-    "TYP006": "Invalid comparison result type",
-    "TYP007": "Invalid logical operand types",
-    "TYP008": "Mismatched return type",
-    "TYP009": "Invalid function call arguments",
-    "TYP010": "Invalid unary operator",
-    "TYP011": "Invalid assignment target",
-    "TYP012": "Argument count mismatch",
-    "TYP013": "Assignment to function parameter",
+    "SEM001": "Duplicate declaration",
+    "SEM002": "Undefined identifier",
+    "SEM003": "Wrong number of arguments",
+    "TYP001": "Cannot infer type for variable",
+    "TYP002": "Return outside function",
+    "TYP003": "Return type mismatch",
+    "TYP004": "Non-boolean condition",
+    "TYP005": "Non-numeric operand",
+    "TYP006": "Type mismatch in comparison",
+    "TYP007": "Non-boolean logical operand",
+    "TYP008": "Assignment type mismatch",
+    "TYP009": "Non-numeric unary operand",
+    "TYP010": "Non-boolean not operand",
+    "TYP011": "Argument count mismatch",
+    "TYP012": "Argument type mismatch",
+    "TYP013": "Non-function callee",
+    "WHILE001": "AILang has no while loops",
+    "LANG001": "Nested functions not allowed",
+    "LANG002": "list.set() does not exist",
+    "LANG003": "string.replace() does not exist",
+    "LANG004": "Import in function body",
+    "MOD001": "Circular import detected",
+    "MOD002": "Duplicate import",
+    "MOD003": "Module not found",
+    "MOD004": "Symbol not found in module",
     "CMP001": "Internal compiler error",
 }
 

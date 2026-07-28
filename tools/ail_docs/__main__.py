@@ -91,9 +91,9 @@ def main() -> int:
     """Main entry point for ail docs."""
     # Ensure UTF-8 output on Windows
     if sys.stdout.encoding and sys.stdout.encoding.lower() != "utf-8":
-        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        sys.stdout.reconfigure(encoding="utf-8", errors="backslashreplace")
     if sys.stderr.encoding and sys.stderr.encoding.lower() != "utf-8":
-        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+        sys.stderr.reconfigure(encoding="utf-8", errors="backslashreplace")
 
     parser = argparse.ArgumentParser(
         prog="ail docs",
@@ -143,7 +143,8 @@ def main() -> int:
     if args.json:
         print(json.dumps(result, indent=2))
     else:
-        print(result["content"])
+        sys.stdout.buffer.write(result["content"].encode("utf-8"))
+        sys.stdout.buffer.write(b"\n")
     return 0
 
 

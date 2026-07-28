@@ -360,13 +360,20 @@ class CompilationSession:
                 except ValueError as e:
                     msg = str(e) or "Compilation error"
                     if reporter is not None:
-                        diag = Diagnostic(
-                            Severity.ERROR,
-                            ErrorCode("CMP001", msg),
-                            msg,
-                            file_path=file_path,
+                        # Suppress CMP001 cascade when LEX002 already reported
+                        has_lex002 = any(
+                            d.error_code.code == "LEX002"
+                            and (d.file_path == file_path or d.file_path is None)
+                            for d in reporter.diagnostics
                         )
-                        reporter.report(diag)
+                        if not has_lex002:
+                            diag = Diagnostic(
+                                Severity.ERROR,
+                                ErrorCode("CMP001", msg),
+                                msg,
+                                file_path=file_path,
+                            )
+                            reporter.report(diag)
                     self._asts[module_name] = ProgramNode(())
 
     def analyze(self, reporter: DiagnosticReporter | None = None) -> None:
@@ -596,14 +603,21 @@ class CompilationSession:
         except ValueError as e:
             msg = str(e) or "Compilation error"
             if reporter is not None:
-                reporter.report(
-                    Diagnostic(
-                        Severity.ERROR,
-                        ErrorCode("CMP001", msg),
-                        msg,
-                        file_path=file_path,
-                    )
+                # Suppress CMP001 cascade when LEX002 already reported
+                has_lex002 = any(
+                    d.error_code.code == "LEX002"
+                    and (d.file_path == file_path or d.file_path is None)
+                    for d in reporter.diagnostics
                 )
+                if not has_lex002:
+                    reporter.report(
+                        Diagnostic(
+                            Severity.ERROR,
+                            ErrorCode("CMP001", msg),
+                            msg,
+                            file_path=file_path,
+                        )
+                    )
             self._asts[module_name] = ProgramNode(())
             return False
 

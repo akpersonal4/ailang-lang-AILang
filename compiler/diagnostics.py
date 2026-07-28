@@ -189,6 +189,16 @@ class DiagnosticReporter:
         self.diagnostics: list[Diagnostic] = []
 
     def report(self, diagnostic: Diagnostic) -> None:
+        # Skip duplicate diagnostics that are already in the list
+        for existing in self.diagnostics:
+            if (
+                existing.error_code.code == diagnostic.error_code.code
+                and existing.line == diagnostic.line
+                and existing.column == diagnostic.column
+                and existing.message == diagnostic.message
+                and existing.file_path == diagnostic.file_path
+            ):
+                return
         # Auto-populate next_steps if not already set
         if diagnostic.next_steps is None and diagnostic.error_code.code in _NEXT_STEPS:
             # Create a new Diagnostic with next_steps (frozen dataclass)

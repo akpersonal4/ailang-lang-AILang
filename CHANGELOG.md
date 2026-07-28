@@ -1,5 +1,41 @@
 # Changelog
 
+## v1.1.6
+
+### Remediation Sprint — M106 Post-Release Audit Fixes
+
+This release addresses all issues identified in the independent M106 post-release audit.
+
+- **Critical Bug Fixes**:
+  - Fixed compiler crash (`AssertionError`) when single quotes are used in function call arguments (`compiler/ast/builder.py`).
+  - Fixed `ail rename` crash (`NameError: name 'RenameTool' is not defined`) — restored missing import (`compiler/cli/main.py`).
+- **High Severity Fixes**:
+  - Fixed `ail doctor` misreporting package as NOT INSTALLED when installed from PyPI (`tools/ail_doctor/__main__.py`).
+  - Fixed Unicode encoding bug in `ail docs` — em dash no longer replaced with "???" (`tools/ail_docs/__main__.py`, `compiler/cli/main.py`).
+  - Fixed LEX002 cascade suppression — unterminated strings now produce 1 diagnostic instead of 3 (`compiler/diagnostics.py`, `compiler/compilation/session.py`).
+- **Diagnostics Improvements**:
+  - Fixed duplicate diagnostic reporting — `DiagnosticReporter` now deduplicates exact matches (`compiler/diagnostics.py`).
+  - Updated `ail context` diagnostic codes to match the actual compiler (`tools/ail_context/__main__.py`).
+- **CLI Consistency**:
+  - `ail doctor --help` and `ail explain --help` now display proper help text (`compiler/cli/main.py`).
+- **Documentation Synchronization**:
+  - Corrected README.md badge and text to show 1136 passing tests.
+  - Updated `CHANGELOG.md` test count (1047 → 1136).
+  - Updated `ail.toml` template language version from "0.3" to "1.1.5" (`compiler/cli/main.py`, `tools/ail_package_manager/init.py`).
+  - Added `string.concat` arity documentation to STDLIB_REFERENCE.md.
+- **Test Suite**:
+  - Fixed 5 stale test assertions checking for v1.1.4 instead of v1.1.5.
+  - All 1136 tests are passing.
+- **Tooling Fixes**:
+  - Fixed static-analyzer output path — now writes to current working directory instead of package directory (`tools/ail_static_analyzer/__main__.py`).
+
+### No Changes
+
+- No language changes
+- No breaking changes
+- No new features
+- No API changes
+
 ## v1.1.5
 
 ### Production Release — Independent Certification Complete
@@ -17,7 +53,7 @@ This release incorporates critical production readiness fixes and passes indepen
   - All 27 CLI commands now consistently support the `--help` flag, providing clear usage information.
   - `ail lsp --help` now displays help instead of starting the server.
 - **Documentation Synchronization**:
-  - Corrected README.md test counts (1047 passing).
+  - Corrected README.md test counts (1136 passing).
   - Updated AGENTS.md with accurate claims regarding stdlib functions (`list.sort`, `list.copy`) and loop rules.
   - Ensured version consistency across `LANGUAGE_SPEC.md`, `README.md`, and internal tool versions.
 - **Packaging Improvements**:
@@ -25,7 +61,7 @@ This release incorporates critical production readiness fixes and passes indepen
   - Synchronized compiler and tool versions across the repository.
   - `.gitignore` updated to exclude profiler outputs and generated project context files.
 - **Test Suite**:
-  - All 1047 tests are passing, including new security regression tests.
+  - All 1136 tests are passing, including new security regression tests.
   - Resolved minor version mismatch issues in test assertions.
 
 ### No Changes

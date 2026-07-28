@@ -29,7 +29,7 @@ description = "{description}"
 entry = "{entry}"
 
 [language]
-version = "0.3"
+version = "1.1.5"
 """
 
 

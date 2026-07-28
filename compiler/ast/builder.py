@@ -138,9 +138,10 @@ class ASTBuilder:
     # ------------------------------------------------------------------
 
     @staticmethod
-    def _build_ExpressionStatement(node: CSTNode) -> ExpressionStatementNode:
+    def _build_ExpressionStatement(node: CSTNode) -> ExpressionStatementNode | None:
         expr = ASTBuilder._try_build(node.children[0])
-        assert expr is not None
+        if expr is None:
+            return None
         return ExpressionStatementNode(
             expression=expr,
             start_span=node.start_span,

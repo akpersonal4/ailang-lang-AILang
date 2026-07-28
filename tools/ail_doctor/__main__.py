@@ -394,11 +394,11 @@ def check_vscode_extension(root: Path) -> dict:
 def check_ail_package() -> dict:
     """Check if the ailang Python package is installed."""
     try:
-        import ailang
+        import compiler
 
         return {
             "installed": True,
-            "version": getattr(ailang, "__version__", "unknown"),
+            "version": getattr(compiler, "__version__", "unknown"),
             "ok": True,
         }
     except ImportError:
