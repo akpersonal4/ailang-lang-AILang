@@ -496,6 +496,299 @@ ERROR_DATABASE: dict[str, ErrorExplanation] = {
         related_commands=["ail docs AGENTS.md", "ail docs LANGUAGE_SPEC.md"],
         heal_topic=None,
     ),
+    "LEX001": ErrorExplanation(
+        code="LEX001",
+        description="Unexpected character encountered during lexing. AILang does not allow arbitrary symbols outside of string literals.",
+        common_causes=[
+            "Using single quotes (') instead of double quotes (\") for strings.",
+            "Using a character from an unsupported character set.",
+            "A typo or stray character in the source code.",
+        ],
+        examples=[
+            Example(
+                broken='print(\'hello\');',
+                fixed='print("hello");',
+                explanation="AILang only supports double-quoted string literals.",
+            ),
+        ],
+        fixes=[
+            "Use double quotes (\") for all string literals.",
+            "Remove the unexpected character.",
+            "Check for stray characters near the indicated location.",
+        ],
+        related_commands=["ail docs LANGUAGE_SPEC.md"],
+        heal_topic=None,
+    ),
+    "LEX002": ErrorExplanation(
+        code="LEX002",
+        description="Unterminated string literal: a string was opened with double quotes but never closed.",
+        common_causes=[
+            "Missing closing quote at the end of a string.",
+            "A multi-line string (AILang does not support multi-line strings).",
+        ],
+        examples=[
+            Example(
+                broken='let s = "hello;',
+                fixed='let s = "hello";',
+                explanation="Add the closing double quote.",
+            ),
+        ],
+        fixes=[
+            'Add a closing double quote (") at the end of the string literal.',
+            "For long strings, use string.concat() to join multiple string literals.",
+        ],
+        related_commands=["ail docs LANGUAGE_SPEC.md"],
+        heal_topic=None,
+    ),
+    "LEX003": ErrorExplanation(
+        code="LEX003",
+        description="Invalid escape sequence in a string literal.",
+        common_causes=[
+            "Using an unsupported escape sequence like \\x, \\u, or \\0.",
+            "Using a backslash without a valid escape character.",
+        ],
+        examples=[
+            Example(
+                broken='let s = "hello\\world";',
+                fixed='let s = "hello\\\\world";',
+                explanation="Use \\\\ to represent a literal backslash.",
+            ),
+        ],
+        fixes=[
+            "Use only valid escape sequences: \\n, \\t, \\\\, \\\", \\r, \\b, \\f.",
+            "To include a literal backslash, use \\\\.",
+        ],
+        related_commands=["ail docs LANGUAGE_SPEC.md"],
+        heal_topic=None,
+    ),
+    "PAR001": ErrorExplanation(
+        code="PAR001",
+        description="Expected a specific token but found something else. The parser could not match the input against the grammar.",
+        common_causes=[
+            "Missing semicolon at the end of a statement.",
+            "Missing closing parenthesis ')'.",
+            "Missing closing brace '}'.",
+            "Using an expression where a statement is expected, or vice versa.",
+            "Bare return; (use return 0; or return \"\"; instead).",
+        ],
+        examples=[
+            Example(
+                broken="fn main() {\n    print(\"hello\")\n}",
+                fixed="fn main() {\n    print(\"hello\");\n}",
+                explanation="AILang requires semicolons at the end of statement lines.",
+            ),
+            Example(
+                broken="fn main() {\n    return;\n}",
+                fixed="fn main() {\n    return 0;\n}",
+                explanation="return always requires an expression in AILang.",
+            ),
+        ],
+        fixes=[
+            "Check the syntax near the indicated location.",
+            "Ensure all statements end with a semicolon.",
+            "Ensure all parentheses () and braces {} are properly closed.",
+            "return always needs an expression: return 0; or return \"\";",
+        ],
+        related_commands=["ail docs LANGUAGE_SPEC.md", "ail docs GETTING_STARTED"],
+        heal_topic=None,
+    ),
+    "PAR002": ErrorExplanation(
+        code="PAR002",
+        description="Invalid import path. The import statement has a syntax error.",
+        common_causes=[
+            "Typo in the module name after 'import'.",
+            "Missing module name.",
+            "Invalid characters in the module path.",
+        ],
+        examples=[
+            Example(
+                broken="import math-utils;",
+                fixed="import math_utils;",
+                explanation="Use underscores, not hyphens, in module names.",
+            ),
+        ],
+        fixes=[
+            "Check the module name spelling after 'import'.",
+            "Module names can contain letters, numbers, and underscores.",
+            "For stdlib modules, use: import map; import list; import json; etc.",
+        ],
+        related_commands=["ail docs STDLIB_REFERENCE.md"],
+        heal_topic="missing_import",
+    ),
+    "PAR003": ErrorExplanation(
+        code="PAR003",
+        description="Expected an identifier (variable or function name) after a keyword.",
+        common_causes=[
+            "Missing function name after 'fn' keyword.",
+            "Missing variable name after 'let' keyword.",
+            "Using a reserved word as an identifier.",
+        ],
+        examples=[
+            Example(
+                broken="fn () { return 1; }",
+                fixed="fn main() { return 1; }",
+                explanation="Provide a valid identifier for the function name.",
+            ),
+        ],
+        fixes=[
+            "Add a valid identifier (name starting with a letter or underscore).",
+            "Avoid using reserved keywords as names.",
+        ],
+        related_commands=["ail docs LANGUAGE_SPEC.md"],
+        heal_topic=None,
+    ),
+    "TYP011": ErrorExplanation(
+        code="TYP011",
+        description="Argument count mismatch: the number of arguments in a function call does not match the function's signature.",
+        common_causes=[
+            "Calling a function with too many or too few arguments.",
+            "Missing required arguments in a stdlib function call.",
+        ],
+        examples=[
+            Example(
+                broken="import list;\nlet items = list.new();\nlist.get(items);",
+                fixed="import list;\nlet items = list.new();\nlist.get(items, 0);",
+                explanation="list.get() requires an index as the second argument.",
+            ),
+        ],
+        fixes=[
+            "Check the function signature and provide the correct number of arguments.",
+            "Use ail docs STDLIB_REFERENCE.md to check stdlib function signatures.",
+        ],
+        related_commands=["ail docs STDLIB_REFERENCE.md", "ail explain SEM003"],
+        heal_topic="type_error",
+    ),
+    "TYP012": ErrorExplanation(
+        code="TYP012",
+        description="Argument type mismatch: an argument in a function call has a type that does not match the expected parameter type.",
+        common_causes=[
+            "Passing a string where a number is expected.",
+            "Passing a boolean where a string is expected.",
+            "Type inference inconsistency between function declaration and call site.",
+        ],
+        examples=[
+            Example(
+                broken='fn add(a, b) { return a + b; }\nlet x = add(1, "2");',
+                fixed='fn add(a, b) { return a + b; }\nlet x = add(1, 2);',
+                explanation="Both arguments must be the same type (numeric for arithmetic).",
+            ),
+        ],
+        fixes=[
+            "Ensure the argument type matches the function parameter type.",
+            "Use convert.to_int(), convert.to_string(), etc. to convert types.",
+        ],
+        related_commands=["ail explain TYP001", "ail heal type_error"],
+        heal_topic="type_error",
+    ),
+    "TYP013": ErrorExplanation(
+        code="TYP013",
+        description="Non-function callee: attempting to call something that is not a function.",
+        common_causes=[
+            "Using a variable as a function when it holds a non-function value.",
+            "Typo in the function name (falling back to a variable name).",
+        ],
+        examples=[
+            Example(
+                broken="let x = 42;\nx();",
+                fixed="let x = 42;\nprint(x);",
+                explanation="Only functions can be called. x is a number, not a function.",
+            ),
+        ],
+        fixes=[
+            "Ensure the name you are calling refers to a function, not a variable.",
+            "Check for typos in function names.",
+        ],
+        related_commands=["ail explain SEM002", "ail docs LANGUAGE_SPEC.md"],
+        heal_topic=None,
+    ),
+    "MOD002": ErrorExplanation(
+        code="MOD002",
+        description="Duplicate import: the same module is imported more than once.",
+        common_causes=[
+            "Importing the same module twice in a file.",
+            "Copy-paste duplication of import statements.",
+        ],
+        examples=[
+            Example(
+                broken="import map;\nimport map;",
+                fixed="import map;",
+                explanation="Remove the duplicate import. One import per module is sufficient.",
+            ),
+        ],
+        fixes=[
+            "Remove the duplicate import statement.",
+            "Keep only one import per module at the top of the file.",
+        ],
+        related_commands=["ail fmt"],
+        heal_topic=None,
+    ),
+    "SEM004": ErrorExplanation(
+        code="SEM004",
+        description="Unknown stdlib function: the function name does not match any known standard library function.",
+        common_causes=[
+            "Typo in the stdlib function name (e.g., list.sett instead of list.set).",
+            "Using a function that does not exist in the stdlib module.",
+            "Calling a stdlib function on the wrong module.",
+        ],
+        examples=[
+            Example(
+                broken='import list;\nlet x = list.sett(mylist, "key", "val");',
+                fixed='import map;\nlet x = map.set(mymap, "key", "val");',
+                explanation="list.sett does not exist; list.set does not accept string keys. Use map.set for key-value storage.",
+            ),
+        ],
+        fixes=[
+            "Check the function name spelling against STDLIB_REFERENCE.md.",
+            "Use ail docs STDLIB_REFERENCE.md to list available functions.",
+            "Verify you are calling the correct module (map vs list).",
+        ],
+        related_commands=["ail docs STDLIB_REFERENCE.md", "ail explain MOD004"],
+        heal_topic="missing_import",
+    ),
+    "CMP001": ErrorExplanation(
+        code="CMP001",
+        description="Internal compiler error. This is a bug in the AILang compiler itself.",
+        common_causes=[
+            "A compiler bug triggered by an unexpected code pattern.",
+            "A missing edge case in the compiler's error handling.",
+        ],
+        examples=[
+            Example(
+                broken="# This is not a user-facing code issue;\n# CMP001 indicates a compiler bug.",
+                fixed="# Report the issue at the AILang repository.",
+                explanation="CMP001 is an internal error, not a code error.",
+            ),
+        ],
+        fixes=[
+            "This is a compiler bug — please report it at the AILang repository.",
+            "Include the source code that triggered the error.",
+            "As a workaround, try simplifying the code around the reported location.",
+        ],
+        related_commands=[],
+        heal_topic=None,
+    ),
+    "LSP000": ErrorExplanation(
+        code="LSP000",
+        description="LSP server error: the Language Server Protocol server encountered an internal error.",
+        common_causes=[
+            "The LSP server crashed due to unexpected input.",
+            "Memory or resource exhaustion in the editor.",
+        ],
+        examples=[
+            Example(
+                broken="# LSP server shows an error popup in VS Code.",
+                fixed="Restart the LSP server via VS Code command: 'AILang: Restart Server'",
+                explanation="Restarting the LSP server typically resolves transient errors.",
+            ),
+        ],
+        fixes=[
+            "Restart the LSP server.",
+            "In VS Code, run the 'AILang: Restart Server' command.",
+            "If the problem persists, restart VS Code.",
+        ],
+        related_commands=["ail docs VSCODE_QUICKSTART"],
+        heal_topic=None,
+    ),
 }
 
 

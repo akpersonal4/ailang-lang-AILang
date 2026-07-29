@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from tools.ail_package_manager.cache import clone_git_dep, resolve_local_dep
+from tools.ail_package_manager.errors import PackageError
 from tools.ail_package_manager.lock import (
     deps_hash_matches,
     read_lock_packages,
@@ -183,14 +184,13 @@ def _resolve_deps(
 
             try:
                 if local_registry_dir is not None:
-
                     meta = _fetch_local_package_meta(dep_name, local_registry_dir)
                 else:
                     meta = fetch_package_metadata(dep_name, registry_url)
             except RegistryError as e:
                 raise ValueError(
                     f"Could not resolve registry dependency '{dep_name}': {e}"
-                )
+                ) from e
 
             versions = meta.get("versions", {})
             if not versions:

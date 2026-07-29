@@ -25,6 +25,7 @@ from compiler.ir.nodes import (
 
 from .builtins import BUILTINS
 from .environment import Environment
+from .errors import RuntimeError
 from .stack_frame import StackFrame
 
 
@@ -50,6 +51,10 @@ class Runtime:
         self._aliases: dict[str, str] = {}  # alias -> real_module_name
         self._module_bundle = module_bundle
         self._initialized_modules: set[str] = set()
+        # Module source map for runtime error location: module_name -> (file_path, source_text)
+        self._source_map: dict[str, tuple[str, str]] = {}
+        # Current expression source span being evaluated
+        self._current_span: int | None = None
 
     def execute(self, program: ProgramIR) -> Any:
         result: Any = None
@@ -204,6 +209,9 @@ class Runtime:
                 return not operand
             raise ValueError(f"Unsupported operator: {expression.operator}")
         if isinstance(expression, CallIR):
+            # Track current source span for error diagnostics
+            self._current_span = expression.start_span
+
             # callee can be a string (function name) or an expression
             if isinstance(expression.callee, str):
                 callee = self._resolve_name(expression.callee)
@@ -225,7 +233,10 @@ class Runtime:
                 if isinstance(callee, FunctionIR):
                     return self._call_function(callee, args)
                 if callee in BUILTINS.values():
-                    return callee(args)
+                    try:
+                        return callee(args)
+                    except RuntimeError as re:
+                        raise self._augment_error(re)
                 try:
                     return callee(*args)
                 except TypeError:
@@ -238,6 +249,40 @@ class Runtime:
         if isinstance(expression, VariableReferenceIR):
             return self._get_local(expression.name)
         raise TypeError(f"Unsupported expression: {type(expression)!r}")
+
+    def set_source_map(self, source_map: dict[str, tuple[str, str]]) -> None:
+        """Set the source map for runtime error location resolution.
+
+        Args:
+            source_map: Mapping of module_name -> (file_path, source_text).
+        """
+        self._source_map = source_map
+
+    def _augment_error(self, error: RuntimeError) -> RuntimeError:
+        """Inject source location into a RuntimeError if not already set."""
+        if error.source_file:
+            return error
+        # Try to find the source module for the current function context
+        if self._frame_stack:
+            frame = self._frame_stack[-1]
+            if frame.function_name:
+                for module_name, (file_path, source_text) in self._source_map.items():
+                    if module_name in frame.function_name or frame.function_name in module_name:
+                        error.source_file = file_path
+                        if self._current_span is not None:
+                            error.source_line = RuntimeError._span_to_line(
+                                source_text, self._current_span
+                            )
+                        return error
+        # Fallback: use first available source map entry
+        if self._source_map and not error.source_file:
+            first = next(iter(self._source_map.values()))
+            error.source_file = first[0]
+            if self._current_span is not None:
+                error.source_line = RuntimeError._span_to_line(
+                    first[1], self._current_span
+                )
+        return error
 
     def _define_local(self, name: str, value: Any) -> None:
         if self._frame_stack:

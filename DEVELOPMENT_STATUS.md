@@ -10,9 +10,21 @@ until this document has been reviewed. Update AGENTS.md reading order after revi
 
 | Attribute | Value |
 |:----------|:------|
-| **Current Version** | v1.1.6 |
-| **Current Milestone** | M83C — VS Code Extension Release |
+| **Release Candidate** | v1.1.7-rc |
+| **Current Milestone** | M127 P0 — Runtime Diagnostics & Package Validation |
 | **Project Phase** | Public Beta |
+
+### Release Status
+
+| Item | Status |
+|------|--------|
+| Wheel Build | ✅ Complete |
+| Fresh Virtual Environment Verification | ✅ Complete |
+| Local Wheel Installation | ✅ Complete |
+| Smoke Tests (hello_world, calculator, collections, fibonacci) | ✅ Complete |
+| Regression Tests | ✅ 1165 Passing |
+| PyPI Publication | ⏳ Not Performed |
+| GitHub Release | ⏳ Not Performed |
 
 ### Maturity Assessment
 
@@ -30,7 +42,7 @@ until this document has been reviewed. Update AGENTS.md reading order after revi
 | Governance | 100% |
 | Validation Framework | 100% |
 | Reference Applications | 8 apps (todo, expense, inventory, employee, log_analyzer, csv_etl, json_transformer, invoice) |
-| Test Suite | 1079 tests passing |
+| Test Suite | 1165 tests passing |
 
 --------------------------------------
 
@@ -188,6 +200,19 @@ in the ecosystem that makes AILang productive for both human and AI developers.
 
 ## Current Work
 
+**M127 P0 — Runtime Diagnostics & Package Validation** ✅ Complete
+
+### Status
+- **Phase:** Structured error diagnostics across runtime and package manager, wheel packaging verified (release candidate)
+- **Runtime Diagnostics:** `RuntimeError` exception with `format_diagnostic()` — operation, reason, expected type, actual type, source location, suggestion; 30+ stdlib type guards
+- **Package Validation:** `PackageError` exception with `format_diagnostic()` — reason, suggestion, detail, manifest_path, location
+- **Exit Codes:** 5 new specific codes replacing generic `INTERNAL_ERROR` (MANIFEST_NOT_FOUND=10, INVALID_PACKAGE_NAME=11, INVALID_VERSION=12, INVALID_ENTRY=13, INVALID_DEPENDENCY=14)
+- **Wheel Verification:** `ailang_lang-1.1.7-py3-none-any.whl` built, installed, and smoke-tested in clean venv (not published to PyPI or GitHub)
+- **Test Results:** 1165/1165 tests passing (29 new validation + 87 runtime/CLI/diagnostic + 48 package + 1001 existing)
+- **Documentation:** Map iteration patterns in STDLIB_REFERENCE.md, CLI reference table + troubleshooting in README.md, PACKAGE_VALIDATION.md guide
+- **Closure Report:** `docs/milestones/M127_CLOSURE_REPORT.md`
+- **Next:** M128 — Independent Public Validation (then publish to PyPI + GitHub Release)
+
 **M56/M57 — External Adoption Closure** ✅ Complete
 
 ### Status
@@ -251,7 +276,7 @@ in the ecosystem that makes AILang productive for both human and AI developers.
 
 ### Maintenance
 - 📋 **Documentation website** — Create hosted documentation site
-- 📋 **PyPI package** — `pip install ailang`
+- ⏳ **PyPI package** — `pip install ailang-lang` (pending M128 validation)
 
 ---
 
@@ -259,12 +284,12 @@ in the ecosystem that makes AILang productive for both human and AI developers.
 
 | Priority | Area | Key Deliverables |
 |:--------:|------|------------------|
-| **P0** | **M56 — Package Naming + Commands** | ✅ Snake-case naming, `ail add/remove/update/list`, `ail new` generates `ail.toml` — see "Recently Completed" |
-| **P1** | **M57 — VS Code Extension** | ✅ Extension v0.2.0, code actions, `for` keyword support — see "Recently Completed" |
+| **P0** | **M127 — Runtime Diagnostics & Package Validation** | ✅ Structured error messages, type guards, new exit codes, wheel packaging verified (RC) — see "Recently Completed" |
+| **P1** | **M128 — Independent Public Validation** | Provide validators with: source repo, local wheel, docs only. No milestone reports or implementation notes. Post-validation: publish to PyPI + GitHub Release + tag |
 | **P2** | 90‑Day Production Validation (M40) | Continuous inventory run, collect bugs/fixes/incidents |
 | **P3** | Official Examples Repository | 5 polished examples (Inventory, CRM, Ticket Management, HRMS, Legal Case Tracker) |
 
-> Rationale: Package naming deadlock and VS Code extension hardening are complete. Next focus is production validation and example repositories.
+> Rationale: Validate before publishing. M127 produces a release candidate. M128 validates independently. Findings are addressed before public release, avoiding patch releases for early adopters.
 
 ## Forward-Looking Roadmap
 
@@ -272,9 +297,8 @@ in the ecosystem that makes AILang productive for both human and AI developers.
 
 | Milestone | Focus | Target |
 |-----------|-------|:------:|
-| **v1.0.0** | ✅ Release — benchmarks, daemon, language freeze, documentation | Current |
-| **M54** | Package Registry MVP — `ail publish`, remote `ail install` | Next |
-| **P1** | VS Code Extension — highlighting, diagnostics, LSP features | Future |
+| **v1.1.7** | ✅ Release Candidate — runtime diagnostics, package validation, wheel verified (not yet published) | Current |
+| **M128** | Independent Public Validation — validate RC, then publish to PyPI + GitHub Release | Next |
 | **P2** | 90-Day Production Validation — continuous inventory run | Future |
 | **P3** | Official Examples — 5 polished repos | Future |
 
@@ -325,6 +349,7 @@ in the ecosystem that makes AILang productive for both human and AI developers.
 
 | Item | Version | Date |
 |------|---------|------|
+| **M127 P0 — Runtime Diagnostics & Package Validation** (RC) — Implemented structured runtime diagnostics (`RuntimeError` with `format_diagnostic()`: operation, reason, expected type, actual type, source location, suggestion). 30+ stdlib type validation guards. Source span tracking + error augmentation in interpreter. Structured package diagnostics (`PackageError`: reason, suggestion, detail, manifest_path, location). New exit codes: MANIFEST_NOT_FOUND=10, INVALID_PACKAGE_NAME=11, INVALID_VERSION=12, INVALID_ENTRY=13, INVALID_DEPENDENCY=14. Entry file validation is warning (not error). 164 tests (48 existing package + 29 new validation + 87 runtime/CLI/diagnostic). Wheel packaging verified locally: `ail --version` = v1.1.7, helloworld/calculator/collections/fibonacci all execute correctly. Not yet published to PyPI or GitHub Releases. | v1.1.7-rc | 2026-07-29 |
 | **M83C — VS Code Extension Public Release** — Packaged VSIX (19.73 KB), created GitHub Release v1.1.0-vscode, uploaded VSIX asset. Extension 1.1.0, LSP 1.1.0, VSIX 1.1.0. 13 files in package. | v1.1.0 | 2026-07-20 |
 | **M83B — VS Code Extension MVP** — Wired formatter to LSP (formatting handlers, v1.1.0). Added format-on-save, 5 CLI commands (build/run/check/version/format), MVP settings. 5 new tests (108 total). | v1.1.0 | 2026-07-20 |
 | **M83A — VS Code Extension Architecture** — Created `VSCODE_EXTENSION_ARCHITECTURE.md` (682 lines). Two-server design: LSP (deterministic IDE) + MCP (AI-assisted tools). 31 error codes mapped. Feature roadmap: MVP, Phase 2, Phase 3. | v1.1.0 | 2026-07-20 |
@@ -418,6 +443,8 @@ in the ecosystem that makes AILang productive for both human and AI developers.
 | **v1.0.0** | 📋 Planned | Full backward compatibility |
 | **v1.0.0-M56** | ✅ Complete | External Adoption Closure — package naming, `ail add/remove/update/list` |
 | **v1.0.0-M57** | ✅ Complete | VS Code Extension Hardening — v0.2.0, code actions, `for` keyword |
+| **v1.1.7** | ✅ Complete | M127 P0 — Runtime Diagnostics & Package Validation — structured error messages, type validation guards, new exit codes, wheel packaging verified (release candidate — not yet published) |
+| **M128** | 📋 Planned | Independent Public Validation — validate RC, then publish to PyPI + GitHub Release + tag |
 
 --------------------------------------
 
@@ -495,6 +522,6 @@ Every document type has exactly one owner. If you need to add information, first
 
 | Field | Value |
 |:------|:------|
-| **Date** | 2026-07-20 |
-| **Version** | v1.1.6 |
-| **Milestone** | M83C — VS Code Extension Release |
+| **Date** | 2026-07-29 |
+| **Version** | v1.1.7 |
+| **Milestone** | M127 P0 — Runtime Diagnostics & Package Validation |

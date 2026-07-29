@@ -8,62 +8,58 @@ import json
 import re
 import shutil
 import sys
+import time
 from pathlib import Path
 
 from ail_platform.project import get_project_root, read_file_safe
 
+# Maximum number of files to scan (prevents hangs on large repos)
+_MAX_SCAN_FILES = 5000
+# Maximum file size (in bytes) for content-based checks
+_MAX_CONTENT_SIZE = 50 * 1024  # 50KB
+# Maximum execution time per check (seconds)
+_MAX_CHECK_TIME = 10.0
+
+
+def _filter_excluded(path: Path) -> bool:
+    """Return True if path should be excluded from scanning."""
+    exclude_dirs = {
+        ".venv", ".venv_test", ".git", ".mypy_cache", ".pytest_cache",
+        ".ruff_cache", "node_modules", "__pycache__", "ailang.egg-info",
+        "verify_env", "dist", "build", ".ail", "backups", ".github",
+        "archived", "data", "egg-info", "node_modules",
+        ".mypy_cache", ".pytest_cache", ".ruff_cache",
+    }
+    return any(part in exclude_dirs for part in path.parts)
+
 
 def find_markdown_files(root: Path) -> list[Path]:
     """Find all markdown files in the project (excluding .venv, .git, etc.)."""
-    exclude_dirs = {
-        ".venv",
-        ".venv_test",
-        ".git",
-        ".mypy_cache",
-        ".pytest_cache",
-        ".ruff_cache",
-        "node_modules",
-        "verify_env",
-        "dist",
-        "build",
-        ".ail",
-        "backups",
-        ".github",
-        "archived",
-    }
     markdown_files = []
+    count = 0
     for path in root.rglob("*.md"):
-        if not any(part in exclude_dirs for part in path.parts):
-            markdown_files.append(path)
+        if count >= _MAX_SCAN_FILES:
+            break
+        if _filter_excluded(path):
+            continue
+        markdown_files.append(path)
+        count += 1
     return sorted(markdown_files)
 
 
 def find_all_files(root: Path) -> list[Path]:
     """Find all files in the project for repository health analysis."""
-    exclude_dirs = {
-        ".venv",
-        ".venv_test",
-        ".git",
-        ".mypy_cache",
-        ".pytest_cache",
-        ".ruff_cache",
-        "node_modules",
-        "__pycache__",
-        "ailang.egg-info",
-        "verify_env",
-        "dist",
-        "build",
-        ".ail",
-        "backups",
-        ".github",
-        "archived",
-        "data",
-        "verify_env",
-    }
     all_files = []
+    count = 0
     for path in root.rglob("*"):
-        if path.is_file() and not any(part in exclude_dirs for part in path.parts):
-            all_files.append(path)
+        if count >= _MAX_SCAN_FILES:
+            break
+        if not path.is_file():
+            continue
+        if _filter_excluded(path):
+            continue
+        all_files.append(path)
+        count += 1
     return sorted(all_files)
 
 
@@ -94,19 +90,21 @@ def check_broken_internal_links(root: Path) -> list[dict]:
     """Check for broken internal markdown links."""
     broken_links = []
     markdown_files = find_markdown_files(root)
+    start = time.monotonic()
 
     for md_file in markdown_files:
+        if time.monotonic() - start > _MAX_CHECK_TIME:
+            break
         content = read_file_safe(md_file)
         if not content:
             continue
         for link_text, link_target in extract_markdown_links(content):
-            # Only check relative internal links (not URLs, not absolute paths)
             if link_target.startswith("http://") or link_target.startswith("https://"):
                 continue
             if link_target.startswith("/"):
                 continue
 
-            # Resolve relative to the markdown file's directory
+            # Resolve relative to markdown file's directory
             target_path = (md_file.parent / link_target).resolve()
             if not target_path.exists():
                 broken_links.append(
@@ -145,10 +143,14 @@ def check_duplicate_files(root: Path) -> list[dict]:
     duplicates = []
 
     all_files = find_all_files(root)
+    start = time.monotonic()
     for file_path in all_files:
-        # Skip very large files
+        # Timeout guard
+        if time.monotonic() - start > _MAX_CHECK_TIME:
+            break
+        # Skip large files
         try:
-            if file_path.stat().st_size > 100 * 1024:  # 100KB limit
+            if file_path.stat().st_size > _MAX_CONTENT_SIZE:
                 continue
         except OSError:
             continue
@@ -275,10 +277,13 @@ def check_orphan_documents(root: Path) -> list[Path]:
     """Find orphan markdown documents (never referenced elsewhere)."""
     orphan_docs = []
     markdown_files = find_markdown_files(root)
+    start = time.monotonic()
 
     # Build set of all linked files
     linked_files = set()
     for md_file in markdown_files:
+        if time.monotonic() - start > _MAX_CHECK_TIME:
+            break
         content = read_file_safe(md_file)
         if content:
             for _, link_target in extract_markdown_links(content):
@@ -676,8 +681,16 @@ def generate_report() -> str:
 
 def main() -> int:
     """Main entry point for the ail doctor tool."""
-    content = generate_report()
-    print(content)
+    try:
+        content = generate_report()
+        print(content)
+    except Exception as e:
+        print(f"# AILang Doctor Report\n")
+        print(f"_Auto-generated by `ail doctor` tool_\n")
+        print(f"## Error\n")
+        print(f"Doctor encountered an issue: {e}")
+        print(f"\nTry running from your project directory with ail.toml present.")
+        return 1
     return 0
 
 

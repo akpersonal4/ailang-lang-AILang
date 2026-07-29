@@ -30,10 +30,9 @@ import string;
 ```
 
 ### `concat(a, b)`
-Concatenates two strings (exactly 2 arguments). Use `+` for 3+ strings.
+Concatenates two strings.
 ```ail
 string.concat("hello", " world")  // "hello world"
-let greeting = "Hello" + " " + "World";  // 3+ strings use +
 ```
 
 ### `equals(a, b)`
@@ -745,9 +744,10 @@ let dir = environment.cwd();  // "/home/user/project"
 ```
 
 ### `args()`
-Returns the command-line arguments as a list.
+Returns the command-line arguments as a list. When run via `ail run`, the script path is excluded — only user-provided arguments are returned.
 ```ail
-let args = environment.args();  // ["program.ail", "arg1", "arg2"]
+// ail run hello.ail one two three
+let args = environment.args();  // ["one", "two", "three"]
 ```
 
 ---
@@ -812,6 +812,13 @@ Prints a value followed by a newline.
 io.println("line 2");
 ```
 
+### `read()`
+Reads a line from stdin and returns it as a string. Returns an empty string on EOF.
+```ail
+let name = io.read();
+io.writeln("Hello, " + name);
+```
+
 ---
 
 ## system
@@ -825,4 +832,201 @@ Exits the process with the given exit code. If `code` is omitted, defaults to 0.
 ```ail
 system.exit(0);  // Normal exit
 system.exit(1);  // Error exit
+```
+
+---
+
+## Language Rules & Behaviors
+
+This section documents language behaviors that are not obvious from function signatures alone.
+
+### Recursion Only (No While/For Loops)
+
+AILang has **no while loops and no for loops** (except the experimental `for-in` with `--experimental-loops`). All iteration must use **recursion**.
+
+```ail
+// WRONG — this will produce WHILE001 error
+let i = 0;
+while (i < 10) {
+    print(i);
+    i = i + 1;
+}
+
+// CORRECT — use recursion
+fn count_up(n) {
+    if (n == 0) {
+        return 0;
+    }
+    print(n);
+    return count_up(n - 1);
+}
+count_up(10);
+```
+
+### No Nested Functions
+
+All functions must be at the **top level** of the file. Defining a function inside another function produces LANG001.
+
+```ail
+// WRONG — LANG001 error
+fn main() {
+    fn helper() { return 1; }
+    let x = helper();
+}
+
+// CORRECT — helper at top level
+fn helper() { return 1; }
+fn main() {
+    let x = helper();
+}
+```
+
+### Bottom-Up Ordering (No Forward References)
+
+Functions must be defined **before** they are called. AILang uses single-pass compilation, so forward references produce SEM002.
+
+```ail
+// WRONG — SEM002: Forward reference
+fn main() { greet(); }
+fn greet() { print("hello"); }
+
+// CORRECT — callee above caller
+fn greet() { print("hello"); }
+fn main() { greet(); }
+```
+
+### Return Requires Expression
+
+Every `return` statement must have a value expression. Bare `return;` is not allowed.
+
+```ail
+// WRONG — missing expression
+fn do_nothing() { return; }
+
+// CORRECT
+fn do_nothing() { return 0; }
+```
+
+### Import Rules
+
+- Imports must be at the **top level** (never inside a function body).
+- Each import declares a module namespace (e.g., `import list;` creates `list.` prefix).
+- Use `as` to alias: `import list as lst;`.
+- All 16 stdlib modules require explicit import before use.
+
+```ail
+import list;
+import map;
+import io;
+
+fn main() {
+    let items = list.new();
+    list.append(items, 1);
+    io.writeln(list.get(items, 0));
+}
+```
+
+### Integer Division
+
+The `/` operator performs **floating-point division**, not integer division. `10 / 3` returns `3.333...`, not `3`.
+
+```ail
+math.div(10, 3)  // 3.333...
+10 / 3           // 3.333...
+```
+
+To get integer division, use `math.div` and convert: `convert.to_int(math.div(10, 3))` → `3`.
+
+### Boolean Printing
+
+Booleans print as `True` / `False` (Python-style capitalization):
+
+```ail
+print(true);   // prints: True
+print(false);  // prints: False
+```
+
+### `convert.to_number` Behavior
+
+`convert.to_number(value)` is equivalent to `convert.to_int(value)`. It converts a string to an integer, or returns the integer as-is. It does **not** return floats.
+
+```ail
+convert.to_number("42")  // 42
+convert.to_number(42)    // 42
+```
+
+### `list.sort()` Returns NEW List
+
+`list.sort()` returns a **new sorted list**. The original list is not modified.
+
+```ail
+let nums = list.new();
+list.append(nums, 30);
+list.append(nums, 10);
+let sorted = list.sort(nums);
+// nums still: [30, 10]
+// sorted is:  [10, 30]
+```
+
+### `list.set()` Does Not Exist
+
+There is no `list.set()` function. To modify a list:
+- Use `list.append(value)` to add to the end.
+- Use `map.set(key, value)` for key-value storage.
+
+### `string.replace()` Does Not Exist
+
+There is no `string.replace()` function. To modify strings:
+- Use `string.substring()` to extract parts.
+- Use `string.concat()` to join parts with the replacement.
+
+```ail
+import string;
+// Replace "world" with "AILang" in "hello world"
+let before = string.substring("hello world", 0, 6);
+let after = string.substring("hello world", 11, 11);
+let result = string.concat(before, "AILang");
+result = string.concat(result, after);
+// result: "hello AILang"
+```
+
+### `&&` Is Eager
+
+Both operands of `&&` always execute. When the right side depends on the left side, use nested `if` instead:
+
+```ail
+// DANGEROUS — right side executes even if left is false
+if (map.has(m, "key") && map.get(m, "key") > 0) { ... }
+
+// SAFE — nested if
+if (map.has(m, "key")) {
+    if (map.get(m, "key") > 0) { ... }
+}
+```
+
+### `string.concat` Takes Exactly 2 Arguments
+
+Use `+` operator for concatenating 3 or more strings:
+
+```ail
+// WRONG — string.concat takes exactly 2 args
+string.concat("a", "b", "c")
+
+// CORRECT — use +
+let result = "a" + "b" + "c";
+```
+
+### Variable Names Must Be Unique
+
+Each function must use unique variable names. Reusing `i`, `x`, `result`, etc. across functions produces SEM001.
+
+```ail
+fn a() {
+    let counter = 0;
+    return counter;
+}
+fn b() {
+    let counter = 1;  // OK — different function scope
+    return counter;
+}
 ```

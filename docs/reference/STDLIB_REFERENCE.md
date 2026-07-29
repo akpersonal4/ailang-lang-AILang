@@ -438,6 +438,144 @@ map.values(data)  // ["Alice", 30]
 
 ---
 
+### Map Iteration Patterns
+
+Since AILang uses recursion (not loops), iterating over a map follows a recursive pattern using `map.keys()`.
+
+#### Basic iteration over keys
+
+```ail
+fn visit_keys(keys, index) {
+    if (index >= list.len(keys)) {
+        return 0
+    }
+    let key = list.get(keys, index);
+    print("Key:", key);
+    return visit_keys(keys, math.add(index, 1))
+}
+
+fn main() {
+    let data = map.new();
+    map.set(data, "name", "Alice");
+    map.set(data, "role", "admin");
+    map.set(data, "active", true);
+
+    let all_keys = map.keys(data);
+    visit_keys(all_keys, 0);
+    return 0
+}
+```
+
+#### Iterating over keys and values
+
+```ail
+fn visit_items(keys, index, data) {
+    if (index >= list.len(keys)) {
+        return 0
+    }
+    let key = list.get(keys, index);
+    let value = map.get(data, key);
+    print(key, value);
+    return visit_items(keys, math.add(index, 1), data)
+}
+
+fn main() {
+    let data = map.new();
+    map.set(data, "name", "Alice");
+    map.set(data, "role", "admin");
+
+    let all_keys = map.keys(data);
+    visit_items(all_keys, 0, data);
+    return 0
+}
+```
+
+#### Safe access with guard
+
+Always guard `map.get` with `map.has` when the key may not exist:
+
+```ail
+fn display_value(data, key) {
+    if (map.has(data, key)) {
+        let value = map.get(data, key);
+        print(key, value)
+    } else {
+        print("Key not found:", key)
+    }
+}
+```
+
+#### Building a filtered map (copy with condition)
+
+```ail
+fn copy_matching(keys, index, source, target) {
+    if (index >= list.len(keys)) {
+        return target
+    }
+    let key = list.get(keys, index);
+    let value = map.get(source, key);
+    if (value > 10) {
+        map.set(target, key, value)
+    }
+    return copy_matching(keys, math.add(index, 1), source, target)
+}
+```
+
+### Common Mistakes
+
+#### Using `list.get` on a map
+
+Maps are not lists. Calling `list.get(map_value, 0)` produces a runtime diagnostic:
+
+```
+Runtime Error
+
+Operation:
+  list.get
+
+Reason:
+  Expected a List, but received a Map
+
+Expected:
+  List
+
+Received:
+  Map
+
+Location:
+  main.ail:12
+
+Suggestion:
+  Use map.get() or map.keys() to access map contents.
+```
+
+#### Calling `map.get` without a guard
+
+If the key does not exist, `map.get` raises a diagnostic. Always check with `map.has` first or use `map.get_or_default` / `map.safe_get`:
+
+```ail
+// WRONG — will fail if key is missing:
+let value = map.get(data, "missing_key");
+
+// RIGHT:
+let value = map.get_or_default(data, "missing_key", 0);
+```
+
+#### Forgetting that `map.keys` returns a list of strings
+
+Even if keys are numeric concepts, `map.keys` always returns a list of strings. Use `convert.to_int` if you need numeric keys:
+
+```ail
+map.set(data, "100", "value");
+let keys = map.keys(data);     // ["100"] - list of strings, not numbers
+let first = list.get(keys, 0); // "100" - still a string
+let num = convert.to_int(first); // 100 - now a number
+```
+
+> See `docs/guides/PACKAGE_VALIDATION.md` for package manifest validation diagnostics, and `compiler/runtime/errors.py` for the full runtime diagnostic format.
+
+---
+
 ## set
 
 ```ail

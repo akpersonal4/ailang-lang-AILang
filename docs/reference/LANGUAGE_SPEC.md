@@ -579,13 +579,18 @@ Errors during compilation are reported through the `DiagnosticReporter` system. 
 | LEX003 | Invalid escape sequence |
 | PAR001 | Expected token |
 | PAR002 | Invalid import path |
+| PAR003 | Expected identifier |
+| PAR010 | Expected identifier after 'for' |
+| PAR011 | Expected 'in' after loop variable |
+| PAR012 | Use of 'for' requires --experimental-loops flag |
 | SEM001 | Duplicate declaration |
-| SEM002 | Undefined identifier |
+| SEM002 | Undefined identifier (forward reference) |
+| SEM003 | Wrong number of arguments |
+| SEM004 | Unknown stdlib function |
 | MOD001 | Circular import detected |
 | MOD002 | Duplicate import |
 | MOD003 | Module not found |
 | MOD004 | Symbol not found in module |
-| MOD005 | Import path traversal attempt |
 | TYP001 | Unknown type |
 | TYP002 | Return outside function |
 | TYP003 | Return type mismatch |
@@ -599,6 +604,13 @@ Errors during compilation are reported through the `DiagnosticReporter` system. 
 | TYP011 | Argument count mismatch |
 | TYP012 | Argument type mismatch |
 | TYP013 | Non-function callee |
+| CMP001 | Internal compiler error |
+| LSP000 | LSP server error |
+| WHILE001 | AILang has no while loops |
+| LANG001 | Nested functions not allowed |
+| LANG002 | list.set() does not exist in AILang |
+| LANG003 | string.replace() does not exist in AILang |
+| LANG004 | Import in function body |
 
 ### 11.2 Runtime Errors
 
@@ -979,13 +991,18 @@ All other standard library functionality is accessed through module imports (`im
 
 | PAR001 | Expected token | Parser |
 | PAR002 | Invalid import path | Parser |
+| PAR003 | Expected identifier | Parser |
+| PAR010 | Expected identifier after 'for' | Parser |
+| PAR011 | Expected 'in' after loop variable | Parser |
+| PAR012 | Use of 'for' requires --experimental-loops flag | Parser |
 | SEM001 | Duplicate declaration | Semantic analysis |
-| SEM002 | Undefined identifier | Semantic analysis |
+| SEM002 | Undefined identifier (forward reference) | Semantic analysis |
+| SEM003 | Wrong number of arguments | Semantic analysis |
+| SEM004 | Unknown stdlib function | Semantic analysis |
 | MOD001 | Circular import detected | Module system |
 | MOD002 | Duplicate import | Module system |
 | MOD003 | Module not found | Module system |
 | MOD004 | Symbol not found in module | Module system |
-| MOD005 | Import path traversal attempt | Module system |
 | TYP001 | Unknown type | Type checker |
 | TYP002 | Return outside function | Type checker |
 | TYP003 | Return type mismatch | Type checker |
@@ -999,3 +1016,10 @@ All other standard library functionality is accessed through module imports (`im
 | TYP011 | Argument count mismatch | Type checker |
 | TYP012 | Argument type mismatch | Type checker |
 | TYP013 | Non-function callee | Type checker |
+| CMP001 | Internal compiler error | Compiler |
+| LSP000 | LSP server error | LSP |
+| WHILE001 | AILang has no while loops | Language constraint |
+| LANG001 | Nested functions not allowed | Language constraint |
+| LANG002 | list.set() does not exist | Language constraint |
+| LANG003 | string.replace() does not exist | Language constraint |
+| LANG004 | Import in function body | Language constraint |

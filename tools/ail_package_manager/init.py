@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from ail_platform.report_schema import ExitCode
+from tools.ail_package_manager.errors import PackageError
 from tools.ail_package_manager.manifest import validate_package_name, validate_version
 
 _DEFAULT_ENTRY = """\
@@ -29,7 +30,7 @@ description = "{description}"
 entry = "{entry}"
 
 [language]
-version = "1.1.6"
+version = "1.1.7"
 """
 
 
@@ -48,23 +49,43 @@ def init_project(
 
     err = validate_package_name(name)
     if err:
-        print(f"Error: {err}")
-        return ExitCode.INTERNAL_ERROR
+        diag = PackageError(
+            reason=err,
+            suggestion="Choose a valid snake_case name (lowercase letters, digits, underscores only, max 64 chars).",
+            manifest_path=str(target / "ail.toml"),
+            location="[project].name",
+        )
+        print(diag.format_diagnostic())
+        return ExitCode.INVALID_PACKAGE_NAME
 
     err = validate_version(version)
     if err:
-        print(f"Error: {err}")
-        return ExitCode.INTERNAL_ERROR
+        diag = PackageError(
+            reason=err,
+            suggestion="Use semantic versioning: MAJOR.MINOR.PATCH (e.g. 1.0.0).",
+            manifest_path=str(target / "ail.toml"),
+            location="[project].version",
+        )
+        print(diag.format_diagnostic())
+        return ExitCode.INVALID_VERSION
 
     if target.exists():
         if not target.is_dir():
-            print(f"Error: {target} exists and is not a directory")
+            diag = PackageError(
+                reason=f"Path exists and is not a directory: {target}",
+                suggestion="Remove the file or choose a different project path.",
+            )
+            print(diag.format_diagnostic())
             return ExitCode.INTERNAL_ERROR
         existing = list(target.iterdir())
         if existing:
             visible = [f for f in existing if not f.name.startswith(".")]
             if visible:
-                print(f"Error: {target} is not empty")
+                diag = PackageError(
+                    reason=f"Target directory is not empty: {target}",
+                    suggestion="Use an empty directory, or remove existing files first.",
+                )
+                print(diag.format_diagnostic())
                 return ExitCode.INTERNAL_ERROR
 
     target.mkdir(parents=True, exist_ok=True)

@@ -7,6 +7,7 @@ import sys
 from pathlib import Path
 
 from ail_platform.report_schema import ExitCode
+from tools.ail_package_manager.errors import PackageError
 from tools.ail_package_manager.init import init_project
 from tools.ail_package_manager.installer import install
 from tools.ail_package_manager.registry import (
@@ -19,7 +20,7 @@ from tools.ail_package_manager.registry import (
 
 def cmd_init(args: argparse.Namespace) -> int:
     directory = Path(args.directory) if args.directory else Path.cwd()
-    return init_project(
+    result = init_project(
         directory=directory,
         name=args.name or directory.name,
         version=args.version,
@@ -27,6 +28,7 @@ def cmd_init(args: argparse.Namespace) -> int:
         entry=args.entry,
         yes=args.yes,
     )
+    return result
 
 
 def cmd_publish(args: argparse.Namespace) -> int:
@@ -48,8 +50,11 @@ def cmd_publish(args: argparse.Namespace) -> int:
         else:
             publish_remote(project_root, registry_url)
         return ExitCode.SUCCESS
-    except (RegistryError, ValueError) as e:
-        print(f"Publish error: {e}", file=sys.stderr)
+    except (RegistryError, ValueError, PackageError) as e:
+        if isinstance(e, PackageError):
+            print(e.format_diagnostic(), file=sys.stderr)
+        else:
+            print(f"Publish error: {e}", file=sys.stderr)
         return ExitCode.FAILURE
 
 

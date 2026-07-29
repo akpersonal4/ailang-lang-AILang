@@ -24,6 +24,13 @@ class ExitCode:
     LOCKFILE_MISMATCH = 4
     GIT_CLONE_FAILURE = 5
 
+    # Package validation specific codes (M127)
+    MANIFEST_NOT_FOUND = 10
+    INVALID_PACKAGE_NAME = 11
+    INVALID_VERSION = 12
+    INVALID_ENTRY = 13
+    INVALID_DEPENDENCY = 14
+
 
 @dataclass
 class ReportMetadata:

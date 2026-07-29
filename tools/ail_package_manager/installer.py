@@ -10,6 +10,7 @@ from tools.ail_package_manager.cache import (
     copy_package_to_lib,
 )
 from tools.ail_package_manager.lock import generate_lock, write_lock
+from tools.ail_package_manager.errors import PackageError
 from tools.ail_package_manager.manifest import find_manifest, parse_manifest
 from tools.ail_package_manager.registry import (
     RegistryError,
@@ -30,17 +31,26 @@ def install(
     """Install all dependencies declared in ail.toml."""
     manifest_path = find_manifest(project_root)
     if manifest_path is None:
-        print("Error: No ail.toml found")
-        return ExitCode.INTERNAL_ERROR
+        print("Package Validation Error")
+        print("")
+        print("Reason:")
+        print("  No ail.toml found in project root.")
+        print("")
+        print("Suggestion:")
+        print("  Run 'ail new <project>' to create a new project, or ensure ail.toml exists in the current directory.")
+        return ExitCode.MANIFEST_NOT_FOUND
 
     if verbose:
         print(f"Manifest: {manifest_path}")
 
     try:
         manifest = parse_manifest(manifest_path)
-    except ValueError as e:
-        print(f"Error: {e}")
-        return ExitCode.INTERNAL_ERROR
+    except (ValueError, PackageError) as e:
+        if isinstance(e, PackageError):
+            print(e.format_diagnostic())
+        else:
+            print(f"Error: {e}")
+        return ExitCode.INVALID_MANIFEST
 
     if not manifest.dependencies:
         print("No dependencies to install")
@@ -89,6 +99,9 @@ def install(
     except ValueError as e:
         print(f"Resolution error: {e}", file=__import__("sys").stderr)
         return ExitCode.FAILURE
+    except PackageError as e:
+        print(e.format_diagnostic(), file=__import__("sys").stderr)
+        return ExitCode.INVALID_MANIFEST
 
     if frozen_lockfile and lock_path.exists():
         from tools.ail_package_manager.lock import deps_hash_matches
@@ -125,11 +138,14 @@ def install(
                         dep_spec, cache_dir
                     )
                     copy_package_to_lib(clone_path, lib_dir, dep.name)
-                except ValueError as e:
-                    print(
-                        f"  Error installing {dep.name}: {e}",
-                        file=__import__("sys").stderr,
-                    )
+                except (ValueError, PackageError) as e:
+                    if isinstance(e, PackageError):
+                        print(e.format_diagnostic(), file=__import__("sys").stderr)
+                    else:
+                        print(
+                            f"  Error installing {dep.name}: {e}",
+                            file=__import__("sys").stderr,
+                        )
                     return ExitCode.FAILURE
 
         elif dep.source == "registry":

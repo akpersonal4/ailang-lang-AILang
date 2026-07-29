@@ -2,25 +2,16 @@
 
 **AI-first programming language — deterministic, specification-driven, and compiler-friendly.**
 
-[![Tests](https://img.shields.io/badge/tests-1136%20passing-brightgreen)](#)
+[![Tests](https://img.shields.io/badge/tests-1165%20passing-brightgreen)](#)
 [![Python](https://img.shields.io/badge/python-3.11%2B-blue)](#)
-[![Version](https://img.shields.io/badge/version-1.1.6-brightgreen)](#)
+[![Version](https://img.shields.io/badge/build-v1.1.7--rc-blue)](#)
 [![License](https://img.shields.io/badge/license-Apache%202.0-green)](#)
 
-AILang is an AI-first programming language designed to be deterministic, specification-first, and easy for both humans and AI systems to reason about. It features a complete compiler pipeline, a 16-module standard library, and has been validated through 1136 tests, stress testing up to 10,000 LOC, and AI-generated program verification with 100% first-pass success.
+AILang is an AI-first programming language designed to be deterministic, specification-first, and easy for both humans and AI systems to reason about. It features a complete compiler pipeline, a 16-module standard library, and has been validated through 1165 tests, stress testing up to 10,000 LOC, and AI-generated program verification with 100% first-pass success.
 
 ## Quick Start
 
-```bash
-# Install from PyPI
-pip install ailang-lang
-
-# Run your first program
-echo 'fn main() { print("Hello, AILang!"); return 0 }' > hello.ail
-ail run hello.ail
-```
-
-Or install from source:
+Build from source (pre-release — v1.1.7-rc):
 
 ```bash
 git clone https://github.com/akpersonal4/ailang-lang-AILang.git
@@ -29,6 +20,13 @@ pip install -e .
 
 # Run your first program
 echo 'fn main() { print("Hello, AILang!"); return 0 }' > hello.ail
+ail run hello.ail
+```
+
+Install from local wheel (pre-built in `dist/`):
+
+```bash
+pip install dist/ailang_lang-1.1.7-py3-none-any.whl
 ail run hello.ail
 ```
 
@@ -273,12 +271,83 @@ fn main() {
 | Python version | 3.11+ |
 | Compiler LOC | ~3,950 (39 Python files) |
 | Stdlib modules | 16 |
-| Tests | **1037 passing** |
+| Tests | **1165 passing** |
 | Example programs | 55+ |
 | Application programs | 43+ |
 | DX Tools | ail context, ail doctor, ail static_analyzer, ail benchmark, ail testgen, ail docs, ail mcp |
 | Quality gates | black, ruff, mypy all clean |
 | Validation | Deterministic, AI-verified, stress-tested |
+
+## CLI Command Reference
+
+| Command | Action |
+|---------|--------|
+| `ail run <file>` | Compile and run an AILang program |
+| `ail build <file>` | Compile and check for errors (no execution) |
+| `ail check <file>` | Check for forward references and ordering violations |
+| `ail fmt <file\|dir>` | Format AILang source file(s) |
+| `ail test [<file\|dir>]` | Run test_*.ail files |
+| `ail new <project>` | Create a new AILang project scaffold |
+| `ail rename <old> <new>` | Rename identifier repository-wide |
+| `ail order <target>` | Analyze dependency ordering of .ail files |
+| `ail watch [<file>]` | Watch for changes, recompile incrementally |
+| `ail install` | Install dependencies from ail.toml |
+| `ail add <package>` | Add a dependency to ail.toml |
+| `ail remove <package>` | Remove a dependency from ail.toml |
+| `ail update` | Re-resolve all dependencies |
+| `ail list` | List installed dependencies |
+| `ail publish` | Publish project to package registry |
+| `ail doctor` | Diagnose environment issues |
+| `ail heal` | Get fix suggestions for common errors |
+| `ail explain <CODE>` | Explain a compiler error code in detail |
+| `ail docs [<name>]` | Read documentation offline |
+| `ail context [--json]` | Get machine-readable language context |
+| `ail mcp` | Start MCP server for AI tool integration |
+| `ail lsp` | Start the LSP server (stdin/stdout) |
+| `ail --version` | Print version information |
+
+### Troubleshooting
+
+**"Command not found" after pip install**
+```bash
+# Ensure the Python Scripts directory is on your PATH:
+python -m site --user-site
+# Usually: ~/AppData/Roaming/Python/Python311/Scripts (Windows)
+# Or: ~/.local/bin (Linux/macOS)
+```
+
+**"Module not found" when running from outside project**
+```bash
+# AILang v1.1.5+ resolves stdlib from the installed package automatically.
+# If you still see MOD003, try reinstalling:
+pip install --force-reinstall ailang-lang
+```
+
+**"Unexpected character" on Windows**
+```bash
+# The file may have a BOM marker. Save without BOM (UTF-8 without signature):
+# In VS Code: File → Save with Encoding → UTF-8
+# Then re-run: ail run <file>
+```
+
+**"Running this file outside a project tree" warning**
+```bash
+# This is informational — the file will still run. Create a project for
+# full package management support:
+ail new myproject && cd myproject
+# Then copy your .ail file into myproject/
+```
+
+**"Forward reference" error**
+```bash
+# Functions must be defined before they are called.
+# Run to see the exact ordering issue:
+ail check <file>
+# Then move the called function above its caller.
+```
+
+> For detailed error explanations: `ail explain <ERROR_CODE>`
+> For environment diagnostics: `ail doctor`
 
 ## Formatter
 

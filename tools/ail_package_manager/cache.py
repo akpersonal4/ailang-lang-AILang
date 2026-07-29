@@ -7,6 +7,7 @@ import shutil
 import subprocess
 from pathlib import Path
 
+from tools.ail_package_manager.errors import PackageError
 from tools.ail_package_manager.manifest import parse_manifest
 from tools.ail_package_manager.models import DependencySpec, ProjectManifest
 
@@ -33,20 +34,36 @@ def resolve_local_dep(
     """Resolve a local path dependency.
 
     Returns (manifest, checksum) of the resolved package.
-    Raises ValueError if the path is invalid or has no manifest.
+    Raises PackageError if the path is invalid or has no manifest.
     """
     if not dep.path:
-        raise ValueError(f"Dependency '{dep.name}' has no path specified")
+        raise PackageError(
+            reason=f"Dependency '{dep.name}' has no path specified.",
+            suggestion="Add a path field to the dependency in ail.toml. Example:\n{ path = \"../my_lib\" }",
+            location=f"dependencies.{dep.name}",
+        )
 
     dep_path = (project_root / dep.path).resolve()
     if not dep_path.exists():
-        raise ValueError(f"Local dependency path not found: {dep_path}")
+        raise PackageError(
+            reason=f"Local dependency path not found: {dep_path}",
+            suggestion=f"Ensure the path exists, or update the dependency path for '{dep.name}' in ail.toml.",
+            location=f"dependencies.{dep.name}",
+        )
     if not dep_path.is_dir():
-        raise ValueError(f"Local dependency path is not a directory: {dep_path}")
+        raise PackageError(
+            reason=f"Local dependency path is not a directory: {dep_path}",
+            suggestion="Local dependencies must point to a directory containing an ail.toml project.",
+            location=f"dependencies.{dep.name}",
+        )
 
     manifest_path = dep_path / "ail.toml"
     if not manifest_path.exists():
-        raise ValueError(f"No ail.toml found in local dependency: {dep_path}")
+        raise PackageError(
+            reason=f"No ail.toml found in local dependency: {dep_path}",
+            suggestion="Each local dependency must be a valid AILang project with an ail.toml file.",
+            location=f"dependencies.{dep.name}",
+        )
 
     manifest = parse_manifest(manifest_path)
     checksum = compute_dir_checksum(dep_path)
@@ -59,10 +76,14 @@ def clone_git_dep(
     """Clone a Git dependency into the cache directory.
 
     Returns (manifest, checksum, clone_path).
-    Raises ValueError if clone fails or no manifest found.
+    Raises PackageError if clone fails or no manifest found.
     """
     if not dep.git:
-        raise ValueError(f"Dependency '{dep.name}' has no git URL specified")
+        raise PackageError(
+            reason=f"Dependency '{dep.name}' has no git URL specified.",
+            suggestion="Add a git URL to the dependency in ail.toml. Example:\n{ git = \"https://github.com/user/repo.git\", tag = \"v1.0.0\" }",
+            location=f"dependencies.{dep.name}",
+        )
 
     # Create a unique cache directory name from the URL
     url_hash = hashlib.sha256(dep.git.encode("utf-8")).hexdigest()[:16]
@@ -85,11 +106,19 @@ def clone_git_dep(
                 timeout=120,
             )
         except subprocess.TimeoutExpired:
-            raise ValueError(f"Git clone timed out for {dep.git}")
+            raise PackageError(
+                reason=f"Git clone timed out for {dep.git}",
+                suggestion="Check your network connection. For large repositories, consider using a local path dependency instead.",
+                location=f"dependencies.{dep.name}",
+            )
 
         if result.returncode != 0:
             err = result.stderr.strip() or result.stdout.strip() or "unknown error"
-            raise ValueError(f"Git clone failed for {dep.git}: {err}")
+            raise PackageError(
+                reason=f"Git clone failed for {dep.git}: {err}",
+                suggestion="Check that the repository URL is correct and accessible. For private repositories, ensure you have the right credentials.",
+                location=f"dependencies.{dep.name}",
+            )
 
         # If a specific rev is requested, check it out
         if dep.rev:
@@ -103,7 +132,11 @@ def clone_git_dep(
 
     manifest_path = clone_dir / "ail.toml"
     if not manifest_path.exists():
-        raise ValueError(f"No ail.toml found in cloned repo: {dep.git}")
+        raise PackageError(
+            reason=f"No ail.toml found in cloned repo: {dep.git}",
+            suggestion="The repository must be a valid AILang project with an ail.toml file in its root.",
+            location=f"dependencies.{dep.name}",
+        )
 
     manifest = parse_manifest(manifest_path)
     checksum = compute_dir_checksum(clone_dir)

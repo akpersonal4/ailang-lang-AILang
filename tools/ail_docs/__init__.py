@@ -1,1 +1,1 @@
-# AILang Developer Experience Tool: ail docs
+"""AILang Document Retrieval - provides documentation content via CLI."""

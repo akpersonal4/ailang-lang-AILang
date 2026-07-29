@@ -23,6 +23,18 @@ DOCUMENTS = {
         "filename": "STDLIB_REFERENCE.md",
         "description": "Standard library API reference",
     },
+    "GETTING_STARTED": {
+        "filename": "GETTING_STARTED.md",
+        "description": "Getting started guide — install, first program, next steps",
+    },
+    "LANGUAGE_TOUR": {
+        "filename": "LANGUAGE_TOUR.md",
+        "description": "AILang language tour with examples",
+    },
+    "VSCODE_QUICKSTART": {
+        "filename": "VSCODE_QUICKSTART.md",
+        "description": "VS Code extension setup and features",
+    },
 }
 
 
@@ -103,7 +115,7 @@ def main() -> int:
         "document",
         nargs="?",
         default=None,
-        help="Document name (AGENTS, LANGUAGE_SPEC, STDLIB_REFERENCE)",
+        help="Document name (AGENTS, LANGUAGE_SPEC, STDLIB_REFERENCE, GETTING_STARTED, LANGUAGE_TOUR, VSCODE_QUICKSTART)",
     )
     parser.add_argument(
         "--json",

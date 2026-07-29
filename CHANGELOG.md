@@ -1,5 +1,61 @@
 # Changelog
 
+## v1.1.7
+
+### Developer Experience (DX) Improvement Sprint — M121/M122 Release Candidate
+
+This release implements all Developer Experience remediation findings from the independent Developer 4 application build evaluation (M120).
+
+- **Tooling Fixes**:
+  - `ail doctor`: Fixed indefinite hanging by introducing file scan limits (max 5000 files), 10-second per-check timeouts, and expanded directory exclusions (`reports/`, `generated/`, `.pytest_cache`, etc.).
+  - `ail docs`: Added `GETTING_STARTED`, `LANGUAGE_TOUR`, and `VSCODE_QUICKSTART` to the offline document retrieval registry. Bundled all reference documentation into `compiler/docs/`.
+  - `ail explain`: Populated the explanation database (`compiler/cli/explain.py`) for all 11 previously missing error codes (`PAR001-003`, `LEX001-003`, `TYP011-013`, `MOD002`, `SEM004`, `CMP001`, `LSP000`), including broken/fixed examples and return expression guidance.
+- **Specification & Documentation Parity**:
+  - Synchronized `LANGUAGE_SPEC.md` §11.1 and Appendix E with the runtime error registry (`compiler/diagnostics.py`), adding 13 missing runtime codes and removing obsolete `MOD005`.
+  - Added full documentation and code examples for `io.read()` in `STDLIB_REFERENCE.md`.
+  - Added a dedicated "Design Philosophy and Constraints" section to `GETTING_STARTED.md` explaining the architectural rationale for recursion-only iteration, mandatory return expressions, and map/list primitive data structures.
+- **Packaging & Distribution**:
+  - Added proper `__init__.py` files for `tools/` submodules.
+  - Updated `pyproject.toml` package data to ensure all documentation files are bundled in wheels and source distributions.
+- **Test Suite**:
+  - All tests passing successfully.
+
+### M127 P0 — Runtime Diagnostics & Package Validation (Release Candidate)
+
+This milestone implements structured, deterministic error messages across the runtime and package management systems, plus wheel packaging verification. v1.1.7 is a release candidate — not yet published to PyPI or GitHub Releases.
+
+- **Runtime Diagnostics** (`compiler/runtime/errors.py`):
+  - New `RuntimeError` exception class with `format_diagnostic()` — structured output: operation, reason, expected type, actual type, source location, suggestion.
+  - 30+ stdlib type validation guards in `compiler/runtime/builtins.py` (`_expect_list`, `_expect_dict`, `_expect_set`).
+  - Source span tracking and `_augment_error()` in `compiler/runtime/interpreter.py`.
+  - `CallIR` wraps builtin calls in try/except for clean error capture.
+  - `cmd_run` / `cmd_test` in `compiler/cli/main.py` build source map and render `RuntimeError` diagnostics (no Python tracebacks shown).
+- **Package Validation** (`tools/ail_package_manager/errors.py`):
+  - New `PackageError` exception class with `format_diagnostic()` — deterministic output: reason, suggestion, detail, manifest_path, location.
+  - Structured diagnostics across manifest validation, installer, commands, init, cache, resolver.
+  - Entry file validation is a **warning** not a hard error.
+- **Exit Codes** (`ail_platform/report_schema.py`):
+  - Replaced generic `INTERNAL_ERROR` with specific codes: `MANIFEST_NOT_FOUND=10`, `INVALID_PACKAGE_NAME=11`, `INVALID_VERSION=12`, `INVALID_ENTRY=13`, `INVALID_DEPENDENCY=14`.
+- **Documentation**:
+  - New `docs/guides/PACKAGE_VALIDATION.md` — validation lifecycle, diagnostic examples, troubleshooting.
+  - Map iteration patterns added to `STDLIB_REFERENCE.md` — common usage, mistakes (`list.get` on maps, unguarded `map.get`), cross-references to runtime diagnostics.
+  - README updated: CLI command reference table, troubleshooting section, test count badges (1136→1165).
+- **Wheel Packaging Verification**:
+  - `ailang_lang-1.1.7-py3-none-any.whl` built and installed into clean venv.
+  - Verified: `ail --version` = v1.1.7, `ail --help` shows all commands, `pip show ailang-lang` metadata correct.
+  - Verified: hello_world, calculator, collections, fibonacci all execute correctly.
+  - Verification report archived.
+- **Test Suite**: 48 existing package tests + 29 new validation tests + 87 runtime/CLI/diagnostic = 164 new/updated tests. Total: 1165 tests passing.
+- **Binaries**: `compiler/runtime/errors.py`, `tools/ail_package_manager/errors.py` (new), `docs/guides/PACKAGE_VALIDATION.md` (new), `tests/test_package_validation.py` (new).
+- **No language, grammar, parser, AST, or semantics changes.**
+
+### No Changes
+
+- No language changes
+- No breaking changes
+- No API changes
+- Runtime interpreter frozen
+
 ## v1.1.6
 
 ### Remediation Sprint — M106 Post-Release Audit Fixes

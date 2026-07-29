@@ -8,6 +8,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+from tools.ail_package_manager.errors import PackageError
 from tools.ail_package_manager.manifest import (
     find_manifest,
     parse_manifest,
@@ -44,7 +45,11 @@ def cmd_add(
 
     manifest_path = find_manifest(project_dir)
     if manifest_path is None:
-        print("Error: No ail.toml found. Run 'ail new <project>' first.", flush=True)
+        diag = PackageError(
+            reason="No ail.toml found.",
+            suggestion="Run 'ail new <project>' to create a new project.",
+        )
+        print(diag.format_diagnostic(), flush=True)
         return 1
 
     # Parse the package spec
@@ -54,7 +59,12 @@ def cmd_add(
 
     err = validate_package_name(pkg_name)
     if err:
-        print(f"Error: {err}", flush=True)
+        diag = PackageError(
+            reason=err,
+            suggestion="Use snake_case: start with a lowercase letter, followed by lowercase letters, digits, or underscores.",
+            location="dependency name",
+        )
+        print(diag.format_diagnostic(), flush=True)
         return 1
 
     if pkg_version != "*" and validate_version(pkg_version) is not None:
@@ -128,7 +138,11 @@ def cmd_remove(
 
     manifest_path = find_manifest(project_dir)
     if manifest_path is None:
-        print("Error: No ail.toml found. Run 'ail new <project>' first.", flush=True)
+        diag = PackageError(
+            reason="No ail.toml found.",
+            suggestion="Run 'ail new <project>' to create a new project.",
+        )
+        print(diag.format_diagnostic(), flush=True)
         return 1
 
     content = manifest_path.read_text(encoding="utf-8")
@@ -160,7 +174,12 @@ def cmd_remove(
         i += 1
 
     if not removed:
-        print(f"Error: dependency '{package}' not found in ail.toml", flush=True)
+        diag = PackageError(
+            reason=f"Dependency '{package}' not found in ail.toml.",
+            suggestion="Check the dependency name. Use 'ail list' to see all declared dependencies.",
+            manifest_path=str(manifest_path),
+        )
+        print(diag.format_diagnostic(), flush=True)
         return 1
 
     manifest_path.write_text("\n".join(new_lines), encoding="utf-8")
@@ -189,13 +208,22 @@ def cmd_update(
 
     manifest_path = find_manifest(project_dir)
     if manifest_path is None:
-        print("Error: No ail.toml found. Run 'ail new <project>' first.", flush=True)
+        diag = PackageError(
+            reason="No ail.toml found.",
+            suggestion="Run 'ail new <project>' to create a new project.",
+        )
+        print(diag.format_diagnostic(), flush=True)
         return 1
 
     if package is not None:
         err = validate_package_name(package)
         if err:
-            print(f"Error: {err}", flush=True)
+            diag = PackageError(
+                reason=err,
+                suggestion="Use snake_case: start with a lowercase letter, followed by lowercase letters, digits, or underscores.",
+                location="package name",
+            )
+            print(diag.format_diagnostic(), flush=True)
             return 1
         print(f"Updating {package}...")
 
@@ -230,10 +258,19 @@ def cmd_list(
 
     manifest_path = find_manifest(project_dir)
     if manifest_path is None:
-        print("Error: No ail.toml found. Run 'ail new <project>' first.", flush=True)
+        diag = PackageError(
+            reason="No ail.toml found.",
+            suggestion="Run 'ail new <project>' to create a new project.",
+        )
+        print(diag.format_diagnostic(), flush=True)
         return 1
 
-    manifest = parse_manifest(manifest_path)
+    try:
+        manifest = parse_manifest(manifest_path)
+    except PackageError as e:
+        print(e.format_diagnostic())
+        return 1
+
     lib_dir = project_dir / "lib"
 
     if not manifest.dependencies:

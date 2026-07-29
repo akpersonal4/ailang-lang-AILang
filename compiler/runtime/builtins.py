@@ -12,6 +12,7 @@ import time as _time
 from pathlib import Path
 from typing import Any, cast
 
+from .errors import RuntimeError
 from .values import RuntimeValue
 from .sandbox import get_policy
 
@@ -27,30 +28,80 @@ def print_builtin(args: tuple[RuntimeValue, ...]) -> None:
     print(*args, flush=True)
 
 
+def _expect_list(value: RuntimeValue, fn_name: str) -> list:
+    """Validate that *value* is a list and return it cast."""
+    if not isinstance(value, (list, tuple)):
+        tname = RuntimeError._type_name(value)
+        suggestion = ""
+        if isinstance(value, dict):
+            suggestion = "Use map.get(key) to access map entries, or use map.keys() to iterate."
+        raise RuntimeError(
+            operation=f"{fn_name}()",
+            reason=f"Expected a List.",
+            expected_type="List",
+            actual_type=tname,
+            suggestion=suggestion,
+        )
+    return cast(list, value)
+
+
+def _expect_dict(value: RuntimeValue, fn_name: str) -> dict:
+    """Validate that *value* is a dict and return it cast."""
+    if not isinstance(value, dict):
+        tname = RuntimeError._type_name(value)
+        suggestion = ""
+        if isinstance(value, list):
+            suggestion = "Use list.get(index) to access list entries by position."
+        raise RuntimeError(
+            operation=f"{fn_name}()",
+            reason=f"Expected a Map.",
+            expected_type="Map",
+            actual_type=tname,
+            suggestion=suggestion,
+        )
+    return cast(dict, value)
+
+
+def _expect_set(value: RuntimeValue, fn_name: str) -> set:
+    """Validate that *value* is a set and return it cast."""
+    if not isinstance(value, set):
+        tname = RuntimeError._type_name(value)
+        raise RuntimeError(
+            operation=f"{fn_name}()",
+            reason=f"Expected a Set.",
+            expected_type="Set",
+            actual_type=tname,
+        )
+    return cast(set, value)
+
+
 def list_new(args: tuple[RuntimeValue, ...]) -> list[RuntimeValue]:
     return []
 
 
 def list_append(args: tuple[RuntimeValue, ...]) -> list[RuntimeValue]:
-    values = cast(list[RuntimeValue], args[0])
+    values = _expect_list(args[0], "list.append")
     values.append(args[1])
     return values
 
 
 def list_len(args: tuple[RuntimeValue, ...]) -> int:
+    _expect_list(args[0], "list.len")
     return len(args[0])
 
 
 def list_get(args: tuple[RuntimeValue, ...]) -> RuntimeValue:
+    _expect_list(args[0], "list.get")
     return args[0][args[1]]
 
 
 def list_contains(args: tuple[RuntimeValue, ...]) -> bool:
+    _expect_list(args[0], "list.contains")
     return args[1] in args[0]
 
 
 def list_remove(args: tuple[RuntimeValue, ...]) -> list[RuntimeValue]:
-    values = cast(list[RuntimeValue], args[0])
+    values = _expect_list(args[0], "list.remove")
     try:
         values.remove(args[1])
     except ValueError:
@@ -59,6 +110,7 @@ def list_remove(args: tuple[RuntimeValue, ...]) -> list[RuntimeValue]:
 
 
 def list_sum(args: tuple[RuntimeValue, ...]) -> int:
+    _expect_list(args[0], "list.sum")
     total = 0
     for item in args[0]:
         total += int(item)
@@ -66,7 +118,7 @@ def list_sum(args: tuple[RuntimeValue, ...]) -> int:
 
 
 def list_find_by_key(args: tuple[RuntimeValue, ...]) -> RuntimeValue:
-    items = args[0]
+    items = _expect_list(args[0], "list.find_by_key")
     key = args[1]
     value = args[2]
     for item in items:
@@ -76,7 +128,7 @@ def list_find_by_key(args: tuple[RuntimeValue, ...]) -> RuntimeValue:
 
 
 def list_sort(args: tuple[RuntimeValue, ...]) -> list[RuntimeValue]:
-    items = args[0]
+    items = _expect_list(args[0], "list.sort")
     if len(args) > 1:
         key = str(args[1])
         return sorted(items, key=lambda x: x.get(key, "") if isinstance(x, dict) else x)
@@ -84,18 +136,19 @@ def list_sort(args: tuple[RuntimeValue, ...]) -> list[RuntimeValue]:
 
 
 def list_copy(args: tuple[RuntimeValue, ...]) -> list[RuntimeValue]:
+    _expect_list(args[0], "list.copy")
     return list(args[0])
 
 
 def list_filter_by_key(args: tuple[RuntimeValue, ...]) -> list[RuntimeValue]:
-    items = args[0]
+    items = _expect_list(args[0], "list.filter_by_key")
     key = str(args[1])
     value = args[2]
     return [item for item in items if isinstance(item, dict) and item.get(key) == value]
 
 
 def list_filter_by_contains(args: tuple[RuntimeValue, ...]) -> list[RuntimeValue]:
-    items = args[0]
+    items = _expect_list(args[0], "list.filter_by_contains")
     key = str(args[1])
     substring = str(args[2])
     return [
@@ -106,27 +159,27 @@ def list_filter_by_contains(args: tuple[RuntimeValue, ...]) -> list[RuntimeValue
 
 
 def list_collect_key(args: tuple[RuntimeValue, ...]) -> list[RuntimeValue]:
-    items = args[0]
+    items = _expect_list(args[0], "list.collect_key")
     key = str(args[1])
     return [item[key] for item in items if isinstance(item, dict) and key in item]
 
 
 def map_get_or_default(args: tuple[RuntimeValue, ...]) -> RuntimeValue:
-    values = cast(dict[RuntimeValue, RuntimeValue], args[0])
+    values = _expect_dict(args[0], "map.get_or_default")
     key = args[1]
     default = args[2] if len(args) > 2 else False
     return values.get(key, default)
 
 
 def dict_values(args: tuple[RuntimeValue, ...]) -> list[RuntimeValue]:
-    values = cast(dict[RuntimeValue, RuntimeValue], args[0])
+    values = _expect_dict(args[0], "map.values")
     return list(values.values())
 
 
 def list_group_by_key(
     args: tuple[RuntimeValue, ...],
 ) -> dict[RuntimeValue, list[RuntimeValue]]:
-    items = args[0]
+    items = _expect_list(args[0], "list.group_by_key")
     key = str(args[1])
     groups: dict[RuntimeValue, list[RuntimeValue]] = {}
     for item in items:
@@ -139,7 +192,7 @@ def list_group_by_key(
 
 
 def list_sum_by_key(args: tuple[RuntimeValue, ...]) -> int:
-    items = args[0]
+    items = _expect_list(args[0], "list.sum_by_key")
     key = str(args[1])
     total = 0
     for item in items:
@@ -149,19 +202,19 @@ def list_sum_by_key(args: tuple[RuntimeValue, ...]) -> int:
 
 
 def list_take(args: tuple[RuntimeValue, ...]) -> list[RuntimeValue]:
-    items = args[0]
+    items = _expect_list(args[0], "list.take")
     n = int(args[1])
     return items[:n]
 
 
 def list_skip(args: tuple[RuntimeValue, ...]) -> list[RuntimeValue]:
-    items = args[0]
+    items = _expect_list(args[0], "list.skip")
     n = int(args[1])
     return items[n:]
 
 
 def list_search_by_name(args: tuple[RuntimeValue, ...]) -> list[RuntimeValue]:
-    items = args[0]
+    items = _expect_list(args[0], "list.search_by_name")
     query = str(args[1]).lower()
     return [
         item
@@ -173,7 +226,7 @@ def list_search_by_name(args: tuple[RuntimeValue, ...]) -> list[RuntimeValue]:
 
 
 def list_exists_by_key(args: tuple[RuntimeValue, ...]) -> bool:
-    items = args[0]
+    items = _expect_list(args[0], "list.exists_by_key")
     key = str(args[1])
     value = args[2]
     for item in items:
@@ -188,7 +241,7 @@ def string_join(args: tuple[RuntimeValue, ...]) -> str:
 
 
 def list_clear(args: tuple[RuntimeValue, ...]) -> list[RuntimeValue]:
-    values = cast(list[RuntimeValue], args[0])
+    values = _expect_list(args[0], "list.clear")
     values.clear()
     return values
 
@@ -198,33 +251,43 @@ def dict_new(args: tuple[RuntimeValue, ...]) -> dict[RuntimeValue, RuntimeValue]
 
 
 def dict_set(args: tuple[RuntimeValue, ...]) -> dict[RuntimeValue, RuntimeValue]:
-    values = cast(dict[RuntimeValue, RuntimeValue], args[0])
+    values = _expect_dict(args[0], "map.set")
     values[args[1]] = args[2]
     return values
 
 
 def dict_get(args: tuple[RuntimeValue, ...]) -> RuntimeValue:
-    return args[0][args[1]]
+    values = _expect_dict(args[0], "map.get")
+    if args[1] not in values:
+        raise RuntimeError(
+            operation="map.get()",
+            reason=f"Key '{args[1]}' not found in Map.",
+            expected_type="Map with key present",
+            actual_type="Map (missing key)",
+            suggestion="Use map.has(m, key) to check key existence before calling map.get().",
+        )
+    return values[args[1]]
 
 
 def dict_has(args: tuple[RuntimeValue, ...]) -> bool:
-    return args[1] in args[0]
+    values = _expect_dict(args[0], "map.has")
+    return args[1] in values
 
 
 def dict_delete(args: tuple[RuntimeValue, ...]) -> dict[RuntimeValue, RuntimeValue]:
-    values = cast(dict[RuntimeValue, RuntimeValue], args[0])
+    values = _expect_dict(args[0], "map.delete")
     if args[1] in values:
         del values[args[1]]
     return values
 
 
 def dict_keys(args: tuple[RuntimeValue, ...]) -> list[RuntimeValue]:
-    values = cast(dict[RuntimeValue, RuntimeValue], args[0])
+    values = _expect_dict(args[0], "map.keys")
     return list(values.keys())
 
 
 def dict_clear(args: tuple[RuntimeValue, ...]) -> dict[RuntimeValue, RuntimeValue]:
-    values = cast(dict[RuntimeValue, RuntimeValue], args[0])
+    values = _expect_dict(args[0], "map.clear")
     values.clear()
     return values
 
@@ -235,45 +298,67 @@ def set_new(args: tuple[RuntimeValue, ...]) -> set[RuntimeValue]:
 
 def native_to_int(args: tuple[RuntimeValue, ...]) -> int:
     if len(args) != 1:
-        raise TypeError("to_int expects 1 argument")
+        raise RuntimeError(
+            operation="convert.to_int()",
+            reason="Expected exactly 1 argument.",
+            suggestion="Pass a single string or int value.",
+        )
     value = args[0]
     if isinstance(value, int):
         return value
     if isinstance(value, str):
-        return int(value)
+        try:
+            return int(value)
+        except ValueError:
+            raise RuntimeError(
+                operation="convert.to_int()",
+                reason=f"Cannot convert '{value}' to Int.",
+                expected_type="String containing digits",
+                actual_type=f"String '{value}'",
+            )
     if isinstance(value, float):
         return int(value)
-    raise TypeError("to_int expects a string or int")
+    raise RuntimeError(
+        operation="convert.to_int()",
+        reason="Expected a String or Int.",
+        expected_type="String or Int",
+        actual_type=RuntimeError._type_name(value),
+    )
 
 
 def native_to_string(args: tuple[RuntimeValue, ...]) -> str:
     if len(args) != 1:
-        raise TypeError("to_string expects 1 argument")
+        raise RuntimeError(
+            operation="convert.to_string()",
+            reason="Expected exactly 1 argument.",
+        )
     return str(args[0])
 
 
 def set_add(args: tuple[RuntimeValue, ...]) -> set[RuntimeValue]:
-    values = cast(set[RuntimeValue], args[0])
+    values = _expect_set(args[0], "set.add")
     values.add(args[1])
     return values
 
 
 def set_contains(args: tuple[RuntimeValue, ...]) -> bool:
+    _expect_set(args[0], "set.contains")
     return args[1] in args[0]
 
 
 def set_len(args: tuple[RuntimeValue, ...]) -> int:
+    _expect_set(args[0], "set.len")
     return len(args[0])
 
 
 def set_remove(args: tuple[RuntimeValue, ...]) -> set[RuntimeValue]:
-    values = cast(set[RuntimeValue], args[0])
+    values = _expect_set(args[0], "set.remove")
     values.discard(args[1])
     return values
 
 
 def set_clear(args: tuple[RuntimeValue, ...]) -> set[RuntimeValue]:
-    values = cast(set[RuntimeValue], args[0])
+    values = _expect_set(args[0], "set.clear")
     values.clear()
     return values
 

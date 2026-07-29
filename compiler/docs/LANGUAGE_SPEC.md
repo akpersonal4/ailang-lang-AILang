@@ -1,6 +1,6 @@
 # AILang Language Specification
 
-**Version:** 1.0.2  
+**Version:** 1.1.6  
 **Status:** Complete — Implementation Reference  
 **Canonical Source:** This document is the single source of truth for the AILang language.
 
@@ -501,7 +501,7 @@ math.add(1, 2)        // calls add exported by math.ail
 | `random` | Random numbers: `int`, `float`, `choice` |
 | `environment` | Environment: `get`, `cwd`, `args` |
 | `convert` | Type conversion: `to_string`, `to_int`, `to_bool`, `to_number` |
-| `io` | I/O helpers: `write`, `writeln`, `println` |
+| `io` | I/O helpers: `write`, `writeln`, `println`, `read` |
 | `system` | System operations: `exit` |
 
 ### 10.2 Built-in Functions
@@ -579,13 +579,18 @@ Errors during compilation are reported through the `DiagnosticReporter` system. 
 | LEX003 | Invalid escape sequence |
 | PAR001 | Expected token |
 | PAR002 | Invalid import path |
+| PAR003 | Expected identifier |
+| PAR010 | Expected identifier after 'for' |
+| PAR011 | Expected 'in' after loop variable |
+| PAR012 | Use of 'for' requires --experimental-loops flag |
 | SEM001 | Duplicate declaration |
-| SEM002 | Undefined identifier |
+| SEM002 | Undefined identifier (forward reference) |
+| SEM003 | Wrong number of arguments |
+| SEM004 | Unknown stdlib function |
 | MOD001 | Circular import detected |
 | MOD002 | Duplicate import |
 | MOD003 | Module not found |
 | MOD004 | Symbol not found in module |
-| MOD005 | Import path traversal attempt |
 | TYP001 | Unknown type |
 | TYP002 | Return outside function |
 | TYP003 | Return type mismatch |
@@ -599,6 +604,13 @@ Errors during compilation are reported through the `DiagnosticReporter` system. 
 | TYP011 | Argument count mismatch |
 | TYP012 | Argument type mismatch |
 | TYP013 | Non-function callee |
+| CMP001 | Internal compiler error |
+| LSP000 | LSP server error |
+| WHILE001 | AILang has no while loops |
+| LANG001 | Nested functions not allowed |
+| LANG002 | list.set() does not exist in AILang |
+| LANG003 | string.replace() does not exist in AILang |
+| LANG004 | Import in function body |
 
 ### 11.2 Runtime Errors
 
@@ -727,7 +739,8 @@ Every phase is deterministic: the same input always produces the same output.
 
 ## 14. Language Limitations
 
-- No `while` or `for` loops — use recursion for iteration.
+- No `while` loops — use recursion for iteration.
+- `for-in` loops are available behind the `--experimental-loops` flag (lowered to recursive calls at compile time). Not available by default.
 - No string indexing (`s[i]`) — use `string` module functions.
 - No character type — use single-character strings.
 - No array/list/set literal syntax — use module functions.
@@ -885,7 +898,7 @@ fn main() {
 | 0.3.0 | M63 | Pre-flight check integration. `ail check` auto-runs before `ail run` and `ail test`. `--no-check` flag. |
 | 0.4.0 | M64 | CLI tooling. `ail fmt`, `ail lsp`, `ail rename`, `ail watch`, `ail new`. |
 | 0.5.0 | M65 | Stdlib expansion. `list.group_by_key`, `list.sum_by_key`, `list.take`, `list.skip`, `list.search_by_name`, `list.exists_by_key`, `map.values`, `map.get_or_default`, `map.safe_get`. |
-| 1.0.0 | M66 | Bounded deterministic iteration. `for-in` loops promoted to stable. ADR-00X. |
+| 1.0.0 | M66 | Experimental `for-in` loop syntax added (behind `--experimental-loops` flag, lowered to recursive calls at compile time). ADR-00X. |
 
 ---
 
@@ -978,13 +991,18 @@ All other standard library functionality is accessed through module imports (`im
 
 | PAR001 | Expected token | Parser |
 | PAR002 | Invalid import path | Parser |
+| PAR003 | Expected identifier | Parser |
+| PAR010 | Expected identifier after 'for' | Parser |
+| PAR011 | Expected 'in' after loop variable | Parser |
+| PAR012 | Use of 'for' requires --experimental-loops flag | Parser |
 | SEM001 | Duplicate declaration | Semantic analysis |
-| SEM002 | Undefined identifier | Semantic analysis |
+| SEM002 | Undefined identifier (forward reference) | Semantic analysis |
+| SEM003 | Wrong number of arguments | Semantic analysis |
+| SEM004 | Unknown stdlib function | Semantic analysis |
 | MOD001 | Circular import detected | Module system |
 | MOD002 | Duplicate import | Module system |
 | MOD003 | Module not found | Module system |
 | MOD004 | Symbol not found in module | Module system |
-| MOD005 | Import path traversal attempt | Module system |
 | TYP001 | Unknown type | Type checker |
 | TYP002 | Return outside function | Type checker |
 | TYP003 | Return type mismatch | Type checker |
@@ -998,3 +1016,10 @@ All other standard library functionality is accessed through module imports (`im
 | TYP011 | Argument count mismatch | Type checker |
 | TYP012 | Argument type mismatch | Type checker |
 | TYP013 | Non-function callee | Type checker |
+| CMP001 | Internal compiler error | Compiler |
+| LSP000 | LSP server error | LSP |
+| WHILE001 | AILang has no while loops | Language constraint |
+| LANG001 | Nested functions not allowed | Language constraint |
+| LANG002 | list.set() does not exist | Language constraint |
+| LANG003 | string.replace() does not exist | Language constraint |
+| LANG004 | Import in function body | Language constraint |

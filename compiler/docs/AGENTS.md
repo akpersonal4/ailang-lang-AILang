@@ -116,14 +116,14 @@ ail test --no-check <file_or_dir>
 
 | Rule | Detail |
 |------|--------|
-| No loops | Use recursion only (`while`/`for` don't exist) |
+| No loops (default) | Use recursion only. `for-in` is experimental behind `--experimental-loops` (lowered to recursion at compile time) |
 | No nested functions | All functions at top level |
 | No forward references | Callee must be defined before caller |
 | Bottom-up ordering | Write in dependency order (Level 0 → main) |
 | `let` needs initializer | `let x = value`, never `let x;` |
 | `return` needs value | `return expr`, never `return;` |
 | `import` at top level only | Never inside a function body |
-| Unique variable names | No reuse of `i`, `x`, `result`, `acc` across functions |
+| Unique variable names | No reuse of `i`, `x`, `result`, `acc` within the same function. Reusing names across different functions is OK (block-scoped). |
 | `map.get` needs `map.has` guard | Always check key existence first |
 | `list.get` needs `list.len` check | Guard against empty list access |
 | `string.concat` takes exactly 2 args | Use `+` for 3+ strings |
@@ -134,9 +134,9 @@ ail test --no-check <file_or_dir>
 ## 5. Common Pitfalls
 
 - **Forward reference:** `Undefined identifier: X` → move X before its caller
-- **Missing stdlib:** `sort`, `list.copy` don't exist → write custom (see Playbook)
+- **Missing stdlib:** Check `docs/reference/STDLIB_REFERENCE.md` before reimplementing — `list.sort`, `list.copy`, and many others already exist
 - **Wrong map key:** Keys mismatch between `map.set` and `map.get` → audit key names
-- **Variable collision:** `let i = 0` in multiple functions → use unique names
+- **Variable collision:** `let i = 0` in multiple functions is OK (block-scoped). `let i = 0` and `let i = 1` in the *same* function → use unique names
 - **File too large:** ~100 functions / 1000+ LOC → forward reference ordering becomes error-prone; plan to split early
 
 ---
@@ -149,7 +149,7 @@ ail test --no-check <file_or_dir>
 | 2 | Dependency graph created (Level 0 → N) |
 | 3 | Stdlib audited (no manual reimplementation of existing APIs) |
 | 4 | Guards verified (`map.has` before `map.get`, `list.len` before `list.get`, `&&` safe) |
-| 5 | Variable names unique across all functions |
+| 5 | Variable names unique within each function |
 | 6 | `string.concat` has ≤2 args (use `+` for 3+) |
 | 7 | `let` has initializer (`let x = value`) |
 | 8 | `return` has value (`return expr`) |
@@ -210,7 +210,7 @@ Changes to syntax, semantics, types, or execution model.
 
 Non-language additions to the developer experience.
 
-**Examples:** `ail test`, `ail rename`, `ail fmt`, `ail watch`, `ail new`, `ail mcp`, VS Code extension, LSP features.
+**Examples:** `ail test`, `ail rename`, `ail fmt`, `ail watch`, `ail new`, `ail mcp`, `ail explain`, VS Code extension, LSP features.
 
 **Review:** Q1–Q3 only, lightweight maintainer approval.
 
@@ -235,70 +235,3 @@ The project remains tightly aligned with:
 > **AI-assisted, deterministic, low-maintenance business software development.**
 
 Features that damage determinism, add unmeasured complexity, or solve no observed pain point are out of scope for v1.x.
-
----
-
-## 9. Known Patterns and Limitations
-
-### 9.1 Map Creation
-
-AILang does not support map literal syntax like `{"id": 1}`. Use the `map.*` API instead:
-
-**Unsupported:**
-```
-let product = {"id": 1, "name": "Widget"}
-```
-
-**Supported:**
-```
-let product = map.new()
-map.set(product, "id", 1)
-map.set(product, "name", "Widget")
-```
-
-### 9.2 Type Inference
-
-AILang uses type inference but has known limitations:
-
-- **Boolean return types:** Functions returning `true`, `false`, or boolean expressions (`x < 10`) are correctly inferred as returning `bool`.
-- **Parameter types:** Function parameters are inferred from usage, not from annotations.
-- **Comparison operators:** `==`, `!=`, `<`, `>`, `<=`, `>=` return `bool` when both operands are the same type.
-- **Arithmetic operators:** `+`, `-`, `*`, `/`, `%` return `int` for integer operands, `float` if either operand is float.
-- **String concatenation:** Use `+` operator. `string.concat` takes exactly 2 arguments.
-
-### 9.3 Standard Library Patterns
-
-Common stdlib usage patterns:
-
-```
-# List operations
-let items = list.new()
-list.append(items, value)
-let count = list.len(items)
-
-# Map operations
-let data = map.new()
-map.set(data, "key", value)
-if map.has(data, "key")
-    let val = map.get(data, "key")
-end
-
-# File I/O
-let content = file.read("data.txt")
-file.write("output.txt", content)
-
-# Stdin
-let name = io.read()
-```
-
-### 9.4 Error Messages
-
-Common error messages and their fixes:
-
-| Error | Meaning | Fix |
-|-------|---------|-----|
-| `Forward reference: 'X' used before declaration` | Function X called before it's defined | Move X above the calling function |
-| `Return type mismatch` | Function returns different types | Ensure all return paths return the same type |
-| `Arithmetic operator requires numeric types` | Non-numeric operands in math | Convert to int/float first |
-| `Comparison operator requires matching types` | Comparing different types | Ensure both sides are the same type |
-| `Condition must be bool` | Non-boolean in if/while | Use comparison or logical operator |

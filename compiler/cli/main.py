@@ -29,8 +29,8 @@ from compiler import __version__
 from compiler.compilation import CompilationSession
 from compiler.diagnostics import DiagnosticFormatter, DiagnosticReporter
 from compiler.rename import RenameTool
+from compiler.runtime import Runtime, RuntimeError
 from compiler.runtime import builtins as runtime_builtins
-from compiler.runtime.interpreter import Runtime
 
 PROG = "ail"
 
@@ -378,6 +378,12 @@ def cmd_run(args: list[str]) -> int:
         return 1
     runtime = Runtime(bundle)
 
+    # Set source map for runtime error location resolution
+    source_map: dict[str, tuple[str, str]] = {}
+    for module_name, src in session._sources.items():
+        source_map[module_name] = (str(src.path), src.text)
+    runtime.set_source_map(source_map)
+
     for module_name in session._graph.topological_sort():
         runtime._initialize_module(module_name)
 
@@ -389,11 +395,17 @@ def cmd_run(args: list[str]) -> int:
                 break
 
         if main_module is None:
-            raise KeyError("No module found")
+            raise RuntimeError(
+                operation="runtime.execute()",
+                reason="No main module found in compilation bundle.",
+            )
 
         program_ir = bundle.module_irs[main_module]
         runtime.execute(program_ir)
         return 0
+    except RuntimeError as e:
+        print(e.format_diagnostic(), file=sys.stderr)
+        return 1
     except Exception as e:
         print(f"Runtime error: {e}", file=sys.stderr)
         return 1
@@ -1251,7 +1263,7 @@ description = "{description}"
 entry = "main.ail"
 
 [language]
-version = "1.1.6"
+version = "1.1.7"
 """
 
 _AIL_LOCK_TEMPLATE = """\
@@ -1732,6 +1744,12 @@ def cmd_test(args: list[str]) -> int:
         bundle = session.build_ir()
         runtime = Runtime(bundle)
 
+        # Set source map for runtime error location resolution
+        test_source_map: dict[str, tuple[str, str]] = {}
+        for module_name, src in session._sources.items():
+            test_source_map[module_name] = (str(src.path), src.text)
+        runtime.set_source_map(test_source_map)
+
         for module_name in session._graph.topological_sort():
             runtime._initialize_module(module_name)
 
@@ -1743,7 +1761,10 @@ def cmd_test(args: list[str]) -> int:
                     break
 
             if main_module is None:
-                raise KeyError("No module found")
+                raise RuntimeError(
+                    operation="runtime.execute()",
+                    reason="No main module found in compilation bundle.",
+                )
 
             program_ir = bundle.module_irs[main_module]
 
@@ -1772,6 +1793,12 @@ def cmd_test(args: list[str]) -> int:
                         for line in output.strip().split("\n"):
                             print("  " + line)
 
+        except RuntimeError as e:
+            failed += 1
+            errors.append(test_file.name)
+            print(f"FAIL  {test_file.name}", file=sys.stderr)
+            for line in e.format_diagnostic().split("\n"):
+                print("  " + line, file=sys.stderr)
         except Exception as e:
             failed += 1
             errors.append(test_file.name)
@@ -2063,6 +2090,14 @@ def cmd_docs(args: list[str]) -> int:
         print()
         print("Retrieve AILang documentation without filesystem access.")
         print("Run 'ail docs' without arguments to list available documents.")
+        print()
+        print("Available documents:")
+        print("  AGENTS            AI agent instructions and language rules")
+        print("  LANGUAGE_SPEC     Complete AILang language specification")
+        print("  STDLIB_REFERENCE  Standard library API reference")
+        print("  GETTING_STARTED   Getting started guide")
+        print("  LANGUAGE_TOUR     AILang language tour with examples")
+        print("  VSCODE_QUICKSTART VS Code extension setup and features")
         return 0
     return _run_dx_tool("tools.ail_docs", args)
 

@@ -66,4 +66,14 @@ dependencies = []
 |:----:|---------|
 | 0 | Success |
 | 1 | Operation failed (resolution, download, checksum mismatch) |
-| 3 | Internal error (invalid args, missing manifest, I/O error) |
+| 2 | Circular dependency detected |
+| 3 | Invalid manifest |
+| 4 | Lock file mismatch |
+| 5 | Git clone failure |
+| 10 | Manifest not found |
+| 11 | Invalid package name |
+| 12 | Invalid version |
+| 13 | Invalid entry |
+| 14 | Invalid dependency |
+
+See `docs/guides/PACKAGE_VALIDATION.md` for full diagnostic documentation.
