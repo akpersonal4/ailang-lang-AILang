@@ -10,7 +10,7 @@ until this document has been reviewed. Update AGENTS.md reading order after revi
 
 | Attribute | Value |
 |:----------|:------|
-| **Release Candidate** | v1.1.7-rc |
+| **Current Release** | v1.1.8 |
 | **Current Milestone** | M127 P0 — Runtime Diagnostics & Package Validation |
 | **Project Phase** | Public Beta |
 
@@ -23,8 +23,8 @@ until this document has been reviewed. Update AGENTS.md reading order after revi
 | Local Wheel Installation | ✅ Complete |
 | Smoke Tests (hello_world, calculator, collections, fibonacci) | ✅ Complete |
 | Regression Tests | ✅ 1165 Passing |
-| PyPI Publication | ⏳ Not Performed |
-| GitHub Release | ⏳ Not Performed |
+| PyPI Publication | ✅ v1.1.8 Published |
+| GitHub Release | ✅ v1.1.8 Published |
 
 ### Maturity Assessment
 

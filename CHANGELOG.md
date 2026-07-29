@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.1.8
+
+### M127 P0 — Runtime Diagnostics & Package Validation (Final Release)
+
+This release is the final v1.1.8, incorporating the RC Technical Review fixes.
+
+- **RC Technical Review Fixes**:
+  - `compiler/runtime/interpreter.py:285` — removed line that concatenated line number into `source_file` in fallback path (double-line-number bug).
+  - `compiler/runtime/builtins.py:243-246` — replaced `cast(list, args[0])` with `_expect_list(args[0], "list.clear")` in `list_clear`.
+- **Publication**: Published to PyPI and GitHub Releases.
+- **Test Suite**: 1165 tests passing.
+
 ## v1.1.7
 
 ### Developer Experience (DX) Improvement Sprint — M121/M122 Release Candidate
