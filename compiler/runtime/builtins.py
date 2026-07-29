@@ -92,7 +92,17 @@ def list_len(args: tuple[RuntimeValue, ...]) -> int:
 
 def list_get(args: tuple[RuntimeValue, ...]) -> RuntimeValue:
     _expect_list(args[0], "list.get")
-    return args[0][args[1]]
+    try:
+        return args[0][args[1]]
+    except IndexError:
+        length = len(args[0])
+        raise RuntimeError(
+            operation="list.get",
+            reason=f"Index {args[1]} out of range for list of length {length}.",
+            expected_type=f"integer in range 0..{length - 1}",
+            actual_type=str(args[1]),
+            suggestion="Check list.len() before calling list.get().",
+        )
 
 
 def list_contains(args: tuple[RuntimeValue, ...]) -> bool:

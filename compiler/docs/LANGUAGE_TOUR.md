@@ -380,7 +380,7 @@ All output must use `print()`. The CLI does not print the return value of `main(
 
 ## 13. Complete Grammar Reference
 
-The canonical grammar is defined in the [Language Specification](../LANGUAGE_SPEC.md#12-grammar). Key productions:
+The canonical grammar is defined in the [Language Specification](LANGUAGE_SPEC.md). Key productions:
 
 ```
 program = { import_declaration }, { declaration } ;

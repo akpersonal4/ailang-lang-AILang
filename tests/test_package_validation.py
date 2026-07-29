@@ -314,7 +314,7 @@ class TestManifestValidation:
             "authors = [\"Alice\"]\n"
             "license = \"MIT\"\n"
             "entry = \"main.ail\"\n"
-            "[language]\nversion = \"1.1.7\"\n",
+            "[language]\nversion = \"1.1.8\"\n",
             encoding="utf-8",
         )
         manifest = parse_manifest(toml_path)
@@ -324,7 +324,7 @@ class TestManifestValidation:
         assert manifest.authors == ["Alice"]
         assert manifest.license == "MIT"
         assert manifest.entry == "main.ail"
-        assert manifest.language_version == "1.1.7"
+        assert manifest.language_version == "1.1.8"
 
 
 # =============================================================================

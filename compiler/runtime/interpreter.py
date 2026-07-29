@@ -162,9 +162,27 @@ class Runtime:
             if expression.operator == "*":
                 return left * right
             if expression.operator == "/":
-                return left / right
+                try:
+                    return left / right
+                except ZeroDivisionError:
+                    raise self._augment_error(RuntimeError(
+                        operation="division",
+                        reason="Division by zero is undefined.",
+                        expected_type="non-zero divisor",
+                        actual_type="0",
+                        suggestion="Guard division with a check for zero.",
+                    ))
             if expression.operator == "%":
-                return left % right
+                try:
+                    return left % right
+                except ZeroDivisionError:
+                    raise self._augment_error(RuntimeError(
+                        operation="modulo",
+                        reason="Modulo by zero is undefined.",
+                        expected_type="non-zero divisor",
+                        actual_type="0",
+                        suggestion="Guard modulo with a check for zero.",
+                    ))
             if expression.operator == "==":
                 return left == right
             if expression.operator == "!=":

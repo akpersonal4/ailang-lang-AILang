@@ -340,4 +340,4 @@ Formatting is deterministic and idempotent — running `ail fmt` twice on the sa
 - Read the [Language Tour](LANGUAGE_TOUR.md) for a deep dive into syntax and semantics.
 - Browse the [Standard Library Reference](STDLIB_REFERENCE.md) for all available modules.
 - Explore example programs in the `examples/` and `apps/` directories.
-- See the [Compiler Architecture](COMPILER_ARCHITECTURE.md) guide to understand how AILang works internally.
+- See the [Compiler Architecture](LANGUAGE_SPEC.md) guide to understand how AILang works internally.

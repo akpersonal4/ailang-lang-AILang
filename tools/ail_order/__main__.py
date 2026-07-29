@@ -111,7 +111,7 @@ def main() -> int:
 
     args = parser.parse_args()
 
-    root = get_project_root()
+    root = Path.cwd()
 
     # Resolve target path
     target_path = Path(args.target)

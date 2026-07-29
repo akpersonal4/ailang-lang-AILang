@@ -273,7 +273,7 @@ def parse_manifest(path: Path) -> ProjectManifest:
             errors.append(
                 PackageError(
                     reason="[language] section must be a table (key-value pairs).",
-                    suggestion="Write [language] as a section header with fields underneath. Example:\n[language]\nversion = \"1.1.7\"",
+                    suggestion="Write [language] as a section header with fields underneath. Example:\n[language]\nversion = \"1.1.8\"",
                     manifest_path=path_str,
                 )
             )

@@ -4,14 +4,16 @@
 
 [![Tests](https://img.shields.io/badge/tests-1165%20passing-brightgreen)](#)
 [![Python](https://img.shields.io/badge/python-3.11%2B-blue)](#)
-[![Version](https://img.shields.io/badge/build-v1.1.7--rc-blue)](#)
+[![Version](https://img.shields.io/badge/build-v1.1.8-blue)](#)
 [![License](https://img.shields.io/badge/license-Apache%202.0-green)](#)
 
 AILang is an AI-first programming language designed to be deterministic, specification-first, and easy for both humans and AI systems to reason about. It features a complete compiler pipeline, a 16-module standard library, and has been validated through 1165 tests, stress testing up to 10,000 LOC, and AI-generated program verification with 100% first-pass success.
 
 ## Quick Start
 
-Build from source (pre-release — v1.1.7-rc):
+> **Note:** The CLI is `ail` (not `ailang`). After `pip install ailang-lang`, use `ail run`, `ail build`, etc.
+
+Build from source:
 
 ```bash
 git clone https://github.com/akpersonal4/ailang-lang-AILang.git
@@ -26,7 +28,7 @@ ail run hello.ail
 Install from local wheel (pre-built in `dist/`):
 
 ```bash
-pip install dist/ailang_lang-1.1.7-py3-none-any.whl
+pip install dist/ailang_lang-1.1.8-py3-none-any.whl
 ail run hello.ail
 ```
 

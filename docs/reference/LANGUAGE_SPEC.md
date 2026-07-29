@@ -1,6 +1,6 @@
 # AILang Language Specification
 
-**Version:** 1.1.6  
+**Version:** 1.1.8  
 **Status:** Complete — Implementation Reference  
 **Canonical Source:** This document is the single source of truth for the AILang language.
 
@@ -229,11 +229,7 @@ fn name(parameter1, parameter2) {
 }
 ```
 
-- Parameters are positional, comma-separated identifiers.
-- Parameters may have default values: `fn add(a, b = 10) { ... }`.
-- Parameters without defaults are required; defaults are used when the argument is omitted at the call site.
-- Default value expressions are evaluated fresh on each call when the parameter is omitted.
-- Required parameters must precede parameters with defaults.
+- Parameters are positional, comma-separated identifiers. All parameters are required (no default values, no varargs).
 - Empty parameter lists are valid: `fn zero() { ... }`.
 - Functions must be defined before they are called (no forward references).
 - Empty function bodies are valid: `fn noop() {}`.

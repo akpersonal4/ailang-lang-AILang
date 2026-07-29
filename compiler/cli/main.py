@@ -2138,8 +2138,13 @@ def cmd_testgen(args: list[str]) -> int:
     """Generate test cases for AILang applications."""
     if args and args[0] in ("-h", "--help"):
         print(f"Usage: {PROG} testgen [options]")
+        print(f"       {PROG} testgen --app <app_name>")
         print()
-        print("Generate test cases for AILang applications.")
+        print("Generate test cases for AILang apps.")
+        print()
+        print("Options:")
+        print("  --app APP    Generate tests for a specific app directory")
+        print("  --all        Generate tests for all apps (default)")
         return 0
     return _run_dx_tool("tools.ail_testgen", args)
 
