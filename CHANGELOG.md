@@ -1,5 +1,26 @@
 # Changelog
 
+## v1.1.9
+
+### M129 Engineering Response — Independent Validation First Iteration
+
+This patch release addresses all accepted findings from the M128 independent validation of the v1.1.8 release. v1.1.8 remains published and immutable.
+
+- **High Priority Fixes**:
+  - `ail order` output path: Changed `get_project_root()` to `Path.cwd()` so outputs write to the working directory, not site-packages (`tools/ail_order/__main__.py:114`).
+  - LANGUAGE_SPEC default parameters: Removed §5.1 reference to unimplemented default parameter feature — all parameters are required, matching LANGUAGE_TOUR (both copies: `compiler/docs/`, `docs/reference/`).
+  - Division-by-zero runtime error: `interpreter.py` `/` and `%` ops now catch `ZeroDivisionError` → structured `RuntimeError` with operation/reason/expected/actual/location/suggestion.
+  - List index out-of-range: `builtins.py` `list_get` now catches `IndexError` → structured `RuntimeError` with index, length, bounds suggestion.
+  - Broken link fixes: GETTING_STARTED (`COMPILER_ARCHITECTURE.md` → `LANGUAGE_SPEC.md`), LANGUAGE_TOUR (`../LANGUAGE_SPEC.md` → `LANGUAGE_SPEC.md`).
+- **Version Synchronisation**:
+  - Updated LANGUAGE_SPEC and language tool versions to v1.1.9 across 10 files: `compiler/docs/LANGUAGE_SPEC.md`, `docs/reference/LANGUAGE_SPEC.md`, `tools/ail_context/__main__.py`, `tools/ail_mcp/*.py` (3), `tools/ail_package_manager/init.py`, `tools/ail_package_manager/manifest.py`, `extensions/vscode-ailang/package.json`.
+  - Updated all test version assertions and development status references.
+- **Documentation**:
+  - README: Added note that CLI is `ail` (not `ailang`).
+  - `ail testgen`: Usage help now shows `--app APP` flag.
+- **Test Suite**: 1084 tests passing (full suite).
+- **Publication**: Published to PyPI and GitHub Releases.
+
 ## v1.1.8
 
 ### M127 P0 — Runtime Diagnostics & Package Validation (Final Release)

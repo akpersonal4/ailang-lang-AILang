@@ -1,6 +1,6 @@
 # AILang Language Specification
 
-**Version:** 1.1.8  
+**Version:** 1.1.9  
 **Status:** Complete — Implementation Reference  
 **Canonical Source:** This document is the single source of truth for the AILang language.
 
