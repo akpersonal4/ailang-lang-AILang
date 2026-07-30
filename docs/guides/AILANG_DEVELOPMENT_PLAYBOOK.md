@@ -466,6 +466,40 @@ Every optimization must be registered in `docs/runtime/optimizations.md` with:
 
 ---
 
+## Release & Publish Checklist
+
+Used when cutting a new release to GitHub and PyPI.
+
+```bash
+# 1. Bump version in ALL locations:
+#    compiler/_version.py  pyproject.toml  tools/ail_mcp/__init__.py
+#    (use semantic versioning — patch for bugfixes, minor for features)
+
+# 2. Commit the version bump (do NOT include other changes)
+git add compiler/_version.py pyproject.toml tools/ail_mcp/__init__.py
+git commit -m "Bump version to X.Y.Z"
+
+# 3. Tag the release
+git tag vX.Y.Z
+
+# 4. Build
+python -m build
+
+# 5. Upload to PyPI (no --verbose to avoid credential exposure)
+python -m twine upload dist/*
+
+# 6. Push to GitHub (tags included)
+git push origin main --tags
+```
+
+**Rules:**
+- Bump version **before** building — never after a failed upload
+- Never use `--verbose` with `twine upload`
+- Version fields live in `compiler/_version.py`, `pyproject.toml`, `tools/ail_mcp/__init__.py`
+- `reports/` and `dist/` are gitignored — don't commit them
+
+---
+
 ## Playbook Update Policy
 
 This playbook is a living document. Update it when:
