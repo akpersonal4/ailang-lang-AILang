@@ -595,7 +595,7 @@ This release incorporates critical production readiness fixes and passes indepen
 
 - All new APIs verified: `file.listdir`, `list.sum`, `list.find_by_key`, `convert.to_number` — build+run confirmed
 - Existing test suite: 18 stdlib tests pass, zero regressions
-- ENGINEERING_EVIDENCE_REPORT.md: updated with before/after comparison
+- docs/archive/reports/validation/ENGINEERING_EVIDENCE_REPORT.md: updated with before/after comparison
 - HYPOTHESIS_STATUS.md: created with evidence references
 - All P0 APIs implemented (no scope changes)
 
@@ -611,11 +611,11 @@ This release incorporates critical production readiness fixes and passes indepen
 - **B7 AI Context**: Structured guide (AGENTS.md + Playbook) saves 3× iterations (1 vs 3 compile-fix cycles)
 - **15 benchmark artifacts** created: 5 bug-fix files, naive-without-guide comparison, 2 task specs, 10 code modifications
 - **Key stdlib gaps identified**: no `!=` operator, no `listdir`, `convert.to_number` is no-op
-- **Evidence published**: `ENGINEERING_EVIDENCE_REPORT.md` with method, datasets, raw results, summary table, and cost model
+- **Evidence published**: `docs/archive/reports/validation/ENGINEERING_EVIDENCE_REPORT.md` with method, datasets, raw results, summary table, and cost model
 
 ### Quality Gates
 
-- **ENGINEERING_EVIDENCE_REPORT.md**: PASS — all 6 benchmarks documented with measurements
+- **docs/archive/reports/validation/ENGINEERING_EVIDENCE_REPORT.md**: PASS — all 6 benchmarks documented with measurements
 - B2–B7 artifacts: PASS — all build+run verified
 
 ## 0.6.1

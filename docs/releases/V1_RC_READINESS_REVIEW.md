@@ -224,7 +224,7 @@
 | VISION_AND_DIFFERENTIATION.md | ✅ | Project vision |
 | PROJECT_CONSTITUTION.md | ✅ | Immutable rules |
 | GOVERNANCE.md | ✅ | Decision-making process |
-| PRODUCT_ROADMAP.md | ✅ | Forward-looking roadmap |
+| ../roadmap/PRODUCT_ROADMAP.md | ✅ | Forward-looking roadmap |
 
 ### 4.2 Examples
 

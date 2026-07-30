@@ -199,7 +199,7 @@ A chronological record of every major engineering phase, with results, lessons, 
 | **Why** | Needed single-file project context that any AI agent could read before generating code to reduce iteration and mistakes. |
 | **Result** | Tool generates ~6.5KB markdown document with 15 sections covering everything from project overview to frozen components. Acceptance test suite validates all aspects. |
 | **Lessons** | Single-file context prevents AI from missing critical constraints (no loops, no forward references, bottom-up ordering). Warnings about missing stdlib functions prevent hallucinations. |
-| **Documents** | `tools/ail_context/`, `tests/dx_tool_001_acceptance_test.py`, `tests/dx_tool_001_ai_validation.py`, `DX_TOOL_001_REPORT.md` |
+| **Documents** | `tools/ail_context/`, `tests/dx_tool_001_acceptance_test.py`, `tests/dx_tool_001_ai_validation.py`, `docs/archive/reports/validation/DX_TOOL_001_REPORT.md` |
 
 ### M12 — DX Tool #004 (ail benchmark)
 
@@ -275,11 +275,11 @@ A chronological record of every major engineering phase, with results, lessons, 
 
 | Aspect | Detail |
 |--------|--------|
-| **What** | Consolidated PROJECT_VISION.md + PROJECT_PHILOSOPHY.md into VISION_AND_DIFFERENTIATION.md. Expanded PROJECT_CONSTITUTION.md with Documentation Rule and Canonical First Rule. Created PRODUCT_ROADMAP.md at root as canonical roadmap. Moved benchmark methodology from whitepaper to ENGINEERING_BENCHMARK_PLAN.md. |
-| **Why** | 4 documents describing "roadmap" (PROJECT_VISION.md, PROJECT_PHILOSOPHY.md, ROADMAP.md, PRODUCT_ROADMAP.md) created confusion about which was canonical. CTO directed consolidation. |
-| **Result** | From 5 documents to 3 canonical sources (VISION_AND_DIFFERENTIATION.md + CONSTITUTION + PRODUCT_ROADMAP.md). Canonical First Rule added to AGENTS.md and Constitution. Eliminated 7 obsolete/archive files. |
+| **What** | Consolidated PROJECT_VISION.md + PROJECT_PHILOSOPHY.md into VISION_AND_DIFFERENTIATION.md. Expanded PROJECT_CONSTITUTION.md with Documentation Rule and Canonical First Rule. Created docs/roadmap/PRODUCT_ROADMAP.md at root as canonical roadmap. Moved benchmark methodology from whitepaper to ENGINEERING_BENCHMARK_PLAN.md. |
+| **Why** | 4 documents describing "roadmap" (PROJECT_VISION.md, PROJECT_PHILOSOPHY.md, ROADMAP.md, docs/roadmap/PRODUCT_ROADMAP.md) created confusion about which was canonical. CTO directed consolidation. |
+| **Result** | From 5 documents to 3 canonical sources (VISION_AND_DIFFERENTIATION.md + CONSTITUTION + docs/roadmap/PRODUCT_ROADMAP.md). Canonical First Rule added to AGENTS.md and Constitution. Eliminated 7 obsolete/archive files. |
 | **Lessons** | Before creating a new document, search for an existing canonical first. Extend it rather than creating a new file. |
-| **Documents** | `PRODUCT_ROADMAP.md`, `docs/governance/PROJECT_CONSTITUTION.md`, `docs/governance/VISION_AND_DIFFERENTIATION.md` |
+| **Documents** | `docs/roadmap/PRODUCT_ROADMAP.md`, `docs/governance/PROJECT_CONSTITUTION.md`, `docs/governance/VISION_AND_DIFFERENTIATION.md` |
 
 ### B1 — Engineering Benchmark Framework (v0.6.0)
 
@@ -309,7 +309,7 @@ A chronological record of every major engineering phase, with results, lessons, 
 | **Why** | Benchmark evidence showed AILang requires 1.38× more iterations than Python, with 42% of B2 errors caused by stdlib limitations. Optimization needed before v1.0. |
 | **Result** | B2 L2 improved from 3→1 iterations (67%). B2 total from 7→5 (29%). Overall AILang vs Python ratio from 1.38× to 1.23×. All existing tests pass with zero regressions. |
 | **Lessons** | Single-error-at-a-time compiler reporting is the next bottleneck (not addressed here, out of scope). Stdlib gaps are the highest-leverage optimization target. The evidence-first methodology (build measure, identify, fix, re-measure) works. |
-| **Documents** | `ENGINEERING_EVIDENCE_REPORT.md`, `docs/HYPOTHESIS_STATUS.md`, `stdlib/file.ail`, `stdlib/list.ail`, `stdlib/convert.ail` |
+| **Documents** | `docs/archive/reports/validation/ENGINEERING_EVIDENCE_REPORT.md`, `docs/HYPOTHESIS_STATUS.md`, `stdlib/file.ail`, `stdlib/list.ail`, `stdlib/convert.ail` |
 
 ### M20 — Dependency Ordering Assistant (`ail order`)
 
@@ -325,11 +325,11 @@ A chronological record of every major engineering phase, with results, lessons, 
 
 | Aspect | Detail |
 |--------|--------|
-| **What** | Executed 6 engineering benchmarks (B2–B7) comparing AILang vs Python across feature implementation, bug fixing, refactoring, upgrades, maintenance, and AI context. Generated ENGINEERING_EVIDENCE_REPORT.md with raw measurements, environment, and observations. |
+| **What** | Executed 6 engineering benchmarks (B2–B7) comparing AILang vs Python across feature implementation, bug fixing, refactoring, upgrades, maintenance, and AI context. Generated docs/archive/reports/validation/ENGINEERING_EVIDENCE_REPORT.md with raw measurements, environment, and observations. |
 | **Why** | Needed objective, reproducible evidence of AILang's engineering cost relative to Python — the project's primary hypothesis requires measurement before claims. |
 | **Result** | AILang: 18 iterations total (B2–B6). Python: 13 iterations total. Ratio: 1.38× more iterations for AILang. All AILang errors are compile-time (zero silent runtime failures). Refactoring/upgrade/maintenance at parity (1.0×). AI structured context saves 3× iterations (B7). Key stdlib gaps identified: no `!=` operator, no `listdir`, `convert.to_number` is no-op. |
 | **Lessons** | The compiler's single-error-at-a-time reporting inflates iteration counts. Stdlib gaps are the #1 friction point (42% of B2 errors). Bottom-up ordering is net neutral for refactoring. |
-| **Documents** | `ENGINEERING_EVIDENCE_REPORT.md` |
+| **Documents** | `docs/archive/reports/validation/ENGINEERING_EVIDENCE_REPORT.md` |
 
 ### M21 — Inventory Python Equivalent + Empirical AILang vs Python Comparison
 
@@ -527,6 +527,6 @@ Root
 │   └── generated/                    ← Auto-generated test files
 ├── ai_benchmarks/                    ← 3 large benchmarks
 ├── examples/patterns/                ← 10 pattern files
-├── PRODUCT_ROADMAP.md                ← Canonical product roadmap
+├── docs/roadmap/PRODUCT_ROADMAP.md                ← Canonical product roadmap
 └── .github/workflows/ci.yml          ← CI pipeline
 ```

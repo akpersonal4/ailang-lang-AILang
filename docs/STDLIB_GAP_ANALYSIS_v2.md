@@ -433,8 +433,8 @@ utility function patterns. See the complete scan methodology in
 
 ### Historical Reports
 
-- `ENGINEERING_EVIDENCE_REPORT.md` (v0.6.x → v0.7.0 optimization results)
-- `ENGINEERING_EVIDENCE_REPORT_v0.8.0.md` (DX-009 diagnostics impact)
+- `archive/reports/validation/ENGINEERING_EVIDENCE_REPORT.md` (v0.6.x → v0.7.0 optimization results)
+- `archive/reports/validation/ENGINEERING_EVIDENCE_REPORT_v0.8.0.md` (DX-009 diagnostics impact)
 - `docs/HYPOTHESIS_STATUS.md` (H6: Stdlib completeness reduces iterations)
 - `docs/benchmarks/AI_BENCHMARK_ANALYSIS.md` (cross-benchmark pattern analysis)
 - `docs/benchmarks/AI_BENCHMARK_MATRIX.md` (21 small validation apps)

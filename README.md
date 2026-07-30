@@ -1,13 +1,26 @@
 # AILang
 
-**AI-first programming language — deterministic, specification-driven, and compiler-friendly.**
+**Deterministic programming language designed for AI-assisted development.**
 
-[![Tests](https://img.shields.io/badge/tests-1165%20passing-brightgreen)](#)
-[![Python](https://img.shields.io/badge/python-3.11%2B-blue)](#)
-[![Version](https://img.shields.io/badge/build-v1.1.10-blue)](#)
-[![License](https://img.shields.io/badge/license-Apache%202.0-green)](#)
+[![PyPI](https://img.shields.io/pypi/v/ailang-lang?color=blue)](https://pypi.org/project/ailang-lang/)
+[![Tests](https://img.shields.io/badge/tests-1165%20passing-brightgreen)](https://github.com/akpersonal4/ailang-lang-AILang/actions?query=branch%3Adevelop)
+[![Python](https://img.shields.io/badge/python-3.11%2B-blue)](https://www.python.org/)
+[![License](https://img.shields.io/badge/license-Apache%202.0-green)](https://github.com/akpersonal4/ailang-lang-AILang/blob/main/LICENSE)
 
-AILang is an AI-first programming language designed to be deterministic, specification-first, and easy for both humans and AI systems to reason about. It features a complete compiler pipeline, a 16-module standard library, and has been validated through 1165 tests, stress testing up to 10,000 LOC, and AI-generated program verification with 100% first-pass success.
+AILang is a deterministic programming language for AI-assisted development. It compiles to Python and is designed to be easy for both humans and AI systems to reason about — no runtime surprises, no silent failures.
+
+```ail
+fn main() {
+    print("Hello, AILang!");
+    return 0
+}
+```
+
+### Why AILang?
+
+- **Deterministic by design** — same source always produces the same output. No runtime exceptions, no silent failures. If it compiles, it runs.
+- **AI-native tooling** — `ail mcp` exposes the compiler to AI tools via Model Context Protocol. AI agents get machine-readable language specs, not blog posts.
+- **Fast feedback** — compile and run in &lt;2 seconds for 5000 LOC. No build server, no waiting.
 
 ## Quick Start
 
@@ -280,104 +293,9 @@ fn main() {
 | Quality gates | black, ruff, mypy all clean |
 | Validation | Deterministic, AI-verified, stress-tested |
 
-## CLI Command Reference
+For environment diagnostics: `ail doctor`. For error explanations: `ail explain <CODE>`.
 
-| Command | Action |
-|---------|--------|
-| `ail run <file>` | Compile and run an AILang program |
-| `ail build <file>` | Compile and check for errors (no execution) |
-| `ail check <file>` | Check for forward references and ordering violations |
-| `ail fmt <file\|dir>` | Format AILang source file(s) |
-| `ail test [<file\|dir>]` | Run test_*.ail files |
-| `ail new <project>` | Create a new AILang project scaffold |
-| `ail rename <old> <new>` | Rename identifier repository-wide |
-| `ail order <target>` | Analyze dependency ordering of .ail files |
-| `ail watch [<file>]` | Watch for changes, recompile incrementally |
-| `ail install` | Install dependencies from ail.toml |
-| `ail add <package>` | Add a dependency to ail.toml |
-| `ail remove <package>` | Remove a dependency from ail.toml |
-| `ail update` | Re-resolve all dependencies |
-| `ail list` | List installed dependencies |
-| `ail publish` | Publish project to package registry |
-| `ail doctor` | Diagnose environment issues |
-| `ail heal` | Get fix suggestions for common errors |
-| `ail explain <CODE>` | Explain a compiler error code in detail |
-| `ail docs [<name>]` | Read documentation offline |
-| `ail context [--json]` | Get machine-readable language context |
-| `ail mcp` | Start MCP server for AI tool integration |
-| `ail lsp` | Start the LSP server (stdin/stdout) |
-| `ail --version` | Print version information |
-
-### Troubleshooting
-
-**"Command not found" after pip install**
-```bash
-# Ensure the Python Scripts directory is on your PATH:
-python -m site --user-site
-# Usually: ~/AppData/Roaming/Python/Python311/Scripts (Windows)
-# Or: ~/.local/bin (Linux/macOS)
-```
-
-**"Module not found" when running from outside project**
-```bash
-# AILang v1.1.5+ resolves stdlib from the installed package automatically.
-# If you still see MOD003, try reinstalling:
-pip install --force-reinstall ailang-lang
-```
-
-**"Unexpected character" on Windows**
-```bash
-# The file may have a BOM marker. Save without BOM (UTF-8 without signature):
-# In VS Code: File → Save with Encoding → UTF-8
-# Then re-run: ail run <file>
-```
-
-**"Running this file outside a project tree" warning**
-```bash
-# This is informational — the file will still run. Create a project for
-# full package management support:
-ail new myproject && cd myproject
-# Then copy your .ail file into myproject/
-```
-
-**"Forward reference" error**
-```bash
-# Functions must be defined before they are called.
-# Run to see the exact ordering issue:
-ail check <file>
-# Then move the called function above its caller.
-```
-
-> For detailed error explanations: `ail explain <ERROR_CODE>`
-> For environment diagnostics: `ail doctor`
-
-## Formatter
-
-AILang includes a deterministic source code formatter. One style only — no configuration.
-
-```bash
-# Format a file in-place
-ail fmt hello.ail
-
-# Check if a file is formatted (exit 0 = yes, 1 = no)
-ail fmt --check hello.ail
-
-# Read from stdin, write formatted to stdout
-cat hello.ail | ail fmt --stdin
-```
-
-Formatting rules:
-- **4-space indentation**
-- **Opening brace on same line** (`fn foo() {`, `if (cond) {`)
-- **`} else {` on one line**
-- **Spaces around all binary operators** (`a + b`, `x == y`, `a && b`)
-- **Space after `,`** in parameter/argument lists
-- **Single blank line between function declarations**
-- **Trailing whitespace removed**
-- **Newline at EOF**
-- **Comments preserved** — inline and standalone comments are retained
-
-Formatting is idempotent: formatting an already-formatted file produces no changes.
+See [CLI Reference](docs/reference/CLI_REFERENCE.md) for all commands, [Formatter](docs/reference/FORMATTER.md) for formatting rules, and [Troubleshooting](docs/reference/TROUBLESHOOTING.md) for common issues.
 
 ## Development
 

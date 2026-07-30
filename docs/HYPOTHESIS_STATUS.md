@@ -42,7 +42,7 @@
 - B2 L2 (CSV pipeline): 3 iterations → 1 iteration with `file.listdir`
 - `convert.to_number` changed from no-op to actual converter
 - `list.sum` and `list.find_by_key` reduce boilerplate
-- 42% of B2 errors were stdlib-related (from ENGINEERING_EVIDENCE_REPORT.md)
+- 42% of B2 errors were stdlib-related (from archive/reports/validation/ENGINEERING_EVIDENCE_REPORT.md)
 
 ### H7: AI Context Improves Output Quality
 
@@ -67,4 +67,4 @@
 | Not Yet Tested | 1 (H2) |
 | Rejected | 0 |
 | Last updated | 2026-07-07 |
-| Evidence source | ENGINEERING_EVIDENCE_REPORT.md |
+| Evidence source | archive/reports/validation/ENGINEERING_EVIDENCE_REPORT.md |

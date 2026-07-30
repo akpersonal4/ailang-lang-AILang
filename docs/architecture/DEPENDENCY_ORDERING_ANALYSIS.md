@@ -9,7 +9,7 @@
 | Evidence Source | Finding |
 |-----------------|---------|
 | Mini CRM benchmark | Forward references add +1 iteration for code reordering |
-| ENGINEERING_EVIDENCE_REPORT.md | AILang 1.38× more iteration-intensive than Python (18 vs 13 total) |
+| archive/reports/validation/ENGINEERING_EVIDENCE_REPORT.md | AILang 1.38× more iteration-intensive than Python (18 vs 13 total) |
 | ADR-004 | Bottom-up ordering is intentional design, not accidental |
 | Playbook | Dependency mapping mitigates but adds cognitive overhead |
 
@@ -327,7 +327,7 @@ The recommendation is to implement **module-level forward references** as the pr
 ## References
 
 - Mini CRM Engineering Evidence Report: `apps/mini_crm/ENGINEERING_EVIDENCE_REPORT.md`
-- ENGINEERING_EVIDENCE_REPORT.md: `ENGINEERING_EVIDENCE_REPORT.md`
+- ENGINEERING_EVIDENCE_REPORT.md: `archive/reports/validation/ENGINEERING_EVIDENCE_REPORT.md`
 - ADR-001 through ADR-009: `docs/architecture/ARCHITECTURE_DECISIONS.md`
 - Development Playbook: `docs/guides/AILANG_DEVELOPMENT_PLAYBOOK.md`
 - Language Spec: `docs/reference/LANGUAGE_SPEC.md`

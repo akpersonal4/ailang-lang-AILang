@@ -297,7 +297,7 @@ in the ecosystem that makes AILang productive for both human and AI developers.
 
 ## Forward-Looking Roadmap
 
-> See `PRODUCT_ROADMAP.md` (canonical roadmap) for the complete milestone history and future plans.
+> See `docs/roadmap/PRODUCT_ROADMAP.md` (canonical roadmap) for the complete milestone history and future plans.
 
 | Milestone | Focus | Target |
 |-----------|-------|:------:|
@@ -376,10 +376,10 @@ in the ecosystem that makes AILang productive for both human and AI developers.
 | **M25/M26 — Experimental Loop Primitive** — `for item in collection { body }` lowered to recursive `__for_fn_N`; 12 files changed, 9 tests, `--experimental-loops` flag, full evaluation report. | v0.9.0 | 2026-07-09 |
 | **v0.7.0** — Engineering Optimization — `file.listdir`, `convert.to_number` fix, `list.sum`, `list.find_by_key`. B2 L2: 3→1 iterations (67%). HYPOTHESIS_STATUS.md created. | v0.7.0 | 2026-07-07 |
 | **v0.8.0** — Compiler Diagnostics Improvement — `file:line:col` source locations, SEM002 suggestions, multi-error reporting, JSON diagnostics enhanced. Semicolons optional. 308+ tests passing. | v0.8.0 | 2026-07-08 |
-| **B2–B7** — Engineering Benchmark Evidence — 6 benchmarks (Feature Implementation, Bug Fix, Refactoring, Upgrade, Maintenance, AI Context) executed AILang vs Python — see ENGINEERING_EVIDENCE_REPORT.md | v0.6.2 | 2026-07-07 |
+| **B2–B7** — Engineering Benchmark Evidence — 6 benchmarks (Feature Implementation, Bug Fix, Refactoring, Upgrade, Maintenance, AI Context) executed AILang vs Python — see docs/archive/reports/validation/ENGINEERING_EVIDENCE_REPORT.md | v0.6.2 | 2026-07-07 |
 | **B1.1** — AI Provider Integration & Calibration — 4 providers (OpenAI, Anthropic, Google, Local), calibration module, B1 extended with provider abstraction, `python -m benchmarks calibrate` | v0.6.1 | 2026-07-07 |
 | **B1** — Engineering Benchmark Framework — measurement infrastructure, 3 datasets, 44 tests, `python -m benchmarks {setup,b1,list,test}` | v0.6.0 | 2026-07-07 |
-| **M19** — Documentation Canonicalization (consolidated PROJECT_VISION + PROJECT_PHILOSOPHY → VISION_AND_DIFFERENTIATION + CONSTITUTION; PRODUCT_ROADMAP.md canonical; benchmark methodology/evidence separated) | v0.5.0 | 2026-07-07 |
+| **M19** — Documentation Canonicalization (consolidated PROJECT_VISION + PROJECT_PHILOSOPHY → VISION_AND_DIFFERENTIATION + CONSTITUTION; docs/roadmap/PRODUCT_ROADMAP.md canonical; benchmark methodology/evidence separated) | v0.5.0 | 2026-07-07 |
 | **DX-008** — AILang Formatter — architecture, --diff, --quiet, dir-wide, lexer stability, string-aware comments, repo-wide idempotency (82 tests) | v0.5.0 | 2026-07-07 |
 | **DX-007** — AILang Language Server — architecture, consolidation, symbol search, code actions (103 tests) | v0.4.0 | 2026-07-07 |
 | **M16** — Documentation Architecture Cleanup (ADR fix, status consolidation, AI guidance, archive, .gitignore) | v0.3.1 | 2026-07-07 |
@@ -440,7 +440,7 @@ in the ecosystem that makes AILang productive for both human and AI developers.
 | **v0.5.0** | ✅ **Complete** | DX-008 AILang Formatter — production-ready |
 | **v0.6.0** | ✅ **Complete** | B1 Engineering Benchmark Framework |
 | **v0.6.1** | ✅ **Complete** | B1.1 AI Provider Integration & Calibration |
-| **v0.6.2** | ✅ **Complete** | B2–B7 Engineering Benchmark Execution — see ENGINEERING_EVIDENCE_REPORT.md |
+| **v0.6.2** | ✅ **Complete** | B2–B7 Engineering Benchmark Execution — see docs/archive/reports/validation/ENGINEERING_EVIDENCE_REPORT.md |
 | **v0.7.0** | ✅ **Complete** | Engineering Optimization Program — `file.listdir`, `convert.to_number` fix, `list.sum`, `list.find_by_key`. B2 L2: 3→1 iterations (67% reduction) |
 | **v0.8.0** | ✅ **Complete** | Compiler Diagnostics Improvement Program — `file:line:col` source locations, spell-check suggestions (SEM002), multi-error collection, JSON diagnostics enhanced |
 | **v0.9.0** | ✅ **Complete** | Experimental Loop Primitive — `for-in` syntax, recursive lowering, variable capture semantics, evaluation report |
@@ -497,7 +497,7 @@ Every completed task follows this flow. Nothing gets lost.
 |-------|-------------------|
 | **Vision** | `docs/governance/VISION_AND_DIFFERENTIATION.md` |
 | **Constitution** | `docs/governance/PROJECT_CONSTITUTION.md` |
-| **Roadmap** | `PRODUCT_ROADMAP.md` |
+| **Roadmap** | `docs/roadmap/PRODUCT_ROADMAP.md` |
 | **Current Status** | `DEVELOPMENT_STATUS.md` — this file |
 | **History / Memory** | `PROJECT_MEMORY.md` |
 | **Release History** | `CHANGELOG.md` |
