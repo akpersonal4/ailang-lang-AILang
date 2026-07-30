@@ -245,13 +245,24 @@ class Runtime:
                 if isinstance(receiver, dict):
                     return receiver.get(member)
                 if hasattr(receiver, member):
-                    # Restrict attribute access to safe attributes only
                     if member.startswith("__") and member.endswith("__"):
-                        raise self._augment_error(RuntimeError(
-                            operation="attribute_access",
-                            reason=f"Access to dunder attribute '{member}' is not allowed.",
-                            suggestion="Use public APIs only.",
-                        ))
+                        _ALLOWED_DUNDER = frozenset({
+                            "__len__", "__str__", "__repr__", "__bool__", "__contains__",
+                            "__iter__", "__next__",
+                            "__getitem__", "__setitem__", "__delitem__",
+                            "__add__", "__sub__", "__mul__", "__truediv__",
+                            "__floordiv__", "__mod__", "__pow__",
+                            "__eq__", "__ne__", "__lt__", "__le__", "__gt__", "__ge__",
+                            "__hash__", "__int__", "__float__", "__index__",
+                            "__neg__", "__pos__", "__abs__", "__invert__",
+                            "__and__", "__or__", "__xor__", "__lshift__", "__rshift__",
+                        })
+                        if member not in _ALLOWED_DUNDER:
+                            raise self._augment_error(RuntimeError(
+                                operation="attribute_access",
+                                reason=f"Access to dunder attribute '{member}' is not allowed.",
+                                suggestion="Only safe data-model methods are accessible. Use public APIs only.",
+                            ))
                     return getattr(receiver, member)
             return receiver
         if isinstance(expression, UnaryOperationIR):
@@ -449,21 +460,26 @@ class Runtime:
                 if isinstance(receiver, dict):
                     return receiver.get(member)
                 if hasattr(receiver, member):
-                    # Restrict access to attributes that could enable sandbox escape
-                    # Allow safe dunders (__len__, __str__, etc.) but block dangerous ones
-                    _BLOCKED_DUNDER = frozenset({
-                        "__class__", "__subclasses__", "__bases__", "__mro__",
-                        "__globals__", "__code__", "__closure__", "__defaults__",
-                        "__annotations__", "__dict__", "__qualname__",
-                        "__import__", "__build_class__", "__loader__",
-                        "__spec__", "__file__", "__cached__", "__package__",
-                    })
-                    if member in _BLOCKED_DUNDER:
-                        raise self._augment_error(RuntimeError(
-                            operation="attribute_access",
-                            reason=f"Access to blocked attribute '{member}' is not allowed.",
-                            suggestion="Use public APIs only. Dunder attributes are restricted for security.",
-                        ))
+                    # Deny-by-default for dunder attributes — only explicitly
+                    # allowed data-model methods are accessible.
+                    if member.startswith("__") and member.endswith("__"):
+                        _ALLOWED_DUNDER = frozenset({
+                            "__len__", "__str__", "__repr__", "__bool__", "__contains__",
+                            "__iter__", "__next__",
+                            "__getitem__", "__setitem__", "__delitem__",
+                            "__add__", "__sub__", "__mul__", "__truediv__",
+                            "__floordiv__", "__mod__", "__pow__",
+                            "__eq__", "__ne__", "__lt__", "__le__", "__gt__", "__ge__",
+                            "__hash__", "__int__", "__float__", "__index__",
+                            "__neg__", "__pos__", "__abs__", "__invert__",
+                            "__and__", "__or__", "__xor__", "__lshift__", "__rshift__",
+                        })
+                        if member not in _ALLOWED_DUNDER:
+                            raise self._augment_error(RuntimeError(
+                                operation="attribute_access",
+                                reason=f"Access to dunder attribute '{member}' is not allowed.",
+                                suggestion="Only safe data-model methods are accessible. Use public APIs only.",
+                            ))
                     return getattr(receiver, member)
 
             module_env = self._modules.get(base_name)

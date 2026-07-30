@@ -29,10 +29,16 @@ from compiler.ast.nodes import (
 from compiler.diagnostics import (
     ErrorCode,
     SEM003_WRONG_ARG_COUNT,
+    SEM005_BUILTIN_SHADOW,
     Diagnostic,
     Severity,
 )
+from compiler.runtime.builtins import BUILTINS
 from compiler.semantic.symbol_table import SymbolTable
+
+# Names that users cannot redeclare because they would shadow
+# runtime built-in functions (print, etc.).
+_BUILTIN_NAMES: frozenset[str] = frozenset(BUILTINS.keys())
 
 
 class SemanticAnalyzer:
@@ -77,12 +83,18 @@ class SemanticAnalyzer:
     # ------------------------------------------------------------------
 
     def _analyze_VariableDeclarationNode(self, node: VariableDeclarationNode) -> None:
+        if node.name.name in _BUILTIN_NAMES:
+            self._report_builtin_shadow(node.name.name, node.name.start_span, node.name.end_span)
+            return
         self.symbol_table.declare(
             node.name.name, node.name.start_span, node.name.end_span
         )
         self.analyze(node.initializer)
 
     def _analyze_FunctionDeclarationNode(self, node: FunctionDeclarationNode) -> None:
+        if node.name.name in _BUILTIN_NAMES:
+            self._report_builtin_shadow(node.name.name, node.name.start_span, node.name.end_span)
+            return
         sym = self.symbol_table.declare(
             node.name.name, node.name.start_span, node.name.end_span
         )
@@ -101,6 +113,42 @@ class SemanticAnalyzer:
             )
         self.analyze(node.body)
         self.symbol_table.exit_scope()
+
+    # ------------------------------------------------------------------
+    # Helpers
+    # ------------------------------------------------------------------
+
+    def _report_builtin_shadow(
+        self, name: str, start_span: int | None, end_span: int | None
+    ) -> None:
+        """Emit a diagnostic when a declaration shadows a built-in."""
+        if self.symbol_table.reporter is None:
+            return
+        from compiler.diagnostics import Diagnostic
+
+        line = None
+        column = None
+        if start_span is not None and self.symbol_table._source_lines is not None:
+            col_offset = start_span
+            for lineno, src_line in enumerate(self.symbol_table._source_lines, 1):
+                if col_offset <= len(src_line):
+                    line = lineno
+                    column = col_offset + 1
+                    break
+                col_offset -= len(src_line) + 1
+        elif start_span is not None:
+            line = 1
+            column = start_span + 1
+        diagnostic = Diagnostic(
+            Severity.ERROR,
+            SEM005_BUILTIN_SHADOW,
+            f"Cannot declare `{name}`: this name is reserved for a built-in function.",
+            line,
+            column,
+            self.symbol_table._file_path,
+            "Use a different name for your variable or function.",
+        )
+        self.symbol_table.reporter.report(diagnostic)
 
     # ------------------------------------------------------------------
     # Statements

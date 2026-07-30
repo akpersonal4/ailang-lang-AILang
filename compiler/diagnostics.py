@@ -41,6 +41,7 @@ SEM001_DUPLICATE_DECLARATION = ErrorCode("SEM001", "Duplicate declaration")
 SEM002_UNDEFINED_IDENTIFIER = ErrorCode("SEM002", "Undefined identifier")
 SEM003_WRONG_ARG_COUNT = ErrorCode("SEM003", "Wrong number of arguments")
 SEM004_UNKNOWN_STDLIB = ErrorCode("SEM004", "Unknown stdlib function")
+SEM005_BUILTIN_SHADOW = ErrorCode("SEM005", "Shadowing built-in function")
 
 # Type error codes
 TYP001_UNKNOWN_TYPE = ErrorCode("TYP001", "Unknown type")

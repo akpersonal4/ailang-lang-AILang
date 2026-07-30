@@ -228,8 +228,23 @@ def test_multiple_parameters_shadowing() -> None:
 
 
 def test_shadow_builtin() -> None:
-    source = "fn main() { let print = 42; return print; }"
-    assert _run(source) == 42
+    """Shadowing a built-in name is a compile-time error (SEM005)."""
+    from compiler.diagnostics import DiagnosticReporter
+    from compiler.semantic.analyzer import SemanticAnalyzer
+    from compiler.semantic.symbol_table import SymbolTable
+
+    lexer = Lexer()
+    parser = Parser(lexer.tokenize("fn main() { let print = 42; return print; }"))
+    cst = parser.parse_program()
+    ast = ASTBuilder().build(cst)
+    reporter = DiagnosticReporter()
+    symbol_table = SymbolTable(reporter)
+    SemanticAnalyzer(symbol_table).analyze(ast)
+    assert reporter.error_count >= 1
+    assert any(
+        "print" in d.message and "built-in" in d.message
+        for d in reporter.diagnostics
+    ), f"Expected SEM005 diagnostic, got: {[d.message for d in reporter.diagnostics]}"
 
 
 def test_shadow_deep_chain() -> None:
