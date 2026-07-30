@@ -10,7 +10,7 @@ until this document has been reviewed. Update AGENTS.md reading order after revi
 
 | Attribute | Value |
 |:----------|:------|
-| **Current Release** | v1.1.10 |
+| **Current Release** | v1.1.12 |
 | **Current Milestone** | M127 P0 — Runtime Diagnostics & Package Validation |
 | **Project Phase** | Public Beta |
 
@@ -29,6 +29,10 @@ until this document has been reviewed. Update AGENTS.md reading order after revi
 | GitHub Release | ✅ v1.1.9 Published |
 | PyPI Publication | ✅ v1.1.10 Published |
 | GitHub Release | ✅ v1.1.10 Published |
+| PyPI Publication | ✅ v1.1.11 Published |
+| GitHub Release | ✅ v1.1.11 Published |
+| PyPI Publication | ✅ v1.1.12 Published |
+| GitHub Release | ✅ v1.1.12 Published |
 
 ### Maturity Assessment
 
@@ -46,7 +50,7 @@ until this document has been reviewed. Update AGENTS.md reading order after revi
 | Governance | 100% |
 | Validation Framework | 100% |
 | Reference Applications | 8 apps (todo, expense, inventory, employee, log_analyzer, csv_etl, json_transformer, invoice) |
-| Test Suite | 1165 tests passing |
+| Test Suite | 1088 tests passing (hardening) |
 
 --------------------------------------
 
@@ -526,6 +530,6 @@ Every document type has exactly one owner. If you need to add information, first
 
 | Field | Value |
 |:------|:------|
-| **Date** | 2026-07-29 |
-| **Version** | v1.1.7 |
+| **Date** | 2026-07-30 |
+| **Version** | v1.1.12 |
 | **Milestone** | M127 P0 — Runtime Diagnostics & Package Validation |

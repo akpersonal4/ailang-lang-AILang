@@ -1,5 +1,33 @@
 # Changelog
 
+## v1.1.12
+
+### Security & Correctness Hardening
+
+- **Dunder allowlist**: Replaced blocklist with deny-by-default allowlist (`_ALLOWED_DUNDER`) in both `_resolve_name` and `_evaluate_expression`, restricting runtime attribute access to safe data-model dunders.
+- **Builtin shadowing protection**: New `SEM005_BUILTIN_SHADOW` error code in semantic analyzer prevents declarations that shadow built-in names (`print`, `list_*`, etc.) at compile time.
+- **Regression tests updated**: `test_shadow_builtin` updated to expect compile-time diagnostic instead of runtime shadowing.
+- **Audit closure item**: Remaining compiler hardening improvements from the audit findings complete.
+
+**Test Suite**: 1088 tests passing.
+**Publication**: Published to PyPI and GitHub Releases.
+
+## v1.1.11
+
+### Production Readiness — Audit Findings Sprint
+
+Six audit-priority improvements for compiler and runtime stability:
+
+- **Recursion guard**: `_call_depth` counter in `Runtime` with `sys.setrecursionlimit(max_depth + 5000)`. Default max depth = 2000 from sandbox policy.
+- **Python exception isolation**: User-facing `NameError`, `TypeError`, `AttributeError` converted to structured `RuntimeError`. Top-level `execute()` catch-all wrapper.
+- **`parse_identifier` fix**: Returns `MissingExpression` node on failure instead of broken `Identifier` with no token.
+- **`MissingExpression` detection**: `_build_MissingExpression` raises `ValueError` instead of silently filtering.
+- **IR validator wired**: `IRValidator.validate(ir)` called inside `CompilationSession.build_ir()` for every module.
+- **Fuzz test harness**: 4 tests (100 random programs, 50 random byte streams, deeply nested expressions at depth 200, deep recursion chains at 800 calls). All pass.
+
+**Test Suite**: 1088 tests passing.
+**Publication**: Published to PyPI and GitHub Releases.
+
 ## v1.1.10
 
 ### Maintenance Release — Project Template Version Fix

@@ -7,9 +7,9 @@ Project history, key decisions, and evolution timeline for AI coding assistants.
 ## Project Identity
 
 - **Language:** AILang — AI-first, deterministic, specification-driven
-- **Version:** v1.1.6
+- **Version:** v1.1.12
 - **Standard Library:** 16 `.ail` modules (extended: `file.listdir`, `list.sum`, `list.find_by_key`, `list.filter_by_key`, `list.filter_by_contains`, `list.collect_key`, `list.group_by_key`, `list.sum_by_key`, `list.take`, `list.skip`, `list.search_by_name`, `list.exists_by_key`, `list.sort`, `list.sort_by_key`, `list.copy`, `io.read`, `string.join`, `string.from_int`, `string.from_bool`, `map.values`, `map.get_or_default`, `map.safe_get`, `convert.to_number`)
-- **Test Suite:** 1028+ passing tests across 44+ test scripts
+- **Test Suite:** 1088 passing tests across 80+ test scripts
 - **Applications:** 66+ across `apps/`, `ai_benchmarks/`, `examples/patterns/`
 
 ---
@@ -458,6 +458,26 @@ A chronological record of every major engineering phase, with results, lessons, 
 | **Result** | All public-facing documentation now reflects v1.1.0 with correct test counts (1074), correct CLI commands (`ail run`), and new onboarding resources. |
 | **Files** | `docs/getting-started/QUICK_START.md`, `docs/getting-started/ONBOARDING_CHECKLIST.md`, `README.md`, `DEVELOPMENT_STATUS.md`, `PROJECT_MEMORY.md`, `docs/reference/GETTING_STARTED.md` |
 | **Lessons** | Documentation accuracy is critical for first impressions. Version badges, test counts, and CLI command references must be updated in lockstep with releases. |
+
+### M83 — Compiler Hardening Audit Fixes (v1.1.11)
+
+| Aspect | Detail |
+|--------|--------|
+| **What** | Implemented 6 audit-priority improvements: recursion guard (`_call_depth` + `sys.setrecursionlimit`), Python exception isolation (all user-facing NameError/TypeError/AttributeError → structured RuntimeError), `parse_identifier` returns `MissingExpression` on failure, `MissingExpression` detection in AST builder, IR validator wired into `CompilationSession.build_ir()`, and fuzz test harness (100 random programs, 50 random byte streams, deep nesting/recursion). |
+| **Why** | Audit of compiler subsystems (Lexer: needs work, Parser: needs work, Runtime: needs work, Testing: needs work) identified these as highest-priority stability gaps before v1.2.0. |
+| **Result** | All 6 improvements implemented, 1088 tests pass, v1.1.11 published to PyPI and GitHub. |
+| **Lessons** | `--verbose` flag breaks `twine upload` — only `--non-interactive` is safe. Version must be bumped in `compiler/_version.py`, `pyproject.toml`, and `tools/ail_mcp/__init__.py`. |
+| **Files** | `compiler/runtime/interpreter.py`, `compiler/parser/expressions.py`, `compiler/ast/builder.py`, `compiler/compilation/session.py`, `tests/test_fuzz.py` |
+
+### M84 — Additional Hardening & Release (v1.1.12)
+
+| Aspect | Detail |
+|--------|--------|
+| **What** | Two additional security hardening fixes: dunder allowlist (deny-by-default `_ALLOWED_DUNDER` in runtime attribute access) and builtin shadowing protection (`SEM005_BUILTIN_SHADOW` diagnostic in semantic analyzer). Updated regression test for new shadowing behavior. Published v1.1.12 to PyPI and GitHub. |
+| **Why** | Security hardening follow-up: blocklist-based approach is inherently fragile; allowlist eliminates entire class of dunder-based attacks. Builtin shadowing was identified as a correctness gap in the audit. |
+| **Result** | Both fixes implemented, 1088 tests pass, v1.1.12 published. No new language features. |
+| **Lessons** | Feature governance (Q6: "Would this still make sense without AI?") correctly scoped both fixes — they are security/correctness improvements, not language features. |
+| **Files** | `compiler/runtime/interpreter.py`, `compiler/semantic/analyzer.py`, `compiler/diagnostics.py`, `tests/test_scope_cache.py` |
 
 ### Governance
 
