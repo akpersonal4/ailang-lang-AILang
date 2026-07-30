@@ -1263,7 +1263,7 @@ description = "{description}"
 entry = "main.ail"
 
 [language]
-version = "1.1.7"
+version = "1.1.9"
 """
 
 _AIL_LOCK_TEMPLATE = """\

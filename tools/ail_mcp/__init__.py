@@ -3,4 +3,4 @@
 
 """AILang MCP Server - exposes compiler capabilities to AI tools via MCP protocol."""
 
-__version__ = "1.1.9"
+__version__ = "1.1.10"
