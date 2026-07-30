@@ -24,6 +24,11 @@ fn main() {
 
 ## Quick Start
 
+fn main() {
+    print("Hello, AILang!")
+    return 0
+}
+
 > **Note:** The CLI is `ail` (not `ailang`). After `pip install ailang-lang`, use `ail run`, `ail build`, etc.
 
 Build from source:
