@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.1.10
+
+### Maintenance Release — Project Template Version Fix
+
+- **Fixed**: `ail new` project template now generates `ail.toml` with correct language version (`1.1.9` instead of stale `1.1.7`).
+
+**Impact**: No language, compiler, or runtime changes. Fully backward compatible with v1.1.9.
+
 ## v1.1.9
 
 ### M129 Engineering Response — Independent Validation First Iteration

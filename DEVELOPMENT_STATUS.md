@@ -10,7 +10,7 @@ until this document has been reviewed. Update AGENTS.md reading order after revi
 
 | Attribute | Value |
 |:----------|:------|
-| **Current Release** | v1.1.9 |
+| **Current Release** | v1.1.10 |
 | **Current Milestone** | M127 P0 — Runtime Diagnostics & Package Validation |
 | **Project Phase** | Public Beta |
 
@@ -27,6 +27,8 @@ until this document has been reviewed. Update AGENTS.md reading order after revi
 | GitHub Release | ✅ v1.1.8 Published |
 | PyPI Publication | ✅ v1.1.9 Published |
 | GitHub Release | ✅ v1.1.9 Published |
+| PyPI Publication | ✅ v1.1.10 Published |
+| GitHub Release | ✅ v1.1.10 Published |
 
 ### Maturity Assessment
 
