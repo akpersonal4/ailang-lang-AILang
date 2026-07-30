@@ -472,16 +472,22 @@ class CompilationSession:
 
         Returns:
             ModuleIRBundle containing IR for each module in dependency order.
+
+        Raises:
+            IRValidationError: If any module's IR fails structural validation.
         """
         from compiler.ast.nodes import ImportDeclarationNode, ProgramNode
+        from compiler.ir.validator import IRValidator
 
         bundle = ModuleIRBundle()
         ir_builder = IRBuilder()
+        ir_validator = IRValidator()
 
         for module_name in self._graph.topological_sort():
             if module_name in self._asts:
                 ast = self._asts[module_name]
                 ir = ir_builder.build(ast)
+                ir_validator.validate(ir)
                 bundle.module_irs[module_name] = ir
 
                 # Extract import aliases for runtime resolution

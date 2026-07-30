@@ -211,4 +211,9 @@ def parse_identifier(stream: TokenStream) -> CSTNode:
             end_span=token.end_offset,
         )
     stream.report("Expected identifier")
-    return CSTNode("Identifier")
+    # Return MissingExpression so the AST builder can produce a clean
+    # diagnostic instead of attempting to build a broken Identifier node.
+    error_node = CSTNode("MissingExpression")
+    error_node.start_span = token.start_offset
+    error_node.end_span = token.end_offset
+    return error_node

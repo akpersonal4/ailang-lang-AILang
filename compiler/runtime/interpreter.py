@@ -43,7 +43,11 @@ class Runtime:
         from .sandbox import get_policy
 
         policy = get_policy()
-        sys.setrecursionlimit(policy.max_recursion)
+        # Set Python recursionlimit safely above our own limit so CPython
+        # never catches a RecursionError before our AILang-level depth check.
+        self._max_call_depth = policy.max_recursion
+        self._call_depth = 0
+        sys.setrecursionlimit(max(self._max_call_depth + 5000, 10000))
         self._global_environment = Environment()
         self._frame_stack: list[StackFrame] = []
         self._functions: dict[str, FunctionIR] = {}
@@ -57,12 +61,21 @@ class Runtime:
         self._current_span: int | None = None
 
     def execute(self, program: ProgramIR) -> Any:
-        result: Any = None
-        for node in program.body:
-            result = self._execute_node(node)
-        if "main" in self._functions:
-            return self._call_function(self._functions["main"], ())
-        return result
+        try:
+            result: Any = None
+            for node in program.body:
+                result = self._execute_node(node)
+            if "main" in self._functions:
+                return self._call_function(self._functions["main"], ())
+            return result
+        except RuntimeError:
+            raise
+        except Exception as exc:
+            raise self._augment_error(RuntimeError(
+                operation="runtime",
+                reason=f"Unexpected error: {type(exc).__name__}: {exc}",
+                suggestion="This is an internal error. Please report it.",
+            )) from exc
 
     def _execute_node(self, node: IRNode) -> Any:
         if isinstance(node, ProgramIR):
@@ -122,6 +135,20 @@ class Runtime:
             self._frame_stack.pop()
 
     def _call_function(self, function: FunctionIR, args: tuple[Any, ...]) -> Any:
+        self._call_depth += 1
+        if self._call_depth > self._max_call_depth:
+            self._call_depth -= 1
+            raise self._augment_error(RuntimeError(
+                operation="call",
+                reason=(
+                    f"Recursion depth exceeded (limit: {self._max_call_depth}). "
+                    "AILang recursion is bounded to prevent stack overflow."
+                ),
+                suggestion=(
+                    "Simplify recursive logic or increase the recursion limit "
+                    "via the sandbox policy."
+                ),
+            ))
         total = len(function.parameters)
         defaults = {
             name: self._evaluate_expression(expr)
@@ -129,10 +156,15 @@ class Runtime:
         }
         required = total - len(defaults)
         if len(args) < required or len(args) > total:
-            raise TypeError(
-                f"Function {function.name} expected {required}-{total} "
-                f"arguments, got {len(args)}"
-            )
+            self._call_depth -= 1
+            raise self._augment_error(RuntimeError(
+                operation="function_call",
+                reason=(
+                    f"Function `{function.name}` expects {required}-{total} "
+                    f"argument(s), got {len(args)}."
+                ),
+                suggestion="Check the function signature and provide the correct number of arguments.",
+            ))
         frame = StackFrame(
             function_name=function.name,
             parent_frame=self._frame_stack[-1] if self._frame_stack else None,
@@ -150,6 +182,7 @@ class Runtime:
             return result
         finally:
             self._frame_stack.pop()
+            self._call_depth -= 1
 
     def _evaluate_expression(self, expression: Any) -> Any:
         if isinstance(expression, BinaryOperationIR):
@@ -214,9 +247,11 @@ class Runtime:
                 if hasattr(receiver, member):
                     # Restrict attribute access to safe attributes only
                     if member.startswith("__") and member.endswith("__"):
-                        raise AttributeError(
-                            f"Access to dunder attribute '{member}' is not allowed"
-                        )
+                        raise self._augment_error(RuntimeError(
+                            operation="attribute_access",
+                            reason=f"Access to dunder attribute '{member}' is not allowed.",
+                            suggestion="Use public APIs only.",
+                        ))
                     return getattr(receiver, member)
             return receiver
         if isinstance(expression, UnaryOperationIR):
@@ -260,7 +295,13 @@ class Runtime:
                 except TypeError:
                     return callee(args)
 
-            raise TypeError(f"Cannot call non-function: {callee}")
+            raise self._augment_error(RuntimeError(
+                operation="call",
+                reason=f"Cannot call non-function value.",
+                expected_type="function or callable",
+                actual_type=RuntimeError._type_name(callee),
+                suggestion="Ensure the name refers to a function, not a variable.",
+            ))
 
         if isinstance(expression, LiteralIR):
             return expression.value
@@ -418,9 +459,11 @@ class Runtime:
                         "__spec__", "__file__", "__cached__", "__package__",
                     })
                     if member in _BLOCKED_DUNDER:
-                        raise AttributeError(
-                            f"Access to attribute '{member}' is not allowed"
-                        )
+                        raise self._augment_error(RuntimeError(
+                            operation="attribute_access",
+                            reason=f"Access to blocked attribute '{member}' is not allowed.",
+                            suggestion="Use public APIs only. Dunder attributes are restricted for security.",
+                        ))
                     return getattr(receiver, member)
 
             module_env = self._modules.get(base_name)
@@ -429,7 +472,11 @@ class Runtime:
                     return module_env.resolve(member)
                 except NameError:
                     pass
-        raise NameError(f"Undefined variable: {name}")
+        raise self._augment_error(RuntimeError(
+            operation="variable_lookup",
+            reason=f"Undefined variable `{name}`.",
+            suggestion="Check that the variable is defined and the name is spelled correctly.",
+        ))
 
     def _get_local(self, name: str) -> Any:
         return self._resolve_name(name)

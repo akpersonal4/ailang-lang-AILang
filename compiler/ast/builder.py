@@ -352,6 +352,21 @@ class ASTBuilder:
             end_span=node.end_span,
         )
 
+    @staticmethod
+    def _build_MissingExpression(node: CSTNode) -> ASTNode:
+        """Raise a ValueError for missing expression nodes from parse errors.
+
+        The parser should have already reported a diagnostic. This ensures
+        the AST build fails explicitly instead of silently filtering the
+        MissingExpression node, which would cause downstream code to
+        operate on an incomplete AST.
+        """
+        raise ValueError(
+            "Missing expression in AST — the parser reported an error "
+            "but the AST builder encountered a MissingExpression node. "
+            "Fix the source program or check parser diagnostics."
+        )
+
     # ------------------------------------------------------------------
     # Helpers
     # ------------------------------------------------------------------

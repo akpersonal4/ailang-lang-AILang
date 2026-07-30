@@ -96,9 +96,7 @@ def test_ast_builds_variable_declaration_with_expression() -> None:
 
 def test_ast_rejects_missing_initializer() -> None:
     """Regression: let x = ; must produce diagnostic, not crash."""
-    with pytest.raises(
-        ValueError, match="Variable declaration requires an initializer expression"
-    ):
+    with pytest.raises(ValueError, match="Missing expression in AST"):
         _build("let x = ;")
 
 
@@ -147,7 +145,7 @@ def test_ast_builds_return_statement() -> None:
 
 def test_ast_rejects_empty_return() -> None:
     """Regression: empty return must produce diagnostic, not crash."""
-    with pytest.raises(ValueError, match="Return statement requires an expression"):
+    with pytest.raises(ValueError, match="Missing expression in AST"):
         _build("fn f() { return; }")
 
 
