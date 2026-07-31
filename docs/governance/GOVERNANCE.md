@@ -250,7 +250,7 @@ theoretical discussions.
 |----------|---------|
 | [LANGUAGE_EVOLUTION.md](LANGUAGE_EVOLUTION.md) | Permanent record of every feature request and its disposition |
 | [PROJECT_CONSTITUTION.md](PROJECT_CONSTITUTION.md) | Immutable rules for development |
-| [RELEASE_PROCESS.md](RELEASE_PROCESS.md) | Version bumping, branching, and release checklist |
+| [RELEASE_PROCESS.md](../releases/RELEASE_PROCESS.md) | Version bumping, branching, and release checklist |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Day-to-day developer workflow |
-| [LANGUAGE_SPEC.md](../LANGUAGE_SPEC.md) | Canonical specification of the language |
-| [PRODUCT_ROADMAP.md](../../roadmap/PRODUCT_ROADMAP.md) | Long-term feature planning |
+| [LANGUAGE_SPEC.md](../reference/LANGUAGE_SPEC.md) | Canonical specification of the language |
+| [PRODUCT_ROADMAP.md](../roadmap/PRODUCT_ROADMAP.md) | Long-term feature planning |

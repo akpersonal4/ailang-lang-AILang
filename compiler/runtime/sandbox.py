@@ -10,7 +10,7 @@ Default policy:
 - Environment variable access restricted to AILANG_* prefix
 - file_write creates directories only within the working directory
 - file_read limited to 10MB per read
-- Recursion limit set to 10000 (reduced from 50000)
+- Recursion limit set to 2000 (matches the documented default in CHANGELOG v1.1.11)
 """
 
 from __future__ import annotations
@@ -27,7 +27,7 @@ class SandboxPolicy:
         working_dir: str | Path | None = None,
         env_prefix: str = "AILANG_",
         max_read_bytes: int = 10 * 1024 * 1024,  # 10 MB
-        max_recursion: int = 10000,
+        max_recursion: int = 2000,
         enabled: bool = True,
     ) -> None:
         self.enabled = enabled

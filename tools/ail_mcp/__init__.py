@@ -3,4 +3,7 @@
 
 """AILang MCP Server - exposes compiler capabilities to AI tools via MCP protocol."""
 
-__version__ = "1.1.12"
+try:
+    from compiler._version import __version__
+except ImportError:
+    __version__ = "1.1.13"

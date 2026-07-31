@@ -81,6 +81,7 @@ LANG004_IMPORT_IN_FUNCTION = ErrorCode(
 LEX001_UNEXPECTED_CHARACTER = ErrorCode("LEX001", "Unexpected character")
 LEX002_UNTERMINATED_STRING = ErrorCode("LEX002", "Unterminated string literal")
 LEX003_INVALID_ESCAPE_SEQUENCE = ErrorCode("LEX003", "Invalid escape sequence")
+LEX004_SOURCE_ENCODING = ErrorCode("LEX004", "Source file is not valid UTF-8")
 
 
 @dataclass(frozen=True)
@@ -122,6 +123,7 @@ _NEXT_STEPS: dict[str, str] = {
     "LEX001": "  Remove or replace the unexpected character",
     "LEX002": '  Add a closing quote (") at the end of the string literal',
     "LEX003": "  Use a valid escape sequence (\\n, \\t, \\\\, etc.)",
+    "LEX004": "  Re-save the file as UTF-8 (e.g., notepad/VS Code 'Save with encoding')",
     # Semantic errors
     "SEM001": "  Rename one of the duplicate declarations to a unique name",
     "SEM002": "  ail docs AGENTS.md\n  ail fmt",
@@ -167,6 +169,7 @@ _ERROR_DESCRIPTIONS: dict[str, str] = {
     "LEX001": "Unexpected character",
     "LEX002": "Unterminated string literal",
     "LEX003": "Invalid escape sequence",
+    "LEX004": "Source file is not valid UTF-8",
     "SEM001": "Duplicate declaration",
     "SEM002": "Forward reference",
     "SEM003": "Wrong number of arguments",

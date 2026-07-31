@@ -171,7 +171,7 @@ Runtime._get_local("result")
 
 ### 4.1 Relevant Specification Quotes
 
-From [`LANGUAGE_SPEC.md`](../../LANGUAGE_SPEC.md) §4.1 Variable Declaration:
+From [`LANGUAGE_SPEC.md`](../../docs/reference/LANGUAGE_SPEC.md) §4.1 Variable Declaration:
 
 > - Variables are **block-scoped**.
 
@@ -181,11 +181,11 @@ From §4.3 Scope Rules:
 > - Variables declared in an outer scope are visible in nested scopes.
 > - An inner scope can **shadow** an outer variable by declaring a new variable with the same name.
 
-From [`GETTING_STARTED.md`](../../docs/GETTING_STARTED.md):
+From [`GETTING_STARTED.md`](../../docs/reference/GETTING_STARTED.md):
 
 > All variables are **block-scoped**.
 
-From [`LANGUAGE_TOUR.md`](../../docs/LANGUAGE_TOUR.md):
+From [`LANGUAGE_TOUR.md`](../../docs/reference/LANGUAGE_TOUR.md):
 
 > Variables are **block-scoped**:
 > ```ail

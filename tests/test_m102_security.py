@@ -173,8 +173,8 @@ def test_interpreter_blocks_dunder_attributes():
 # ---------------------------------------------------------------------------
 
 def test_recursion_limit_is_reduced():
-    """Recursion limit should be 10000, not 50000."""
+    """Recursion limit should be 2000, not 50000."""
     from compiler.runtime.sandbox import SandboxPolicy
 
     policy = SandboxPolicy()
-    assert policy.max_recursion == 10000
+    assert policy.max_recursion == 2000

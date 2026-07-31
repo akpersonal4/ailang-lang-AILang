@@ -45,9 +45,12 @@ class Runtime:
         policy = get_policy()
         # Set Python recursionlimit safely above our own limit so CPython
         # never catches a RecursionError before our AILang-level depth check.
+        # Each AILang function call consumes several Python stack frames
+        # (call machinery + environment resolve chains), so the Python limit
+        # must be a multiple of the AILang limit.
         self._max_call_depth = policy.max_recursion
         self._call_depth = 0
-        sys.setrecursionlimit(max(self._max_call_depth + 5000, 10000))
+        sys.setrecursionlimit(max(self._max_call_depth * 10 + 1000, 15000))
         self._global_environment = Environment()
         self._frame_stack: list[StackFrame] = []
         self._functions: dict[str, FunctionIR] = {}
@@ -70,6 +73,39 @@ class Runtime:
             return result
         except RuntimeError:
             raise
+        except RecursionError as exc:
+            raise self._augment_error(RuntimeError(
+                operation="call",
+                reason=(
+                    "Recursion depth exceeded. AILang recursion is bounded "
+                    "to prevent stack overflow."
+                ),
+                suggestion=(
+                    "Simplify recursive logic or increase the recursion "
+                    "limit via the sandbox policy."
+                ),
+            )) from exc
+        except FileNotFoundError as exc:
+            raise self._augment_error(RuntimeError(
+                operation="file.read",
+                reason=f"File not found: {getattr(exc, 'filename', 'unknown path')}",
+                suggestion="Check that the file exists and the path is correct.",
+            )) from exc
+        except PermissionError as exc:
+            raise self._augment_error(RuntimeError(
+                operation="sandbox",
+                reason=str(exc),
+                suggestion=(
+                    "The AILang sandbox restricts file access to the project "
+                    "directory. Use --no-sandbox to disable it."
+                ),
+            )) from exc
+        except UnicodeDecodeError as exc:
+            raise self._augment_error(RuntimeError(
+                operation="file.read",
+                reason="File is not valid UTF-8.",
+                suggestion="Re-save the file as UTF-8.",
+            )) from exc
         except Exception as exc:
             raise self._augment_error(RuntimeError(
                 operation="runtime",
@@ -344,13 +380,20 @@ class Runtime:
                                 source_text, self._current_span
                             )
                         return error
-        # Fallback: use first available source map entry
+        # Fallback: use a user module (prefer one outside the stdlib dir),
+        # so errors are not misattributed to e.g. stdlib/array.ail.
         if self._source_map and not error.source_file:
-            first = next(iter(self._source_map.values()))
-            error.source_file = first[0]
+            user_entry: tuple[str, str] | None = None
+            for file_path, source_text in self._source_map.values():
+                if "stdlib" not in str(file_path):
+                    user_entry = (file_path, source_text)
+                    break
+            if user_entry is None:
+                user_entry = next(iter(self._source_map.values()))
+            error.source_file = user_entry[0]
             if self._current_span is not None:
                 error.source_line = RuntimeError._span_to_line(
-                    first[1], self._current_span
+                    user_entry[1], self._current_span
                 )
         return error
 

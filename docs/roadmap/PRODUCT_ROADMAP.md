@@ -145,7 +145,7 @@
 
 ## Related Documents
 
-- [Development Status](DEVELOPMENT_STATUS.md) — Detailed current work and known issues
-- [Governance](docs/governance/GOVERNANCE.md) — Proposal process and evidence bars
-- [Language Evolution](docs/governance/LANGUAGE_EVOLUTION.md) — Feature request log
-- [Changelog](CHANGELOG.md) — Release-by-release changes
+- [Development Status](../../DEVELOPMENT_STATUS.md) — Detailed current work and known issues
+- [Governance](../governance/GOVERNANCE.md) — Proposal process and evidence bars
+- [Language Evolution](../governance/LANGUAGE_EVOLUTION.md) — Feature request log
+- [Changelog](../../CHANGELOG.md) — Release-by-release changes

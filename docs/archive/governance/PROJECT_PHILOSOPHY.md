@@ -189,7 +189,7 @@ This philosophy guides every decision:
 ## Related Documents
 
 - [Project Vision](PROJECT_VISION.md) — Original project motivation and goals
-- [Project Constitution](PROJECT_CONSTITUTION.md) — Immutable rules for development
-- [Governance](GOVERNANCE.md) — Proposal process, freeze policy, rejected features
-- [Language Evolution](LANGUAGE_EVOLUTION.md) — Permanent record of every feature request
-- [Language Specification](../LANGUAGE_SPEC.md) — Technical specification of the language
+- [Project Constitution](../../governance/PROJECT_CONSTITUTION.md) — Immutable rules for development
+- [Governance](../../governance/GOVERNANCE.md) — Proposal process, freeze policy, rejected features
+- [Language Evolution](../../governance/LANGUAGE_EVOLUTION.md) — Permanent record of every feature request
+- [Language Specification](../../reference/LANGUAGE_SPEC.md) — Technical specification of the language

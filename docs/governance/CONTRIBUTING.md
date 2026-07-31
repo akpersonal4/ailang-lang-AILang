@@ -36,7 +36,7 @@ pip install pytest black ruff mypy
 
 ### 1. Understand the Architecture
 
-Read [COMPILER_ARCHITECTURE.md](COMPILER_ARCHITECTURE.md) to understand the pipeline stages and how they connect.
+Read [COMPILER_ARCHITECTURE.md](../reference/COMPILER_ARCHITECTURE.md) to understand the pipeline stages and how they connect.
 
 ### 2. Choose an Area
 
@@ -50,7 +50,7 @@ Common areas for contribution:
 
 ### 3. Write Tests First
 
-All new code must be accompanied by tests. See [TESTING.md](TESTING.md) for the testing guide.
+All new code must be accompanied by tests. See [TESTING.md](../reference/TESTING.md) for the testing guide.
 
 ```bash
 # Run existing tests to understand the patterns
@@ -61,7 +61,7 @@ python -m pytest tests/test_lexer.py -v
 
 Follow the existing code style:
 - Python: PEP 8 with 88-character line limit (black-formatted)
-- AILang: see [LANGUAGE_TOUR.md](LANGUAGE_TOUR.md) for syntax conventions
+- AILang: see [LANGUAGE_TOUR.md](../reference/LANGUAGE_TOUR.md) for syntax conventions
 
 ### 5. Run Quality Gates
 
@@ -121,7 +121,7 @@ python -m pytest -v -s
 python -m pytest tests/test_benchmark.py -v
 ```
 
-See [TESTING.md](TESTING.md) for the complete testing guide.
+See [TESTING.md](../reference/TESTING.md) for the complete testing guide.
 
 ## Adding a Standard Library Module
 
@@ -136,7 +136,7 @@ See [TESTING.md](TESTING.md) for the complete testing guide.
 ## Adding an Example Program
 
 1. Create `examples/program_name.ail`
-2. Follow the [Getting Started](GETTING_STARTED.md) conventions
+2. Follow the [Getting Started](../reference/GETTING_STARTED.md) conventions
 3. Ensure it has a `main()` function
 4. Test it: `ail run examples/program_name.ail`
 
@@ -165,8 +165,8 @@ Before submitting, verify:
 ## Getting Help
 
 - Open an issue on GitHub
-- Check the [documentation index](INDEX.md)
-- Read the canonical [Language Specification](../LANGUAGE_SPEC.md)
+- Check the [documentation index](../INDEX.md)
+- Read the canonical [Language Specification](../reference/LANGUAGE_SPEC.md)
 
 ## License Agreement
 

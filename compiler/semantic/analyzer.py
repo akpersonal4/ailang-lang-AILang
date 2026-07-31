@@ -49,12 +49,21 @@ class SemanticAnalyzer:
         analyzer.analyze(ast_root)
     """
 
-    def __init__(self, symbol_table: SymbolTable | None = None) -> None:
+    def __init__(
+        self,
+        symbol_table: SymbolTable | None = None,
+        shadowed_modules: set[str] | None = None,
+    ) -> None:
         self.symbol_table = symbol_table or SymbolTable()
         # Tracks qualified names that have been explicitly imported by the
         # user in the current analysis pass – distinct from symbols
         # pre-registered by CompilationSession._register_export.
         self._imported_names: set[str] = set()
+        # Module names for which a user module was discovered but dropped in
+        # favor of the stdlib module of the same name (stdlib registration
+        # wins). Calls through these names must not be reported as MOD004
+        # since the user's intended module simply did not get registered.
+        self._shadowed_modules: set[str] = shadowed_modules or set()
 
     def analyze(self, node: ASTNode) -> None:
         method_name = f"_analyze_{type(node).__name__}"
@@ -313,9 +322,20 @@ class SemanticAnalyzer:
             active = self.symbol_table.scopes[-1]
             symbol = active.resolve(func_name) if active else None
 
-            # Detect known unavailable stdlib functions
             if symbol is None and self.symbol_table.reporter is not None:
-                self._report_unavailable_stdlib(func_name, callee)
+                # Detect known unavailable stdlib functions (returns True when
+                # a specific LANG diagnostic was emitted for this name).
+                reported = self._report_unavailable_stdlib(func_name, callee)
+                # When the receiver names a module that exports at least one
+                # symbol, a missing qualified name is an undefined module
+                # member (MOD004) rather than an unknown variable. Skip names
+                # shadowed by stdlib registration (see _shadowed_modules).
+                if (
+                    not reported
+                    and callee.receiver.name not in self._shadowed_modules
+                    and self._module_has_exports(callee.receiver.name)
+                ):
+                    self._report_undefined_module_member(func_name, callee)
         else:
             return
 
@@ -342,8 +362,12 @@ class SemanticAnalyzer:
 
     def _report_unavailable_stdlib(
         self, func_name: str, node: MemberAccessNode
-    ) -> None:
-        """Report a helpful error for known unavailable stdlib functions."""
+    ) -> bool:
+        """Report a helpful error for known unavailable stdlib functions.
+
+        Returns:
+            True if a diagnostic was reported for this function name.
+        """
         from compiler.diagnostics import (
             LANG002_LIST_SET_UNAVAILABLE,
             LANG003_STRING_REPLACE_UNAVAILABLE,
@@ -370,6 +394,51 @@ class SemanticAnalyzer:
                 file_path=self.symbol_table._file_path,
             )
             self.symbol_table.reporter.report(diagnostic)
+            return True
+        return False
+
+    def _module_has_exports(self, module_name: str) -> bool:
+        """Return True if any scope declares a qualified export for the module."""
+        prefix = module_name + "."
+        for scope in self.symbol_table.scopes:
+            if any(name.startswith(prefix) for name in scope.symbols):
+                return True
+        return False
+
+    def _report_undefined_module_member(
+        self, func_name: str, node: MemberAccessNode
+    ) -> None:
+        """Report MOD004 for a call to a member that is not exported by its module."""
+        from compiler.diagnostics import MOD004_SYMBOL_NOT_FOUND
+
+        module_name = node.receiver.name
+        message = (
+            f"Function '{func_name}()' does not exist in module '{module_name}'. "
+            f"Check the function name against STDLIB_REFERENCE.md."
+        )
+        prefix = module_name + "."
+        exports = sorted(
+            {
+                name[len(prefix) :]
+                for scope in self.symbol_table.scopes
+                for name in scope.symbols
+                if name.startswith(prefix)
+            }
+        )
+        if exports:
+            message += (
+                f" Available functions in module '{module_name}': "
+                + ", ".join(f"{module_name}.{member}" for member in exports)
+            )
+        diagnostic = Diagnostic(
+            Severity.ERROR,
+            MOD004_SYMBOL_NOT_FOUND,
+            message,
+            node.start_span,
+            node.end_span,
+            file_path=self.symbol_table._file_path,
+        )
+        self.symbol_table.reporter.report(diagnostic)
 
     # ------------------------------------------------------------------
     # Literals and identifiers

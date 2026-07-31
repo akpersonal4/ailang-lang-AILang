@@ -1,5 +1,20 @@
 # Changelog
 
+## v1.1.13
+
+### Evaluation Findings Fixes
+
+- **MOD004 at compile time**: Unknown module member calls (e.g. `math.mod()`, `list.push()`) are now reported during `ail check`/analysis instead of failing silently at runtime. The diagnostic includes the module's available-function list. User modules dropped in favor of same-named stdlib modules are excluded to avoid false positives.
+- **CMP001 cascade suppression**: The internal "MissingExpression" compile error is no longer reported when a lexer/parser diagnostic (PAR/LEX) for the same file already explains the failure (e.g. `let x = ;` reports only PAR001).
+- **LEX004 non-UTF-8 source**: Source files that are not valid UTF-8 (e.g. UTF-16) now produce a single clean `LEX004` diagnostic with a "re-save as UTF-8" suggestion instead of crashing compilation.
+- **Recursion guard**: Default recursion limit is 2000 (matching the v1.1.11 documented default). Python's recursion limit is raised safely above the AILang limit so deep recursion produces a clean structured `Runtime Error` instead of a Python traceback.
+- **Runtime error conversion**: `FileNotFoundError`, `PermissionError`, and `UnicodeDecodeError` are converted to structured diagnostics, and error locations prefer the user module over a stdlib file.
+- **Sandbox enabled in CLI**: `ail run` now enforces the sandbox by default; the new `--no-sandbox` flag disables it. File access outside the project directory reports a clean sandbox violation with guidance.
+- **Version sync**: `ail context`, `ail mcp`, and the VS Code extension now share the canonical `compiler._version` so tool-reported versions cannot drift from `ail --version`.
+- **`ail doctor` fixes**: Excludes `.venv_verify`/`generated`/egg-info directories, handles `#anchor` links, resolves relative/directory links (Windows path-separator bug fixed), and the real broken links in current docs were repaired.
+
+**Test Suite**: 1179 tests passing (1098 compiler + 81 benchmarks).
+
 ## v1.1.12
 
 ### Security & Correctness Hardening

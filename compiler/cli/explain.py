@@ -561,6 +561,28 @@ ERROR_DATABASE: dict[str, ErrorExplanation] = {
         related_commands=["ail docs LANGUAGE_SPEC.md"],
         heal_topic=None,
     ),
+    "LEX004": ErrorExplanation(
+        code="LEX004",
+        description="Source file is not valid UTF-8. AILang source files must be UTF-8 encoded.",
+        common_causes=[
+            "The file was saved as UTF-16 (e.g., PowerShell 'echo' redirection on Windows).",
+            "The file was saved with a legacy encoding such as ANSI/Latin-1.",
+            "The file is a binary file with a .ail extension.",
+        ],
+        examples=[
+            Example(
+                broken="Saved as UTF-16 (byte-order-mark at the start of the file)",
+                fixed='Re-save as UTF-8: in VS Code use "Save with Encoding" -> UTF-8.',
+                explanation="AILang reads every source file as UTF-8. Re-saving as UTF-8 fixes the error.",
+            ),
+        ],
+        fixes=[
+            "Re-save the file as UTF-8 using your editor's 'Save with encoding' option.",
+            "In PowerShell, use Set-Content -Encoding UTF8 instead of echo redirection.",
+        ],
+        related_commands=["ail docs LANGUAGE_SPEC.md"],
+        heal_topic=None,
+    ),
     "PAR001": ErrorExplanation(
         code="PAR001",
         description="Expected a specific token but found something else. The parser could not match the input against the grammar.",

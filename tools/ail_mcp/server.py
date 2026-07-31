@@ -16,7 +16,10 @@ from .docs_adapter import get_document, list_documents
 from .examples_adapter import get_examples
 from .stdlib_adapter import get_stdlib
 
-VERSION = "1.1.10"
+try:
+    from compiler._version import __version__ as VERSION
+except ImportError:
+    VERSION = "1.1.13"
 
 TOOLS = [
     {

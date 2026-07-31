@@ -15,7 +15,7 @@ from compiler.lexer import Lexer, LexicalError
 from compiler.parser import Parser
 from compiler.semantic.analyzer import SemanticAnalyzer
 from compiler.semantic.symbol_table import SymbolTable
-from compiler.source import Source
+from compiler.source import Source, SourceEncodingError
 
 from .graph import DependencyGraph
 from .resolution import ModuleResolver, _read_package_entry
@@ -62,6 +62,10 @@ class CompilationSession:
         self._cycle_detected: bool = False
         self._experimental_loops = experimental_loops
         self._pkg_stdlib_dirs: list[Path] = []
+        # User modules dropped during discovery because a stdlib module of the
+        # same name was registered first. MOD004 must not fire for calls
+        # through these names (the user's module was the intended target).
+        self._shadowed_user_modules: set[str] = set()
 
         if paths is not None:
             for p in paths:
@@ -264,11 +268,39 @@ class CompilationSession:
         """Recursively discover modules and add to graph."""
         module_name = self._path_to_module_name(file_path)
         if module_name in self._sources:
+            existing = self._sources[module_name].path
+            if (
+                existing
+                and "stdlib" in str(existing)
+                and "stdlib" not in str(file_path)
+            ):
+                self._shadowed_user_modules.add(module_name)
             if importer is not None:
                 self._graph.add_dependency(importer, module_name)
             return
 
-        source = Source.from_file(str(file_path))
+        try:
+            source = Source.from_file(str(file_path))
+        except SourceEncodingError as e:
+            from compiler.diagnostics import (
+                LEX004_SOURCE_ENCODING,
+                Diagnostic,
+                Severity,
+            )
+
+            if reporter is not None:
+                reporter.report(
+                    Diagnostic(
+                        Severity.ERROR,
+                        LEX004_SOURCE_ENCODING,
+                        (
+                            f"Source file is not valid UTF-8: {e.path}. "
+                            "AILang source files must be UTF-8 encoded."
+                        ),
+                        file_path=str(file_path),
+                    )
+                )
+            return
         self._sources[module_name] = source
         self._graph.add_module(module_name, str(file_path))
         self._registration_order.append(module_name)
@@ -360,13 +392,17 @@ class CompilationSession:
                 except ValueError as e:
                     msg = str(e) or "Compilation error"
                     if reporter is not None:
-                        # Suppress CMP001 cascade when LEX002 already reported
-                        has_lex002 = any(
-                            d.error_code.code == "LEX002"
+                        # Suppress the CMP001 cascade when the parser or lexer
+                        # already reported a user-facing diagnostic for this
+                        # file (LEX002, PAR001, etc.). The MissingExpression
+                        # ValueError is a consequence of the original parse
+                        # error, not an internal compiler failure.
+                        has_syntax_error = any(
+                            d.error_code.code.startswith(("PAR", "LEX"))
                             and (d.file_path == file_path or d.file_path is None)
                             for d in reporter.diagnostics
                         )
-                        if not has_lex002:
+                        if not has_syntax_error:
                             diag = Diagnostic(
                                 Severity.ERROR,
                                 ErrorCode("CMP001", msg),
@@ -464,7 +500,9 @@ class CompilationSession:
 
     def _analyze_module(self, module_name: str, symbol_table: SymbolTable) -> None:
         """Analyze a single module in a dedicated scope."""
-        analyzer = SemanticAnalyzer(symbol_table)
+        analyzer = SemanticAnalyzer(
+            symbol_table, shadowed_modules=self._shadowed_user_modules
+        )
         analyzer.analyze_module(self._asts[module_name])
 
     def build_ir(self) -> ModuleIRBundle:

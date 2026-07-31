@@ -285,6 +285,7 @@ def cmd_run(args: list[str]) -> int:
     """
     experimental_loops = False
     no_check = False
+    no_sandbox = False
     positional: list[str] = []
 
     remaining = list(args)
@@ -292,7 +293,7 @@ def cmd_run(args: list[str]) -> int:
         arg = remaining.pop(0)
         if arg in ("-h", "--help"):
             print(
-                f"Usage: {PROG} run [--experimental-loops] [--no-check] <file> [args..]"
+                f"Usage: {PROG} run [--experimental-loops] [--no-check] [--no-sandbox] <file> [args..]"
             )
             print()
             print("Compile and run an AILang program.")
@@ -300,14 +301,17 @@ def cmd_run(args: list[str]) -> int:
             print("Options:")
             print("  --experimental-loops  Enable experimental for-in loop syntax")
             print("  --no-check            Skip pre-flight ordering check")
+            print("  --no-sandbox          Disable the runtime sandbox (file I/O outside the project directory)")
             return 0
         elif arg == "--experimental-loops":
             experimental_loops = True
         elif arg == "--no-check":
             no_check = True
+        elif arg == "--no-sandbox":
+            no_sandbox = True
         elif arg.startswith("-"):
             print(
-                f"Usage: {PROG} run [--experimental-loops] [--no-check] <file>",
+                f"Usage: {PROG} run [--experimental-loops] [--no-check] [--no-sandbox] <file>",
                 file=sys.stderr,
             )
             return 1
@@ -376,6 +380,13 @@ def cmd_run(args: list[str]) -> int:
         formatter = DiagnosticFormatter()
         print(formatter.format(diag), file=sys.stderr)
         return 1
+
+    # Enable the runtime sandbox for file I/O unless the user opts out.
+    # The policy restricts file operations to the current working directory.
+    from compiler.runtime.sandbox import SandboxPolicy, set_policy
+
+    set_policy(SandboxPolicy(working_dir=Path.cwd(), enabled=not no_sandbox))
+
     runtime = Runtime(bundle)
 
     # Set source map for runtime error location resolution
@@ -409,6 +420,12 @@ def cmd_run(args: list[str]) -> int:
     except Exception as e:
         print(f"Runtime error: {e}", file=sys.stderr)
         return 1
+    finally:
+        # Restore the default (disabled) sandbox so later in-process
+        # runtimes are not affected by this command's policy.
+        from compiler.runtime.sandbox import SandboxPolicy, set_policy
+
+        set_policy(SandboxPolicy(enabled=False))
 
 
 def _format_errors_json(filepath: str, reporter: DiagnosticReporter) -> str:

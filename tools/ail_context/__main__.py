@@ -9,7 +9,10 @@ import argparse
 import json
 from pathlib import Path
 
-VERSION = "1.1.10"
+try:
+    from compiler._version import __version__ as VERSION
+except ImportError:
+    VERSION = "1.1.13"
 
 LANGUAGE_RULES = {
     "no_loops": {

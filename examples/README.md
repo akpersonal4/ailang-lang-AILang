@@ -43,7 +43,7 @@ ail run examples/calculator/main.ail
 |---------|-------------|----------|
 | [fibonacci](fibonacci/) | Fibonacci sequence | Recursion, `list.append` |
 | [recursion](recursion/) | Recursion patterns | Recursive functions |
-| [collections](collections/) | List and map operations | `list.*`, `map.*` |
+| [collections](collections.ail) | List and map operations | `list.*`, `map.*` |
 | [string_utils](string_utils.ail) | String utilities | `string.*` functions |
 | [file_io](file_io.ail) | File I/O operations | `file.*` functions |
 | [json_demo](json_demo.ail) | JSON operations | `json.parse`, `json.stringify` |
@@ -83,16 +83,16 @@ The `patterns/` directory contains reusable patterns for common operations:
 
 | Pattern | Description | Usage |
 |---------|-------------|-------|
-| [recursive_filter](patterns/recursive_filter/) | Filter list by condition | Finding items matching criteria |
-| [recursive_map](patterns/recursive_map/) | Transform list elements | Converting data formats |
-| [recursive_reduce](patterns/recursive_reduce/) | Accumulate list to single value | Summing, counting, aggregating |
-| [recursive_search](patterns/recursive_search/) | Search list for item | Finding specific items |
-| [string_find](patterns/string_find/) | Find substring in string | Text search operations |
-| [string_split](patterns/string_split/) | Split string by delimiter | CSV parsing, text processing |
-| [json_store](patterns/json_store/) | JSON file persistence | Save/load data |
-| [csv_reader](patterns/csv_reader/) | CSV file reading | Import data from CSV |
-| [dependency_graph](patterns/dependency_graph/) | Dependency resolution | Topological sorting |
-| [topological_sort](patterns/topological_sort/) | Topological sort | Task ordering |
+| [recursive_filter](patterns/recursive_filter.ail) | Filter list by condition | Finding items matching criteria |
+| [recursive_map](patterns/recursive_map.ail) | Transform list elements | Converting data formats |
+| [recursive_reduce](patterns/recursive_reduce.ail) | Accumulate list to single value | Summing, counting, aggregating |
+| [recursive_search](patterns/recursive_search.ail) | Search list for item | Finding specific items |
+| [string_find](patterns/string_find.ail) | Find substring in string | Text search operations |
+| [string_split](patterns/string_split.ail) | Split string by delimiter | CSV parsing, text processing |
+| [json_store](patterns/json_store.ail) | JSON file persistence | Save/load data |
+| [csv_reader](patterns/csv_reader.ail) | CSV file reading | Import data from CSV |
+| [dependency_graph](patterns/dependency_graph.ail) | Dependency resolution | Topological sorting |
+| [topological_sort](patterns/topological_sort.ail) | Topological sort | Task ordering |
 
 ## Running Examples
 

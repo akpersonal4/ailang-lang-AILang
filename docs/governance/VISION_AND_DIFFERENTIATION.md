@@ -237,4 +237,4 @@ The project succeeds when the following are true:
 - [Governance](GOVERNANCE.md) — Evidence bars, proposal process, freeze policy
 - [Engineering Benchmark Plan](../ENGINEERING_BENCHMARK_PLAN.md) — How claims are validated
 - [Architecture Decisions](../architecture/ARCHITECTURE_DECISIONS.md) — Why design choices were made
-- [Product Roadmap](../../roadmap/PRODUCT_ROADMAP.md) — Completed and planned milestones
+- [Product Roadmap](../roadmap/PRODUCT_ROADMAP.md) — Completed and planned milestones

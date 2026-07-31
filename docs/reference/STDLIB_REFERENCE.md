@@ -716,11 +716,12 @@ import json;
 ```
 
 ### `parse(text)`
-Parses a JSON string into an AILang value.
+Parses a JSON string into an AILang value. On invalid JSON input, `parse` returns `false` (rather than raising an error), so callers should validate the result before use.
 ```ail
 let data = json.parse("{\"name\": \"Alice\", \"age\": 30}");
 let items = json.parse("[1, 2, 3]");
 let empty = json.parse("null");  // Returns Python None (no AILang literal)
+let bad = json.parse("{not valid json");  // false
 ```
 
 ### `stringify(value)`

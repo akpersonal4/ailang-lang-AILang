@@ -3,7 +3,7 @@
 **Deterministic programming language designed for AI-assisted development.**
 
 [![PyPI](https://img.shields.io/pypi/v/ailang-lang?color=blue)](https://pypi.org/project/ailang-lang/)
-[![Tests](https://img.shields.io/badge/tests-1165%20passing-brightgreen)](https://github.com/akpersonal4/ailang-lang-AILang/actions?query=branch%3Adevelop)
+[![Tests](https://img.shields.io/badge/tests-1179%20passing-brightgreen)](https://github.com/akpersonal4/ailang-lang-AILang/actions?query=branch%3Adevelop)
 [![Python](https://img.shields.io/badge/python-3.11%2B-blue)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-Apache%202.0-green)](https://github.com/akpersonal4/ailang-lang-AILang/blob/main/LICENSE)
 
@@ -24,10 +24,14 @@ fn main() {
 
 ## Quick Start
 
+Create a file `hello.ail`:
+
+```ail
 fn main() {
     print("Hello, AILang!")
     return 0
 }
+```
 
 > **Note:** The CLI is `ail` (not `ailang`). After `pip install ailang-lang`, use `ail run`, `ail build`, etc.
 
@@ -46,7 +50,7 @@ ail run hello.ail
 Install from local wheel (pre-built in `dist/`):
 
 ```bash
-pip install dist/ailang_lang-1.1.12-py3-none-any.whl
+pip install dist/ailang_lang-1.1.13-py3-none-any.whl
 ail run hello.ail
 ```
 
@@ -238,7 +242,7 @@ Or package and install from the VS Code Marketplace: `extensions/vscode-ailang/`
 - **AI-friendly** — validated with 23 AI-generated programs at 100% first-pass success
 - **Fast compile times** — 5000 LOC compiles in <2 seconds
 - **Low memory usage** — 5000 LOC uses <11 MB peak memory
-- **Complete test coverage** — 1037 tests across all compiler stages
+- **Complete test coverage** — 1179 tests across all compiler stages
 
 ## Example
 
@@ -291,7 +295,7 @@ fn main() {
 | Python version | 3.11+ |
 | Compiler LOC | ~3,950 (39 Python files) |
 | Stdlib modules | 16 |
-| Tests | **1165 passing** |
+| Tests | **1179 passing** |
 | Example programs | 55+ |
 | Application programs | 43+ |
 | DX Tools | ail context, ail doctor, ail static_analyzer, ail benchmark, ail testgen, ail docs, ail mcp |

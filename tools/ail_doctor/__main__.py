@@ -24,11 +24,11 @@ _MAX_CHECK_TIME = 10.0
 def _filter_excluded(path: Path) -> bool:
     """Return True if path should be excluded from scanning."""
     exclude_dirs = {
-        ".venv", ".venv_test", ".git", ".mypy_cache", ".pytest_cache",
-        ".ruff_cache", "node_modules", "__pycache__", "ailang.egg-info",
-        "verify_env", "dist", "build", ".ail", "backups", ".github",
-        "archived", "data", "egg-info", "node_modules",
-        ".mypy_cache", ".pytest_cache", ".ruff_cache",
+        ".venv", ".venv_test", ".venv_verify", ".git", ".mypy_cache",
+        ".pytest_cache", ".ruff_cache", "node_modules", "__pycache__",
+        "ailang.egg-info", "ailang_lang.egg-info", "verify_env", "dist",
+        "build", ".ail", "backups", ".github", "archived", "data",
+        "egg-info", "generated",
     }
     return any(part in exclude_dirs for part in path.parts)
 
@@ -73,13 +73,14 @@ def extract_markdown_links(content: str) -> list[str]:
     for link_text, link_target in matches:
         if link_target.startswith("mailto:"):
             continue
-        # Skip if target looks like a URL without http (e.g., "url")
+        # Skip targets that look like prose words rather than paths
+        # (no extension and no path separator, e.g. `[see](here)`).
+        # Directory links like `hello_world/` are kept.
         if (
             link_target
             and not link_target.startswith("http")
-            and not link_target.startswith("/")
             and "." not in link_target
-            and not link_target.endswith(".md")
+            and "/" not in link_target
         ):
             continue
         filtered.append((link_text, link_target))
@@ -104,8 +105,9 @@ def check_broken_internal_links(root: Path) -> list[dict]:
             if link_target.startswith("/"):
                 continue
 
-            # Resolve relative to markdown file's directory
-            target_path = (md_file.parent / link_target).resolve()
+            # Resolve relative to markdown file's directory.
+            # Strip any #anchor fragment so heading links resolve to the file.
+            target_path = (md_file.parent / link_target.split("#", 1)[0]).resolve()
             if not target_path.exists():
                 broken_links.append(
                     {
@@ -279,19 +281,36 @@ def check_orphan_documents(root: Path) -> list[Path]:
     markdown_files = find_markdown_files(root)
     start = time.monotonic()
 
-    # Build set of all linked files
+    # Build set of all linked files, resolved to root-relative posix paths.
+    # Links written relative to the linking document (e.g. '../README.md'
+    # or a same-directory 'FOO.md') must resolve before comparing, otherwise
+    # every document in a subdirectory looks orphaned.
     linked_files = set()
     for md_file in markdown_files:
         if time.monotonic() - start > _MAX_CHECK_TIME:
             break
         content = read_file_safe(md_file)
-        if content:
-            for _, link_target in extract_markdown_links(content):
-                linked_files.add(link_target)
+        if not content:
+            continue
+        for _, link_target in extract_markdown_links(content):
+            if link_target.startswith(("http://", "https://", "mailto:", "#")):
+                continue
+            target_path = (md_file.parent / link_target.split("#", 1)[0]).resolve()
+            # A link to a directory conventionally means that directory's
+            # README.md (e.g. [module](hello_world/)).
+            if target_path.is_dir():
+                target_path = target_path / "README.md"
+            try:
+                linked_files.add(target_path.relative_to(root).as_posix())
+            except ValueError:
+                continue
 
     # Check each markdown file
     for md_file in markdown_files:
-        rel_path = str(md_file.relative_to(root))
+        # Normalize to forward slashes: links in markdown use '/', but
+        # Path.relative_to on Windows yields backslashes, which would make
+        # every document look orphaned.
+        rel_path = md_file.relative_to(root).as_posix()
         if rel_path not in linked_files and rel_path not in [
             "README.md",
             "AGENTS.md",
