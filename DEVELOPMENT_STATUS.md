@@ -35,8 +35,8 @@ until this document has been reviewed. Update AGENTS.md reading order after revi
 | GitHub Release | ✅ v1.1.12 Published |
 | PyPI Publication | ✅ v1.1.13 Published |
 | GitHub Release | ✅ v1.1.13 Published |
-| PyPI Publication | ⏳ v1.1.14 Pending (verified locally, awaiting upload) |
-| GitHub Release | ⏳ v1.1.14 Pending (verified locally, awaiting upload) |
+| PyPI Publication | ✅ v1.1.14 Published |
+| GitHub Release | ✅ v1.1.14 Published |
 
 ### Maturity Assessment
 
