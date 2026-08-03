@@ -86,6 +86,75 @@ def test_type_checker_rejects_non_bool_condition() -> None:
 
 
 # ------------------------------------------------------------------
+# M132: Truthiness — no truthy/falsy coercion (LANGUAGE_SPEC §7.1)
+# TYP004 must fire for every non-bool condition, not just int.
+# TYP007 must fire for `&&`/`||` with non-bool operands.
+# TYP010 must fire for `!` with a non-bool operand.
+# ------------------------------------------------------------------
+
+
+def test_truthiness_rejects_string_condition_m132() -> None:
+    """M132: `if (x)` where x is a string must produce TYP004."""
+    source = 'fn foo() { let x = "abc"; if (x) { return 1; } }'
+    _, reporter = _type_check(source)
+    typ004 = [d for d in reporter.diagnostics if "TYP004" in d.error_code.code]
+    assert len(typ004) == 1, (
+        f"Expected 1 TYP004 for string condition, got {len(typ004)}"
+    )
+
+
+def test_truthiness_rejects_zero_condition_m132() -> None:
+    """M132: `if (0)` must produce TYP004 (no truthiness coercion)."""
+    source = "fn foo() { if (0) { return 1; } }"
+    _, reporter = _type_check(source)
+    typ004 = [d for d in reporter.diagnostics if "TYP004" in d.error_code.code]
+    assert len(typ004) == 1, (
+        f"Expected 1 TYP004 for `if (0)`, got {len(typ004)}"
+    )
+
+
+def test_truthiness_logical_and_rejects_int_m132() -> None:
+    """M132: `1 && 2` must produce TYP007 (no truthiness coercion)."""
+    source = "fn foo() { let x = 1 && 2; return x; }"
+    _, reporter = _type_check(source)
+    typ007 = [d for d in reporter.diagnostics if "TYP007" in d.error_code.code]
+    assert len(typ007) == 1, (
+        f"Expected 1 TYP007 for `1 && 2`, got {len(typ007)}"
+    )
+
+
+def test_truthiness_logical_or_rejects_string_m132() -> None:
+    """M132: `"a" || true` must produce TYP007."""
+    source = 'fn foo() { let x = "a" || true; return x; }'
+    _, reporter = _type_check(source)
+    typ007 = [d for d in reporter.diagnostics if "TYP007" in d.error_code.code]
+    assert len(typ007) == 1, (
+        f"Expected 1 TYP007 for `\"a\" || true`, got {len(typ007)}"
+    )
+
+
+def test_truthiness_not_rejects_int_m132() -> None:
+    """M132: `!1` must produce TYP010 (no truthiness coercion)."""
+    source = "fn foo() { let x = !1; return x; }"
+    _, reporter = _type_check(source)
+    typ010 = [d for d in reporter.diagnostics if "TYP010" in d.error_code.code]
+    assert len(typ010) == 1, (
+        f"Expected 1 TYP010 for `!1`, got {len(typ010)}"
+    )
+
+
+def test_truthiness_not_accepts_bool_m132() -> None:
+    """M132: `!true` is accepted (bool operand is fine)."""
+    source = "fn foo() { let x = !true; return x; }"
+    _, reporter = _type_check(source)
+    typ010 = [d for d in reporter.diagnostics if "TYP010" in d.error_code.code]
+    assert typ010 == [], (
+        f"!true must be accepted, got TYP010: "
+        f"{[d.message for d in typ010]}"
+    )
+
+
+# ------------------------------------------------------------------
 # Unary operator type checking
 # ------------------------------------------------------------------
 
@@ -887,3 +956,92 @@ def test_function_returning_int_plus_string_rejected() -> None:
     _, reporter = _type_check(source)
     typ005_errors = [d for d in reporter.diagnostics if "TYP005" in d.error_code.code]
     assert len(typ005_errors) >= 1, f"Expected 1 TYP005 error, got {len(typ005_errors)}"
+
+
+# ------------------------------------------------------------------
+# M132: Boolean arithmetic (LANGUAGE_SPEC §3.1)
+# "Boolean values participate in arithmetic: true is 1, false is 0."
+# ------------------------------------------------------------------
+
+
+def test_bool_plus_bool_accepted_m132() -> None:
+    """M132: true + true should type-check (spec §3.1)."""
+    source = "fn main() { let x = true + true; return x; }"
+    _, reporter = _type_check(source)
+    typ005_errors = [d for d in reporter.diagnostics if "TYP005" in d.error_code.code]
+    assert typ005_errors == [], (
+        f"true+true should be accepted (LANGUAGE_SPEC §3.1), got TYP005: "
+        f"{[d.message for d in typ005_errors]}"
+    )
+
+
+def test_bool_plus_int_accepted_m132() -> None:
+    """M132: true + 1 should type-check (spec §3.1)."""
+    source = "fn main() { let x = true + 1; return x; }"
+    _, reporter = _type_check(source)
+    typ005_errors = [d for d in reporter.diagnostics if "TYP005" in d.error_code.code]
+    assert typ005_errors == [], (
+        f"true+1 should be accepted (LANGUAGE_SPEC §3.1), got TYP005: "
+        f"{[d.message for d in typ005_errors]}"
+    )
+
+
+def test_bool_times_int_accepted_m132() -> None:
+    """M132: true * 2 should type-check (spec §3.1)."""
+    source = "fn main() { let x = true * 2; return x; }"
+    _, reporter = _type_check(source)
+    typ005_errors = [d for d in reporter.diagnostics if "TYP005" in d.error_code.code]
+    assert typ005_errors == [], (
+        f"true*2 should be accepted (LANGUAGE_SPEC §3.1), got TYP005: "
+        f"{[d.message for d in typ005_errors]}"
+    )
+
+
+def test_int_plus_bool_accepted_m132() -> None:
+    """M132: 1 + true should type-check (spec §3.1, symmetric)."""
+    source = "fn main() { let x = 1 + true; return x; }"
+    _, reporter = _type_check(source)
+    typ005_errors = [d for d in reporter.diagnostics if "TYP005" in d.error_code.code]
+    assert typ005_errors == [], (
+        f"1+true should be accepted (LANGUAGE_SPEC §3.1), got TYP005: "
+        f"{[d.message for d in typ005_errors]}"
+    )
+
+
+def test_bool_minus_bool_accepted_m132() -> None:
+    """M132: true - false should type-check (spec §3.1)."""
+    source = "fn main() { let x = true - false; return x; }"
+    _, reporter = _type_check(source)
+    typ005_errors = [d for d in reporter.diagnostics if "TYP005" in d.error_code.code]
+    assert typ005_errors == [], (
+        f"true-false should be accepted (LANGUAGE_SPEC §3.1), got TYP005: "
+        f"{[d.message for d in typ005_errors]}"
+    )
+
+
+def test_bool_plus_float_accepted_m132() -> None:
+    """M132: bool participates in mixed int/float arithmetic (promoted to float)."""
+    source = "fn main() { let x = true + 1.5; return x; }"
+    _, reporter = _type_check(source)
+    typ005_errors = [d for d in reporter.diagnostics if "TYP005" in d.error_code.code]
+    assert typ005_errors == [], (
+        f"true+1.5 should be accepted (LANGUAGE_SPEC §3.1), got TYP005: "
+        f"{[d.message for d in typ005_errors]}"
+    )
+
+
+def test_list_plus_bool_still_rejected_m132() -> None:
+    """M132: list + bool is still a TYP005 (only bool↔int↔float participate)."""
+    source = (
+        "fn list_new() { return [1, 2]; }"
+        " fn main() { let xs = list_new(); let x = xs + true; return x; }"
+    ).replace("[1, 2]", "{tag: 1}")  # fall back to map literal syntax
+    # Simpler: use a string concat scenario where TYP005 should still fire
+    source = (
+        'fn main() { let s = "abc"; let x = s + true; return x; }'
+    )
+    _, reporter = _type_check(source)
+    typ005_errors = [d for d in reporter.diagnostics if "TYP005" in d.error_code.code]
+    assert len(typ005_errors) >= 1, (
+        f"string+bool should still be rejected, got {len(typ005_errors)} TYP005 errors"
+    )

@@ -120,8 +120,37 @@ def check_broken_internal_links(root: Path) -> list[dict]:
     return broken_links
 
 
+def is_pypi_install(root: Path) -> bool:
+    """M132: Detect whether `root` is a PyPI/sdist install of ailang.
+
+    When ailang is installed via `pip install ailang-lang`, the wheel places
+    `compiler/`, `tools/`, `stdlib/`, and `ail_platform/` directly inside
+    site-packages, and `get_project_root()` resolves to that site-packages
+    directory. In that case, repository files such as `README.md`, `LICENSE`,
+    and `CHANGELOG.md` are intentionally absent (they are not shipped in the
+    wheel) and MUST NOT be reported as "missing".
+
+    Detection signal: `pyproject.toml` is the definitive source-tree marker.
+    Every AILang source checkout has one at the project root, and a wheel
+    NEVER ships it into site-packages. The package directories (`compiler/`,
+    `tools/`, `stdlib/`) cannot be used as markers because the wheel ships
+    those into site-packages too.
+    """
+    return not (root / "pyproject.toml").exists()
+
+
 def check_missing_files(root: Path) -> list[dict]:
-    """Check for missing expected files using common patterns."""
+    """Check for missing expected files using common patterns.
+
+    M132: `ail doctor` is a repository-health check, so it only applies to a
+    source checkout. When running against a PyPI install (where `root`
+    resolves to site-packages), ALL of the expected project files
+    (README/LICENSE/CHANGELOG/DEVELOPMENT_STATUS/PROJECT_MEMORY/AGENTS) are
+    intentionally absent from the wheel, so none are reported as missing.
+    """
+    if is_pypi_install(root):
+        return []
+
     missing = []
     expected_files = [
         "README.md",

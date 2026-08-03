@@ -262,6 +262,11 @@ class TypeChecker:
             def _num_unk(t: Type) -> bool:
                 return isinstance(t, (UnknownType, NumericUnknownType))
 
+            # M132: Per LANGUAGE_SPEC §3.1, boolean values participate in
+            # arithmetic: true is 1, false is 0. Treat bool as int when both
+            # operands are bool; treat bool as int when paired with int.
+            if left_type is BOOL_TYPE and right_type is BOOL_TYPE:
+                return INT_TYPE
             if left_type is INT_TYPE and _num_unk(right_type):
                 return INT_TYPE
             if right_type is INT_TYPE and _num_unk(left_type):
@@ -270,9 +275,15 @@ class TypeChecker:
                 return FLOAT_TYPE
             if right_type is FLOAT_TYPE and _num_unk(left_type):
                 return FLOAT_TYPE
-            if left_type in {INT_TYPE, FLOAT_TYPE} and right_type in {
+            if left_type in {INT_TYPE, BOOL_TYPE} and right_type in {
+                INT_TYPE,
+                BOOL_TYPE,
+            }:
+                return INT_TYPE
+            if left_type in {INT_TYPE, FLOAT_TYPE, BOOL_TYPE} and right_type in {
                 INT_TYPE,
                 FLOAT_TYPE,
+                BOOL_TYPE,
             }:
                 if left_type is FLOAT_TYPE or right_type is FLOAT_TYPE:
                     return FLOAT_TYPE

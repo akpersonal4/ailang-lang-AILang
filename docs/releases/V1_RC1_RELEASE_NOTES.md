@@ -87,7 +87,7 @@ The inventory reference application (8,515 LOC) is now **production-usable** wit
 
 | API | Description |
 |-----|-------------|
-| `list.sort(values)` | Sort list in-place (ascending) |
+| `list.sort(values)` | Sort list, return new sorted list (ascending; original unchanged) |
 | `string.join(values, delimiter)` | Join list of strings with delimiter |
 | `list.copy(values)` | Deep copy a list |
 | `map.get_or_default(map, key, default)` | Get with fallback default |

@@ -1,5 +1,28 @@
 # Changelog
 
+## v1.1.14 (M132 Maintenance Verification)
+
+### Spec/Implementation Sync
+
+- **Boolean arithmetic (LANGUAGE_SPEC §3.1)**: `true` and `false` now participate in arithmetic expressions (`true + true`, `true + 1`, `true * 2`). Previously the type checker emitted `TYP005` even though the spec, runtime, and stress tests (`test_boolean_in_arithmetic`) all assumed boolean arithmetic works. Type checker now accepts `bool` alongside `int` and `float` for `+ - * / %`, returning `int` when both operands are `bool`/`int` and `float` when either is `float` — matching Python's `bool`⊂`int` semantics.
+- **`list.sort` docs fixed**: `docs/releases/V1_RC1_RELEASE_NOTES.md` previously claimed `list.sort(values)` sorts in-place. The implementation, `STDLIB_REFERENCE.md`, and the new `LANGUAGE_SPEC §10.2.1` all state it returns a **new** sorted list (the original is unchanged). Doc fixed to match behavior. New regression tests cover empty input, string sort, no-mutation, and stable sort order.
+- **`ail doctor` PyPI fix**: `README.md`, `LICENSE`, and `CHANGELOG.md` are no longer reported as "Missing Required Files" when `ail doctor` runs against a `pip install ailang-lang` site-packages layout (where those files are intentionally absent from the wheel). `is_pypi_install()` detects install mode via the `pyproject.toml` source-tree marker — refined during fresh-release verification because the wheel ships `compiler/`/`tools/`/`stdlib/` into site-packages, so those directories cannot act as source-tree markers.
+- **Truthiness spec mirror synced**: The archived `compiler/docs/LANGUAGE_SPEC.md` mirror previously said "The number `0` is truthy", contradicting the canonical spec. Updated to match: "no truthiness coercion in conditions". Regression tests added for `TYP004` (string condition, `if (0)`), `TYP007` (`&&`/`||` with non-bool), and `TYP010` (`!` with non-bool).
+
+### Test Suite
+
+- +22 new M132 regression tests (7 boolean-arithmetic, 4 list.sort, 5 doctor, 6 truthiness coverage).
+
+### Test Summary
+
+| Component | Count |
+|-----------|-------|
+| Compiler Tests | 1120 |
+| Benchmark Tests | 81 |
+| **Total Verified** | **1201** |
+
+_(Total verified 1201, up from 1179 in v1.1.13.)_
+
 ## v1.1.13
 
 ### Evaluation Findings Fixes

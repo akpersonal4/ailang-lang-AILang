@@ -182,6 +182,19 @@ AILang is dynamically typed. The runtime recognizes the following value types:
 - Boolean values participate in arithmetic: `true` is `1`, `false` is `0`.
 - Explicit conversion is available via the `convert` module (`to_int`, `to_string`).
 
+#### Why boolean arithmetic produces numeric results
+
+`true == 1` and `false == 0`. Arithmetic always follows numeric promotion, so when a boolean appears in an arithmetic expression it is promoted to its integer value (`1` or `0`) before the operation runs. Boolean arithmetic therefore produces **numeric** results, not booleans:
+
+```ail
+true + true   // 2  (1 + 1), an int — NOT true
+true + 1      // 2  (1 + 1), an int
+true * 2      // 2  (1 * 2), an int
+true + 1.5    // 2.5        — promoted to float when either operand is float
+```
+
+This is intentional. If `true + true` were to return `true` instead of `2`, the `+` operator would behave inconsistently depending on operand types, and expressions like `true + false` (which must equal `1`) would be impossible to express. Use comparison operators (`==`, `&&`, `||`, `!`) when you want boolean results.
+
 ---
 
 ## 4. Variables and Assignment
@@ -505,6 +518,13 @@ math.add(1, 2)        // calls add exported by math.ail
 | Function | Signature | Description |
 |----------|-----------|-------------|
 | `print` | `print(...)` | Prints arguments to stdout, separated by spaces, followed by a newline |
+
+### 10.2.1 `list.sort` Semantics (M132)
+
+- `list.sort(values)` returns a **new** list sorted ascending by the values themselves (numeric or string). The input list is **not** mutated.
+- `list.sort_by_key(values, key)` returns a **new** list sorted ascending by `key` (a string) looked up in each map. Missing keys fall back to `""`.
+- The sort is **stable**: equal-key elements preserve their input order.
+- Empty input lists return empty lists. Mixed-type input lists raise a runtime `TypeError` (not wrapped in an AILang diagnostic).
 
 ### 10.3 Calling Module Functions
 

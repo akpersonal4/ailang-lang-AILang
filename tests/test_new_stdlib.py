@@ -83,6 +83,110 @@ fn main() {
     assert result == 1, f"Expected 1, got {result}"
 
 
+def test_list_sort_empty_m132() -> None:
+    """M132: list.sort of an empty list returns an empty list."""
+    result = _run_program("""
+import list;
+
+fn main() {
+    let nums = list.new();
+    let sorted = list.sort(nums);
+    if (list.len(sorted) == 0) {
+        return 1;
+    }
+    return 0;
+}
+""")
+    assert result == 1, f"Expected 1, got {result}"
+
+
+def test_list_sort_strings_m132() -> None:
+    """M132: list.sort sorts strings lexicographically (ascending)."""
+    result = _run_program("""
+import list;
+
+fn main() {
+    let xs = list.new();
+    list.append(xs, "banana");
+    list.append(xs, "apple");
+    list.append(xs, "cherry");
+    let sorted = list.sort(xs);
+    if (list.get(sorted, 0) == "apple"
+        && list.get(sorted, 1) == "banana"
+        && list.get(sorted, 2) == "cherry") {
+        return 1;
+    }
+    return 0;
+}
+""")
+    assert result == 1, f"Expected 1, got {result}"
+
+
+def test_list_sort_does_not_mutate_input_m132() -> None:
+    """M132: list.sort returns a new list; the original list is unchanged.
+
+    Regression test for V1_RC1_RELEASE_NOTES.md:90, which incorrectly
+    documented list.sort as in-place. Implementation and STDLIB_REFERENCE
+    both state list.sort returns a NEW list.
+    """
+    result = _run_program("""
+import list;
+
+fn main() {
+    let nums = list.new();
+    list.append(nums, 30);
+    list.append(nums, 10);
+    list.append(nums, 20);
+    let sorted = list.sort(nums);
+    if (list.get(nums, 0) == 30
+        && list.get(nums, 1) == 10
+        && list.get(nums, 2) == 20
+        && list.get(sorted, 0) == 10
+        && list.get(sorted, 1) == 20
+        && list.get(sorted, 2) == 30) {
+        return 1;
+    }
+    return 0;
+}
+""")
+    assert result == 1, f"Expected 1, got {result}"
+
+
+def test_list_sort_by_key_stable_m132() -> None:
+    """M132: list.sort_by_key is stable: equal-key maps preserve input order."""
+    result = _run_program("""
+import list;
+
+fn main() {
+    let items = list.new();
+    let a = map.new();
+    map.set(a, "name", "alice");
+    map.set(a, "age", 30);
+    let b = map.new();
+    map.set(b, "name", "bob");
+    map.set(b, "age", 30);
+    let c = map.new();
+    map.set(c, "name", "carol");
+    map.set(c, "age", 25);
+    list.append(items, a);
+    list.append(items, b);
+    list.append(items, c);
+    let sorted = list.sort_by_key(items, "age");
+    let s0 = list.get(sorted, 0);
+    let s1 = list.get(sorted, 1);
+    let s2 = list.get(sorted, 2);
+    let n0 = map.get(s0, "name");
+    let n1 = map.get(s1, "name");
+    let n2 = map.get(s2, "name");
+    if (n0 == "carol" && n1 == "alice" && n2 == "bob") {
+        return 1;
+    }
+    return 0;
+}
+""")
+    assert result == 1, f"Expected 1, got {result}"
+
+
 def test_list_copy() -> None:
     """list.copy should return a shallow copy."""
     result = _run_program("""

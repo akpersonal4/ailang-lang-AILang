@@ -224,7 +224,7 @@ def test_shadowed_stdlib_module_no_false_mod004() -> None:
 
 
 def test_version_consistency() -> None:
-    """The canonical version is 1.1.13 for this patch release."""
+    """The canonical version is 1.1.14 for this patch release (M132)."""
     from compiler._version import __version__
 
-    assert __version__ == "1.1.13"
+    assert __version__ == "1.1.14"

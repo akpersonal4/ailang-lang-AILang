@@ -10,7 +10,7 @@ from typing import Any
 try:
     from compiler._version import __version__ as VERSION
 except ImportError:
-    VERSION = "1.1.13"
+    VERSION = "1.1.14"
 
 LANGUAGE_RULES = {
     "no_loops": {

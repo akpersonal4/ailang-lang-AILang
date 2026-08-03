@@ -114,7 +114,7 @@ DIAGNOSTICS = {
         "cause": "Arithmetic operation that produces an invalid result type.",
         "fix": "Ensure the operation produces a numeric result.",
         "example": {
-            "bad": "fn main() { let x = true + 1; return 0 }",
+            "bad": "fn main() { let x = [1, 2] + 1; return 0 }",
             "good": "fn main() { let x = 1 + 1; return 0 }",
         },
     },

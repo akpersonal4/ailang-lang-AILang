@@ -364,7 +364,7 @@ if (condition) {
       ...
   }
   ```
-- The condition is evaluated as boolean. The number `0` is truthy.
+- The condition must evaluate to a boolean (`true` or `false`). Numbers, strings, and other non-boolean values are rejected (TYP004). There is no truthiness coercion in conditions.
 
 ### 7.2 Return Statement
 
