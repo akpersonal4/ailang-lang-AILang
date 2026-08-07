@@ -10,9 +10,9 @@ until this document has been reviewed. Update AGENTS.md reading order after revi
 
 | Attribute | Value |
 |:----------|:------|
-| **Current Release** | v1.1.16 |
-| **Current Milestone** | M132 Maintenance Verification |
-| **Project Phase** | Public Beta |
+| **Current Release** | v1.1.16 (Published) |
+| **Current Milestone** | A100 — Community Validation |
+| **Project Phase** | Public Release |
 
 ### Release Status
 
@@ -22,7 +22,7 @@ until this document has been reviewed. Update AGENTS.md reading order after revi
 | Fresh Virtual Environment Verification | ✅ Complete |
 | Local Wheel Installation | ✅ Complete |
 | Smoke Tests (hello_world, calculator, collections, fibonacci) | ✅ Complete |
-| Regression Tests | ✅ 1201 Passing |
+| Regression Tests | ✅ 1128 Passing |
 | PyPI Publication | ✅ v1.1.8 Published |
 | GitHub Release | ✅ v1.1.8 Published |
 | PyPI Publication | ✅ v1.1.9 Published |
@@ -37,6 +37,11 @@ until this document has been reviewed. Update AGENTS.md reading order after revi
 | GitHub Release | ✅ v1.1.13 Published |
 | PyPI Publication | ✅ v1.1.14 Published |
 | GitHub Release | ✅ v1.1.14 Published |
+| PyPI Publication | ✅ v1.1.15 Published |
+| GitHub Release | ✅ v1.1.15 Published |
+| PyPI Publication | ✅ v1.1.16 Published |
+| GitHub Release | ✅ v1.1.16 Published |
+| External Review (v1.1.16 RC1) | ✅ GO — no release-blocking defects |
 
 ### Maturity Assessment
 
@@ -54,7 +59,7 @@ until this document has been reviewed. Update AGENTS.md reading order after revi
 | Governance | 100% |
 | Validation Framework | 100% |
 | Reference Applications | 8 apps (todo, expense, inventory, employee, log_analyzer, csv_etl, json_transformer, invoice) |
-| Test Suite | 1088 tests passing (hardening) |
+| Test Suite | 1128 tests passing |
 
 --------------------------------------
 
@@ -212,6 +217,20 @@ in the ecosystem that makes AILang productive for both human and AI developers.
 
 ## Current Work
 
+**A100 — Community Validation** — First non-engineering milestone. Evaluates
+whether AILang's design produces measurable advantages for AI-assisted business
+software development under real usage conditions.
+
+### Status
+- **Phase:** Adoption-focused. The compiler is no longer the bottleneck; adoption is.
+- **Preconditions:** first-impression wheel-tooling fixes (`ail testgen <file>` crash, `ail benchmark`/`ail static-analyzer` source-checkout requirement, `ail doctor` health score on wheel installs)
+- **Protocol:** two-phase head-to-head (greenfield build + maintenance changes) vs AI-assisted Python; "easier" and "would choose" recorded separately
+- **Success criteria:** fixed before recruitment (>= 5 participants, >= 5 useful apps, >= 3 maintenance phase, >= 3 would choose AILang again, 0 release-blocking bugs)
+- **Governance:** community feedback identifies problems; governance determines solutions
+- **Details:** `docs/roadmap/A100_COMMUNITY_VALIDATION.md`
+
+### Completed Milestone Summaries
+
 **M127 P0 — Runtime Diagnostics & Package Validation** ✅ Complete
 
 ### Status
@@ -223,7 +242,6 @@ in the ecosystem that makes AILang productive for both human and AI developers.
 - **Test Results:** 1165/1165 tests passing (29 new validation + 87 runtime/CLI/diagnostic + 48 package + 1001 existing)
 - **Documentation:** Map iteration patterns in STDLIB_REFERENCE.md, CLI reference table + troubleshooting in README.md, PACKAGE_VALIDATION.md guide
 - **Closure Report:** `docs/milestones/M127_CLOSURE_REPORT.md`
-- **Next:** M128 — Independent Public Validation (then publish to PyPI + GitHub Release)
 
 **M56/M57 — External Adoption Closure** ✅ Complete
 
@@ -288,7 +306,7 @@ in the ecosystem that makes AILang productive for both human and AI developers.
 
 ### Maintenance
 - 📋 **Documentation website** — Create hosted documentation site
-- ⏳ **PyPI package** — `pip install ailang-lang` (pending M128 validation)
+- ✅ **PyPI package** — `pip install ailang-lang` (v1.1.16 published)
 
 ---
 
@@ -296,12 +314,12 @@ in the ecosystem that makes AILang productive for both human and AI developers.
 
 | Priority | Area | Key Deliverables |
 |:--------:|------|------------------|
-| **P0** | **M127 — Runtime Diagnostics & Package Validation** | ✅ Structured error messages, type guards, new exit codes, wheel packaging verified (RC) — see "Recently Completed" |
-| **P1** | **M128 — Independent Public Validation** | Provide validators with: source repo, local wheel, docs only. No milestone reports or implementation notes. Post-validation: publish to PyPI + GitHub Release + tag |
-| **P2** | 90‑Day Production Validation (M40) | Continuous inventory run, collect bugs/fixes/incidents |
-| **P3** | Official Examples Repository | 5 polished examples (Inventory, CRM, Ticket Management, HRMS, Legal Case Tracker) |
+| **P0** | **A100 — Community Validation** | First non-engineering milestone: evaluate AILang under real usage (greenfield + maintenance head-to-head vs AI-assisted Python). Fixed success criteria. See `docs/roadmap/A100_COMMUNITY_VALIDATION.md` |
 
-> Rationale: Validate before publishing. M127 produces a release candidate. M128 validates independently. Findings are addressed before public release, avoiding patch releases for early adopters.
+> Rationale: The compiler is no longer the bottleneck. Adoption is. Major
+> feature milestones after v1.1.x are driven by evidence gathered during A100
+> rather than speculation. Community feedback identifies problems; governance
+> determines solutions.
 
 ## Forward-Looking Roadmap
 
@@ -309,10 +327,9 @@ in the ecosystem that makes AILang productive for both human and AI developers.
 
 | Milestone | Focus | Target |
 |-----------|-------|:------:|
-| **v1.1.7** | ✅ Release Candidate — runtime diagnostics, package validation, wheel verified (not yet published) | Current |
-| **M128** | Independent Public Validation — validate RC, then publish to PyPI + GitHub Release | Next |
-| **P2** | 90-Day Production Validation — continuous inventory run | Future |
-| **P3** | Official Examples — 5 polished repos | Future |
+| **v1.1.16** | ✅ Released and published — PyPI + GitHub, 1128 tests passing, external review GO | Published |
+| **A100** | Community Validation — evidence from real users | Current |
+| **v1.2.x** | Determined by A100 results, not speculation | Future |
 
 --------------------------------------
 
@@ -361,6 +378,9 @@ in the ecosystem that makes AILang productive for both human and AI developers.
 
 | Item | Version | Date |
 |------|---------|------|
+| **M134 — External Review Verification** — SEM005 over-reservation narrowed, TYP001 false positive fixed, `ail explain` made ASCII-only, version consistency synced. RC1 audit: 1128 tests passing, canonical benchmark 5/5 apps, wheel + sdist built and verified from a fresh venv, external review verdict GO, released to PyPI + GitHub with SHA256-matched assets. See `docs/archive/reports/engineering/M134_ENGINEERING_RESPONSE.md`. | v1.1.16 | 2026-08-07 |
+| **M133 — Independent Engineering Response** — Engineering response to the external evaluation of v1.1.14 (see `M133_ENGINEERING_RESPONSE.md`). | v1.1.15 | 2026-08-03 |
+| **M132 — Maintenance Verification** — Regression hardening across stdlib and type checker; +22 regression tests (7 boolean-arithmetic, 4 list.sort, 5 doctor, 6 truthiness coverage). | v1.1.14 | 2026-08-03 |
 | **M127 P0 — Runtime Diagnostics & Package Validation** (RC) — Implemented structured runtime diagnostics (`RuntimeError` with `format_diagnostic()`: operation, reason, expected type, actual type, source location, suggestion). 30+ stdlib type validation guards. Source span tracking + error augmentation in interpreter. Structured package diagnostics (`PackageError`: reason, suggestion, detail, manifest_path, location). New exit codes: MANIFEST_NOT_FOUND=10, INVALID_PACKAGE_NAME=11, INVALID_VERSION=12, INVALID_ENTRY=13, INVALID_DEPENDENCY=14. Entry file validation is warning (not error). 164 tests (48 existing package + 29 new validation + 87 runtime/CLI/diagnostic). Wheel packaging verified locally: `ail --version` = v1.1.7, helloworld/calculator/collections/fibonacci all execute correctly. Not yet published to PyPI or GitHub Releases. | v1.1.7-rc | 2026-07-29 |
 | **M83C — VS Code Extension Public Release** — Packaged VSIX (19.73 KB), created GitHub Release v1.1.0-vscode, uploaded VSIX asset. Extension 1.1.0, LSP 1.1.0, VSIX 1.1.0. 13 files in package. | v1.1.0 | 2026-07-20 |
 | **M83B — VS Code Extension MVP** — Wired formatter to LSP (formatting handlers, v1.1.0). Added format-on-save, 5 CLI commands (build/run/check/version/format), MVP settings. 5 new tests (108 total). | v1.1.0 | 2026-07-20 |
@@ -456,7 +476,9 @@ in the ecosystem that makes AILang productive for both human and AI developers.
 | **v1.0.0-M56** | ✅ Complete | External Adoption Closure — package naming, `ail add/remove/update/list` |
 | **v1.0.0-M57** | ✅ Complete | VS Code Extension Hardening — v0.2.0, code actions, `for` keyword |
 | **v1.1.7** | ✅ Complete | M127 P0 — Runtime Diagnostics & Package Validation — structured error messages, type validation guards, new exit codes, wheel packaging verified (release candidate — not yet published) |
-| **M128** | 📋 Planned | Independent Public Validation — validate RC, then publish to PyPI + GitHub Release + tag |
+| **v1.1.14** | ✅ Complete | M132 Maintenance Verification |
+| **v1.1.15** | ✅ Complete | M133 Independent Engineering Response |
+| **v1.1.16** | ✅ **Published** | M134 External Review Verification — released to PyPI + GitHub |
 
 --------------------------------------
 
@@ -534,6 +556,6 @@ Every document type has exactly one owner. If you need to add information, first
 
 | Field | Value |
 |:------|:------|
-| **Date** | 2026-07-30 |
-| **Version** | v1.1.12 |
-| **Milestone** | M127 P0 — Runtime Diagnostics & Package Validation |
+| **Date** | 2026-08-07 |
+| **Version** | v1.1.16 |
+| **Milestone** | A100 — Community Validation |

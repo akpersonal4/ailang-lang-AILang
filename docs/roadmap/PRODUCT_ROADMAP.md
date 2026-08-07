@@ -4,9 +4,40 @@
 > what is being done, and what is planned. No philosophy, no design principles,
 > no historical narrative — only milestones and versions.
 
+## Roadmap Policy
+
+Engineering milestones are planned internally.
+
+Major feature milestones after v1.1.x are driven by evidence gathered during
+A100 Community Validation rather than speculation.
+
+> We do not invent features first. We validate needs first.
+
 ---
 
-## Past: Completed Milestones
+## Roadmap Summary
+
+```
+Completed
+-----------
+Language implementation
+Tooling
+Governance
+Release engineering
+Maintenance (v1.1.x)
+
+Current
+--------
+A100 — Community Validation
+
+Future
+-------
+v1.2.x (determined by community validation results)
+```
+
+---
+
+## Completed
 
 ### Phase 1 — Core Compiler ✓
 - Repository structure, source model, diagnostics system
@@ -56,7 +87,7 @@
 - Documentation audit, example validation, installation validation
 
 ### RTO-001 — Variable Lookup Cache ✓
-- `Environment.resolve()` caching — ~6× speedup on static analyzer
+- `Environment.resolve()` caching — ~6x speedup on static analyzer
 
 ### DX Foundation — Developer Experience Tools ✓
 - **DX-001** — `ail context` (AI onboarding context generator)
@@ -78,6 +109,7 @@
 
 ### v0.5.0 — Production Formatter ✓
 - **DX-008** — AILang Formatter (--diff, --quiet, directory-wide, lexer stability, string-aware comments, repo-wide idempotency) — 82 tests
+
 - **M17** — Vision and Differentiation (evidence-driven strategic document)
 - **M18** — Engineering Benchmark Plan (design-only methodology)
 - **M19** — Documentation Canonicalization (this consolidation)
@@ -93,41 +125,51 @@
 - **M72** — VS Code Extension v0.3.0 (LSP + MCP dual-server, 7 commands, status bar, auto-launch)
 - **M73** — 8 Reference Applications (todo, expense, inventory, employee, log_analyzer, csv_etl, json_transformer, invoice)
 
+### v1.1.x — Maintenance & Verification Series ✓
+
+Maintenance and external-review milestones culminating in the current release:
+
+- **M127** — Runtime Diagnostics & Package Validation (structured diagnostics, type guards, new exit codes, wheel packaging verified)
+- **M132** — Maintenance Verification (v1.1.14) — regression hardening across stdlib and type checker
+- **M133** — Independent Engineering Response (v1.1.15) — response to external evaluation of v1.1.14
+- **M134** — External Review Verification (v1.1.16) — SEM005/TYP001 fixes, ASCII diagnostics, version consistency
+
+**v1.1.16 (RC1) published** — 1128 tests passing, canonical benchmark 5/5 apps,
+wheel + sdist built and verified from a fresh virtual environment, external
+review verdict GO, released to PyPI and GitHub with assets SHA256-matched.
+
 ---
 
-## Current: Active Work
+## Current
 
-**v1.0.5 released** — MCP Server, VS Code extension with MCP integration, 8 reference applications.
-**Next:** M74 — Public Beta Launch, P2 — 90-Day Production Validation.
+### A100 — Community Validation
+
+First non-engineering milestone. Evaluates whether AILang's design produces
+measurable advantages for AI-assisted business software development under real
+usage conditions.
+
+- **Preconditions:** first-impression fixes shipped (wheel-only `ail testgen`
+  crash, `ail benchmark`/`ail static-analyzer` source-checkout requirement,
+  `ail doctor` health score on wheel installs)
+- **Protocol:** two-phase head-to-head (greenfield build + maintenance changes)
+  against AI-assisted Python; "easier" and "would choose" recorded separately
+- **Success criteria fixed before recruitment:** >= 5 participants, >= 5 useful
+  apps, >= 3 maintenance phase, >= 3 would choose AILang again, 0
+  release-blocking bugs
+- **Governance:** community feedback identifies problems; governance determines
+  solutions
+
+Details: `docs/roadmap/A100_COMMUNITY_VALIDATION.md`.
 
 ---
 
-## Future: Planned Milestones
+## Future
 
-| Milestone | Focus | Target |
-|-----------|-------|:------:|
-| **P2** | 90-Day Production Validation — continuous inventory run | Next |
-| **P3** | Official Examples — 5 polished repos | Planned |
-| **v1.0** | Language freeze with full backward-compatibility guarantees | Planned |
-| **Post-1.0** | Self-hosting, JIT, advanced features (evidence-driven) | Future |
-
-### P2 — 90-Day Production Validation
-- Continuous inventory system run
-- Collect bugs, fixes, incidents
-- Evidence for v1.0 readiness
-
-### P3 — Official Examples Repository
-- 5 polished example repos (Inventory, CRM, Ticket Management, HRMS, Legal Case Tracker)
-- Installation guides, best practices
-
-### v1.0 — Language Guarantee
-- Full backward-compatibility guarantees
-- Language specification frozen with no further changes without governance vote
-
-### Post-1.0 — Advanced (Evidence-Driven)
-- Self-hosting compiler
-- JIT compilation
-- Advanced features only if evidence from ≥6 benchmarks demands them
+- **v1.2.x** — determined by the results of A100 Community Validation, not by
+  internal brainstorming. No major feature milestone is committed until
+  evidence from real usage exists.
+- Previously-listed post-1.0 items (self-hosting, JIT, advanced features)
+  remain gated on the evidence bar below.
 
 ---
 
@@ -135,10 +177,10 @@
 
 | Component | Freeze Status | Unfreeze Condition |
 |-----------|---------------|-------------------|
-| Language spec (v0.1.x) | Frozen — no syntax, grammar, or semantics changes | Evidence from ≥6 independent benchmarks |
-| Compiler pipeline | Frozen | Evidence from ≥6 independent benchmarks |
+| Language spec (v0.1.x) | Frozen — no syntax, grammar, or semantics changes | Evidence from >= 6 independent benchmarks |
+| Compiler pipeline | Frozen | Evidence from >= 6 independent benchmarks |
 | Runtime interpreter | Frozen | Evidence of new bottleneck |
-| Standard library | Frozen — v1.0 complete | Evidence from ≥2 independent benchmarks |
+| Standard library | Frozen — v1.0 complete | Evidence from >= 2 independent benchmarks |
 | Benchmark suite | Frozen — canonical set locked | Project lead discretion |
 
 ---
@@ -149,3 +191,4 @@
 - [Governance](../governance/GOVERNANCE.md) — Proposal process and evidence bars
 - [Language Evolution](../governance/LANGUAGE_EVOLUTION.md) — Feature request log
 - [Changelog](../../CHANGELOG.md) — Release-by-release changes
+- [A100 Community Validation](A100_COMMUNITY_VALIDATION.md) — Current milestone
