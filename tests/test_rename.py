@@ -263,10 +263,45 @@ class TestVerify:
 
 
 class TestRenameCli:
-    def test_rename_via_cmd(self, repo: Path) -> None:
-        _write_ail(repo, "example.ail", "fn supplier(x) { return x }\n")
+    def test_rename_rejected_without_ail_toml(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """M134: rename refuses to scan a marker-only directory tree.
+
+        A stray `.ail` directory (e.g. in the user home) is not a real
+        AILang project. Without the root guard, cmd_rename would resolve
+        the project root to that directory and crash on the first
+        inaccessible subdirectory (Windows PermissionError). The guard
+        must return a clean error instead.
+        """
         from compiler.cli.main import cmd_rename
 
-        result = cmd_rename([str(repo / "example.ail"), "supplier", "vendor"])
-        # Should work or return appropriate error
-        assert result in (0, 1, 2)
+        stray = tmp_path / "stray_marker"
+        stray.mkdir()
+        (stray / ".ail").mkdir()  # marker that is NOT a real project
+        (stray / "dummy.ail").write_text("fn foo() { return 0 }\n", encoding="utf-8")
+        monkeypatch.chdir(stray)
+        result = cmd_rename(["foo", "bar"])
+        assert result == 5  # "must be run inside an AILang project"
+
+    def test_rename_via_cmd(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """M134: rename works end-to-end inside a real ail.toml project."""
+        from compiler.cli.main import cmd_rename
+
+        project = tmp_path / "realproj"
+        project.mkdir()
+        (project / "ail.toml").write_text(
+            "[project]\nname = 'x'\nversion = '0.1.0'\n", encoding="utf-8"
+        )
+        (project / "example.ail").write_text(
+            "fn supplier(x) { return x }\nfn main() { return supplier(1) }\n",
+            encoding="utf-8",
+        )
+        monkeypatch.chdir(project)
+        result = cmd_rename(["supplier", "vendor", "--no-verify"])
+        assert result == 0
+        content = (project / "example.ail").read_text(encoding="utf-8")
+        assert "supplier" not in content
+        assert "vendor" in content

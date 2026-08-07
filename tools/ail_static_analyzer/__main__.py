@@ -42,6 +42,17 @@ def run_analyzer_on_file(filepath: Path, timeout: int = 300) -> tuple[dict, str]
     """Run the AILang static analyzer on a single file and return parsed results."""
     root = get_project_root()
     analyzer_app = root / "apps" / "static_analyzer" / "main.ail"
+    if not analyzer_app.is_file():
+        # The analyzer is a bootstrap AILang app shipped in the repository
+        # tree. When installed from PyPI without the repo the analyzer app
+        # is not available, so emit a clear error instead of silently
+        # returning zero metrics (which the evaluator flagged as a bug).
+        raise FileNotFoundError(
+            f"static analyzer app not found at {analyzer_app}. "
+            "Install AILang from the repository source tree (pip install -e .) "
+            "to enable static analysis, or run 'ail static-analyzer' from "
+            "within an AILang checkout."
+        )
     result = subprocess.run(
         [sys.executable, "-m", "compiler", str(analyzer_app), str(filepath)],
         capture_output=True,
@@ -49,6 +60,14 @@ def run_analyzer_on_file(filepath: Path, timeout: int = 300) -> tuple[dict, str]
         cwd=root,
         timeout=timeout,
     )
+    if result.returncode != 0:
+        # Surface the analyzer compile/run error so callers know the zero
+        # metrics in the report do not reflect the analyzed file. Without
+        # this, a broken analyzer app silently produced total_lines=0.
+        raise RuntimeError(
+            f"static analyzer failed (exit {result.returncode}): "
+            f"{result.stderr.strip() or result.stdout.strip()}"
+        )
 
     # Parse stdout to extract metrics
     output = result.stdout
@@ -266,7 +285,18 @@ def main() -> int:
     results = []
     raw_outputs = []
     for ail_file in ail_files:
-        metrics, raw = run_analyzer_on_file(ail_file, args.timeout)
+        try:
+            metrics, raw = run_analyzer_on_file(ail_file, args.timeout)
+        except FileNotFoundError as e:
+            # Analyzer app missing (e.g. pip-installed wheel without the
+            # repo's apps/ tree). Fail loudly rather than silently
+            # writing a report full of zeros.
+            print(f"Error: {e}", file=sys.stderr)
+            return ExitCode.FAILURE
+        except RuntimeError as e:
+            # Analyzer app compiled but the run failed (or did not compile).
+            print(f"Error analyzing {ail_file}: {e}", file=sys.stderr)
+            return ExitCode.FAILURE
         results.append(metrics)
         raw_outputs.append(raw)
         print(f"Analyzed: {ail_file}")

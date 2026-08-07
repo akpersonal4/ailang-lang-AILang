@@ -33,12 +33,14 @@ from compiler.diagnostics import (
     Diagnostic,
     Severity,
 )
-from compiler.runtime.builtins import BUILTINS
+from compiler.runtime.builtins import USER_FACING_BUILTINS
 from compiler.semantic.symbol_table import SymbolTable
 
 # Names that users cannot redeclare because they would shadow
-# runtime built-in functions (print, etc.).
-_BUILTIN_NAMES: frozenset[str] = frozenset(BUILTINS.keys())
+# runtime built-in functions. Only the user-facing built-ins are reserved;
+# internal binding names (list_copy, dict_new, ...) are implementation
+# details of stdlib wrappers and must be available to user code.
+_BUILTIN_NAMES: frozenset[str] = USER_FACING_BUILTINS
 
 
 class SemanticAnalyzer:
@@ -135,19 +137,7 @@ class SemanticAnalyzer:
             return
         from compiler.diagnostics import Diagnostic
 
-        line = None
-        column = None
-        if start_span is not None and self.symbol_table._source_lines is not None:
-            col_offset = start_span
-            for lineno, src_line in enumerate(self.symbol_table._source_lines, 1):
-                if col_offset <= len(src_line):
-                    line = lineno
-                    column = col_offset + 1
-                    break
-                col_offset -= len(src_line) + 1
-        elif start_span is not None:
-            line = 1
-            column = start_span + 1
+        line, column = self._spans_to_line_col(start_span, end_span)
         diagnostic = Diagnostic(
             Severity.ERROR,
             SEM005_BUILTIN_SHADOW,
@@ -158,6 +148,36 @@ class SemanticAnalyzer:
             "Use a different name for your variable or function.",
         )
         self.symbol_table.reporter.report(diagnostic)
+
+    def _spans_to_line_col(
+        self, start_span: int | None, end_span: int | None
+    ) -> tuple[int | None, int | None]:
+        """Convert character-offset spans to 1-based (line, column).
+
+        Mirrors the conversion in SymbolTable._report_error. Used by all
+        member-call diagnostics so MOD004/LANG002/LANG003 stop emitting
+        raw byte offsets as line/column numbers.
+        """
+        if start_span is None:
+            return None, None
+        source_lines = self.symbol_table._source_lines
+        if source_lines is not None:
+            col_offset = start_span
+            for lineno, src_line in enumerate(source_lines, 1):
+                if col_offset <= len(src_line):
+                    column = col_offset + 1
+                    # end_span is used only when it stays within the line.
+                    end_col = (
+                        min(end_span - start_span, len(src_line) - col_offset) + 1
+                        if end_span is not None
+                        and end_span - start_span <= len(src_line) - col_offset
+                        else column
+                    )
+                    return lineno, end_col
+                col_offset -= len(src_line) + 1
+        # Fallback: pretend the file is one long line so we still emit a
+        # valid (line, column) pair instead of misleading byte offsets.
+        return 1, start_span + 1
 
     # ------------------------------------------------------------------
     # Statements
@@ -385,12 +405,13 @@ class SemanticAnalyzer:
         }
         if func_name in unavailable:
             code, message = unavailable[func_name]
+            line, column = self._spans_to_line_col(node.start_span, node.end_span)
             diagnostic = Diagnostic(
                 Severity.ERROR,
                 code,
                 message,
-                node.start_span,
-                node.end_span,
+                line,
+                column,
                 file_path=self.symbol_table._file_path,
             )
             self.symbol_table.reporter.report(diagnostic)
@@ -430,12 +451,13 @@ class SemanticAnalyzer:
                 f" Available functions in module '{module_name}': "
                 + ", ".join(f"{module_name}.{member}" for member in exports)
             )
+        line, column = self._spans_to_line_col(node.start_span, node.end_span)
         diagnostic = Diagnostic(
             Severity.ERROR,
             MOD004_SYMBOL_NOT_FOUND,
             message,
-            node.start_span,
-            node.end_span,
+            line,
+            column,
             file_path=self.symbol_table._file_path,
         )
         self.symbol_table.reporter.report(diagnostic)

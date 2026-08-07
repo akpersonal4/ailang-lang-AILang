@@ -14,6 +14,8 @@ Usage:
 
 from __future__ import annotations
 
+import os
+
 import difflib
 import json
 import os
@@ -103,13 +105,26 @@ class RenameTool:
         Returns the list of references found (also stored internally).
         """
         references: list[RenameReference] = []
-        for file_path in sorted(self.root_dir.rglob("*.ail")):
-            if any(skip in file_path.parts for skip in _SKIP_DIRS):
-                continue
-            refs = self._scan_file(file_path, old_name, include_strings)
-            references.extend(refs)
+        # Walk manually so a single inaccessible subdirectory (common on
+        # Windows where user-profile trees contain permission-locked
+        # folders) does not abort the entire scan with PermissionError.
+        for root, dirs, files in self._safe_walk(self.root_dir):
+            dirs[:] = [d for d in dirs if not any(s in (Path(root) / d).parts for s in _SKIP_DIRS)]
+            for name in files:
+                if not name.endswith(".ail"):
+                    continue
+                file_path = Path(root) / name
+                refs = self._scan_file(file_path, old_name, include_strings)
+                references.extend(refs)
         self._references = references
         return references
+
+    def _safe_walk(self, root: Path):
+        """Yield (dirpath, dirnames, filenames) tuples, skipping inaccessible dirs."""
+        try:
+            yield from os.walk(root)
+        except (PermissionError, FileNotFoundError, OSError):
+            return
 
     def _scan_file(
         self, file_path: Path, old_name: str, include_strings: bool

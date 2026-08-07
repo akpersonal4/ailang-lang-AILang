@@ -4,6 +4,8 @@ import json
 import subprocess
 import sys
 
+from compiler._version import __version__
+
 
 def run_mcp_command(request: dict) -> dict:
     """Run a MCP command and return the response."""
@@ -36,7 +38,7 @@ def test_mcp_initialize():
     assert response["id"] == 1
     assert "result" in response
     assert response["result"]["serverInfo"]["name"] == "ailang-mcp"
-    assert response["result"]["serverInfo"]["version"] == "1.1.14"
+    assert response["result"]["serverInfo"]["version"] == __version__
 
 
 def test_mcp_tools_list():
@@ -82,7 +84,7 @@ def test_mcp_get_language_context():
     assert len(content) == 1
     data = json.loads(content[0]["text"])
     assert data["language"] == "AILang"
-    assert data["version"] == "1.1.14"
+    assert data["version"] == __version__
     assert "rules" in data
     assert "workflow" in data
     assert "diagnostics" in data

@@ -4,6 +4,8 @@ import json
 import subprocess
 import sys
 
+from compiler._version import __version__
+
 
 def test_context_tool_prints_to_stdout():
     """The ail context tool should print to stdout."""
@@ -17,7 +19,7 @@ def test_context_tool_prints_to_stdout():
     content = result.stdout
     assert "AILang Project Context" in content
     assert "Language Rules" in content
-    assert "1.1.14" in content
+    assert __version__ in content
 
 
 def test_context_is_ai_friendly():
@@ -50,7 +52,7 @@ def test_context_json_output():
 
     data = json.loads(result.stdout)
     assert data["language"] == "AILang"
-    assert data["version"] == "1.1.14"
+    assert data["version"] == __version__
     assert "rules" in data
     assert "workflow" in data
     assert "diagnostics" in data

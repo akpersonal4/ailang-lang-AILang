@@ -58,6 +58,11 @@ class Runtime:
         self._aliases: dict[str, str] = {}  # alias -> real_module_name
         self._module_bundle = module_bundle
         self._initialized_modules: set[str] = set()
+        # Maps id(FunctionIR) -> owning module name. FunctionIR is a frozen
+        # dataclass, so we cannot attach a runtime-only attribute to it; the
+        # id-keyed mapping is set in _execute_node_in_module and read in
+        # _call_function to decide whether the callee is a stdlib wrapper.
+        self._function_modules: dict[int, str] = {}
         # Module source map for runtime error location: module_name -> (file_path, source_text)
         self._source_map: dict[str, tuple[str, str]] = {}
         # Current expression source span being evaluated
@@ -171,6 +176,11 @@ class Runtime:
             self._frame_stack.pop()
 
     def _call_function(self, function: FunctionIR, args: tuple[Any, ...]) -> Any:
+        # Snapshot the user-side call-site span before executing the callee.
+        # When the callee is a stdlib wrapper that itself calls a native
+        # builtin, the native's span belongs to a stdlib source file and is
+        # useless for the user; _augment_error uses call_span instead.
+        caller_span = self._current_span
         self._call_depth += 1
         if self._call_depth > self._max_call_depth:
             self._call_depth -= 1
@@ -181,8 +191,9 @@ class Runtime:
                     "AILang recursion is bounded to prevent stack overflow."
                 ),
                 suggestion=(
-                    "Simplify recursive logic or increase the recursion limit "
-                    "via the sandbox policy."
+                    "Simplify recursive logic. The recursion limit is fixed at "
+                    f"{self._max_call_depth} in this build; for larger iterations "
+                    "use multiple smaller batches."
                 ),
             ))
         total = len(function.parameters)
@@ -205,6 +216,8 @@ class Runtime:
             function_name=function.name,
             parent_frame=self._frame_stack[-1] if self._frame_stack else None,
         )
+        frame.call_span = caller_span
+        frame.module = self._function_modules.get(id(function))
         for name, value in zip(function.parameters, args):
             frame.define(name, value)
         for name in function.parameters[len(args) :]:
@@ -221,6 +234,13 @@ class Runtime:
             self._call_depth -= 1
 
     def _evaluate_expression(self, expression: Any) -> Any:
+        # Track the source span of the expression being evaluated so a
+        # runtime error can be reported at the offending line. Previously
+        # only CallIR updated _current_span, which left division-by-zero
+        # and member-access errors with no line number at all.
+        span = getattr(expression, "start_span", None)
+        if span is not None:
+            self._current_span = span
         if isinstance(expression, BinaryOperationIR):
             left = self._evaluate_expression(expression.left)
             right = self._evaluate_expression(expression.right)
@@ -323,6 +343,9 @@ class Runtime:
                 args = tuple(
                     self._evaluate_expression(arg) for arg in expression.arguments
                 )
+                # Restore the span of THIS call before entering the callee so
+                # the callee's wrapper sees the user's call-site span.
+                self._current_span = expression.start_span
                 return self._call_function(callee, args)
 
             # callable() handles both functions and built-ins
@@ -330,6 +353,10 @@ class Runtime:
                 args = tuple(
                     self._evaluate_expression(arg) for arg in expression.arguments
                 )
+                # Restore the user-side span before invoking the callable
+                # (for BUILTIN dispatch the callee path on line ~311 is
+                # taken before this branch).
+                self._current_span = expression.start_span
                 if isinstance(callee, FunctionIR):
                     return self._call_function(callee, args)
                 if callee in BUILTINS.values():
@@ -365,23 +392,44 @@ class Runtime:
         self._source_map = source_map
 
     def _augment_error(self, error: RuntimeError) -> RuntimeError:
-        """Inject source location into a RuntimeError if not already set."""
+        """Inject source location into a RuntimeError if not already set.
+
+        The challenge: AILang's stdlib is a thin AILang wrapper around a
+        Python builtin. When the wrapper invokes the builtin, _current_span
+        is rewritten to a span inside the stdlib source file, which would
+        otherwise be mapped against the user's source and produce a bogus
+        line. The fix: if the innermost executing function is a stdlib
+        wrapper, report the user's call-site span (``frame.call_span``)
+        against the user's source file.
+        """
         if error.source_file:
             return error
-        # Try to find the source module for the current function context
-        if self._frame_stack:
-            frame = self._frame_stack[-1]
+        # Find the innermost function frame (block frames have no name).
+        fn_frame: StackFrame | None = None
+        for frame in reversed(self._frame_stack):
             if frame.function_name:
-                for module_name, (file_path, source_text) in self._source_map.items():
-                    if module_name in frame.function_name or frame.function_name in module_name:
-                        error.source_file = file_path
-                        if self._current_span is not None:
-                            error.source_line = RuntimeError._span_to_line(
-                                source_text, self._current_span
-                            )
-                        return error
-        # Fallback: use a user module (prefer one outside the stdlib dir),
-        # so errors are not misattributed to e.g. stdlib/array.ail.
+                fn_frame = frame
+                break
+        if (
+            fn_frame is not None
+            and fn_frame.module is not None
+            and self._is_stdlib_module(fn_frame.module)
+        ):
+            for file_path, source_text in self._source_map.values():
+                if "stdlib" not in str(file_path):
+                    error.source_file = file_path
+                    span = (
+                        fn_frame.call_span
+                        if fn_frame.call_span is not None
+                        else self._current_span
+                    )
+                    if span is not None:
+                        error.source_line = RuntimeError._span_to_line(
+                            source_text, span
+                        )
+                    return error
+        # Fallback: use the current expression span against the first user
+        # module so errors are not misattributed to a stdlib source file.
         if self._source_map and not error.source_file:
             user_entry: tuple[str, str] | None = None
             for file_path, source_text in self._source_map.values():
@@ -396,6 +444,15 @@ class Runtime:
                     user_entry[1], self._current_span
                 )
         return error
+
+    def _is_stdlib_module(self, module_name: str | None) -> bool:
+        """Return True if ``module_name`` is backed by a file under stdlib/."""
+        if module_name is None:
+            return False
+        entry = self._source_map.get(module_name)
+        if entry is None:
+            return False
+        return "stdlib" in str(entry[0])
 
     def _define_local(self, name: str, value: Any) -> None:
         if self._frame_stack:
@@ -463,12 +520,29 @@ class Runtime:
             self._global_environment.define(node.name, node)
             self._global_environment.define(qualified_name, node)
             module_env.define(node.name, node)
+            # Record the owning module so _call_function can later decide
+            # whether the callee is a stdlib wrapper (call site belongs to
+            # the user's source file) or user code.
+            self._function_modules[id(node)] = module_name
             return None
         # Default execution
         return self._execute_node(node)
 
     def _resolve_name(self, name: str) -> Any:
         if self._frame_stack:
+            # Stdlib wrappers call internal binding names (list_copy, dict_new,
+            # ...) directly. Resolve those to the builtin BEFORE consulting
+            # user scopes so a user-declared helper with the same name cannot
+            # hijack a stdlib implementation. The top frame is a block frame
+            # (module=None); the innermost *function* frame owns the module.
+            if name in BUILTINS:
+                fn_frame: StackFrame | None = None
+                for frame in reversed(self._frame_stack):
+                    if frame.function_name:
+                        fn_frame = frame
+                        break
+                if fn_frame is not None and self._is_stdlib_module(fn_frame.module):
+                    return BUILTINS[name]
             try:
                 return self._frame_stack[-1].resolve(name)
             except NameError:

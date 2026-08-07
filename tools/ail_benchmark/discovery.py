@@ -127,4 +127,15 @@ def discover_benchmarks(
                 suite=suite,
             )
         )
+    # Fallback: a named suite (quick/canonical) that resolves to zero
+    # benchmarks is unusable. Fall back to the 'full' suite (auto-discover
+    # every app under apps/) so the command is usable on any checkout,
+    # not only the dev repo where the canonical apps live.
+    if not benchmarks and suite != "full":
+        print(
+            f"Note: suite '{suite}' found no apps; falling back to 'full' "
+            f"(auto-discover apps/*/main.ail).",
+            file=sys.stderr,
+        )
+        benchmarks = discover_all_apps(root)
     return _add_args(benchmarks)

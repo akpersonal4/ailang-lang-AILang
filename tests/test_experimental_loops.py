@@ -242,6 +242,48 @@ fn main() {
         ), "Expected errors when --experimental-loops is off"
 
 
+def test_for_without_flag_single_diagnostic() -> None:
+    """M134: 'for' without --experimental-loops yields ONE clean PAR012.
+
+    Previously the parser cascaded PAR001/PAR002/SEM002 spurious errors
+    after the first PAR012. The recoverer now skips past the loop body so
+    exactly one diagnostic is reported.
+    """
+    source = """
+import list;
+fn main() {
+    let items = list.new();
+    for item in items {
+        let inner = item;
+        print(inner);
+    }
+    return 0;
+}
+"""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmp_path = Path(tmpdir)
+        main_file = tmp_path / "main.ail"
+        main_file.write_text(source)
+
+        repo_root = Path(__file__).resolve().parents[1]
+        session = CompilationSession(experimental_loops=False)  # flag OFF
+        session._root = repo_root
+        session._resolver = type(session._resolver)(repo_root)
+        reporter = DiagnosticReporter()
+        session.discover(main_file, reporter)
+
+        session.analyze(reporter)
+        par012 = [d for d in reporter.diagnostics if "PAR012" in d.error_code.code]
+        assert len(par012) == 1, (
+            "Expected exactly one PAR012, got: "
+            f"{[d.message for d in reporter.diagnostics]}"
+        )
+        assert reporter.error_count == 1, (
+            f"Expected single diagnostic, got: "
+            f"{[d.message for d in reporter.diagnostics]}"
+        )
+
+
 def test_for_print_elements() -> None:
     """For loop calling print inside body."""
     result = _run_with_loops("""

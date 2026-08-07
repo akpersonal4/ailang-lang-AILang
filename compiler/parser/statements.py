@@ -14,6 +14,44 @@ from compiler.parser.recovery import synchronize
 from compiler.parser.token_stream import TokenStream
 
 
+def _skip_past_for_statement(stream: TokenStream) -> None:
+    """Advance past a ``for`` statement that the parser is rejecting.
+
+    Used after PAR012 (``for`` without --experimental-loops) so the outer
+    statement loop does not loop forever on the for-header tokens and
+    emit a cascade of spurious PAR001/PAR002 diagnostics. Scans forward
+    until it finds the for-body's matching ``}`` (track brace depth) and
+    consumes an optional trailing ``;``.
+    """
+    # Consume the ``for`` token itself.
+    if stream.current().kind is TokenKind.FOR:
+        stream.advance()
+    # Walk forward until we close a single balanced ``{ ... }`` block
+    # belonging to the for body. If no block is found, fall back to the
+    # generic synchronize() so we still make forward progress.
+    depth = 0
+    while not stream.is_at_end():
+        kind = stream.current().kind
+        if kind is TokenKind.LBRACE:
+            depth += 1
+            stream.advance()
+            continue
+        if kind is TokenKind.RBRACE:
+            if depth == 0:
+                # Stray close-brace at top level; let synchronize handle it.
+                break
+            depth -= 1
+            stream.advance()
+            if depth == 0:
+                # For body closed; consume optional trailing semicolon.
+                if stream.current().kind is TokenKind.SEMICOLON:
+                    stream.advance()
+                return
+            continue
+        stream.advance()
+    synchronize(stream)
+
+
 def parse_block(stream: TokenStream) -> CSTNode:
     block = CSTNode("Block")
     block.start_span = stream.current().start_offset
@@ -45,6 +83,9 @@ def parse_block(stream: TokenStream) -> CSTNode:
                 stream.report(
                     "Use of 'for' requires --experimental-loops flag", "PAR012"
                 )
+                # Skip past the for header and body so the statement loop
+                # makes forward progress instead of cascading PAR001/PAR002.
+                _skip_past_for_statement(stream)
         elif (
             stream.current().kind is TokenKind.IDENTIFIER
             and stream.current().value == "while"

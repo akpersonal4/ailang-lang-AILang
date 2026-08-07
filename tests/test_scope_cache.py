@@ -60,6 +60,15 @@ def _run(source: str) -> Any:
 
         bundle = session.build_ir()
         runtime = Runtime(bundle)
+
+        # Mirror the CLI: the runtime needs the source map to tell stdlib
+        # wrappers apart from user code (runtime error attribution and
+        # stdlib-internal builtin resolution).
+        source_map: dict[str, tuple[str, str]] = {}
+        for module_name, src in session._sources.items():
+            source_map[module_name] = (str(src.path), src.text)
+        runtime.set_source_map(source_map)
+
         for module_name in session._graph.topological_sort():
             runtime._initialize_module(module_name)
 
@@ -241,6 +250,58 @@ def test_shadow_builtin() -> None:
     symbol_table = SymbolTable(reporter)
     SemanticAnalyzer(symbol_table).analyze(ast)
     assert reporter.error_count >= 1
+    assert any(
+        "print" in d.message and "built-in" in d.message
+        for d in reporter.diagnostics
+    ), f"Expected SEM005 diagnostic, got: {[d.message for d in reporter.diagnostics]}"
+
+
+def test_internal_builtin_name_reusable() -> None:
+    """M134: internal binding names (list_copy, ...) must be usable as user
+    helper names; SEM005 reserves only user-facing builtins like ``print``."""
+    source = """
+fn list_copy(a, b, c) {
+    return a + b + c;
+}
+fn main() {
+    return list_copy(1, 2, 3);
+}
+"""
+    assert _run(source) == 6
+
+
+def test_internal_builtin_name_does_not_hijack_stdlib() -> None:
+    """M134: a user helper named like an internal binding must not hijack
+    the stdlib implementation that calls the same binding internally."""
+    source = """
+import list;
+fn list_copy(items, result, pos) {
+    return "HACKED";
+}
+fn main() {
+    let items = list.new();
+    list.append(items, 10);
+    list.append(items, 20);
+    let copied = list.copy(items);
+    return list.len(copied);
+}
+"""
+    assert _run(source) == 2
+
+
+def test_print_builtin_still_reserved() -> None:
+    """M134: user-facing builtins such as print remain reserved (SEM005)."""
+    from compiler.diagnostics import DiagnosticReporter
+    from compiler.semantic.analyzer import SemanticAnalyzer
+    from compiler.semantic.symbol_table import SymbolTable
+
+    lexer = Lexer()
+    parser = Parser(lexer.tokenize("fn main() { let print = 42; return print; }"))
+    cst = parser.parse_program()
+    ast = ASTBuilder().build(cst)
+    reporter = DiagnosticReporter()
+    symbol_table = SymbolTable(reporter)
+    SemanticAnalyzer(symbol_table).analyze(ast)
     assert any(
         "print" in d.message and "built-in" in d.message
         for d in reporter.diagnostics

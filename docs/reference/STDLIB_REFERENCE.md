@@ -775,7 +775,8 @@ let first = list.get(rows, 0);
 ```
 
 ### `stringify(rows)`
-Serializes a list of rows back to CSV text.
+Serializes a list of rows back to CSV text. Accepts both a list of
+lists and a list of maps (round-trips with `csv.parse_header`):
 ```ail
 import list;
 
@@ -794,12 +795,15 @@ fn main() {
     return 0
 }
 ```
+When `rows` is a list of maps, the header is taken from the keys of the
+first row and each map is written as a values-only row.
 
 ### Known Limitations
 
 - No custom delimiter or quote character
 - All values are strings (use `convert.to_int` for numbers)
 - RFC 4180 dialect only
+- List-of-maps: all maps must share the same keys; missing keys are written as empty strings
 
 ---
 
@@ -873,7 +877,7 @@ import environment;
 ### `get(name)`
 Returns the value of an environment variable.
 ```ail
-let home = environment.get("HOME");  // or "USERPROFILE" on Windows
+let home = environment.get("AILANG_HOME");  // only AILANG_* variables are accessible
 ```
 
 ### `cwd()`
@@ -1157,7 +1161,7 @@ let result = "a" + "b" + "c";
 
 ### Variable Names Must Be Unique
 
-Each function must use unique variable names. Reusing `i`, `x`, `result`, etc. across functions produces SEM001.
+Each function must use unique variable names **within the same function**. Reusing `i`, `x`, `result`, etc. across different functions is allowed (block-scoped). Reusing names within the same function produces SEM001.
 
 ```ail
 fn a() {

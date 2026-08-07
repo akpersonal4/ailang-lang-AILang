@@ -291,7 +291,7 @@ ERROR_DATABASE: dict[str, ErrorExplanation] = {
         fixes=[
             "Move the referenced function/variable above the one that uses it.",
             "Use bottom-up dependency ordering: Level 0 utilities first, main() last.",
-            "Run ail fmt to reorder functions automatically.",
+            "Manually move the function definition above its callers (ail order can analyze dependency ordering).",
         ],
         related_commands=["ail fmt", "ail docs AGENTS.md", "ail order"],
         heal_topic="forward_reference",
@@ -412,7 +412,7 @@ ERROR_DATABASE: dict[str, ErrorExplanation] = {
         description="Nested functions are not allowed in AILang. All functions must be at the top level.",
         common_causes=[
             "Defining a function inside another function body.",
-            "Python习惯: defining helper functions inside main().",
+            "Python habit: defining helper functions inside main().",
         ],
         examples=[
             Example(
@@ -782,7 +782,7 @@ ERROR_DATABASE: dict[str, ErrorExplanation] = {
             ),
         ],
         fixes=[
-            "This is a compiler bug — please report it at the AILang repository.",
+            "This is a compiler bug - please report it at the AILang repository.",
             "Include the source code that triggered the error.",
             "As a workaround, try simplifying the code around the reported location.",
         ],
@@ -835,7 +835,7 @@ def list_codes() -> str:
 
 
 def _format_explanation(entry: ErrorExplanation) -> str:
-    lines = [f"# {entry.code} — {entry.description}"]
+    lines = [f"# {entry.code} - {entry.description}"]
     lines.append("")
 
     lines.append("## Common Causes")
@@ -875,7 +875,7 @@ def _format_explanation(entry: ErrorExplanation) -> str:
     if entry.heal_topic:
         lines.append("## Can ail heal help?")
         lines.append("")
-        lines.append(f"  Yes — run: ail heal {entry.heal_topic}")
+        lines.append(f"  Yes - run: ail heal {entry.heal_topic}")
     else:
         lines.append("## Can ail heal help?")
         lines.append("")

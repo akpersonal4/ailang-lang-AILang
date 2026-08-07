@@ -1,5 +1,51 @@
 # Changelog
 
+## v1.1.16 (RC1)
+
+Maintenance patch release candidate following the M134 external review
+verification milestone. See `docs/releases/RC1_RELEASE_NOTES.md` for the full
+audit summary.
+
+### Bugs Fixed (M134)
+
+- **SEM005 over-reservation narrowed**: user code may now define functions
+  whose names collide with internal builtin bindings (e.g. `list_copy`); only
+  the user-facing `print` builtin remains reserved. A runtime guard keeps
+  stdlib wrappers resolving to the correct builtin.
+- **TYP001 false positive**: copying a parameter or member/call result
+  (`let new_acc = acc`) no longer reports an uninferrable type.
+- **`ail explain` made ASCII-only**: removed stray CJK text and em-dashes.
+- **Version consistency**: tests, tool fallbacks, VS Code extension, and docs
+  synced to the source version.
+
+### Validation (RC1)
+
+- Full test suite: 1127 tests pass.
+- Canonical benchmark: 5/5 apps OK.
+- Wheel + sdist built and verified from a fresh virtual environment.
+
+## v1.1.15 (M134 External Review Verification & Maintenance)
+
+### Semantic Analyzer
+
+- **SEM005 over-reservation narrowed (external review finding)**: `_BUILTIN_NAMES` previously reserved all 70 internal builtin bindings (`list_copy`, `dict_new`, `__native_to_int`, ...) that are only consumed by `stdlib/*.ail` wrappers. A user function named `list_copy` was falsely rejected with `SEM005`. `_BUILTIN_NAMES` is now derived from the new `USER_FACING_BUILTINS` set (`frozenset({"print"})`); internal builtins are pre-declared as module-namespace bindings (non-conflicting with user code). A runtime guard in the interpreter's `_resolve_name` ensures stdlib wrappers still resolve internal bindings to the builtin even if a user module redefines the same name. Regression tests: internal name reusable, no stdlib hijack, `print` still reserved.
+
+### Type Checker
+
+- **TYP001 false positive fixed (external review finding)**: `let new_acc = acc` (recursive-accumulator parameter copy) and `let copy = raw` (copy of a member/call result) were incorrectly flagged `TYP001`. TYP001 suppression extended from `CallExpressionNode` only to `(CallExpressionNode, IdentifierNode, MemberAccessNode)`. Regression tests added for both cases.
+
+### CLI / DX
+
+- **`ail explain` ASCII-only (external review finding)**: removed stray CJK text and em-dashes from `compiler/cli/explain.py`; the explain database is now pure ASCII. Regression test asserts every entry in `ERROR_DATABASE` is ASCII.
+
+### Version Consistency
+
+- External review found hardcoded `1.1.12`/`1.1.14` assertions in tests and tools. Version asserts in `test_ail_context.py`, `test_mcp_server.py`, `test_vscode_mcp_integration.py` now import `compiler._version.__version__`; `test_v113_regressions.py` uses a tolerant regex. Fallback strings in `tools/ail_context`, `tools/ail_mcp`, `extensions/vscode-ailang/package.json`, `LANGUAGE_SPEC.md`, `PROJECT_MEMORY.md`, `DEVELOPMENT_STATUS.md` synced to `1.1.15`.
+
+### Validation
+
+- Full suite: 1127 tests pass. Canonical benchmark suite: 5/5 apps OK (dice_roller, hangman_game, inventory_mgmt, kanban, static_analyzer).
+
 ## v1.1.14 (M132 Maintenance Verification)
 
 ### Spec/Implementation Sync

@@ -22,6 +22,13 @@ class StackFrame:
             parent=parent_frame.environment if parent_frame is not None else None
         )
         self.return_value: Any = None
+        # Span of the call expression that invoked this function (user-side).
+        # Used by Runtime._augment_error to report the user's call-site line
+        # when the failing expression lives inside a stdlib wrapper.
+        self.call_span: int | None = None
+        # Module name owning the executed function (None for block frames).
+        # Lets the runtime tell stdlib wrappers apart from user code.
+        self.module: str | None = None
 
     def define(self, name: str, value: Any) -> None:
         self.environment.define(name, value)

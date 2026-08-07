@@ -1894,6 +1894,19 @@ def cmd_rename(args: list[str]) -> int:
         return 4
 
     root_dir = _find_project_root(Path.cwd())
+    # Refuse to run if the resolved "project root" does not look like a
+    # real AILang project. _find_project_root walks upward looking for
+    # ail.toml or .ail; without this guard, running rename from inside a
+    # directory whose ancestor (e.g. the user home) contains a stray .ail
+    # marker would silently scan the whole home tree and crash on the
+    # first inaccessible subdirectory (Windows PermissionError).
+    if not (root_dir / "ail.toml").is_file():
+        print(
+            f"Error: 'ail rename' must be run inside an AILang project "
+            f"(no ail.toml found in {root_dir}).",
+            file=sys.stderr,
+        )
+        return 5
     tool = RenameTool(root_dir)
 
     refs = tool.scan(old_name, include_strings=include_strings)

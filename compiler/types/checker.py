@@ -100,8 +100,15 @@ class TypeChecker:
                 node.name.end_span,
                 type=expr_type,
             )
+        # TYP001 should only fire when inference genuinely fails. Unknown
+        # results from function calls are already exempt (map.get, list.get,
+        # user functions with unknown returns). References to existing
+        # symbols (parameters, previously declared variables) and member
+        # accesses inherit the referenced symbol's type rather than failing
+        # inference, so `let new_acc = acc` must not be flagged.
         if isinstance(expr_type, UnknownType) and not isinstance(
-            node.initializer, CallExpressionNode
+            node.initializer,
+            (CallExpressionNode, IdentifierNode, MemberAccessNode),
         ):
             message = self._build_typ001_message(node.name.name, node.initializer)
             self._report_error(

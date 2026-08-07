@@ -438,12 +438,17 @@ class CompilationSession:
 
         symbol_table = SymbolTable(reporter)
 
-        # Pre-register built-in functions so semantic analysis does not flag
-        # calls to e.g. ``print`` as undefined identifiers.
+        # Pre-register runtime built-ins so semantic analysis does not flag
+        # calls to e.g. ``print`` or the internal binding names used by stdlib
+        # wrappers (list_copy, dict_new, ...) as undefined identifiers.
+        # Declarations are registered as module namespaces (non-conflicting):
+        # user modules may declare helpers with the same names, which shadow
+        # the base-scope builtin during resolution. SEM005 still reserves the
+        # genuine user-facing built-ins via SemanticAnalyzer._BUILTIN_NAMES.
         from compiler.runtime.builtins import BUILTINS
 
         for builtin_name in BUILTINS:
-            symbol_table.declare(builtin_name)
+            symbol_table.declare_module_namespace(builtin_name)
 
         # Collect all top-level function names for forward-reference detection.
         from compiler.ast.nodes import FunctionDeclarationNode
@@ -555,7 +560,6 @@ class CompilationSession:
         Stdlib modules are skipped because they produce false TYP003 errors.
         """
         from compiler.ast.nodes import FunctionDeclarationNode
-        from compiler.runtime.builtins import BUILTINS
         from compiler.types.checker import TypeChecker
         from compiler.types.types import FunctionType, UnknownType
 
@@ -570,14 +574,13 @@ class CompilationSession:
                     if "stdlib" in path_parts:
                         continue
                 st = SymbolTable(local_reporter)
-                for builtin_name in BUILTINS:
-                    st.declare(builtin_name)
-                for other_name in all_module_names:
-                    if other_name != module_name:
-                        st.declare_module_namespace(other_name)
-                # Pre-declare user functions so the type checker can resolve
-                # cross-function calls and detect type errors (M76.2B).
+                from compiler.runtime.builtins import BUILTINS
+
+                # Pre-declare user functions FIRST so a user helper sharing an
+                # internal binding name (e.g. ``fn list_copy``) wins over the
+                # base builtin instead of producing a SEM001 duplicate error.
                 ast = self._asts[module_name]
+                user_function_names: list[str] = []
                 for child in ast.children:
                     if isinstance(child, FunctionDeclarationNode):
                         func_type = FunctionType(
@@ -591,6 +594,13 @@ class CompilationSession:
                             child.end_span,
                             type=func_type,
                         )
+                        user_function_names.append(child.name.name)
+                for builtin_name in BUILTINS:
+                    if builtin_name not in user_function_names:
+                        st.declare_module_namespace(builtin_name)
+                for other_name in all_module_names:
+                    if other_name != module_name:
+                        st.declare_module_namespace(other_name)
                 source_text_tc = (
                     self._sources[module_name].text
                     if module_name in self._sources
@@ -750,7 +760,7 @@ class CompilationSession:
         symbol_table = SymbolTable(reporter)
 
         for builtin_name in BUILTINS:
-            symbol_table.declare(builtin_name)
+            symbol_table.declare_module_namespace(builtin_name)
 
         for module_name, ast in self._asts.items():
             symbol_table.declare_module_namespace(module_name)

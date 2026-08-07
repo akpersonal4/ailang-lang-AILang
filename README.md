@@ -7,7 +7,7 @@
 [![Python](https://img.shields.io/badge/python-3.11%2B-blue)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-Apache%202.0-green)](https://github.com/akpersonal4/ailang-lang-AILang/blob/main/LICENSE)
 
-AILang is a deterministic programming language for AI-assisted development. It compiles to Python and is designed to be easy for both humans and AI systems to reason about — no runtime surprises, no silent failures.
+AILang is a deterministic programming language for AI-assisted development. It runs on a deterministic Python interpreter and is designed to be easy for both humans and AI systems to reason about. Runtime errors are structured and diagnostic; there are no Python tracebacks in normal operation.
 
 ```ail
 fn main() {
@@ -18,7 +18,7 @@ fn main() {
 
 ### Why AILang?
 
-- **Deterministic by design** — same source always produces the same output. No runtime exceptions, no silent failures. If it compiles, it runs.
+- **Deterministic by design** — same source always produces the same output. Runtime errors are structured diagnostics, not Python tracebacks. The sandbox restricts file I/O to the project directory.
 - **AI-native tooling** — `ail mcp` exposes the compiler to AI tools via Model Context Protocol. AI agents get machine-readable language specs, not blog posts.
 - **Fast feedback** — compile and run in &lt;2 seconds for 5000 LOC. No build server, no waiting.
 
@@ -50,7 +50,7 @@ ail run hello.ail
 Install from local wheel (pre-built in `dist/`):
 
 ```bash
-pip install dist/ailang_lang-1.1.13-py3-none-any.whl
+pip install dist/ailang_lang-1.1.16-py3-none-any.whl
 ail run hello.ail
 ```
 

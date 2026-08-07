@@ -3,6 +3,7 @@
 Usage:
     python -m tools.ail_testgen
     python -m tools.ail_testgen --app inventory
+    python -m tools.ail_testgen <file.ail>
     python -m tools.ail_testgen --dry-run
     python -m tools.ail_testgen --force
     python -m tools.ail_testgen --report-only
@@ -16,6 +17,7 @@ from pathlib import Path
 from tools.ail_testgen.analyzer import analyze_coverage, find_missing_tests
 from tools.ail_testgen.discovery import discover_apps, discover_existing_tests
 from tools.ail_testgen.generator import generate_all
+from tools.ail_testgen.models import AppInfo
 from tools.ail_testgen.reporter import generate_json_report, generate_markdown_report
 from tools.common.cli import add_common_args, add_output_args, create_parser
 from tools.common.filesystem import ensure_output_dir, get_project_root
@@ -35,6 +37,14 @@ def build_parser():
         type=str,
         default=None,
         help="Generate tests for a specific app only",
+    )
+    parser.add_argument(
+        "file",
+        nargs="?",
+        type=Path,
+        default=None,
+        help="Generate tests for a single .ail source file (treats its "
+             "directory as the app; overrides --app and project discovery)",
     )
     parser.add_argument(
         "--dry-run",
@@ -66,14 +76,41 @@ def main(argv: list[str] | None = None) -> int:
     # Stage 1: Discovery
     if not args.quiet:
         print("Discovering apps...")
-    apps = discover_apps()
+    # When a single file is passed positionally, skip project discovery
+    # and synthesize a one-app view around that file. This makes
+    # `ail testgen <file.ail>` a usable single-file mode in addition to
+    # the default project-wide discovery.
+    if args.file is not None:
+        file_path: Path = args.file.resolve()
+        if not file_path.is_file() or file_path.suffix != ".ail":
+            print("Error: not an AILang source file: %s" % args.file)
+            return 1
+        apps = [
+            AppInfo(
+                name=file_path.stem,
+                source_file=file_path,
+                line_count=len(
+                    file_path.read_text(encoding="utf-8", errors="replace").splitlines()
+                ),
+            )
+        ]
+    else:
+        apps = discover_apps()
+        if not apps:
+            print(
+                "Error: no apps discovered under the current project root "
+                "(%s). Run from a directory containing an ail.toml project, "
+                "or pass a positional .ail file path." % root
+            )
+            return 1
 
     if not args.quiet:
         print("Discovering existing tests...")
     existing_tests = discover_existing_tests()
 
-    # Filter by --app if specified
-    if args.app:
+    # Filter by --app if specified (skipped when a positional file narrowed
+    # the scope to a single synthetic app).
+    if args.app and args.file is None:
         apps = [a for a in apps if a.name == args.app]
         if not apps:
             print("App not found: %s" % args.app)

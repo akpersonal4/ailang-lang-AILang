@@ -9,6 +9,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from compiler._version import __version__
+
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 
@@ -450,7 +452,7 @@ class TestMCPConfiguration:
     def test_package_json_version(self):
         pkg_path = PROJECT_ROOT / "extensions" / "vscode-ailang" / "package.json"
         pkg = json.loads(pkg_path.read_text())
-        assert pkg["version"] == "1.1.14"
+        assert pkg["version"] == __version__
 
     def test_package_json_activation_events(self):
         pkg_path = PROJECT_ROOT / "extensions" / "vscode-ailang" / "package.json"

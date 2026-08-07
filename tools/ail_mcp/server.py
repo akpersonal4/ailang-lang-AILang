@@ -19,7 +19,7 @@ from .stdlib_adapter import get_stdlib
 try:
     from compiler._version import __version__ as VERSION
 except ImportError:
-    VERSION = "1.1.14"
+    VERSION = "1.1.16"
 
 TOOLS = [
     {

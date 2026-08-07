@@ -194,15 +194,26 @@ class ASTBuilder:
         )
 
     @staticmethod
-    def _build_ForStatement(node: CSTNode) -> ForStatementNode:
+    def _build_ForStatement(node: CSTNode) -> ForStatementNode | None:
+        # When the parser sees a malformed for-header (e.g. ``for (let x in
+        # items)`` with parens, or missing ``in``) it reports PAR010/PAR011
+        # and returns a partial CST with no children. Building that as an
+        # AST node would dereference an empty list and crash with an
+        # IndexError; return None so the caller treats it as a recovered
+        # statement and the parser's diagnostic stands on its own.
+        if len(node.children) < 3:
+            return None
         var_cst = node.children[0]
         var_ident = ASTBuilder._try_build(var_cst)
-        assert isinstance(var_ident, IdentifierNode)
+        if not isinstance(var_ident, IdentifierNode):
+            return None
         iterable = ASTBuilder._try_build(node.children[1])
-        assert iterable is not None
+        if iterable is None:
+            return None
         body_cst = node.children[2]
         body = ASTBuilder._try_build(body_cst)
-        assert isinstance(body, BlockNode)
+        if not isinstance(body, BlockNode):
+            return None
         return ForStatementNode(
             variable=var_ident,
             iterable=iterable,

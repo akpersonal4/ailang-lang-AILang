@@ -96,7 +96,16 @@ def from_compiler_diagnostic(
         severity = Severity.INFO
 
     message = str(getattr(compiler_diag, "message", ""))
-    code = str(getattr(compiler_diag, "error_code", ""))
+    # compiler_diag.error_code is a compiler.diagnostics.ErrorCode dataclass.
+    # str(ErrorCode(code="SEM002", message="...")) returns the dataclass repr
+    # (e.g. "ErrorCode(code='SEM002', ...)") rather than the LSP-friendly
+    # bare code string. Reach for the .code attribute explicitly so LSP
+    # consumers receive "SEM002" instead of the Python repr.
+    err_code_obj = getattr(compiler_diag, "error_code", None)
+    code = (
+        getattr(err_code_obj, "code", None)
+        or (str(err_code_obj) if err_code_obj is not None else "")
+    )
 
     return Diagnostic(
         range=DiagnosticRange(

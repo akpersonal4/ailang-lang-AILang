@@ -524,9 +524,22 @@ def csv_parse_header(args: tuple[RuntimeValue, ...]) -> list[dict[str, str]]:
 
 
 def csv_stringify(args: tuple[RuntimeValue, ...]) -> str:
+    rows = args[0]
     output = _io.StringIO()
-    writer = _csv.writer(output, lineterminator="\n")
-    writer.writerows(args[0])
+    # Detect list-of-maps (round-trip with csv.parse_header) and emit a
+    # real header row plus one row of values per map. csv.writer.writerows
+    # on a list of dicts would otherwise write the dict keys as the only
+    # row, silently corrupting the data. List-of-lists falls through to
+    # the plain writer path unchanged.
+    if rows and isinstance(rows[0], dict):
+        fieldnames = list(rows[0].keys())
+        writer = _csv.DictWriter(output, fieldnames=fieldnames, lineterminator="\n")
+        writer.writeheader()
+        for row in rows:
+            writer.writerow({k: row.get(k, "") for k in fieldnames})
+    else:
+        writer = _csv.writer(output, lineterminator="\n")
+        writer.writerows(rows)
     return output.getvalue()
 
 
@@ -636,3 +649,10 @@ BUILTINS: dict[str, Any] = {
     "system_exit": system_exit,
     "io_read": io_read,
 }
+
+# Names users may not redeclare because they shadow the built-in functions
+# that appear as bare identifiers in user source. The vast majority of
+# BUILTINS are internal binding names (list_copy, dict_new, __native_to_int,
+# ...) referenced only by stdlib wrapper files; reserving them in user
+# modules spuriously blocks legitimate helpers such as ``fn list_copy``.
+USER_FACING_BUILTINS: frozenset[str] = frozenset({"print"})

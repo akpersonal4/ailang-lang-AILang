@@ -48,6 +48,34 @@ def test_type_checker_accepts_arithmetic() -> None:
     assert reporter.error_count == 0
 
 
+def test_type_checker_allows_parameter_copy() -> None:
+    """M134: copying a parameter to a local variable must not raise TYP001.
+
+    ``let new_acc = acc`` is a standard recursive-accumulator pattern used by
+    the canonical apps (inventory_mgmt, kanban, static_analyzer). The value
+    inherits the parameter's type rather than failing inference.
+    """
+    source = "fn count(items, pos, acc) { let new_acc = acc; return count(items, pos + 1, new_acc); }"
+    _, reporter = _type_check(source)
+    assert reporter.error_count == 0
+
+
+def test_type_checker_allows_unknown_member_copy() -> None:
+    """M134: copying an unknown-typed member result must not raise TYP001."""
+    source = (
+        "import map;\n"
+        "fn foo() {\n"
+        "    let m = map.new();\n"
+        '    let raw = map.get(m, "key");\n'
+        "    let copy = raw;\n"
+        "    return copy;\n"
+        "}\n"
+    )
+    _, reporter = _type_check(source)
+    typ001 = [d for d in reporter.diagnostics if "TYP001" in d.error_code.code]
+    assert len(typ001) == 0, f"Unexpected TYP001: {typ001}"
+
+
 def test_type_checker_accepts_comparison() -> None:
     source = "fn foo() { let x = 1 < 2; }"
     _, reporter = _type_check(source)
@@ -718,6 +746,24 @@ def test_ail_explain_known_code() -> None:
     assert "Common Causes" in result
     assert "Fixes" in result
     assert "Related Commands" in result
+
+
+def test_ail_explain_output_ascii_only() -> None:
+    """M134: ail explain output must be pure ASCII (mojibake fix).
+
+    Non-ASCII characters in the explanation database (accidental CJK text,
+    em-dashes) are truncated/mangled on cp1252 consoles.
+    """
+    from compiler.cli.explain import ERROR_DATABASE, explain
+
+    checked = 0
+    for code in ERROR_DATABASE:
+        result = explain(code)
+        assert result is not None, f"explain({code}) returned None"
+        non_ascii = [c for c in result if ord(c) > 127]
+        assert not non_ascii, f"{code} contains non-ASCII: {''.join(non_ascii)!r}"
+        checked += 1
+    assert checked > 0
 
 
 def test_ail_explain_all_known_codes() -> None:
