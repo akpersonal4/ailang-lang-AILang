@@ -1,8 +1,8 @@
 # A100 — Community Validation
 
 **Type:** First non-engineering milestone
-**Status:** Proposed
-**Depends on:** v1.1.16 shipped; first-impression fixes shipped (Preconditions)
+**Status:** Active — recruitment ready
+**Depends on:** v1.1.17 shipped with all precondition fixes (✅ shipped 2026-08-07)
 **Success defined before recruitment:** yes (see Success Criteria)
 
 ---
@@ -27,7 +27,7 @@ artifact:
 - Do the benchmarks stay green?
 - Is the wheel verifiable and reproducible?
 
-Those questions are now answered (1128 tests, 5/5 canonical apps, verified
+Those questions are now answered (1217 tests, 5/5 canonical apps, verified
 release). The limiting factor has moved from engineering to users. A100 asks
 the question none of the internal work can answer:
 
@@ -56,12 +56,16 @@ First-impression bugs cost more users than a parser optimization ever will. A
 stranger does not see the architecture; they see the command that crashed.
 These must be fixed and released before recruitment starts:
 
-| Issue | Why it blocks A100 |
-|-------|--------------------|
-| `ail testgen <file>` crashes with an uncaught `ValueError` on a wheel install | A recruited developer can hit a traceback in minute five |
-| `ail benchmark` and `ail static-analyzer` require a source checkout | Contradicts "installed from PyPI" onboarding |
-| `ail doctor` reports health score 0/100 on a wheel install | Alarming first impression for exactly the user we want to keep |
-| `ail rename` reports the wrong directory in its error message | Cosmetic, but cheap to fix before it is seen by a stranger |
+| Issue | Why it blocks A100 | Status |
+|-------|--------------------|--------|
+| `ail testgen <file>` crashes with an uncaught `ValueError` on a wheel install | A recruited developer can hit a traceback in minute five | ✅ Fixed in v1.1.17 |
+| `ail benchmark` and `ail static-analyzer` require a source checkout | Contradicts "installed from PyPI" onboarding | ✅ Fixed in v1.1.17 (bundled apps) |
+| `ail doctor` reports health score 0/100 on a wheel install | Alarming first impression for exactly the user we want to keep | ✅ Fixed in v1.1.17 |
+| `ail rename` reports the wrong directory in its error message | Cosmetic, but cheap to fix before it is seen by a stranger | ✅ Fixed in v1.1.17 |
+
+All four shipped in v1.1.17 (2026-08-07), released to PyPI + GitHub, and
+verified post-publication from a fresh `pip install ailang-lang==1.1.17` venv:
+8/8 CLI checks green, `ail doctor` 98/100, benchmark 5/5 apps.
 
 Target: a fresh `pip install ailang-lang` reaches a first successful program
 in under 10 minutes with zero tracebacks.

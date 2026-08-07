@@ -1,6 +1,10 @@
 # Changelog
 
-## v1.1.17 (A100 Community Validation — Release Gate)
+## v1.1.17 (A100 Community Validation — Published)
+
+**Published:** 2026-08-07 to PyPI and GitHub. Release gate passed: 1217 tests,
+5/5 canonical benchmark, `twine check` PASSED, fresh wheel-only venv verified
+(8/8 CLI checks), post-publication verification from PyPI green.
 
 Precondition fixes for the A100 Community Validation milestone: wheel-installed
 tooling (`ail testgen`, `ail benchmark`, `ail static-analyzer`, `ail doctor`,

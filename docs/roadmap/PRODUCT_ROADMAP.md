@@ -133,10 +133,17 @@ Maintenance and external-review milestones culminating in the current release:
 - **M132** — Maintenance Verification (v1.1.14) — regression hardening across stdlib and type checker
 - **M133** — Independent Engineering Response (v1.1.15) — response to external evaluation of v1.1.14
 - **M134** — External Review Verification (v1.1.16) — SEM005/TYP001 fixes, ASCII diagnostics, version consistency
+- **M135** — A100 Preconditions (v1.1.17) — wheel-install tooling fixes, bundled canonical apps, release gate + post-publication verification
 
 **v1.1.16 (RC1) published** — 1128 tests passing, canonical benchmark 5/5 apps,
 wheel + sdist built and verified from a fresh virtual environment, external
 review verdict GO, released to PyPI and GitHub with assets SHA256-matched.
+
+**v1.1.17 published** — 1217 tests passing, canonical benchmark 5/5 apps,
+all four A100 wheel-install preconditions fixed and bundled apps shipped in the
+wheel, `twine check` PASSED, fresh wheel-only venv verified (8/8 CLI checks),
+released to PyPI + GitHub, post-publication verification from PyPI green.
+A100 recruitment is now unblocked.
 
 ---
 

@@ -109,11 +109,12 @@ Every CLI command is exercised against the installed wheel:
 
 ---
 
-## Known Wheel-Install Limitations (document, do not fix in RC)
+## Known Wheel-Install Limitations
 
-- `ail benchmark`, `ail static-analyzer`, `ail testgen` (app-discovery mode)
-  resolve the app directory relative to the `ail_platform` package location
-  (`site-packages/` under a wheel). Workarounds: `ail testgen <file>`,
-  `ail run apps/<app>/main.ail`; full benchmark needs a source checkout.
-  Root cause: `ail_platform/project.py::get_project_root()` returns
-  `Path(__file__).parent.parent`.
+- **Resolved in v1.1.17** — the four wheel-install tooling defects
+  (`ail testgen <file>`, `ail benchmark`, `ail static-analyzer`, `ail doctor`,
+  `ail rename`) previously listed here were fixed and verified in a fresh
+  wheel-only venv. `ail_platform/project.py::resolve_project_root()` now derives
+  the project root from the working directory, and canonical apps are bundled
+  under `ail_platform/data/apps/` for tools that need a source `apps/` tree.
+  See `CHANGELOG.md` v1.1.17.

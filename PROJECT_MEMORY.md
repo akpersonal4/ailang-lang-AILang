@@ -9,7 +9,7 @@ Project history, key decisions, and evolution timeline for AI coding assistants.
 - **Language:** AILang — AI-first, deterministic, specification-driven
 - **Version:** v1.1.17
 - **Standard Library:** 16 `.ail` modules (extended: `file.listdir`, `list.sum`, `list.find_by_key`, `list.filter_by_key`, `list.filter_by_contains`, `list.collect_key`, `list.group_by_key`, `list.sum_by_key`, `list.take`, `list.skip`, `list.search_by_name`, `list.exists_by_key`, `list.sort`, `list.sort_by_key`, `list.copy`, `io.read`, `string.join`, `string.from_int`, `string.from_bool`, `map.values`, `map.get_or_default`, `map.safe_get`, `convert.to_number`)
-- **Test Suite:** 1201 passing tests across 80+ test scripts
+- **Test Suite:** 1217 passing tests across 80+ test scripts
 - **Applications:** 66+ across `apps/`, `ai_benchmarks/`, `examples/patterns/`
 
 ---
@@ -478,6 +478,16 @@ A chronological record of every major engineering phase, with results, lessons, 
 | **Result** | Both fixes implemented, 1088 tests pass, v1.1.12 published. No new language features. |
 | **Lessons** | Feature governance (Q6: "Would this still make sense without AI?") correctly scoped both fixes — they are security/correctness improvements, not language features. |
 | **Files** | `compiler/runtime/interpreter.py`, `compiler/semantic/analyzer.py`, `compiler/diagnostics.py`, `tests/test_scope_cache.py` |
+
+### M135 — A100 Preconditions Shipped (v1.1.17)
+
+| Aspect | Detail |
+|--------|--------|
+| **What** | Shipped the four A100 wheel-install precondition fixes and published v1.1.17 to PyPI + GitHub: `ail testgen <file>` ValueError on wheel installs; `ail benchmark`/`ail static-analyzer` source-checkout requirement (bundled canonical apps shipped in the wheel via `ail_platform/data/apps/`); `ail doctor` 0/100 health score on wheel-only installs (now scans the user project); `ail rename` wrong-directory error. Full release-gate audit run against the packaged wheel. |
+| **Why** | A100 recruits strangers via `pip install ailang-lang`; first-impression bugs in wheel-installed tooling cost more users than any compiler work. Preconditions must ship in a released version before recruitment starts. |
+| **Result** | 1217 tests passing (1136 core + 81 benchmark), canonical benchmark 5/5 apps, `twine check` PASSED, fresh wheel-only venv verified 8/8 CLI checks, published to PyPI + GitHub with SHA256-matched assets, post-publication verification from PyPI green (98/100 doctor, benchmark 5/5). |
+| **Lessons** | Test the artifact, not just the source tree: the wheel was verified in a fresh venv before publication, catching the recurring release failure mode early. The `scripts/sync_versions.py` `^VERSION` regex misses indented `except ImportError` fallbacks — manual sync needed. |
+| **Documents** | `CHANGELOG.md` v1.1.17, `docs/roadmap/A100_COMMUNITY_VALIDATION.md` |
 
 ### Governance
 
