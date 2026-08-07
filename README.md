@@ -50,7 +50,7 @@ ail run hello.ail
 Install from local wheel (pre-built in `dist/`):
 
 ```bash
-pip install dist/ailang_lang-1.1.16-py3-none-any.whl
+pip install dist/ailang_lang-1.1.17-py3-none-any.whl
 ail run hello.ail
 ```
 

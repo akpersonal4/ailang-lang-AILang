@@ -13,6 +13,80 @@ def get_project_root() -> Path:
     return Path(__file__).resolve().parent.parent
 
 
+def _is_project_dir(candidate: Path) -> bool:
+    """Return True if *candidate* is an AILang project root.
+
+    ``ail.toml`` is the definitive user-project marker (`ail new` creates
+    it). A bare ``.ail`` directory is NOT sufficient on its own: AILang's
+    own config directory lives at ``~/.ail`` (state.json), so a walk-up
+    would otherwise stop at the user's home directory and hijack every
+    CWD-based tool. A ``.ail`` directory therefore only counts as a marker
+    when the directory also looks like an AILang tree (has ``apps/``,
+    ``compiler/``, ``stdlib/``, or ``tools/``) — e.g. the repository root,
+    which has no ``ail.toml`` but does ship those trees.
+    """
+    if (candidate / "ail.toml").is_file():
+        return True
+    if (candidate / ".ail").is_dir():
+        for tree_marker in ("apps", "compiler", "stdlib", "tools"):
+            if (candidate / tree_marker).is_dir():
+                return True
+    return False
+
+
+def resolve_project_root(start: Path | None = None) -> Path:
+    """Resolve the user-facing AILang project root.
+
+    Walks upward from *start* (default: the current working directory)
+    looking for a project root (see :func:`_is_project_dir`), and falls
+    back to *start* itself when no marker is found.
+
+    This is distinct from :func:`get_project_root`, which returns the
+    directory the *package* is installed in (a source checkout in dev, or
+    ``site-packages`` under a wheel). User-facing tools (testgen, doctor,
+    static-analyzer) must operate against the user's project, so they use
+    this helper, not the package location.
+    """
+    if start is None:
+        start = Path.cwd()
+    current = start.resolve()
+    while True:
+        if _is_project_dir(current):
+            return current
+        if current == current.parent:
+            break
+        current = current.parent
+    return start.resolve()
+
+
+def bundled_apps_dir() -> Path:
+    """Return the directory of AILang apps shipped inside the package.
+
+    The wheel bundles a small set of internal AILang applications under
+    ``ail_platform/data/apps/<name>/main.ail`` (mirroring the repository's
+    ``apps/`` tree). These are what `ail benchmark` and `ail
+    static-analyzer` fall back to when no source checkout is present.
+    """
+    return Path(__file__).resolve().parent / "data" / "apps"
+
+
+def resolve_bundled_app(name: str) -> Path:
+    """Resolve an internal AILang app (``apps/<name>/main.ail``).
+
+    Priority:
+      1. ``<project-root>/apps/<name>/main.ail`` — live source in a
+         repository checkout (never bypassed in dev).
+      2. The wheel-bundled copy under ``ail_platform/data/apps/``.
+
+    Returns the path even if neither exists; callers are responsible for
+    checking ``.is_file()`` and emitting a clear error.
+    """
+    live = get_project_root() / "apps" / name / "main.ail"
+    if live.is_file():
+        return live
+    return bundled_apps_dir() / name / "main.ail"
+
+
 def read_file_safe(path: Path) -> str | None:
     """Read a file if it exists and is readable.
 

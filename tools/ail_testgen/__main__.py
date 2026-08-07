@@ -14,13 +14,14 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+from ail_platform.project import resolve_project_root
 from tools.ail_testgen.analyzer import analyze_coverage, find_missing_tests
 from tools.ail_testgen.discovery import discover_apps, discover_existing_tests
 from tools.ail_testgen.generator import generate_all
 from tools.ail_testgen.models import AppInfo
 from tools.ail_testgen.reporter import generate_json_report, generate_markdown_report
 from tools.common.cli import add_common_args, add_output_args, create_parser
-from tools.common.filesystem import ensure_output_dir, get_project_root
+from tools.common.filesystem import ensure_output_dir
 from tools.common.reporting import write_json_report, write_markdown_report
 
 
@@ -68,7 +69,11 @@ def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
 
-    root = get_project_root()
+    # Root = the user's project directory (CWD, or the nearest ancestor with
+    # an ail.toml / .ail marker). Discovery, output, and reports are scoped
+    # to that project — never to the installed package location, which is
+    # what a wheel install gets via __file__-based root detection.
+    root = resolve_project_root()
     output_dir = (
         Path(args.output_dir) if args.output_dir else root / "tests" / "generated"
     )

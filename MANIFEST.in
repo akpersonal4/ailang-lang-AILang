@@ -3,3 +3,5 @@ include README.md
 include CHANGELOG.md
 recursive-include stdlib *.ail
 recursive-include examples *.ail
+recursive-include ail_platform/data/apps *.ail
+include ail_platform/data/apps/README.md

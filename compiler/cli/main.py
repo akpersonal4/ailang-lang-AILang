@@ -1901,9 +1901,20 @@ def cmd_rename(args: list[str]) -> int:
     # marker would silently scan the whole home tree and crash on the
     # first inaccessible subdirectory (Windows PermissionError).
     if not (root_dir / "ail.toml").is_file():
+        # Report the directory the user is actually in (CWD), which is the
+        # actionable location: that is where the ail.toml project must live.
+        # A stray .ail marker in an ancestor (e.g. the user home) used to
+        # leak into the message and point at the wrong directory.
+        cwd = Path.cwd().resolve()
+        stray_hint = ""
+        if root_dir != cwd:
+            stray_hint = (
+                f" A stray project marker (.ail directory) was found at "
+                f"{root_dir}, but it has no ail.toml."
+            )
         print(
             f"Error: 'ail rename' must be run inside an AILang project "
-            f"(no ail.toml found in {root_dir}).",
+            f"(no ail.toml found in {cwd}).{stray_hint}",
             file=sys.stderr,
         )
         return 5

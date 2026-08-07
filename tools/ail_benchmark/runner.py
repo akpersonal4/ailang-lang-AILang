@@ -10,8 +10,6 @@ import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from ail_platform.project import get_project_root
-
 
 @dataclass
 class MeasurementResult:
@@ -141,7 +139,12 @@ def run_benchmark(
     Returns:
         BenchmarkResult with aggregated statistics.
     """
-    root = get_project_root()
+    # Run the app from its own directory. This keeps the runtime sandbox
+    # working directory inside the app folder (data files like
+    # inventory_data.json land next to the app, not in the caller's CWD or
+    # inside site-packages), and makes `ail benchmark` behave identically
+    # in a source checkout and on a wheel install.
+    app_dir = benchmark.path.parent
     python = sys.executable
 
     result = BenchmarkResult(
@@ -164,7 +167,7 @@ def run_benchmark(
 
         # Build step (no extra args needed for build)
         build_cmd = [python, "-m", "compiler", "build", str(benchmark.path)]
-        build_measurement = perform_measurement(build_cmd, root, timeout)
+        build_measurement = perform_measurement(build_cmd, app_dir, timeout)
         run = BenchmarkRun(build=build_measurement)
 
         if build_measurement.exit_code != 0:
@@ -183,7 +186,7 @@ def run_benchmark(
 
         # Run step (append extra args if any)
         run_cmd = [python, "-m", "compiler", "run", str(benchmark.path)] + extra_args
-        run_measurement = perform_measurement(run_cmd, root, timeout)
+        run_measurement = perform_measurement(run_cmd, app_dir, timeout)
         run = BenchmarkRun(build=build_measurement, run=run_measurement)
         result.runs.append(run)
 
@@ -222,7 +225,7 @@ def run_benchmark(
                 [python, "-m", "compiler", "run", str(benchmark.path)] + extra_args,
                 capture_output=True,
                 text=True,
-                cwd=root,
+                cwd=app_dir,
                 timeout=timeout,
             )
             _, peak = tracemalloc.get_traced_memory()

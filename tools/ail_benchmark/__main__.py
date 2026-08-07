@@ -10,7 +10,7 @@ import argparse
 import sys
 import time
 
-from ail_platform.project import get_project_root
+from ail_platform.project import resolve_project_root
 from ail_platform.report_schema import ExitCode
 from tools.ail_benchmark.compare import detect_regressions, load_baseline, save_baseline
 from tools.ail_benchmark.discovery import discover_benchmarks
@@ -160,7 +160,11 @@ def main() -> int:
     )
 
     args = parser.parse_args()
-    root = get_project_root()
+    # Root = the user's project directory (CWD, or the nearest ancestor with
+    # an ail.toml / .ail marker). Benchmarks resolve apps under this root
+    # first, then fall back to the wheel-bundled canonical apps. Reports
+    # and baselines are written under <root>/generated/benchmarks.
+    root = resolve_project_root()
     output_prefix = args.output or "BENCHMARK_REPORT"
     start_wall = time.perf_counter()
 

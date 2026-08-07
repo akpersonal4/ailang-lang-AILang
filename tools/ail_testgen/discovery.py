@@ -4,14 +4,14 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from ail_platform.project import resolve_project_root
 from tools.ail_testgen.models import AppInfo
 from tools.common.filesystem import discover_apps as _discover_apps
-from tools.common.filesystem import get_project_root
 
 
 def discover_apps() -> list[AppInfo]:
     """Discover all AILang apps in the project."""
-    root = get_project_root()
+    root = resolve_project_root()
     app_paths = _discover_apps(root)
     result = []
     for path in app_paths:
@@ -23,7 +23,7 @@ def discover_apps() -> list[AppInfo]:
 
 def discover_existing_tests() -> list[Path]:
     """Discover existing handwritten test files in tests/ (excluding generated)."""
-    root = get_project_root()
+    root = resolve_project_root()
     tests_dir = root / "tests"
     if not tests_dir.is_dir():
         return []

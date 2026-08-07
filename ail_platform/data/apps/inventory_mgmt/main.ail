@@ -1,0 +1,1174 @@
+import string;
+import list;
+import map;
+import convert;
+import json;
+import file;
+import time;
+import random;
+import math;
+
+// ============================================================
+// Level 0: Leaf utilities — no AILang function dependencies
+// ============================================================
+fn is_empty(val_ie) {
+    if (val_ie == "") {
+        return true;
+    }
+    if (val_ie == 0) {
+        return true;
+    }
+    return false;
+}
+
+fn current_timestamp_val() {
+    return time.timestamp();
+}
+
+fn new_id() {
+    return random.int(10000, 99999);
+}
+
+fn find_substring(text_fs, pat_fs, start_fs) {
+    let text_len_fs = string.length(text_fs);
+    let pat_len_fs = string.length(pat_fs);
+    if (start_fs + pat_len_fs > text_len_fs) {
+        return -1;
+    }
+    let slice_fs = string.substring(text_fs, start_fs, start_fs + pat_len_fs);
+    if (string.equals(slice_fs, pat_fs)) {
+        return start_fs;
+    }
+    return find_substring(text_fs, pat_fs, start_fs + 1);
+}
+
+fn find_delim(text_fd, delim_fd, start_fd) {
+    return find_substring(text_fd, delim_fd, start_fd);
+}
+
+fn split_helper(text_sh, delim_sh, pos_sh, result_sh) {
+    let text_len_sh = string.length(text_sh);
+    let delim_len_sh = string.length(delim_sh);
+    if (pos_sh >= text_len_sh) {
+        return result_sh;
+    }
+    let delim_pos_sh = find_delim(text_sh, delim_sh, pos_sh);
+    if (delim_pos_sh == -1) {
+        let last_part_sh = string.substring(text_sh, pos_sh, text_len_sh);
+        list.append(result_sh, last_part_sh);
+        return result_sh;
+    }
+    let part_sh = string.substring(text_sh, pos_sh, delim_pos_sh);
+    list.append(result_sh, part_sh);
+    return split_helper(text_sh, delim_sh, delim_pos_sh + delim_len_sh, result_sh);
+}
+
+fn split_string(text_ss, delim_ss) {
+    return split_helper(text_ss, delim_ss, 0, list.new());
+}
+
+fn string_in_list_pos(items_slp, search_slp, pos_slp) {
+    let len_slp = list.len(items_slp);
+    if (pos_slp >= len_slp) {
+        return -1;
+    }
+    let item_slp = list.get(items_slp, pos_slp);
+    if (item_slp == search_slp) {
+        return pos_slp;
+    }
+    return string_in_list_pos(items_slp, search_slp, pos_slp + 1);
+}
+
+fn string_in_list_flag(items_slf, search_slf) {
+    let pos_slf = string_in_list_pos(items_slf, search_slf, 0);
+    if (pos_slf >= 0) {
+        return true;
+    }
+    return false;
+}
+
+fn list_copy(items_lc, result_lc, pos_lc) {
+    let len_lc = list.len(items_lc);
+    if (pos_lc >= len_lc) {
+        return result_lc;
+    }
+    let item_lc = list.get(items_lc, pos_lc);
+    list.append(result_lc, item_lc);
+    return list_copy(items_lc, result_lc, pos_lc + 1);
+}
+
+fn int_to_string(val_its) {
+    return convert.to_string(val_its);
+}
+
+// ============================================================
+// Level 1: Filter / Search utilities
+// ============================================================
+fn filter_matching(items_fm, field_fm, value_fm, pos_fm, result_fm) {
+    let len_fm = list.len(items_fm);
+    if (pos_fm >= len_fm) {
+        return result_fm;
+    }
+    let item_fm = list.get(items_fm, pos_fm);
+    if (map.has(item_fm, field_fm)) {
+        let fv_fm = map.get(item_fm, field_fm);
+        if (fv_fm == value_fm) {
+            list.append(result_fm, item_fm);
+        }
+    }
+    return filter_matching(items_fm, field_fm, value_fm, pos_fm + 1, result_fm);
+}
+
+fn count_matching(items_cm, field_cm, value_cm, pos_cm, acc_cm) {
+    let len_cm = list.len(items_cm);
+    if (pos_cm >= len_cm) {
+        return acc_cm;
+    }
+    let item_cm = list.get(items_cm, pos_cm);
+    let new_acc_cm = acc_cm;
+    if (map.has(item_cm, field_cm)) {
+        let fv_cm = map.get(item_cm, field_cm);
+        if (fv_cm == value_cm) {
+            new_acc_cm = acc_cm + 1;
+        }
+    }
+    return count_matching(items_cm, field_cm, value_cm, pos_cm + 1, new_acc_cm);
+}
+
+fn find_in_list_by_field(items_fif, field_fif, value_fif, pos_fif) {
+    let len_fif = list.len(items_fif);
+    if (pos_fif >= len_fif) {
+        return -1;
+    }
+    let item_fif = list.get(items_fif, pos_fif);
+    if (map.has(item_fif, field_fif)) {
+        let fv_fif = map.get(item_fif, field_fif);
+        if (fv_fif == value_fif) {
+            return pos_fif;
+        }
+    }
+    return find_in_list_by_field(items_fif, field_fif, value_fif, pos_fif + 1);
+}
+
+// ============================================================
+// Level 2: Core Entity Constructors & Converters
+// ============================================================
+fn make_item(id_mi, sku_mi, name_mi, desc_mi, cat_id_mi, price_mi, qty_mi, min_qty_mi, supp_id_mi) {
+    let item_mi = map.new();
+    map.set(item_mi, "id", id_mi);
+    map.set(item_mi, "sku", sku_mi);
+    map.set(item_mi, "name", name_mi);
+    map.set(item_mi, "description", desc_mi);
+    map.set(item_mi, "category_id", cat_id_mi);
+    map.set(item_mi, "unit_price", price_mi);
+    map.set(item_mi, "quantity", qty_mi);
+    map.set(item_mi, "min_quantity", min_qty_mi);
+    map.set(item_mi, "supplier_id", supp_id_mi);
+    return item_mi;
+}
+
+fn make_category(id_mc, name_mc, desc_mc) {
+    let cat_mc = map.new();
+    map.set(cat_mc, "id", id_mc);
+    map.set(cat_mc, "name", name_mc);
+    map.set(cat_mc, "description", desc_mc);
+    return cat_mc;
+}
+
+fn make_supplier(id_ms, name_ms, contact_ms, email_ms, phone_ms) {
+    let supp_ms = map.new();
+    map.set(supp_ms, "id", id_ms);
+    map.set(supp_ms, "name", name_ms);
+    map.set(supp_ms, "contact", contact_ms);
+    map.set(supp_ms, "email", email_ms);
+    map.set(supp_ms, "phone", phone_ms);
+    return supp_ms;
+}
+
+fn make_transaction(id_mt, item_id_mt, type_mt, qty_mt, date_mt, note_mt) {
+    let txn_mt = map.new();
+    map.set(txn_mt, "id", id_mt);
+    map.set(txn_mt, "item_id", item_id_mt);
+    map.set(txn_mt, "type", type_mt);
+    map.set(txn_mt, "quantity", qty_mt);
+    map.set(txn_mt, "date", date_mt);
+    map.set(txn_mt, "note", note_mt);
+    return txn_mt;
+}
+
+fn item_to_map(item_itm) {
+    let m_itm = map.new();
+    if (map.has(item_itm, "id")) {
+        map.set(m_itm, "id", map.get(item_itm, "id"));
+    }
+    if (map.has(item_itm, "sku")) {
+        map.set(m_itm, "sku", map.get(item_itm, "sku"));
+    }
+    if (map.has(item_itm, "name")) {
+        map.set(m_itm, "name", map.get(item_itm, "name"));
+    }
+    if (map.has(item_itm, "description")) {
+        map.set(m_itm, "description", map.get(item_itm, "description"));
+    }
+    if (map.has(item_itm, "category_id")) {
+        map.set(m_itm, "category_id", map.get(item_itm, "category_id"));
+    }
+    if (map.has(item_itm, "unit_price")) {
+        map.set(m_itm, "unit_price", map.get(item_itm, "unit_price"));
+    }
+    if (map.has(item_itm, "quantity")) {
+        map.set(m_itm, "quantity", map.get(item_itm, "quantity"));
+    }
+    if (map.has(item_itm, "min_quantity")) {
+        map.set(m_itm, "min_quantity", map.get(item_itm, "min_quantity"));
+    }
+    if (map.has(item_itm, "supplier_id")) {
+        map.set(m_itm, "supplier_id", map.get(item_itm, "supplier_id"));
+    }
+    return m_itm;
+}
+
+fn map_to_item(mmti) {
+    let id_mti = 0;
+    let sku_mti = "";
+    let name_mti = "";
+    let desc_mti = "";
+    let cat_id_mti = 0;
+    let price_mti = 0;
+    let qty_mti = 0;
+    let min_qty_mti = 0;
+    let supp_id_mti = 0;
+    if (map.has(mmti, "id")) {
+        id_mti = map.get(mmti, "id");
+    }
+    if (map.has(mmti, "sku")) {
+        sku_mti = map.get(mmti, "sku");
+    }
+    if (map.has(mmti, "name")) {
+        name_mti = map.get(mmti, "name");
+    }
+    if (map.has(mmti, "description")) {
+        desc_mti = map.get(mmti, "description");
+    }
+    if (map.has(mmti, "category_id")) {
+        cat_id_mti = map.get(mmti, "category_id");
+    }
+    if (map.has(mmti, "unit_price")) {
+        price_mti = map.get(mmti, "unit_price");
+    }
+    if (map.has(mmti, "quantity")) {
+        qty_mti = map.get(mmti, "quantity");
+    }
+    if (map.has(mmti, "min_quantity")) {
+        min_qty_mti = map.get(mmti, "min_quantity");
+    }
+    if (map.has(mmti, "supplier_id")) {
+        supp_id_mti = map.get(mmti, "supplier_id");
+    }
+    return make_item(id_mti, sku_mti, name_mti, desc_mti, cat_id_mti, price_mti, qty_mti, min_qty_mti, supp_id_mti);
+}
+
+fn category_to_map(cat_ctm) {
+    let m_ctm = map.new();
+    if (map.has(cat_ctm, "id")) {
+        map.set(m_ctm, "id", map.get(cat_ctm, "id"));
+    }
+    if (map.has(cat_ctm, "name")) {
+        map.set(m_ctm, "name", map.get(cat_ctm, "name"));
+    }
+    if (map.has(cat_ctm, "description")) {
+        map.set(m_ctm, "description", map.get(cat_ctm, "description"));
+    }
+    return m_ctm;
+}
+
+fn map_to_category(mmtc) {
+    let id_mtc = 0;
+    let name_mtc = "";
+    let desc_mtc = "";
+    if (map.has(mmtc, "id")) {
+        id_mtc = map.get(mmtc, "id");
+    }
+    if (map.has(mmtc, "name")) {
+        name_mtc = map.get(mmtc, "name");
+    }
+    if (map.has(mmtc, "description")) {
+        desc_mtc = map.get(mmtc, "description");
+    }
+    return make_category(id_mtc, name_mtc, desc_mtc);
+}
+
+fn supplier_to_map(supp_stm) {
+    let m_stm = map.new();
+    if (map.has(supp_stm, "id")) {
+        map.set(m_stm, "id", map.get(supp_stm, "id"));
+    }
+    if (map.has(supp_stm, "name")) {
+        map.set(m_stm, "name", map.get(supp_stm, "name"));
+    }
+    if (map.has(supp_stm, "contact")) {
+        map.set(m_stm, "contact", map.get(supp_stm, "contact"));
+    }
+    if (map.has(supp_stm, "email")) {
+        map.set(m_stm, "email", map.get(supp_stm, "email"));
+    }
+    if (map.has(supp_stm, "phone")) {
+        map.set(m_stm, "phone", map.get(supp_stm, "phone"));
+    }
+    return m_stm;
+}
+
+fn map_to_supplier(mmts) {
+    let id_mts = 0;
+    let name_mts = "";
+    let contact_mts = "";
+    let email_mts = "";
+    let phone_mts = "";
+    if (map.has(mmts, "id")) {
+        id_mts = map.get(mmts, "id");
+    }
+    if (map.has(mmts, "name")) {
+        name_mts = map.get(mmts, "name");
+    }
+    if (map.has(mmts, "contact")) {
+        contact_mts = map.get(mmts, "contact");
+    }
+    if (map.has(mmts, "email")) {
+        email_mts = map.get(mmts, "email");
+    }
+    if (map.has(mmts, "phone")) {
+        phone_mts = map.get(mmts, "phone");
+    }
+    return make_supplier(id_mts, name_mts, contact_mts, email_mts, phone_mts);
+}
+
+fn transaction_to_map(txn_ttm) {
+    let m_ttm = map.new();
+    if (map.has(txn_ttm, "id")) {
+        map.set(m_ttm, "id", map.get(txn_ttm, "id"));
+    }
+    if (map.has(txn_ttm, "item_id")) {
+        map.set(m_ttm, "item_id", map.get(txn_ttm, "item_id"));
+    }
+    if (map.has(txn_ttm, "type")) {
+        map.set(m_ttm, "type", map.get(txn_ttm, "type"));
+    }
+    if (map.has(txn_ttm, "quantity")) {
+        map.set(m_ttm, "quantity", map.get(txn_ttm, "quantity"));
+    }
+    if (map.has(txn_ttm, "date")) {
+        map.set(m_ttm, "date", map.get(txn_ttm, "date"));
+    }
+    if (map.has(txn_ttm, "note")) {
+        map.set(m_ttm, "note", map.get(txn_ttm, "note"));
+    }
+    return m_ttm;
+}
+
+fn map_to_transaction(mmtt) {
+    let id_mtt = 0;
+    let item_id_mtt = 0;
+    let type_mtt = "";
+    let qty_mtt = 0;
+    let date_mtt = "";
+    let note_mtt = "";
+    if (map.has(mmtt, "id")) {
+        id_mtt = map.get(mmtt, "id");
+    }
+    if (map.has(mmtt, "item_id")) {
+        item_id_mtt = map.get(mmtt, "item_id");
+    }
+    if (map.has(mmtt, "type")) {
+        type_mtt = map.get(mmtt, "type");
+    }
+    if (map.has(mmtt, "quantity")) {
+        qty_mtt = map.get(mmtt, "quantity");
+    }
+    if (map.has(mmtt, "date")) {
+        date_mtt = map.get(mmtt, "date");
+    }
+    if (map.has(mmtt, "note")) {
+        note_mtt = map.get(mmtt, "note");
+    }
+    return make_transaction(id_mtt, item_id_mtt, type_mtt, qty_mtt, date_mtt, note_mtt);
+}
+
+// ============================================================
+// Level 3: Inventory Operations
+// ============================================================
+fn find_item_index(items_fii, item_id_fii, pos_fii) {
+    let len_fii = list.len(items_fii);
+    if (pos_fii >= len_fii) {
+        return -1;
+    }
+    let item_fii = list.get(items_fii, pos_fii);
+    if (map.has(item_fii, "id")) {
+        if (map.get(item_fii, "id") == item_id_fii) {
+            return pos_fii;
+        }
+    }
+    return find_item_index(items_fii, item_id_fii, pos_fii + 1);
+}
+
+fn add_item_to_inventory(inv_ai, item_ai) {
+    if (!map.has(inv_ai, "items")) {
+        map.set(inv_ai, "items", list.new());
+    }
+    let items_ai = map.get(inv_ai, "items");
+    list.append(items_ai, item_ai);
+    return 0;
+}
+
+fn remove_item_from_inventory(inv_ri, item_id_ri) {
+    if (!map.has(inv_ri, "items")) {
+        return 0;
+    }
+    let items_ri = map.get(inv_ri, "items");
+    let idx_ri = find_item_index(items_ri, item_id_ri, 0);
+    if (idx_ri >= 0) {
+        let item_ri = list.get(items_ri, idx_ri);
+        if (map.has(item_ri, "sku")) {
+            list.remove(items_ri, item_ri);
+        }
+    }
+    return 0;
+}
+
+fn get_item_from_inventory(inv_gi, item_id_gi) {
+    if (!map.has(inv_gi, "items")) {
+        return map.new();
+    }
+    let items_gi = map.get(inv_gi, "items");
+    let idx_gi = find_item_index(items_gi, item_id_gi, 0);
+    if (idx_gi < 0) {
+        return map.new();
+    }
+    let len_gi = list.len(items_gi);
+    if (idx_gi < len_gi) {
+        return list.get(items_gi, idx_gi);
+    }
+    return map.new();
+}
+
+fn update_item_stock(inv_us, item_id_us, delta_us) {
+    if (!map.has(inv_us, "items")) {
+        return 0;
+    }
+    let items_us = map.get(inv_us, "items");
+    let idx_us = find_item_index(items_us, item_id_us, 0);
+    if (idx_us < 0) {
+        return 0;
+    }
+    let len_us = list.len(items_us);
+    if (idx_us >= len_us) {
+        return 0;
+    }
+    let item_us = list.get(items_us, idx_us);
+    let cur_qty_us = 0;
+    if (map.has(item_us, "quantity")) {
+        cur_qty_us = map.get(item_us, "quantity");
+    }
+    map.set(item_us, "quantity", cur_qty_us + delta_us);
+    return 0;
+}
+
+fn record_transaction(inv_rt, txn_rt) {
+    if (!map.has(inv_rt, "transactions")) {
+        map.set(inv_rt, "transactions", list.new());
+    }
+    let txns_rt = map.get(inv_rt, "transactions");
+    list.append(txns_rt, txn_rt);
+    return 0;
+}
+
+fn get_item_transactions_helper(inv_gth, item_id_gth, pos_gth, result_gth) {
+    if (!map.has(inv_gth, "transactions")) {
+        return result_gth;
+    }
+    let txns_gth = map.get(inv_gth, "transactions");
+    let len_gth = list.len(txns_gth);
+    if (pos_gth >= len_gth) {
+        return result_gth;
+    }
+    let txn_gth = list.get(txns_gth, pos_gth);
+    if (map.has(txn_gth, "item_id")) {
+        if (map.get(txn_gth, "item_id") == item_id_gth) {
+            list.append(result_gth, txn_gth);
+        }
+    }
+    return get_item_transactions_helper(inv_gth, item_id_gth, pos_gth + 1, result_gth);
+}
+
+fn get_item_transactions(inv_git, item_id_git) {
+    return get_item_transactions_helper(inv_git, item_id_git, 0, list.new());
+}
+
+fn get_low_stock_items_helper(inv_lsh, pos_lsh, result_lsh) {
+    if (!map.has(inv_lsh, "items")) {
+        return result_lsh;
+    }
+    let items_lsh = map.get(inv_lsh, "items");
+    let len_lsh = list.len(items_lsh);
+    if (pos_lsh >= len_lsh) {
+        return result_lsh;
+    }
+    let item_lsh = list.get(items_lsh, pos_lsh);
+    let qty_lsh = 999999;
+    let min_qty_lsh = 0;
+    if (map.has(item_lsh, "quantity")) {
+        qty_lsh = map.get(item_lsh, "quantity");
+    }
+    if (map.has(item_lsh, "min_quantity")) {
+        min_qty_lsh = map.get(item_lsh, "min_quantity");
+    }
+    if (qty_lsh < min_qty_lsh) {
+        list.append(result_lsh, item_lsh);
+    }
+    return get_low_stock_items_helper(inv_lsh, pos_lsh + 1, result_lsh);
+}
+
+fn get_low_stock_items(inv_lsi) {
+    return get_low_stock_items_helper(inv_lsi, 0, list.new());
+}
+
+fn get_category_items_helper(inv_gch, cat_id_gch, pos_gch, result_gch) {
+    if (!map.has(inv_gch, "items")) {
+        return result_gch;
+    }
+    let items_gch = map.get(inv_gch, "items");
+    let len_gch = list.len(items_gch);
+    if (pos_gch >= len_gch) {
+        return result_gch;
+    }
+    let item_gch = list.get(items_gch, pos_gch);
+    if (map.has(item_gch, "category_id")) {
+        if (map.get(item_gch, "category_id") == cat_id_gch) {
+            list.append(result_gch, item_gch);
+        }
+    }
+    return get_category_items_helper(inv_gch, cat_id_gch, pos_gch + 1, result_gch);
+}
+
+fn get_category_items(inv_gci, cat_id_gci) {
+    return get_category_items_helper(inv_gci, cat_id_gci, 0, list.new());
+}
+
+fn get_supplier_items_helper(inv_gsh, supp_id_gsh, pos_gsh, result_gsh) {
+    if (!map.has(inv_gsh, "items")) {
+        return result_gsh;
+    }
+    let items_gsh = map.get(inv_gsh, "items");
+    let len_gsh = list.len(items_gsh);
+    if (pos_gsh >= len_gsh) {
+        return result_gsh;
+    }
+    let item_gsh = list.get(items_gsh, pos_gsh);
+    if (map.has(item_gsh, "supplier_id")) {
+        if (map.get(item_gsh, "supplier_id") == supp_id_gsh) {
+            list.append(result_gsh, item_gsh);
+        }
+    }
+    return get_supplier_items_helper(inv_gsh, supp_id_gsh, pos_gsh + 1, result_gsh);
+}
+
+fn get_supplier_items(inv_gsi, supp_id_gsi) {
+    return get_supplier_items_helper(inv_gsi, supp_id_gsi, 0, list.new());
+}
+
+fn calculate_inventory_value_helper(inv_cvh, pos_cvh, acc_cvh) {
+    if (!map.has(inv_cvh, "items")) {
+        return acc_cvh;
+    }
+    let items_cvh = map.get(inv_cvh, "items");
+    let len_cvh = list.len(items_cvh);
+    if (pos_cvh >= len_cvh) {
+        return acc_cvh;
+    }
+    let item_cvh = list.get(items_cvh, pos_cvh);
+    let qty_cvh = 0;
+    let price_cvh = 0;
+    if (map.has(item_cvh, "quantity")) {
+        qty_cvh = map.get(item_cvh, "quantity");
+    }
+    if (map.has(item_cvh, "unit_price")) {
+        price_cvh = map.get(item_cvh, "unit_price");
+    }
+    let val_cvh = math.mul(qty_cvh, price_cvh);
+    return calculate_inventory_value_helper(inv_cvh, pos_cvh + 1, acc_cvh + val_cvh);
+}
+
+fn calculate_inventory_value(inv_civ) {
+    return calculate_inventory_value_helper(inv_civ, 0, 0);
+}
+
+fn get_category_inventory_helper(inv_gcih, pos_gcih, result_gcih) {
+    if (!map.has(inv_gcih, "items")) {
+        return result_gcih;
+    }
+    let items_gcih = map.get(inv_gcih, "items");
+    let len_gcih = list.len(items_gcih);
+    if (pos_gcih >= len_gcih) {
+        return result_gcih;
+    }
+    let item_gcih = list.get(items_gcih, pos_gcih);
+    let cat_id_gcih = 0;
+    if (map.has(item_gcih, "category_id")) {
+        cat_id_gcih = map.get(item_gcih, "category_id");
+    }
+    let qty_gcih = 0;
+    if (map.has(item_gcih, "quantity")) {
+        qty_gcih = map.get(item_gcih, "quantity");
+    }
+    let price_gcih = 0;
+    if (map.has(item_gcih, "unit_price")) {
+        price_gcih = map.get(item_gcih, "unit_price");
+    }
+    let cat_key_gcih = int_to_string(cat_id_gcih);
+    let cur_val_gcih = 0;
+    if (map.has(result_gcih, cat_key_gcih)) {
+        cur_val_gcih = map.get(result_gcih, cat_key_gcih);
+    }
+    let new_val_gcih = math.mul(qty_gcih, price_gcih);
+    map.set(result_gcih, cat_key_gcih, cur_val_gcih + new_val_gcih);
+    return get_category_inventory_helper(inv_gcih, pos_gcih + 1, result_gcih);
+}
+
+fn get_category_inventory(inv_gci) {
+    return get_category_inventory_helper(inv_gci, 0, map.new());
+}
+
+// ============================================================
+// Level 4: Persistence
+// ============================================================
+fn inventory_to_full_map(inv_im, cats_im, supps_im) {
+    let data_im = map.new();
+    let stored_items_im = list.new();
+    if (map.has(inv_im, "items")) {
+        let items_im = map.get(inv_im, "items");
+        let len_im = list.len(items_im);
+        let pos_im = 0;
+        if (len_im > 0) {
+            stored_items_im = list_copy(items_im, stored_items_im, 0);
+        }
+    }
+    map.set(data_im, "items", stored_items_im);
+    let stored_cats_im = list.new();
+    let cats_len_im = list.len(cats_im);
+    if (cats_len_im > 0) {
+        stored_cats_im = list_copy(cats_im, stored_cats_im, 0);
+    }
+    map.set(data_im, "categories", stored_cats_im);
+    let stored_supps_im = list.new();
+    let supps_len_im = list.len(supps_im);
+    if (supps_len_im > 0) {
+        stored_supps_im = list_copy(supps_im, stored_supps_im, 0);
+    }
+    map.set(data_im, "suppliers", stored_supps_im);
+    let stored_txns_im = list.new();
+    if (map.has(inv_im, "transactions")) {
+        let txns_im = map.get(inv_im, "transactions");
+        let txns_len_im = list.len(txns_im);
+        if (txns_len_im > 0) {
+            stored_txns_im = list_copy(txns_im, stored_txns_im, 0);
+        }
+    }
+    map.set(data_im, "transactions", stored_txns_im);
+    return data_im;
+}
+
+fn build_items_from_data(data_bif, pos_bif, result_bif) {
+    if (!map.has(data_bif, "items")) {
+        return result_bif;
+    }
+    let items_bif = map.get(data_bif, "items");
+    let len_bif = list.len(items_bif);
+    if (pos_bif >= len_bif) {
+        return result_bif;
+    }
+    let raw_bif = list.get(items_bif, pos_bif);
+    let item_bif = map_to_item(raw_bif);
+    list.append(result_bif, item_bif);
+    return build_items_from_data(data_bif, pos_bif + 1, result_bif);
+}
+
+fn build_categories_from_data(data_bcf, pos_bcf, result_bcf) {
+    if (!map.has(data_bcf, "categories")) {
+        return result_bcf;
+    }
+    let cats_bcf = map.get(data_bcf, "categories");
+    let len_bcf = list.len(cats_bcf);
+    if (pos_bcf >= len_bcf) {
+        return result_bcf;
+    }
+    let raw_bcf = list.get(cats_bcf, pos_bcf);
+    let cat_bcf = map_to_category(raw_bcf);
+    list.append(result_bcf, cat_bcf);
+    return build_categories_from_data(data_bcf, pos_bcf + 1, result_bcf);
+}
+
+fn build_suppliers_from_data(data_bsf, pos_bsf, result_bsf) {
+    if (!map.has(data_bsf, "suppliers")) {
+        return result_bsf;
+    }
+    let supps_bsf = map.get(data_bsf, "suppliers");
+    let len_bsf = list.len(supps_bsf);
+    if (pos_bsf >= len_bsf) {
+        return result_bsf;
+    }
+    let raw_bsf = list.get(supps_bsf, pos_bsf);
+    let supp_bsf = map_to_supplier(raw_bsf);
+    list.append(result_bsf, supp_bsf);
+    return build_suppliers_from_data(data_bsf, pos_bsf + 1, result_bsf);
+}
+
+fn build_transactions_from_data(data_btf, pos_btf, result_btf) {
+    if (!map.has(data_btf, "transactions")) {
+        return result_btf;
+    }
+    let txns_btf = map.get(data_btf, "transactions");
+    let len_btf = list.len(txns_btf);
+    if (pos_btf >= len_btf) {
+        return result_btf;
+    }
+    let raw_btf = list.get(txns_btf, pos_btf);
+    let txn_btf = map_to_transaction(raw_btf);
+    list.append(result_btf, txn_btf);
+    return build_transactions_from_data(data_btf, pos_btf + 1, result_btf);
+}
+
+fn full_map_to_inventory(data_fmi) {
+    let inv_fmi = map.new();
+    let items_fmi = build_items_from_data(data_fmi, 0, list.new());
+    map.set(inv_fmi, "items", items_fmi);
+    let cats_fmi = build_categories_from_data(data_fmi, 0, list.new());
+    let supps_fmi = build_suppliers_from_data(data_fmi, 0, list.new());
+    let txns_fmi = build_transactions_from_data(data_fmi, 0, list.new());
+    map.set(inv_fmi, "categories", cats_fmi);
+    map.set(inv_fmi, "suppliers", supps_fmi);
+    map.set(inv_fmi, "transactions", txns_fmi);
+    return inv_fmi;
+}
+
+fn save_inventory_file(filepath_sf, inv_sf, cats_sf, supps_sf) {
+    let data_sf = inventory_to_full_map(inv_sf, cats_sf, supps_sf);
+    let text_sf = json.stringify(data_sf);
+    file.write(filepath_sf, text_sf);
+    return 0;
+}
+
+fn load_inventory_file(filepath_lf) {
+    if (!file.exists(filepath_lf)) {
+        return map.new();
+    }
+    let content_lf = file.read(filepath_lf);
+    let len_lf = string.length(content_lf);
+    if (len_lf == 0) {
+        return map.new();
+    }
+    let data_lf = json.parse(content_lf);
+    return full_map_to_inventory(data_lf);
+}
+
+// ============================================================
+// Level 5: Display & Reports
+// ============================================================
+fn print_item_info(item_pi) {
+    if (!map.has(item_pi, "id")) {
+        return 0;
+    }
+    let id_pi = map.get(item_pi, "id");
+    let sku_pi = "";
+    let name_pi = "";
+    let qty_pi = 0;
+    let price_pi = 0;
+    if (map.has(item_pi, "sku")) {
+        sku_pi = map.get(item_pi, "sku");
+    }
+    if (map.has(item_pi, "name")) {
+        name_pi = map.get(item_pi, "name");
+    }
+    if (map.has(item_pi, "quantity")) {
+        qty_pi = map.get(item_pi, "quantity");
+    }
+    if (map.has(item_pi, "unit_price")) {
+        price_pi = map.get(item_pi, "unit_price");
+    }
+    let id_str_pi = int_to_string(id_pi);
+    let qty_str_pi = int_to_string(qty_pi);
+    let price_str_pi = int_to_string(price_pi);
+    print("  #" + id_str_pi + ":", "[" + sku_pi + "]", name_pi, "Qty:", qty_str_pi, "Price:", price_str_pi);
+    return 0;
+}
+
+fn print_items_list(items_pil, pos_pil) {
+    let len_pil = list.len(items_pil);
+    if (pos_pil >= len_pil) {
+        return 0;
+    }
+    let item_pil = list.get(items_pil, pos_pil);
+    print_item_info(item_pil);
+    return print_items_list(items_pil, pos_pil + 1);
+}
+
+fn print_category_info(cat_pci) {
+    if (!map.has(cat_pci, "id")) {
+        return 0;
+    }
+    let id_pci = map.get(cat_pci, "id");
+    let name_pci = "";
+    if (map.has(cat_pci, "name")) {
+        name_pci = map.get(cat_pci, "name");
+    }
+    let id_str_pci = int_to_string(id_pci);
+    print("  [" + id_str_pci + "]", name_pci);
+    return 0;
+}
+
+fn print_categories_list(cats_pcl, pos_pcl) {
+    let len_pcl = list.len(cats_pcl);
+    if (pos_pcl >= len_pcl) {
+        return 0;
+    }
+    let cat_pcl = list.get(cats_pcl, pos_pcl);
+    print_category_info(cat_pcl);
+    return print_categories_list(cats_pcl, pos_pcl + 1);
+}
+
+fn print_supplier_info(supp_psi) {
+    if (!map.has(supp_psi, "id")) {
+        return 0;
+    }
+    let id_psi = map.get(supp_psi, "id");
+    let name_psi = "";
+    let contact_psi = "";
+    if (map.has(supp_psi, "name")) {
+        name_psi = map.get(supp_psi, "name");
+    }
+    if (map.has(supp_psi, "contact")) {
+        contact_psi = map.get(supp_psi, "contact");
+    }
+    let id_str_psi = int_to_string(id_psi);
+    print("  #" + id_str_psi + ": " + name_psi + " (" + contact_psi + ")");
+    return 0;
+}
+
+fn print_suppliers_list(supps_psl, pos_psl) {
+    let len_psl = list.len(supps_psl);
+    if (pos_psl >= len_psl) {
+        return 0;
+    }
+    let supp_psl = list.get(supps_psl, pos_psl);
+    print_supplier_info(supp_psl);
+    return print_suppliers_list(supps_psl, pos_psl + 1);
+}
+
+fn print_inventory_summary(inv_pis, cats_pis) {
+    print("");
+    print("=== Inventory Summary ===");
+    let total_items_pis = 0;
+    if (map.has(inv_pis, "items")) {
+        total_items_pis = list.len(map.get(inv_pis, "items"));
+    }
+    let total_txns_pis = 0;
+    if (map.has(inv_pis, "transactions")) {
+        total_txns_pis = list.len(map.get(inv_pis, "transactions"));
+    }
+    let total_cats_pis = list.len(cats_pis);
+    let total_val_pis = calculate_inventory_value(inv_pis);
+    print("  Items:", int_to_string(total_items_pis));
+    print("  Categories:", int_to_string(total_cats_pis));
+    print("  Transactions:", int_to_string(total_txns_pis));
+    print("  Total Inventory Value:", int_to_string(total_val_pis));
+    return 0;
+}
+
+fn print_low_stock_report(inv_plr) {
+    print("");
+    print("=== Low Stock Alert ===");
+    let low_items_plr = get_low_stock_items(inv_plr);
+    let low_len_plr = list.len(low_items_plr);
+    if (low_len_plr == 0) {
+        print("  No items below minimum quantity.");
+        return 0;
+    }
+    print("  Items below minimum quantity:", int_to_string(low_len_plr));
+    print_items_list(low_items_plr, 0);
+    return 0;
+}
+
+fn print_category_name(cat_id_pcn, cats_pcn, pos_pcn) {
+    let len_pcn = list.len(cats_pcn);
+    if (pos_pcn >= len_pcn) {
+        return "Unknown";
+    }
+    let cat_pcn = list.get(cats_pcn, pos_pcn);
+    if (map.has(cat_pcn, "id")) {
+        if (map.get(cat_pcn, "id") == cat_id_pcn) {
+            if (map.has(cat_pcn, "name")) {
+                return map.get(cat_pcn, "name");
+            }
+        }
+    }
+    return print_category_name(cat_id_pcn, cats_pcn, pos_pcn + 1);
+}
+
+fn print_category_breakdown_iter(inv_pcbi, cats_pcbi, cat_inv_pcbi, keys_pcbi, pos_pcbi) {
+    let len_pcbi = list.len(keys_pcbi);
+    if (pos_pcbi >= len_pcbi) {
+        return 0;
+    }
+    let key_pcbi = list.get(keys_pcbi, pos_pcbi);
+    let cat_id_int_pcbi = convert.to_int(key_pcbi);
+    let cat_name_pcbi = print_category_name(cat_id_int_pcbi, cats_pcbi, 0);
+    let cat_val_pcbi = 0;
+    if (map.has(cat_inv_pcbi, key_pcbi)) {
+        cat_val_pcbi = map.get(cat_inv_pcbi, key_pcbi);
+    }
+    let cat_val_str_pcbi = int_to_string(cat_val_pcbi);
+    print("  " + cat_name_pcbi + ": $" + cat_val_str_pcbi);
+    return print_category_breakdown_iter(inv_pcbi, cats_pcbi, cat_inv_pcbi, keys_pcbi, pos_pcbi + 1);
+}
+
+fn print_category_breakdown(inv_pcb, cats_pcb) {
+    print("");
+    print("=== Category Breakdown ===");
+    let cat_inv_pcb = get_category_inventory(inv_pcb);
+    let cat_keys_pcb = map.keys(cat_inv_pcb);
+    let key_len_pcb = list.len(cat_keys_pcb);
+    if (key_len_pcb == 0) {
+        print("  No items in inventory.");
+        return 0;
+    }
+    let pos_pcb = 0;
+    if (key_len_pcb > 0) {
+        let cat_name_pcb = "";
+        let cat_val_pcb = 0;
+        let key_pcb = list.get(cat_keys_pcb, pos_pcb);
+        let cat_id_int_pcb = convert.to_int(key_pcb);
+        cat_name_pcb = print_category_name(cat_id_int_pcb, cats_pcb, 0);
+        if (map.has(cat_inv_pcb, key_pcb)) {
+            cat_val_pcb = map.get(cat_inv_pcb, key_pcb);
+        }
+        let cat_val_str_pcb = int_to_string(cat_val_pcb);
+        print("  " + cat_name_pcb + ": $" + cat_val_str_pcb);
+        pos_pcb = 1;
+    }
+    return print_category_breakdown_iter(inv_pcb, cats_pcb, cat_inv_pcb, cat_keys_pcb, pos_pcb);
+}
+
+fn print_transaction_info(txn_pti) {
+    if (!map.has(txn_pti, "id")) {
+        return 0;
+    }
+    let id_pti = map.get(txn_pti, "id");
+    let type_pti = "";
+    let qty_pti = 0;
+    let note_pti = "";
+    if (map.has(txn_pti, "type")) {
+        type_pti = map.get(txn_pti, "type");
+    }
+    if (map.has(txn_pti, "quantity")) {
+        qty_pti = map.get(txn_pti, "quantity");
+    }
+    if (map.has(txn_pti, "note")) {
+        note_pti = map.get(txn_pti, "note");
+    }
+    let id_str_pti = int_to_string(id_pti);
+    let qty_str_pti = int_to_string(qty_pti);
+    print("  #" + id_str_pti + ":", type_pti, qty_str_pti, "units", "-", note_pti);
+    return 0;
+}
+
+fn print_item_transaction_history_iter(txns_pthi, pos_pthi) {
+    let len_pthi = list.len(txns_pthi);
+    if (pos_pthi >= len_pthi) {
+        return 0;
+    }
+    let txn_pthi = list.get(txns_pthi, pos_pthi);
+    print_transaction_info(txn_pthi);
+    return print_item_transaction_history_iter(txns_pthi, pos_pthi + 1);
+}
+
+fn print_item_transaction_history(inv_pth, item_id_pth) {
+    print("");
+    print("=== Transaction History ===");
+    let txns_pth = get_item_transactions(inv_pth, item_id_pth);
+    let txn_len_pth = list.len(txns_pth);
+    if (txn_len_pth == 0) {
+        print("  No transactions found.");
+        return 0;
+    }
+    let pos_pth = 0;
+    if (txn_len_pth > 0) {
+        let txn_pth = list.get(txns_pth, pos_pth);
+        print_transaction_info(txn_pth);
+        return print_item_transaction_history_iter(txns_pth, pos_pth + 1);
+    }
+    return 0;
+}
+
+fn print_all_items(inv_pai) {
+    if (!map.has(inv_pai, "items")) {
+        print("  No items in inventory.");
+        return 0;
+    }
+    let items_pai = map.get(inv_pai, "items");
+    let len_pai = list.len(items_pai);
+    if (len_pai == 0) {
+        print("  No items in inventory.");
+        return 0;
+    }
+    print_items_list(items_pai, 0);
+    return 0;
+}
+
+fn print_all_report(inv_par, cats_par) {
+    print_inventory_summary(inv_par, cats_par);
+    print_low_stock_report(inv_par);
+    print_category_breakdown(inv_par, cats_par);
+    print("");
+    print("=== All Items ===");
+    print_all_items(inv_par);
+    return 0;
+}
+
+// ============================================================
+// Level 6: Demo Data & Orchestration
+// ============================================================
+fn create_demo_categories() {
+    let cats_dc = list.new();
+    let cat1_dc = make_category(1, "Electronics", "Electronic components and devices");
+    let cat2_dc = make_category(2, "Office Supplies", "Stationery and office essentials");
+    let cat3_dc = make_category(3, "Hardware", "Tools, fasteners, and hardware items");
+    let cat4_dc = make_category(4, "Cleaning", "Cleaning supplies and chemicals");
+    list.append(cats_dc, cat1_dc);
+    list.append(cats_dc, cat2_dc);
+    list.append(cats_dc, cat3_dc);
+    list.append(cats_dc, cat4_dc);
+    return cats_dc;
+}
+
+fn create_demo_suppliers() {
+    let supps_ds = list.new();
+    let s1_ds = make_supplier(1, "TechSupply Co.", "Alice Johnson", "alice@techsupply.com", "555-0100");
+    let s2_ds = make_supplier(2, "OfficeMart Inc.", "Bob Smith", "bob@officemart.com", "555-0200");
+    let s3_ds = make_supplier(3, "HardwarePro Ltd.", "Charlie Brown", "charlie@hwpro.com", "555-0300");
+    list.append(supps_ds, s1_ds);
+    list.append(supps_ds, s2_ds);
+    list.append(supps_ds, s3_ds);
+    return supps_ds;
+}
+
+fn create_demo_items(cats_di, supps_di) {
+    let items_di = list.new();
+    let i1_di = make_item(101, "ELEC-001", "USB-C Cable 2m", "High-speed USB-C charging cable", 1, 12, 150, 20, 1);
+    let i2_di = make_item(102, "ELEC-002", "Wireless Mouse", "Ergonomic wireless mouse", 1, 35, 80, 10, 1);
+    let i3_di = make_item(103, "ELEC-003", "HDMI Cable 3m", "4K HDMI cable", 1, 18, 200, 30, 1);
+    let i4_di = make_item(201, "OFF-001", "A4 Printer Paper", "500-sheet ream", 2, 8, 500, 100, 2);
+    let i5_di = make_item(202, "OFF-002", "Ballpoint Pens Box", "Box of 50 blue pens", 2, 15, 300, 50, 2);
+    let i6_di = make_item(203, "OFF-003", "Sticky Notes Pack", "Pack of 5 pads", 2, 6, 400, 80, 2);
+    let i7_di = make_item(301, "HW-001", "Hammer 16oz", "Claw hammer with rubber grip", 3, 22, 60, 10, 3);
+    let i8_di = make_item(302, "HW-002", "Screwdriver Set", "6-piece precision set", 3, 28, 40, 8, 3);
+    let i9_di = make_item(303, "HW-003", "Measuring Tape 5m", "Retractable measuring tape", 3, 10, 120, 20, 3);
+    let i10_di = make_item(401, "CLN-001", "All-Purpose Cleaner", "500ml spray bottle", 4, 5, 350, 60, 2);
+    let i11_di = make_item(402, "CLN-002", "Microfiber Cloths", "Pack of 10 cloths", 4, 9, 180, 30, 2);
+    list.append(items_di, i1_di);
+    list.append(items_di, i2_di);
+    list.append(items_di, i3_di);
+    list.append(items_di, i4_di);
+    list.append(items_di, i5_di);
+    list.append(items_di, i6_di);
+    list.append(items_di, i7_di);
+    list.append(items_di, i8_di);
+    list.append(items_di, i9_di);
+    list.append(items_di, i10_di);
+    list.append(items_di, i11_di);
+    return items_di;
+}
+
+fn create_demo_transactions(inv_dt, items_dt) {
+    let t1_dt = make_transaction(1001, 101, "purchase", 200, "2026-07-01", "Initial stock");
+    record_transaction(inv_dt, t1_dt);
+    update_item_stock(inv_dt, 101, 200);
+    let t2_dt = make_transaction(1002, 102, "purchase", 100, "2026-07-01", "Initial stock");
+    record_transaction(inv_dt, t2_dt);
+    update_item_stock(inv_dt, 102, 100);
+    let t3_dt = make_transaction(1003, 101, "sale", 50, "2026-07-03", "Online order fulfillment");
+    record_transaction(inv_dt, t3_dt);
+    update_item_stock(inv_dt, 101, -50);
+    let t4_dt = make_transaction(1004, 104, "purchase", 500, "2026-07-01", "Initial stock");
+    record_transaction(inv_dt, t4_dt);
+    update_item_stock(inv_dt, 104, 500);
+    let t5_dt = make_transaction(1005, 105, "sale", 200, "2026-07-05", "Bulk order - School supply");
+    record_transaction(inv_dt, t5_dt);
+    update_item_stock(inv_dt, 105, -200);
+    let t6_dt = make_transaction(1006, 107, "purchase", 60, "2026-07-01", "Initial stock");
+    record_transaction(inv_dt, t6_dt);
+    update_item_stock(inv_dt, 107, 60);
+    let t7_dt = make_transaction(1007, 110, "purchase", 400, "2026-07-01", "Initial stock");
+    record_transaction(inv_dt, t7_dt);
+    update_item_stock(inv_dt, 110, 400);
+    let t8_dt = make_transaction(1008, 106, "sale", 100, "2026-07-04", "Office restock");
+    record_transaction(inv_dt, t8_dt);
+    update_item_stock(inv_dt, 106, -100);
+    return 0;
+}
+
+fn load_items(inv_li, items_li, pos_li) {
+    let len_li = list.len(items_li);
+    if (pos_li >= len_li) {
+        return 0;
+    }
+    let item_li = list.get(items_li, pos_li);
+    add_item_to_inventory(inv_li, item_li);
+    return load_items(inv_li, items_li, pos_li + 1);
+}
+
+fn run_demo() {
+    print("Loading demo data...");
+    let categories_rd = create_demo_categories();
+    let suppliers_rd = create_demo_suppliers();
+    let items_rd = create_demo_items(categories_rd, suppliers_rd);
+    let inventory_rd = map.new();
+    map.set(inventory_rd, "items", list.new());
+    map.set(inventory_rd, "transactions", list.new());
+    let item_count_rd = list.len(items_rd);
+    let pos_rd = 0;
+    if (item_count_rd > 0) {
+        let item_rd = list.get(items_rd, pos_rd);
+        add_item_to_inventory(inventory_rd, item_rd);
+        pos_rd = 1;
+    }
+    let load_result_rd = load_items(inventory_rd, items_rd, pos_rd);
+    create_demo_transactions(inventory_rd, items_rd);
+    print("");
+    print("===================================");
+    print("  Inventory Management System Demo");
+    print("===================================");
+    print("");
+    print("Loaded", int_to_string(item_count_rd), "items across", int_to_string(list.len(categories_rd)), "categories");
+    print("");
+    print("--- Categories ---");
+    print_categories_list(categories_rd, 0);
+    print("");
+    print("--- Suppliers ---");
+    print_suppliers_list(suppliers_rd, 0);
+    print_all_report(inventory_rd, categories_rd);
+    let low_items_rd = get_low_stock_items(inventory_rd);
+    if (list.len(low_items_rd) > 0) {
+        print("");
+        print("WARNING: Low stock items detected!");
+    }
+    print("");
+    print("=== End of Inventory Demo ===");
+    save_inventory_file("inventory_data.json", inventory_rd, categories_rd, suppliers_rd);
+    print("Data saved to inventory_data.json");
+    return 0;
+}
+
+// ============================================================
+// Level 7: Entry Point
+// ============================================================
+fn main() {
+    return run_demo();
+}

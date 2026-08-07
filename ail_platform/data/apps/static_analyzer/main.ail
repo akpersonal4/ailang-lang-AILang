@@ -1,0 +1,931 @@
+import string;
+import list;
+import map;
+import file;
+import convert;
+import environment;
+import system;
+import io;
+
+let TL_IDENTS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.";
+let TL_KW_CSV = "fn,let,if,else,return,import,as,true,false,";
+
+fn find_substring(text, pat, start_pos) {
+    return string.find_from(text, pat, start_pos)
+}
+
+fn is_ident_char(ch) { return find_substring(TL_IDENTS, ch, 0) >= 0 }
+
+fn is_keyword(name) {
+    let kw_test = name + ",";
+    return find_substring(TL_KW_CSV, kw_test, 0) >= 0
+}
+
+fn find_ident_start_bw(text, pos) {
+    if (pos < 0) { return 0 }
+    let fis_ch = string.substring(text, pos, pos + 1);
+    if (!is_ident_char(fis_ch)) { return pos + 1 }
+    if (pos == 0) { return 0 }
+    return find_ident_start_bw(text, pos - 1)
+}
+
+fn extract_call_at_paren(text, paren_pos) {
+    if (paren_pos <= 0) { return "" }
+    let ec_name_end = paren_pos;
+    let ec_name_start = find_ident_start_bw(text, paren_pos - 1);
+    if (ec_name_start >= ec_name_end) { return "" }
+    return string.substring(text, ec_name_start, ec_name_end)
+}
+
+fn collect_calls_inner(text, search_pos, result_list) {
+    let paren_at = find_substring(text, "(", search_pos);
+    if (paren_at < 0) { return result_list }
+    let call_name = extract_call_at_paren(text, paren_at);
+    if (string.length(call_name) > 0) {
+        if (!is_keyword(call_name)) {
+            let cci_name_start = find_ident_start_bw(text, paren_at - 1);
+            let cci_is_fn_def = 0;
+            if (cci_name_start >= 3) {
+                let cci_prefix = string.substring(text, cci_name_start - 3, cci_name_start);
+                if (string.equals(cci_prefix, "fn ")) { cci_is_fn_def = 1 }
+            }
+            if (cci_is_fn_def == 0) {
+                list.append(result_list, call_name)
+            }
+        }
+    }
+    return collect_calls_inner(text, paren_at + 1, result_list)
+}
+
+fn split_find_delim(text, delim, start_pos) {
+    let sfd_tlen = string.length(text);
+    if (start_pos >= sfd_tlen) { return start_pos }
+    let sfd_dlen = string.length(delim);
+    let sfd_rest = start_pos + sfd_dlen;
+    if (sfd_rest > sfd_tlen) { return start_pos }
+    let sfd_seg = string.substring(text, start_pos, sfd_rest);
+    if (string.equals(sfd_seg, delim)) { return start_pos }
+    return split_find_delim(text, delim, start_pos + 1)
+}
+
+fn split_helper(text, delim, iter_pos, result_list) {
+    let sh_tlen = string.length(text);
+    if (iter_pos >= sh_tlen) { return result_list }
+    let sh_end = split_find_delim(text, delim, iter_pos);
+    let sh_part = string.substring(text, iter_pos, sh_end);
+    list.append(result_list, sh_part);
+    let sh_dlen = string.length(delim);
+    return split_helper(text, delim, sh_end + sh_dlen, result_list)
+}
+
+fn split_string(text, delim) {
+    return string.split(text, delim)
+}
+
+fn join_strings(str_list, sep, join_idx, join_acc) {
+    let js_len = list.len(str_list);
+    if (join_idx >= js_len) { return join_acc }
+    if (join_idx > 0) { join_acc = join_acc + sep }
+    join_acc = join_acc + list.get(str_list, join_idx);
+    return join_strings(str_list, sep, join_idx + 1, join_acc)
+}
+
+fn list_copy(src_list, copy_idx, copy_acc) {
+    let lc_len = list.len(src_list);
+    if (copy_idx >= lc_len) { return copy_acc }
+    list.append(copy_acc, list.get(src_list, copy_idx));
+    return list_copy(src_list, copy_idx + 1, copy_acc)
+}
+
+fn list_add_unique(items_list, new_item) {
+    if (list.contains(items_list, new_item)) { return items_list }
+    list.append(items_list, new_item);
+    return items_list
+}
+
+fn strip_comment(line_text) {
+    let sc_pos = find_substring(line_text, "//", 0);
+    if (sc_pos < 0) { return line_text }
+    return string.substring(line_text, 0, sc_pos)
+}
+
+fn collect_calls_line(text) {
+    let cc_trimmed = strip_comment(text);
+    return collect_calls_inner(cc_trimmed, 0, list.new())
+}
+
+fn is_blank_line(line_text) {
+    let bl_trim = string.trim(line_text);
+    return string.length(bl_trim) == 0
+}
+
+fn is_comment_line(line_text) {
+    let cl_trim = string.trim(line_text);
+    let cl_first = string.substring(cl_trim, 0, 2);
+    return string.equals(cl_first, "//")
+}
+
+fn is_doc_comment(line_text) {
+    let dc_trim = string.trim(line_text);
+    let dc_first = string.substring(dc_trim, 0, 3);
+    return string.equals(dc_first, "///")
+}
+
+fn is_fn_def_line(line_text) {
+    let fd_trim = string.trim(line_text);
+    let fd_first = string.substring(fd_trim, 0, 3);
+    if (!string.equals(fd_first, "fn ")) { return false }
+    let fd_rest = string.substring(fd_trim, 3, string.length(fd_trim));
+    let fd_paren = find_substring(fd_rest, "(", 0);
+    return fd_paren >= 0
+}
+
+fn is_import_def_line(line_text) {
+    let id_trim = string.trim(line_text);
+    let id_first = string.substring(id_trim, 0, 7);
+    return string.equals(id_first, "import ")
+}
+
+fn is_let_decl_line(line_text) {
+    let ld_trim = string.trim(line_text);
+    let ld_first = string.substring(ld_trim, 0, 4);
+    if (!string.equals(ld_first, "let ")) { return false }
+    let ld_eq = find_substring(ld_trim, "=", 4);
+    return ld_eq >= 0
+}
+
+fn extract_fn_name(line_text) {
+    let ef_trim = string.trim(line_text);
+    let ef_name_start = 3;
+    let ef_paren = find_substring(ef_trim, "(", ef_name_start);
+    if (ef_paren < 0) { return "" }
+    let ef_name = string.substring(ef_trim, ef_name_start, ef_paren);
+    return string.trim(ef_name)
+}
+
+fn extract_fn_params(line_text) {
+    let ep_trim = string.trim(line_text);
+    let ep_open = find_substring(ep_trim, "(", 0);
+    if (ep_open < 0) { return list.new() }
+    let ep_close = find_substring(ep_trim, ")", ep_open);
+    if (ep_close < 0) { return list.new() }
+    let ep_text = string.substring(ep_trim, ep_open + 1, ep_close);
+    let ep_trimmed = string.trim(ep_text);
+    if (string.length(ep_trimmed) == 0) { return list.new() }
+    return split_string(ep_trimmed, ",")
+}
+
+fn extract_import_path(line_text) {
+    let ei_trim = string.trim(line_text);
+    let ei_rest = string.substring(ei_trim, 7, string.length(ei_trim));
+    let ei_semi = find_substring(ei_rest, ";", 0);
+    if (ei_semi >= 0) { ei_rest = string.substring(ei_rest, 0, ei_semi) }
+    let ei_as = find_substring(ei_rest, " as ", 0);
+    if (ei_as >= 0) { ei_rest = string.substring(ei_rest, 0, ei_as) }
+    return string.trim(ei_rest)
+}
+
+fn extract_var_name(line_text) {
+    let ev_trim = string.trim(line_text);
+    let ev_first = string.substring(ev_trim, 0, 4);
+    if (!string.equals(ev_first, "let ")) { return "" }
+    let ev_eq = find_substring(ev_trim, "=", 4);
+    if (ev_eq < 0) { return "" }
+    let ev_name = string.substring(ev_trim, 4, ev_eq);
+    return string.trim(ev_name)
+}
+
+fn cfs_iterate_calls(calls_list, calls_len, iter_idx, counts_map) {
+    if (iter_idx >= calls_len) { return counts_map }
+    let ci_callee = list.get(calls_list, iter_idx);
+    if (map.has(counts_map, ci_callee)) {
+        let ci_old = map.get(counts_map, ci_callee);
+        map.set(counts_map, ci_callee, ci_old + 1)
+    } else {
+        map.set(counts_map, ci_callee, 1)
+    }
+    return cfs_iterate_calls(calls_list, calls_len, iter_idx + 1, counts_map)
+}
+
+fn extract_fn_names(fn_defs, total, iter_idx, name_list) {
+    if (iter_idx >= total) { return name_list }
+    let fn_entry = list.get(fn_defs, iter_idx);
+    list.append(name_list, map.get(fn_entry, "name"));
+    return extract_fn_names(fn_defs, total, iter_idx + 1, name_list)
+}
+
+fn filter_known_callees(callee_list, total, iter_idx, known_names, result_list) {
+    if (iter_idx >= total) { return result_list }
+    let callee = list.get(callee_list, iter_idx);
+    if (list.contains(known_names, callee)) {
+        list.append(result_list, callee)
+    }
+    return filter_known_callees(callee_list, total, iter_idx + 1, known_names, result_list)
+}
+
+fn sum_call_counts(known_names, total, iter_idx, counts_map, accum) {
+    if (iter_idx >= total) { return accum }
+    let fn_name = list.get(known_names, iter_idx);
+    if (map.has(counts_map, fn_name)) {
+        let sc_val = map.get(counts_map, fn_name);
+        accum = accum + sc_val
+    }
+    return sum_call_counts(known_names, total, iter_idx + 1, counts_map, accum)
+}
+
+fn find_fn_bounds(fn_defs, total, iter_idx, target) {
+    if (iter_idx >= total) {
+        let fb_empty = map.new();
+        map.set(fb_empty, "start", 0);
+        map.set(fb_empty, "end", 0);
+        return fb_empty
+    }
+    let fn_entry = list.get(fn_defs, iter_idx);
+    if (string.equals(map.get(fn_entry, "name"), target)) {
+        let fb_result = map.new();
+        map.set(fb_result, "start", map.get(fn_entry, "line"));
+        map.set(fb_result, "end", 0);
+        return fb_result
+    }
+    return find_fn_bounds(fn_defs, total, iter_idx + 1, target)
+}
+
+fn count_known_callees(callee_list, total, iter_idx, known_names, accum) {
+    if (iter_idx >= total) { return accum }
+    let callee = list.get(callee_list, iter_idx);
+    if (list.contains(known_names, callee)) { accum = accum + 1 }
+    return count_known_callees(callee_list, total, iter_idx + 1, known_names, accum)
+}
+
+// Max depth computation - simplified (no cycles)
+// Returns max depth of callees reachable from main
+fn max_depth_of_callees(callee_list, call_graph, idx, max_so_far) {
+    let mdo_count = list.len(callee_list);
+    if (idx >= mdo_count) { return max_so_far }
+    let mdo_callee = list.get(callee_list, idx);
+    // Get depth of this callee by counting its callees
+    let mdo_callee_depth = 1;
+    if (map.has(call_graph, mdo_callee)) {
+        let mdo_grand_callees = map.get(call_graph, mdo_callee);
+        let mdo_grand_count = list.len(mdo_grand_callees);
+        if (mdo_grand_count > 0) { mdo_callee_depth = 2 }
+    }
+    if (mdo_callee_depth > max_so_far) { max_so_far = mdo_callee_depth }
+    return max_depth_of_callees(callee_list, call_graph, idx + 1, max_so_far)
+}
+
+fn compute_max_depth(call_graph) {
+    if (!map.has(call_graph, "main")) { return 0 }
+    let cmd_callees = map.get(call_graph, "main");
+    return max_depth_of_callees(cmd_callees, call_graph, 0, 0)
+}
+
+fn scan_lines_inner(lines, line_idx, fn_defs, imports, let_decls, blank_count, comment_count, code_count) {
+    let sl_count = list.len(lines);
+    if (line_idx >= sl_count) {
+        let sl_fd_count = list.len(fn_defs);
+        if (sl_fd_count > 0) {
+            let sl_last = list.get(fn_defs, sl_fd_count - 1);
+            map.set(sl_last, "end", sl_count - 1)
+        }
+        let sl_result = map.new();
+        map.set(sl_result, "fn_defs", fn_defs);
+        map.set(sl_result, "imports", imports);
+        map.set(sl_result, "let_decls", let_decls);
+        let sl_stats = map.new();
+        map.set(sl_stats, "total_lines", sl_count);
+        map.set(sl_stats, "blank_lines", blank_count);
+        map.set(sl_stats, "comment_lines", comment_count);
+        map.set(sl_stats, "code_lines", code_count);
+        map.set(sl_result, "src_stats", sl_stats);
+        return sl_result
+    }
+    let sl_line = list.get(lines, line_idx);
+    if (is_fn_def_line(sl_line)) {
+        let sl_fd_count = list.len(fn_defs);
+        if (sl_fd_count > 0) {
+            let sl_prev = list.get(fn_defs, sl_fd_count - 1);
+            map.set(sl_prev, "end", line_idx - 1)
+        }
+        let sl_name = extract_fn_name(sl_line);
+        if (string.length(sl_name) > 0) {
+            let sl_params = extract_fn_params(sl_line);
+            let sl_info = map.new();
+            map.set(sl_info, "name", sl_name);
+            map.set(sl_info, "line", line_idx);
+            map.set(sl_info, "params", sl_params);
+            map.set(sl_info, "end", -1);
+            list.append(fn_defs, sl_info)
+        }
+        return scan_lines_inner(lines, line_idx + 1, fn_defs, imports, let_decls, blank_count, comment_count, code_count + 1)
+    }
+    if (is_import_def_line(sl_line)) {
+        let sl_path = extract_import_path(sl_line);
+        if (string.length(sl_path) > 0) { list.append(imports, sl_path) }
+    }
+    if (is_let_decl_line(sl_line)) {
+        let sl_var = extract_var_name(sl_line);
+        if (string.length(sl_var) > 0) { list.append(let_decls, sl_var) }
+    }
+    if (is_blank_line(sl_line)) {
+        return scan_lines_inner(lines, line_idx + 1, fn_defs, imports, let_decls, blank_count + 1, comment_count, code_count)
+    }
+    if (is_comment_line(sl_line)) {
+        return scan_lines_inner(lines, line_idx + 1, fn_defs, imports, let_decls, blank_count, comment_count + 1, code_count)
+    }
+    return scan_lines_inner(lines, line_idx + 1, fn_defs, imports, let_decls, blank_count, comment_count, code_count + 1)
+}
+
+fn scan_lines(lines) {
+    return scan_lines_inner(lines, 0, list.new(), list.new(), list.new(), 0, 0, 0)
+}
+
+fn count_if_in_lines_inner(lines, iter_idx, end_idx, accum) {
+    if (iter_idx > end_idx) { return accum }
+    let ci_line = list.get(lines, iter_idx);
+    let ci_code = strip_comment(ci_line);
+    if (find_substring(ci_code, "if (", 0) >= 0) {
+        return count_if_in_lines_inner(lines, iter_idx + 1, end_idx, accum + 1)
+    }
+    return count_if_in_lines_inner(lines, iter_idx + 1, end_idx, accum)
+}
+
+fn count_if_in_lines(lines, fn_start, fn_end) {
+    return count_if_in_lines_inner(lines, fn_start, fn_end, 0)
+}
+
+fn count_fn_body_lines(fn_start, fn_end) {
+    return (fn_end - fn_start) + 1
+}
+
+fn find_fn_docs_inner(lines, fn_defs, iter_idx, documented, undocumented) {
+    let ffd_total = list.len(fn_defs);
+    if (iter_idx >= ffd_total) {
+        let ffd_result = map.new();
+        map.set(ffd_result, "documented", documented);
+        map.set(ffd_result, "undocumented", undocumented);
+        return ffd_result
+    }
+    let ffd_fn = list.get(fn_defs, iter_idx);
+    let ffd_name = map.get(ffd_fn, "name");
+    let ffd_line = map.get(ffd_fn, "line");
+    let ffd_has_doc = false;
+    if (ffd_line > 0) {
+        let ffd_prev = list.get(lines, ffd_line - 1);
+        ffd_has_doc = is_doc_comment(ffd_prev)
+    }
+    if (ffd_has_doc) {
+        list.append(documented, ffd_name)
+    } else {
+        list.append(undocumented, ffd_name)
+    }
+    return find_fn_docs_inner(lines, fn_defs, iter_idx + 1, documented, undocumented)
+}
+
+fn find_fn_docs(lines, fn_defs) {
+    return find_fn_docs_inner(lines, fn_defs, 0, list.new(), list.new())
+}
+
+// Unreachable detection: unused functions
+fn find_unreachable(fn_names, call_graph) {
+    return list.new()
+}
+
+fn detect_duplicates_inner(items, scan_idx, seen_list, dupe_list) {
+    let dd_count = list.len(items);
+    if (scan_idx >= dd_count) { return dupe_list }
+    let dd_item = list.get(items, scan_idx);
+    if (list.contains(seen_list, dd_item)) {
+        list_add_unique(dupe_list, dd_item)
+    } else {
+        list.append(seen_list, dd_item)
+    }
+    return detect_duplicates_inner(items, scan_idx + 1, seen_list, dupe_list)
+}
+
+fn detect_duplicates(items) {
+    return detect_duplicates_inner(items, 0, list.new(), list.new())
+}
+
+fn count_fn_calls_specific_inner(lines, iter_idx, end_idx, fn_names, counts_map) {
+    if (iter_idx > end_idx) { return counts_map }
+    let cs_line = list.get(lines, iter_idx);
+    let cs_calls = collect_calls_line(cs_line);
+    counts_map = cfs_iterate_calls(cs_calls, list.len(cs_calls), 0, counts_map);
+    return count_fn_calls_specific_inner(lines, iter_idx + 1, end_idx, fn_names, counts_map)
+}
+
+fn count_fn_calls_specific(lines, fn_start, fn_end, fn_names) {
+    return count_fn_calls_specific_inner(lines, fn_start, fn_end, fn_names, map.new())
+}
+
+fn compute_fn_stats_inner(lines, fn_defs, iter_idx, fn_list, len_sum, longest_name, longest_len) {
+    let fs_total = list.len(fn_defs);
+    if (iter_idx >= fs_total) {
+        let fs_avg = 0;
+        if (fs_total > 0) { fs_avg = len_sum / fs_total }
+        let fs_names = extract_fn_names(fn_defs, fs_total, 0, list.new());
+        let fs_dupes = detect_duplicates(fs_names);
+        let fs_result = map.new();
+        map.set(fs_result, "list", fn_list);
+        map.set(fs_result, "total", fs_total);
+        map.set(fs_result, "avg_length", fs_avg);
+        map.set(fs_result, "longest_name", longest_name);
+        map.set(fs_result, "longest_length", longest_len);
+        map.set(fs_result, "duplicates", fs_dupes);
+        return fs_result
+    }
+    let fs_fn = list.get(fn_defs, iter_idx);
+    let fs_name = map.get(fs_fn, "name");
+    let fs_start = map.get(fs_fn, "line");
+    let fs_end = map.get(fs_fn, "end");
+    let fs_length = count_fn_body_lines(fs_start, fs_end);
+    let fs_params = map.get(fs_fn, "params");
+    let fs_params_count = list.len(fs_params);
+    let fs_branches = count_if_in_lines(lines, fs_start, fs_end);
+    let fs_new_len_sum = len_sum + fs_length;
+    let fs_new_longest_name = longest_name;
+    let fs_new_longest_len = longest_len;
+    if (fs_length > longest_len) {
+        fs_new_longest_name = fs_name;
+        fs_new_longest_len = fs_length
+    }
+    let fs_info = map.new();
+    map.set(fs_info, "name", fs_name);
+    map.set(fs_info, "line", fs_start);
+    map.set(fs_info, "length", fs_length);
+    map.set(fs_info, "params_count", fs_params_count);
+    map.set(fs_info, "branches", fs_branches);
+    map.set(fs_info, "fanout", 0);
+    list.append(fn_list, fs_info);
+    return compute_fn_stats_inner(lines, fn_defs, iter_idx + 1, fn_list, fs_new_len_sum, fs_new_longest_name, fs_new_longest_len)
+}
+
+fn compute_fn_stats(lines, fn_defs) {
+    return compute_fn_stats_inner(lines, fn_defs, 0, list.new(), 0, "", 0)
+}
+
+fn compute_var_stats_inner(let_decls, fn_defs, iter_idx, per_fn_map) {
+    let vs_let_total = list.len(let_decls);
+    if (iter_idx >= list.len(fn_defs)) {
+        let vs_dupes = detect_duplicates(let_decls);
+        let vs_result = map.new();
+        map.set(vs_result, "per_fn", per_fn_map);
+        map.set(vs_result, "total", vs_let_total);
+        map.set(vs_result, "duplicates", vs_dupes);
+        return vs_result
+    }
+    let vs_fn = list.get(fn_defs, iter_idx);
+    let vs_fn_name = map.get(vs_fn, "name");
+    if (!map.has(per_fn_map, vs_fn_name)) {
+        map.set(per_fn_map, vs_fn_name, 0)
+    }
+    return compute_var_stats_inner(let_decls, fn_defs, iter_idx + 1, per_fn_map)
+}
+
+fn compute_var_stats(let_decls, fn_defs) {
+    return compute_var_stats_inner(let_decls, fn_defs, 0, map.new())
+}
+
+fn build_call_graph_inner(fn_defs, iter_idx, fn_names, graph, calls_cache) {
+    let bg_total = list.len(fn_defs);
+    if (iter_idx >= bg_total) { return graph }
+    let bg_fn = list.get(fn_defs, iter_idx);
+    let bg_fn_name = map.get(bg_fn, "name");
+    let bg_calls = map.get(calls_cache, bg_fn_name);
+    let bg_callees = map.keys(bg_calls);
+    let bg_unique = filter_known_callees(bg_callees, list.len(bg_callees), 0, fn_names, list.new());
+    map.set(graph, bg_fn_name, bg_unique);
+    return build_call_graph_inner(fn_defs, iter_idx + 1, fn_names, graph, calls_cache)
+}
+
+fn build_call_graph(fn_defs, fn_names, calls_cache) {
+    return build_call_graph_inner(fn_defs, 0, fn_names, map.new(), calls_cache)
+}
+
+fn check_recursive(calls_cache, fn_name) {
+    if (map.has(calls_cache, fn_name)) {
+        let cr_calls = map.get(calls_cache, fn_name);
+        return map.has(cr_calls, fn_name)
+    }
+    return false
+}
+
+fn aggregate_callees(keys_list, keys_total, keys_idx, accum, callee_map) {
+    if (keys_idx >= keys_total) { return accum }
+    let ac_key = list.get(keys_list, keys_idx);
+    let ac_count = map.get(callee_map, ac_key);
+    if (map.has(accum, ac_key)) {
+        let ac_old = map.get(accum, ac_key);
+        map.set(accum, ac_key, ac_old + ac_count)
+    } else {
+        map.set(accum, ac_key, ac_count)
+    }
+    return aggregate_callees(keys_list, keys_total, keys_idx + 1, accum, callee_map)
+}
+
+fn build_calls_from_cache(calls_cache, fn_names, total, iter_idx, accum) {
+    if (iter_idx >= total) { return accum }
+    let bcc_name = list.get(fn_names, iter_idx);
+    let bcc_callees = map.get(calls_cache, bcc_name);
+    let bcc_keys = map.keys(bcc_callees);
+    let bcc_accum = aggregate_callees(bcc_keys, list.len(bcc_keys), 0, accum, bcc_callees);
+    return build_calls_from_cache(calls_cache, fn_names, total, iter_idx + 1, bcc_accum)
+}
+
+fn compute_call_stats_inner(fn_defs, call_counts, fn_names, iter_idx, unused, recursive, calls_cache) {
+    let cs_fn_total = list.len(fn_defs);
+    if (iter_idx >= cs_fn_total) {
+        let cs_total = sum_call_counts(fn_names, cs_fn_total, 0, call_counts, 0);
+        let cs_result = map.new();
+        map.set(cs_result, "counts", call_counts);
+        map.set(cs_result, "total", cs_total);
+        map.set(cs_result, "unused", unused);
+        map.set(cs_result, "recursive", recursive);
+        return cs_result
+    }
+    let cs_fn = list.get(fn_defs, iter_idx);
+    let cs_fn_name = map.get(cs_fn, "name");
+    if (!map.has(call_counts, cs_fn_name)) {
+        if (!string.equals(cs_fn_name, "main")) {
+            list.append(unused, cs_fn_name)
+        }
+    }
+    if (map.has(call_counts, cs_fn_name)) {
+        if (check_recursive(calls_cache, cs_fn_name)) {
+            list_add_unique(recursive, cs_fn_name)
+        }
+    }
+    return compute_call_stats_inner(fn_defs, call_counts, fn_names, iter_idx + 1, unused, recursive, calls_cache)
+}
+
+fn filter_fn_counts(raw_counts, fn_names, fn_total, filtered) {
+    if (fn_total <= 0) { return filtered }
+    let ff_name = list.get(fn_names, fn_total - 1);
+    if (map.has(raw_counts, ff_name)) {
+        map.set(filtered, ff_name, map.get(raw_counts, ff_name))
+    }
+    return filter_fn_counts(raw_counts, fn_names, fn_total - 1, filtered)
+}
+
+fn compute_call_stats(lines, fn_defs, fn_names, calls_cache) {
+    let cs_raw = build_calls_from_cache(calls_cache, fn_names, list.len(fn_names), 0, map.new());
+    let cs_filtered = filter_fn_counts(cs_raw, fn_names, list.len(fn_names), map.new());
+    return compute_call_stats_inner(fn_defs, cs_filtered, fn_names, 0, list.new(), list.new(), calls_cache)
+}
+
+fn compute_module_stats(imports_list) {
+    let ms_total = list.len(imports_list);
+    let ms_dupes = detect_duplicates(imports_list);
+    let ms_result = map.new();
+    map.set(ms_result, "imports", imports_list);
+    map.set(ms_result, "total", ms_total);
+    map.set(ms_result, "duplicates", ms_dupes);
+    return ms_result
+}
+
+fn compute_fanout_inner(fn_defs, fn_names, iter_idx, fanout_map, calls_cache) {
+    let fo_total = list.len(fn_defs);
+    if (iter_idx >= fo_total) { return fanout_map }
+    let fo_fn = list.get(fn_defs, iter_idx);
+    let fo_fn_name = map.get(fo_fn, "name");
+    let fo_calls = map.get(calls_cache, fo_fn_name);
+    let fo_callees = map.keys(fo_calls);
+    let fo_unique = count_known_callees(fo_callees, list.len(fo_callees), 0, fn_names, 0);
+    map.set(fanout_map, fo_fn_name, fo_unique);
+    return compute_fanout_inner(fn_defs, fn_names, iter_idx + 1, fanout_map, calls_cache)
+}
+
+fn compute_fanout(fn_defs, fn_names, calls_cache) {
+    return compute_fanout_inner(fn_defs, fn_names, 0, map.new(), calls_cache)
+}
+
+fn compute_complexity_inner(fn_list, iter_idx, high_branch, large_funcs, high_fanout, fanout_map, max_depth) {
+    let cx_total = list.len(fn_list);
+    if (iter_idx >= cx_total) {
+        let cx_result = map.new();
+        map.set(cx_result, "max_depth", max_depth);
+        map.set(cx_result, "high_branch", high_branch);
+        map.set(cx_result, "large_funcs", large_funcs);
+        map.set(cx_result, "high_fanout", high_fanout);
+        return cx_result
+    }
+    let cx_fn = list.get(fn_list, iter_idx);
+    let cx_fn_name = map.get(cx_fn, "name");
+    let cx_branches = map.get(cx_fn, "branches");
+    let cx_length = map.get(cx_fn, "length");
+    if (cx_branches > 5) {
+        list.append(high_branch, cx_fn_name + " (" + convert.to_string(cx_branches) + ")")
+    }
+    if (cx_length > 50) {
+        list.append(large_funcs, cx_fn_name + " (" + convert.to_string(cx_length) + " lines)")
+    }
+    if (map.has(fanout_map, cx_fn_name)) {
+        let cx_fan_val = map.get(fanout_map, cx_fn_name);
+        if (cx_fan_val > 5) {
+            list.append(high_fanout, cx_fn_name + " (" + convert.to_string(cx_fan_val) + " callees)")
+        }
+    }
+    return compute_complexity_inner(fn_list, iter_idx + 1, high_branch, large_funcs, high_fanout, fanout_map, max_depth)
+}
+
+fn build_fn_calls_cache(lines, fn_defs, fn_names, iter_idx, cache) {
+    let cc_total = list.len(fn_defs);
+    if (iter_idx >= cc_total) { return cache }
+    let cc_fn = list.get(fn_defs, iter_idx);
+    let cc_fn_name = map.get(cc_fn, "name");
+    let cc_start = map.get(cc_fn, "line");
+    let cc_end = map.get(cc_fn, "end");
+    let cc_calls = count_fn_calls_specific(lines, cc_start, cc_end, fn_names);
+    map.set(cache, cc_fn_name, cc_calls);
+    return build_fn_calls_cache(lines, fn_defs, fn_names, iter_idx + 1, cache)
+}
+
+fn compute_complexity(fn_list, fn_defs, fn_names, calls_cache) {
+    let cx_fanout = compute_fanout(fn_defs, fn_names, calls_cache);
+    let cx_call_graph = build_call_graph(fn_defs, fn_names, calls_cache);
+    let cx_max_depth = compute_max_depth(cx_call_graph);
+    return compute_complexity_inner(fn_list, 0, list.new(), list.new(), list.new(), cx_fanout, cx_max_depth)
+}
+
+fn sort_desc_inner(input_map, keys_list, iter_idx, result_list) {
+    let sd_total = list.len(keys_list);
+    if (iter_idx >= sd_total) { return result_list }
+    let sd_key = list.get(keys_list, iter_idx);
+    let sd_val = map.get(input_map, sd_key);
+    list.append(result_list, sd_key + " (" + convert.to_string(sd_val) + ")");
+    return sort_desc_inner(input_map, keys_list, iter_idx + 1, result_list)
+}
+
+fn sort_map_desc(input_map) {
+    let sd_keys = map.keys(input_map);
+    return sort_desc_inner(input_map, sd_keys, 0, list.new())
+}
+
+fn print_lines(lines_list, iter_idx) {
+    let pl_count = list.len(lines_list);
+    if (iter_idx >= pl_count) { return 0 }
+    io.writeln(list.get(lines_list, iter_idx));
+    return print_lines(lines_list, iter_idx + 1)
+}
+
+fn append_line(report_list, text) {
+    list.append(report_list, text);
+    return report_list
+}
+
+fn append_fn_details(report_list, fn_list, iter_idx) {
+    let fd_total = list.len(fn_list);
+    if (iter_idx >= fd_total) { return report_list }
+    let fd_fn = list.get(fn_list, iter_idx);
+    let fd_name = map.get(fd_fn, "name");
+    let fd_params = convert.to_string(map.get(fd_fn, "params_count"));
+    let fd_len = convert.to_string(map.get(fd_fn, "length"));
+    let fd_branches = convert.to_string(map.get(fd_fn, "branches"));
+    let fd_line = "    " + fd_name + " (params:" + fd_params + ", lines:" + fd_len + ", ifs:" + fd_branches + ")";
+    list.append(report_list, fd_line);
+    return append_fn_details(report_list, fn_list, iter_idx + 1)
+}
+
+fn append_import_list(report_list, imports_list, iter_idx) {
+    let ai_total = list.len(imports_list);
+    if (iter_idx >= ai_total) { return report_list }
+    list.append(report_list, "    - " + list.get(imports_list, iter_idx));
+    return append_import_list(report_list, imports_list, iter_idx + 1)
+}
+
+fn append_call_sorted(report_list, sorted_list, iter_idx) {
+    let ac_total = list.len(sorted_list);
+    if (iter_idx >= ac_total) { return report_list }
+    list.append(report_list, "    " + list.get(sorted_list, iter_idx));
+    return append_call_sorted(report_list, sorted_list, iter_idx + 1)
+}
+
+fn append_dep_tree_sub(report_list, callee_list, total, iter_idx, graph, indent, visited) {
+    if (iter_idx >= total) { return report_list }
+    let dt_callee = list.get(callee_list, iter_idx);
+    let dt_skip = "";
+    if (list.contains(visited, dt_callee)) {
+        list.append(report_list, indent + "+-- " + dt_callee + " (cycle)");
+        dt_skip = "skip"
+    } else {
+        list.append(report_list, indent + "+-- " + dt_callee);
+        list.append(visited, dt_callee);
+        if (map.has(graph, dt_callee)) {
+            let dt_sub = map.get(graph, dt_callee);
+            let dt_flag2 = 1;
+            dt_flag2 = append_dep_tree_sub(report_list, dt_sub, list.len(dt_sub), 0, graph, indent + "|   ", visited)
+        }
+    }
+    return append_dep_tree_sub(report_list, callee_list, total, iter_idx + 1, graph, indent, visited)
+}
+
+fn generate_report_text(filepath, src_stats, fn_stats, var_stats, call_stats, mod_stats, complexity, call_graph, doc_stats, unreachable) {
+    let rpt = list.new();
+    rpt = append_line(rpt, "========================================================================");
+    rpt = append_line(rpt, "  AILang Static Code Analyzer -- Report");
+    rpt = append_line(rpt, "========================================================================");
+    rpt = append_line(rpt, "");
+    rpt = append_line(rpt, "File: " + filepath);
+    rpt = append_line(rpt, "------------------------------------------------------------------------");
+    rpt = append_line(rpt, "");
+    rpt = append_line(rpt, "Source Statistics");
+    rpt = append_line(rpt, "-----------------");
+    rpt = append_line(rpt, "  Total lines:      " + convert.to_string(map.get(src_stats, "total_lines")));
+    rpt = append_line(rpt, "  Blank lines:      " + convert.to_string(map.get(src_stats, "blank_lines")));
+    rpt = append_line(rpt, "  Comment lines:    " + convert.to_string(map.get(src_stats, "comment_lines")));
+    rpt = append_line(rpt, "  Code lines:       " + convert.to_string(map.get(src_stats, "code_lines")));
+    rpt = append_line(rpt, "");
+    rpt = append_line(rpt, "Function Analysis");
+    rpt = append_line(rpt, "-----------------");
+    let fs_list = map.get(fn_stats, "list");
+    rpt = append_line(rpt, "  Total functions:  " + convert.to_string(map.get(fn_stats, "total")));
+    rpt = append_line(rpt, "  Average length:   " + convert.to_string(map.get(fn_stats, "avg_length")) + " lines");
+    rpt = append_line(rpt, "  Longest:          " + map.get(fn_stats, "longest_name") + " (" + convert.to_string(map.get(fn_stats, "longest_length")) + " lines)");
+    let fs_dupes = map.get(fn_stats, "duplicates");
+    if (list.len(fs_dupes) > 0) {
+        rpt = append_line(rpt, "  Duplicate names:  " + join_strings(fs_dupes, ", ", 0, ""))
+    } else {
+        rpt = append_line(rpt, "  Duplicates:       (none)")
+    }
+    rpt = append_line(rpt, "");
+    rpt = append_line(rpt, "  Functions:");
+    rpt = append_fn_details(rpt, fs_list, 0);
+    rpt = append_line(rpt, "");
+    rpt = append_line(rpt, "Variable Analysis");
+    rpt = append_line(rpt, "-----------------");
+    rpt = append_line(rpt, "  Total let decls:  " + convert.to_string(map.get(var_stats, "total")));
+    let vs_dupes = map.get(var_stats, "duplicates");
+    if (list.len(vs_dupes) > 0) {
+        rpt = append_line(rpt, "  Duplicates:       " + join_strings(vs_dupes, ", ", 0, ""))
+    } else {
+        rpt = append_line(rpt, "  Duplicates:       (none)")
+    }
+    rpt = append_line(rpt, "");
+    rpt = append_line(rpt, "Call Analysis");
+    rpt = append_line(rpt, "-------------");
+    rpt = append_line(rpt, "  Total calls:      " + convert.to_string(map.get(call_stats, "total")));
+    let ca_unused = map.get(call_stats, "unused");
+    if (list.len(ca_unused) > 0) {
+        rpt = append_line(rpt, "  Unused functions: " + join_strings(ca_unused, ", ", 0, ""))
+    } else {
+        rpt = append_line(rpt, "  Unused:           (none)")
+    }
+    let ca_recursive = map.get(call_stats, "recursive");
+    if (list.len(ca_recursive) > 0) {
+        rpt = append_line(rpt, "  Recursive:        " + join_strings(ca_recursive, ", ", 0, ""))
+    } else {
+        rpt = append_line(rpt, "  Recursive:        (none detected)")
+    }
+    rpt = append_line(rpt, "");
+    rpt = append_line(rpt, "  Most called (user fns):");
+    let ca_counts = map.get(call_stats, "counts");
+    let ca_sorted = sort_map_desc(ca_counts);
+    rpt = append_call_sorted(rpt, ca_sorted, 0);
+    rpt = append_line(rpt, "");
+    rpt = append_line(rpt, "Module Analysis");
+    rpt = append_line(rpt, "---------------");
+    rpt = append_line(rpt, "  Import count:     " + convert.to_string(map.get(mod_stats, "total")));
+    let ms_imports = map.get(mod_stats, "imports");
+    if (list.len(ms_imports) > 0) {
+        rpt = append_line(rpt, "  Imports:");
+        rpt = append_import_list(rpt, ms_imports, 0)
+    }
+    rpt = append_line(rpt, "");
+    rpt = append_line(rpt, "Complexity Report");
+    rpt = append_line(rpt, "-----------------");
+    rpt = append_line(rpt, "  Max call depth:   " + convert.to_string(map.get(complexity, "max_depth")));
+    let cx_high_branch = map.get(complexity, "high_branch");
+    if (list.len(cx_high_branch) > 0) {
+        rpt = append_line(rpt, "  High-branch fns:  " + join_strings(cx_high_branch, ", ", 0, ""))
+    } else {
+        rpt = append_line(rpt, "  High-branch fns:  (none)")
+    }
+    let cx_large_funcs = map.get(complexity, "large_funcs");
+    if (list.len(cx_large_funcs) > 0) {
+        rpt = append_line(rpt, "  Large fns (>50):  " + join_strings(cx_large_funcs, ", ", 0, ""))
+    } else {
+        rpt = append_line(rpt, "  Large fns (>50):  (none)")
+    }
+    let cx_high_fanout = map.get(complexity, "high_fanout");
+    if (list.len(cx_high_fanout) > 0) {
+        rpt = append_line(rpt, "  High fanout (>5): " + join_strings(cx_high_fanout, ", ", 0, ""))
+    } else {
+        rpt = append_line(rpt, "  High fanout (>5): (none)")
+    }
+    rpt = append_line(rpt, "");
+    rpt = append_line(rpt, "Dependency Tree");
+    rpt = append_line(rpt, "---------------");
+    if (map.has(call_graph, "main")) {
+        let dt_callees = map.get(call_graph, "main");
+        rpt = append_line(rpt, "  main");
+        let dt_visited = list.new();
+        rpt = append_dep_tree_sub(rpt, dt_callees, list.len(dt_callees), 0, call_graph, "   ", dt_visited)
+    } else {
+        rpt = append_line(rpt, "  (no call graph)")
+    }
+    rpt = append_line(rpt, "");
+    rpt = append_line(rpt, "Documentation Analysis");
+    rpt = append_line(rpt, "---------------------");
+    let ds_undoc = map.get(doc_stats, "undocumented");
+    if (list.len(ds_undoc) > 0) {
+        rpt = append_line(rpt, "  Missing docs:     " + join_strings(ds_undoc, ", ", 0, ""))
+    } else {
+        rpt = append_line(rpt, "  Missing docs:     (none)")
+    }
+    rpt = append_line(rpt, "");
+    rpt = append_line(rpt, "Reachability Analysis");
+    rpt = append_line(rpt, "---------------------");
+    if (list.len(unreachable) > 0) {
+        rpt = append_line(rpt, "  Unreachable fns:  " + join_strings(unreachable, ", ", 0, ""))
+    } else {
+        rpt = append_line(rpt, "  Unreachable fns:  (none)")
+    }
+    rpt = append_line(rpt, "");
+    rpt = append_line(rpt, "========================================================================");
+    return rpt
+}
+
+fn analyze_file(filepath) {
+    if (!file.exists(filepath)) {
+        io.writeln("Error: file not found: " + filepath);
+        return map.new()
+    }
+    let content = file.read(filepath);
+    if (string.length(content) == 0) {
+        let af_result = map.new();
+        map.set(af_result, "path", filepath);
+        let af_stats = map.new();
+        map.set(af_stats, "total_lines", 0);
+        map.set(af_stats, "blank_lines", 0);
+        map.set(af_stats, "comment_lines", 0);
+        map.set(af_stats, "code_lines", 0);
+        map.set(af_result, "source_stats", af_stats);
+        return af_result
+    }
+    let lines = split_string(content, "\n");
+    let scan_result = scan_lines(lines);
+    let fn_defs = map.get(scan_result, "fn_defs");
+    let fn_names = extract_fn_names(fn_defs, list.len(fn_defs), 0, list.new());
+    let imports = map.get(scan_result, "imports");
+    let let_decls = map.get(scan_result, "let_decls");
+    let src_stats = map.get(scan_result, "src_stats");
+    let fn_stats = compute_fn_stats(lines, fn_defs);
+    let var_stats = compute_var_stats(let_decls, fn_defs);
+    let calls_cache = build_fn_calls_cache(lines, fn_defs, fn_names, 0, map.new());
+    let call_graph = build_call_graph(fn_defs, fn_names, calls_cache);
+    let call_stats = compute_call_stats(lines, fn_defs, fn_names, calls_cache);
+    let mod_stats = compute_module_stats(imports);
+    let fn_list = map.get(fn_stats, "list");
+    let complexity = compute_complexity(fn_list, fn_defs, fn_names, calls_cache);
+    let fn_docs = find_fn_docs(lines, fn_defs);
+    let unreachable = find_unreachable(fn_names, call_graph);
+    let af_result = map.new();
+    map.set(af_result, "path", filepath);
+    map.set(af_result, "source_stats", src_stats);
+    map.set(af_result, "fn_stats", fn_stats);
+    map.set(af_result, "var_stats", var_stats);
+    map.set(af_result, "call_stats", call_stats);
+    map.set(af_result, "mod_stats", mod_stats);
+    map.set(af_result, "complexity", complexity);
+    map.set(af_result, "call_graph", call_graph);
+    map.set(af_result, "doc_stats", fn_docs);
+    map.set(af_result, "unreachable", unreachable);
+    let report = generate_report_text(filepath, src_stats, fn_stats, var_stats, call_stats, mod_stats, complexity, call_graph, fn_docs, unreachable);
+    map.set(af_result, "report", report);
+    return af_result
+}
+
+fn process_file(filepath) {
+    io.writeln("");
+    io.writeln("Analyzing: " + filepath);
+    io.writeln("");
+    let result = analyze_file(filepath);
+    if (map.has(result, "report")) {
+        print_lines(map.get(result, "report"), 0)
+    }
+    return result
+}
+
+fn process_files_inner(args_list, total, iter_idx, results) {
+    if (iter_idx >= total) { return results }
+    let pf_filepath = list.get(args_list, iter_idx);
+    let pf_result = process_file(pf_filepath);
+    list.append(results, pf_result);
+    return process_files_inner(args_list, total, iter_idx + 1, results)
+}
+
+fn main() {
+    let args = environment.args();
+    let arg_cnt = list.len(args);
+    if (arg_cnt < 1) {
+        io.writeln("Usage: ail run apps/static_analyzer/main.ail <file1.ail> [file2.ail ...]");
+        io.writeln("");
+        io.writeln("AILang Static Code Analyzer -- inspects .ail source files");
+        io.writeln("and generates a comprehensive engineering report.");
+        system.exit(1);
+        return 1
+    }
+    let all_results = process_files_inner(args, arg_cnt, 0, list.new());
+    return 0
+}

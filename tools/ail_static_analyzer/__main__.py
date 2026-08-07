@@ -8,7 +8,10 @@ import subprocess
 import sys
 from pathlib import Path
 
-from ail_platform.project import get_project_root
+from ail_platform.project import (
+    resolve_bundled_app,
+    resolve_project_root,
+)
 from ail_platform.report_schema import ExitCode
 
 
@@ -40,24 +43,29 @@ def discover_ail_files(target: Path) -> list[Path]:
 
 def run_analyzer_on_file(filepath: Path, timeout: int = 300) -> tuple[dict, str]:
     """Run the AILang static analyzer on a single file and return parsed results."""
-    root = get_project_root()
-    analyzer_app = root / "apps" / "static_analyzer" / "main.ail"
+    # The analyzer is a bootstrap AILang app. Prefer the live copy in a
+    # source checkout; fall back to the wheel-bundled copy under
+    # ail_platform/data/apps/. This makes `ail static-analyzer <file>`
+    # usable after a plain `pip install ailang-lang` (no source checkout).
+    analyzer_app = resolve_bundled_app("static_analyzer")
     if not analyzer_app.is_file():
-        # The analyzer is a bootstrap AILang app shipped in the repository
-        # tree. When installed from PyPI without the repo the analyzer app
-        # is not available, so emit a clear error instead of silently
-        # returning zero metrics (which the evaluator flagged as a bug).
+        # Neither the repo copy nor the bundled copy is available, so emit a
+        # clear error instead of silently returning zero metrics (which the
+        # evaluator flagged as a bug).
         raise FileNotFoundError(
             f"static analyzer app not found at {analyzer_app}. "
-            "Install AILang from the repository source tree (pip install -e .) "
-            "to enable static analysis, or run 'ail static-analyzer' from "
-            "within an AILang checkout."
+            "Reinstall ailang-lang (pip install --force-reinstall ailang-lang) "
+            "or run 'ail static-analyzer' from within an AILang checkout."
         )
     result = subprocess.run(
         [sys.executable, "-m", "compiler", str(analyzer_app), str(filepath)],
         capture_output=True,
         text=True,
-        cwd=root,
+        # cwd must contain the target file: the runtime sandbox restricts
+        # file reads to the working directory. Using the file's own parent
+        # keeps `ail static-analyzer <file>` working when the package is
+        # installed in site-packages (the file is never under site-packages).
+        cwd=filepath.parent,
         timeout=timeout,
     )
     if result.returncode != 0:
@@ -263,7 +271,10 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    root = Path.cwd()
+    # Operate against the user's project (CWD-based), not the package
+    # location. Under a wheel install get_project_root() resolves to
+    # site-packages; writing reports there would pollute the package.
+    root = resolve_project_root()
 
     # Determine what to analyze
     target_path = Path(args.target)

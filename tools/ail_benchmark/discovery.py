@@ -7,6 +7,8 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
+from ail_platform.project import bundled_apps_dir
+
 
 @dataclass
 class Benchmark:
@@ -33,14 +35,33 @@ SUITE_DEFINITIONS: dict[str, list[str]] = {
     ],
 }
 
+# Args for the static_analyzer benchmark are relative to the app's own
+# directory (the runner sets cwd to the benchmark app's parent), so the
+# analyzer analyzes its own main.ail. This stays correct both in a source
+# checkout (apps/static_analyzer/) and on a wheel install (bundled data).
 BENCHMARK_ARGS: dict[str, list[str]] = {
-    "static_analyzer": ["apps/static_analyzer/main.ail"],
+    "static_analyzer": ["main.ail"],
 }
+
+
+def benchmark_apps_dir(root: Path) -> Path:
+    """Return the directory holding benchmark apps (apps/<name>/main.ail).
+
+    In a source checkout this is ``<root>/apps`` (live app sources). On a
+    wheel install there is no ``apps/`` tree under site-packages, so fall
+    back to the apps bundled with the package under
+    ``ail_platform/data/apps``. This makes `ail benchmark` usable after a
+    plain ``pip install ailang-lang``.
+    """
+    live = root / "apps"
+    if live.is_dir():
+        return live
+    return bundled_apps_dir()
 
 
 def discover_all_apps(root: Path) -> list[Benchmark]:
     """Auto-discover all benchmark applications in apps/*/main.ail."""
-    apps_dir = root / "apps"
+    apps_dir = benchmark_apps_dir(root)
     if not apps_dir.is_dir():
         return []
 
@@ -87,7 +108,7 @@ def discover_benchmarks(
     """
     if app_name:
         # Single app mode: return just that one app
-        app_path = root / "apps" / app_name / "main.ail"
+        app_path = benchmark_apps_dir(root) / app_name / "main.ail"
         if not app_path.is_file():
             raise ValueError(
                 f"Benchmark app '{app_name}' not found at apps/{app_name}/main.ail"
@@ -109,10 +130,11 @@ def discover_benchmarks(
         valid = ", ".join(sorted(SUITE_DEFINITIONS.keys()) + ["full"])
         raise ValueError(f"Unknown suite '{suite}'. Valid suites: {valid}")
 
+    apps_dir = benchmark_apps_dir(root)
     app_names = SUITE_DEFINITIONS[suite]
     benchmarks: list[Benchmark] = []
     for app_name in app_names:
-        app_path = root / "apps" / app_name / "main.ail"
+        app_path = apps_dir / app_name / "main.ail"
         if not app_path.is_file():
             print(
                 f"Warning: Expected benchmark '{app_name}' not found at "

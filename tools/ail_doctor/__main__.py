@@ -11,7 +11,7 @@ import sys
 import time
 from pathlib import Path
 
-from ail_platform.project import get_project_root, read_file_safe
+from ail_platform.project import get_project_root, read_file_safe, resolve_project_root
 
 # Maximum number of files to scan (prevents hangs on large repos)
 _MAX_SCAN_FILES = 5000
@@ -458,9 +458,25 @@ def check_ail_package() -> dict:
         return {"installed": False, "version": None, "ok": False}
 
 
-def generate_report() -> str:
-    """Generate the DOCTOR_REPORT.md content."""
-    root = get_project_root()
+def generate_report(scan_root: Path | None = None) -> str:
+    """Generate the DOCTOR_REPORT.md content.
+
+    Args:
+        scan_root: Directory to scan. Defaults to the CWD-resolved project
+            root (never the installed package location).
+    """
+    # Scan scope = the user's project directory (CWD, or the nearest ancestor
+    # with an ail.toml / .ail marker; falls back to CWD). Scanning the
+    # installed package location would walk site-packages and produce
+    # nonsense results (broken links in unrelated packages, a 0/100 score).
+    if scan_root is None:
+        root = resolve_project_root()
+    else:
+        root = scan_root
+    # Package-internal component checks (stdlib, embedded docs, MCP/LSP
+    # server sources) look at the *installed package* location: the source
+    # checkout in dev, site-packages on a wheel install.
+    package_root = get_project_root()
 
     # Gather all check results
     broken_links = check_broken_internal_links(root)
@@ -471,10 +487,10 @@ def generate_report() -> str:
     version_issues = check_version_consistency(root)
     orphan_docs = check_orphan_documents(root)
     python_version = check_python_version()
-    stdlib_missing = check_stdlib_available(root)
-    docs_missing = check_docs_available(root)
-    mcp = check_mcp_available(root)
-    lsp = check_lsp_available(root)
+    stdlib_missing = check_stdlib_available(package_root)
+    docs_missing = check_docs_available(package_root)
+    mcp = check_mcp_available(package_root)
+    lsp = check_lsp_available(package_root)
     ail_path = check_ail_on_path()
     vscode = check_vscode_extension(root)
     ail_pkg = check_ail_package()

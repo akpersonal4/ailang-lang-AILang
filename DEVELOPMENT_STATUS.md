@@ -10,7 +10,7 @@ until this document has been reviewed. Update AGENTS.md reading order after revi
 
 | Attribute | Value |
 |:----------|:------|
-| **Current Release** | v1.1.16 (Published) |
+| **Current Release** | v1.1.17 (Release Gate) |
 | **Current Milestone** | A100 — Community Validation |
 | **Project Phase** | Public Release |
 

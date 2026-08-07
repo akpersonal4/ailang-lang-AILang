@@ -4,13 +4,23 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from ail_platform.project import resolve_project_root
 from tools.ail_testgen.models import AUTO_HEADER, TestCase, TestCategory
-from tools.common.filesystem import ensure_output_dir, get_project_root
+from tools.common.filesystem import ensure_output_dir
 from tools.common.hashing import hash_file
 
 
 def _relative_app_path(root: Path, source_file: Path) -> str:
-    return str(source_file.relative_to(root)).replace("\\", "/")
+    """Return the app path relative to the project root.
+
+    Falls back to the absolute path when the file lives outside the project
+    (e.g. a single-file mode invocation on a file in another directory), so
+    the generated pytest can still locate it.
+    """
+    try:
+        return str(source_file.relative_to(root)).replace("\\", "/")
+    except ValueError:
+        return str(source_file.resolve()).replace("\\", "/")
 
 
 def _generate_pytest_source(root: Path, cases: list[TestCase]) -> str:
@@ -79,15 +89,25 @@ def generate_all(
     cases: list[TestCase],
     output_dir: Path,
     force: bool = False,
+    root: Path | None = None,
 ) -> list[dict]:
     """Generate pytest test files for all TestCase objects.
 
     Produces one file per app containing all its test cases.
     Skips existing files unless force=True.
 
+    Args:
+        cases: TestCase objects to turn into files.
+        output_dir: Where generated tests are written.
+        force: Overwrite existing files.
+        root: Project root used for relative paths in generated tests.
+            Defaults to the CWD-resolved project root (never the installed
+            package location), which keeps `ail testgen` working on a wheel.
+
     Returns a list of result dicts with file/status/hash/test_count.
     """
-    root = get_project_root()
+    if root is None:
+        root = resolve_project_root()
     output_dir = ensure_output_dir(output_dir)
 
     seen: dict[str, list[TestCase]] = {}

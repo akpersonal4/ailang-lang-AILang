@@ -1,5 +1,41 @@
 # Changelog
 
+## v1.1.17 (A100 Community Validation — Release Gate)
+
+Precondition fixes for the A100 Community Validation milestone: wheel-installed
+tooling (`ail testgen`, `ail benchmark`, `ail static-analyzer`, `ail doctor`,
+`ail rename`) previously resolved the project root relative to the package
+location, breaking when installed from a wheel into site-packages (no `apps/`
+directory present). See `docs/roadmap/A100_COMMUNITY_VALIDATION.md`.
+
+### Bugs Fixed (A100 Preconditions)
+
+- **`ail testgen <file>` ValueError on wheel installs**: `ail testgen` now
+  resolves the project root from the current working directory
+  (`resolve_project_root`) and guards against `Relative path ... is not within
+  the parent` when the target file lives outside the project tree. Regression
+  tests added for single-file and bare-directory invocations.
+- **`ail benchmark` / `ail static-analyzer` source-checkout requirement**:
+  both tools now fall back to bundled canonical apps packaged inside the wheel
+  (`ail_platform/data/apps/`) when no source `apps/` directory exists, and the
+  static analyzer runs with its working directory set to the target file's
+  parent so runtime sandbox restrictions do not block analysis of files outside
+  site-packages.
+- **`ail doctor` 0/100 health score on wheel installs**: `ail doctor` now scans
+  the user's project (CWD-derived project root) instead of package internals,
+  restoring a healthy score on wheel-only installs; package presence checks
+  still target the installed package root.
+- **`ail rename` wrong directory in error message**: the error now reports the
+  actual working directory and includes a hint when a stray project marker
+  (`.ail/` directory) exists at a higher level.
+
+### Packaging
+
+- Canonical apps bundled into the wheel under `ail_platform/data/apps/`
+  (dice_roller, hangman_game, inventory_mgmt, kanban, static_analyzer).
+- `pyproject.toml` package-data and `MANIFEST.in` extended so bundled apps ship
+  in both wheel and sdist.
+
 ## v1.1.16 (RC1)
 
 Maintenance patch release candidate following the M134 external review

@@ -1,0 +1,125 @@
+import random;
+import list;
+import string;
+
+fn find_substring(text, pattern, start) {
+    let tlen = string.length(text);
+    let plen = string.length(pattern);
+    if (start + plen > tlen) { return -1 }
+    let segment = string.substring(text, start, start + plen);
+    if (string.equals(segment, pattern)) { return start }
+    return find_substring(text, pattern, start + 1)
+}
+
+fn string_contains(text, pattern) {
+    let result = find_substring(text, pattern, 0);
+    if (result >= 0) { return true }
+    return false
+}
+
+fn is_letter_guessed(letter, guessed, i) {
+    if (i >= list.len(guessed)) { return false }
+    if (list.get(guessed, i) == letter) { return true }
+    return is_letter_guessed(letter, guessed, i + 1)
+}
+
+fn build_display(word, guessed, i, acc) {
+    if (i >= string.length(word)) { return acc }
+    let letter = string.substring(word, i, i + 1);
+    if (is_letter_guessed(letter, guessed, 0)) {
+        return build_display(word, guessed, i + 1, acc + letter)
+    }
+    return build_display(word, guessed, i + 1, acc + "_")
+}
+
+fn count_unguessed(word, guessed, i) {
+    if (i >= string.length(word)) { return 0 }
+    let letter = string.substring(word, i, i + 1);
+    if (is_letter_guessed(letter, guessed, 0)) {
+        return count_unguessed(word, guessed, i + 1)
+    }
+    return 1 + count_unguessed(word, guessed, i + 1)
+}
+
+fn get_words() {
+    let w = list.new();
+    list.append(w, "ailang");
+    list.append(w, "compiler");
+    list.append(w, "function");
+    list.append(w, "recursion");
+    list.append(w, "variable");
+    list.append(w, "stdlib");
+    list.append(w, "program");
+    list.append(w, "syntax");
+    list.append(w, "module");
+    list.append(w, "runtime");
+    return w
+}
+
+fn reveal_random(word, guessed, remaining) {
+    if (remaining <= 0) { return guessed }
+    let pos = random.int(0, string.length(word) - 1);
+    let letter = string.substring(word, pos, pos + 1);
+    if (!is_letter_guessed(letter, guessed, 0)) {
+        list.append(guessed, letter);
+        return reveal_random(word, guessed, remaining - 1)
+    }
+    return reveal_random(word, guessed, remaining)
+}
+
+fn play_hangman(word, guessed, lives, hint_given) {
+    let unguessed = count_unguessed(word, guessed, 0);
+    if (unguessed == 0) {
+        print("You guessed it! The word was:", word);
+        return 0
+    }
+    if (lives <= 0) {
+        print("Game over! The word was:", word);
+        return 0
+    }
+    let display = build_display(word, guessed, 0, "");
+    print("Word:", display, "| Lives:", lives);
+    if (!hint_given && lives == 2) {
+        guessed = reveal_random(word, guessed, 1);
+        print("Hint: Revealing a random letter!");
+        hint_given = true
+    }
+    let alphabet = list.new();
+    list.append(alphabet, "a"); list.append(alphabet, "e");
+    list.append(alphabet, "i"); list.append(alphabet, "o");
+    list.append(alphabet, "u");
+    list.append(alphabet, "b"); list.append(alphabet, "c");
+    list.append(alphabet, "d"); list.append(alphabet, "f");
+    list.append(alphabet, "g"); list.append(alphabet, "h");
+    list.append(alphabet, "j"); list.append(alphabet, "k");
+    list.append(alphabet, "l"); list.append(alphabet, "m");
+    list.append(alphabet, "n"); list.append(alphabet, "p");
+    list.append(alphabet, "q"); list.append(alphabet, "r");
+    list.append(alphabet, "s"); list.append(alphabet, "t");
+    list.append(alphabet, "v"); list.append(alphabet, "w");
+    list.append(alphabet, "x"); list.append(alphabet, "y");
+    list.append(alphabet, "z");
+    let guess_idx = random.int(0, list.len(alphabet) - 1);
+    let guess = list.get(alphabet, guess_idx);
+    print("Guessing:", guess);
+    if (is_letter_guessed(guess, guessed, 0)) {
+        return play_hangman(word, guessed, lives, hint_given)
+    }
+    list.append(guessed, guess);
+    if (string_contains(word, guess)) {
+        print("Correct!")
+    } else {
+        print("Wrong!")
+        lives = lives - 1
+    }
+    return play_hangman(word, guessed, lives, hint_given)
+}
+
+fn main() {
+    print("=== Hangman ===");
+    print("Guess the word letter by letter");
+    let words = get_words();
+    let word = random.choice(words);
+    let guessed = list.new();
+    play_hangman(word, guessed, 6, false)
+}
