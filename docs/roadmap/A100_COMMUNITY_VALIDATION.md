@@ -180,6 +180,19 @@ must not bypass engineering discipline.
 - Feature requests routed through the governance proposal process.
 - Lessons applied to the development playbook if they generalize.
 
+## Execution Kit (`docs/a100/`)
+
+Prepared materials that operationalize this protocol. In any conflict, this
+protocol wins.
+
+| File | Purpose |
+|------|---------|
+| `PARTICIPANT_BRIEF.md` | Eligibility, consent, environment setup (v1.1.17 from PyPI), timeline, what is measured |
+| `GREENFIELD_TASK.md` | Exact Phase 1 spec — expense tracker (identical for both languages) |
+| `MAINTENANCE_TASKS.md` | Exact Phase 2 spec — change requests M1–M6 (identical for both languages) |
+| `DATA_COLLECTION_FORM.md` | Participant form capturing every protocol metric + event logs + first-impression bugs |
+| `VALIDATION_REPORT_TEMPLATE.md` | Coordinator template for the final anonymized report + fixed-criteria verdict |
+
 ---
 
 ## Definition of Done
