@@ -224,6 +224,25 @@ fn main() {
 | [Onboarding Checklist](docs/getting-started/ONBOARDING_CHECKLIST.md) | Day-by-day guide for new developers |
 | [VS Code Extension](extensions/vscode-ailang/README.md) | AILang VS Code extension |
 
+## Community Validation (A100)
+
+AILang is running an open community validation study against the published
+**v1.1.17** baseline: build one small business application twice — once with
+Python + AI, once with AILang + AI — then apply a fixed set of change requests.
+The goal is real, measured evidence on whether deterministic constraints reduce
+the cost of AI-assisted business software development.
+
+- [Participant Brief](docs/a100/PARTICIPANT_BRIEF.md) — eligibility, setup, what's measured
+- [Protocol](docs/roadmap/A100_COMMUNITY_VALIDATION.md) — methodology, fixed success criteria
+- [Greenfield Task](docs/a100/GREENFIELD_TASK.md) — the build specification
+- [Maintenance Tasks](docs/a100/MAINTENANCE_TASKS.md) — the change requests
+- [Data Collection Form](docs/a100/DATA_COLLECTION_FORM.md) — what participants record
+
+**Eligibility:** AI-trusting developers with prior AI-assisted Python experience,
+not project contributors. Study results are published anonymized. Feature
+requests raised during the study are recorded as evidence and reviewed through
+the governance process — they are not implemented mid-study.
+
 ## VS Code Extension
 
 Install the AILang extension for syntax highlighting, snippets, bracket matching, and more:
