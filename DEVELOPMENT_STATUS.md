@@ -10,7 +10,7 @@ until this document has been reviewed. Update AGENTS.md reading order after revi
 
 | Attribute | Value |
 |:----------|:------|
-| **Current Release** | v1.1.18 (Release Gate) |
+| **Current Release** | v1.1.18 (Published) |
 | **Current Milestone** | A100 — Community Validation (ready for recruitment) |
 | **Project Phase** | Public Release (engineering frozen) |
 
@@ -45,6 +45,9 @@ until this document has been reviewed. Update AGENTS.md reading order after revi
 | PyPI Publication | ✅ v1.1.17 Published |
 | GitHub Release | ✅ v1.1.17 Published |
 | A100 Preconditions (M135) | ✅ Shipped in v1.1.17 — fresh venv verified from PyPI, 8/8 CLI checks pass |
+| M136 Fixes | ✅ Shipped in v1.1.18 — J-1..J-5, published to PyPI + GitHub |
+| PyPI Publication | ✅ v1.1.18 Published |
+| GitHub Release | ✅ v1.1.18 Published |
 | Engineering Freeze | ✅ Restored — no v1.2 work until A100 results |
 
 ### Maturity Assessment
@@ -333,7 +336,7 @@ software development under real usage conditions.
 |-----------|-------|:------:|
 | **v1.1.16** | ✅ Released and published — PyPI + GitHub, 1128 tests passing, external review GO | Published |
 | **v1.1.17** | ✅ Released and published — PyPI + GitHub, 1217 tests passing, A100 preconditions (M135) shipped, wheel-only install verified from PyPI | Published |
-| **v1.1.18** | M136 fixes — J-1..J-5 (cp1252 rename, test_* auto-execution, benchmark streaming, list.sum precision, list.sum_by_key precision) | Release Gate |
+| **v1.1.18** | ✅ Released and published — M136 fixes (J-1..J-5), 1145 passing / 6 pre-existing failures, canonical benchmark 5/5 from wheel, verified from PyPI | Published |
 | **A100** | Community Validation — evidence from real users | Current |
 | **v1.2.x** | Determined by A100 results, not speculation | Future |
 
@@ -384,6 +387,7 @@ software development under real usage conditions.
 
 | Item | Version | Date |
 |------|---------|------|
+| **M136 — Reliability & Tooling Fixes** — Shipped the five M136 fixes: J-1 `ail rename` cp1252/piped-stdout `UnicodeEncodeError` (ASCII `->`), J-2 `ail test` auto-executes `test_*` functions with legacy `main()` fallback, J-3 `ail benchmark` streaming/flush + elapsed/per-run markers, J-4 `list.sum` float precision, J-5 `list.sum_by_key` float/decimal precision + clean data-focused errors. Release gate passed: 1145 passing / 6 pre-existing failures, 55/55 M136 regression tests, `twine check` PASSED, fresh wheel-only venv verified, canonical benchmark 5/5 from wheel, published to PyPI + GitHub with SHA256-matched assets, post-publication verification from PyPI green. See `CHANGELOG.md` v1.1.18 and `docs/releases/M136_V1_1_18_RC_REPORT.md`. | v1.1.18 | 2026-08-11 |
 | **M135 — A100 Preconditions (Release Gate)** — Shipped the four A100 wheel-install precondition fixes (`ail testgen` ValueError, `ail benchmark`/`ail static-analyzer` source-checkout requirement, `ail doctor` 0/100 score, `ail rename` wrong-directory error) plus bundled canonical apps in the wheel. Release gate passed: 1217 tests passing, canonical benchmark 5/5, `twine check` PASSED, fresh wheel-only install verified, published to PyPI + GitHub with SHA256-matched assets, post-publication verification from PyPI (8/8 CLI checks) green. See `CHANGELOG.md` v1.1.17 and `docs/roadmap/A100_COMMUNITY_VALIDATION.md`. | v1.1.17 | 2026-08-07 |
 | **M134 — External Review Verification** — SEM005 over-reservation narrowed, TYP001 false positive fixed, `ail explain` made ASCII-only, version consistency synced. RC1 audit: 1128 tests passing, canonical benchmark 5/5 apps, wheel + sdist built and verified from a fresh venv, external review verdict GO, released to PyPI + GitHub with SHA256-matched assets. See `docs/archive/reports/engineering/M134_ENGINEERING_RESPONSE.md`. | v1.1.16 | 2026-08-07 |
 | **M133 — Independent Engineering Response** — Engineering response to the external evaluation of v1.1.14 (see `M133_ENGINEERING_RESPONSE.md`). | v1.1.15 | 2026-08-03 |
@@ -487,6 +491,7 @@ software development under real usage conditions.
 | **v1.1.15** | ✅ Complete | M133 Independent Engineering Response |
 | **v1.1.16** | ✅ **Published** | M134 External Review Verification — released to PyPI + GitHub |
 | **v1.1.17** | ✅ **Published** | M135 A100 Preconditions — wheel-install tooling fixes + bundled apps, released to PyPI + GitHub, verified from PyPI |
+| **v1.1.18** | ✅ **Published** | M136 Reliability & Tooling Fixes — J-1..J-5, released to PyPI + GitHub, canonical benchmark 5/5 from wheel, verified from PyPI |
 
 --------------------------------------
 

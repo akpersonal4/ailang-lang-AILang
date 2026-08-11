@@ -489,6 +489,16 @@ A chronological record of every major engineering phase, with results, lessons, 
 | **Lessons** | Test the artifact, not just the source tree: the wheel was verified in a fresh venv before publication, catching the recurring release failure mode early. The `scripts/sync_versions.py` `^VERSION` regex misses indented `except ImportError` fallbacks — manual sync needed. |
 | **Documents** | `CHANGELOG.md` v1.1.17, `docs/roadmap/A100_COMMUNITY_VALIDATION.md` |
 
+### M136 — Reliability & Tooling Fixes Shipped (v1.1.18)
+
+| Aspect | Detail |
+|--------|--------|
+| **What** | Shipped the five M136 fixes and published v1.1.18 to PyPI + GitHub: J-1 `ail rename` crashed with `UnicodeEncodeError` under Windows cp1252/piped stdout (Unicode `→` replaced with ASCII `->`); J-2 `ail test` now auto-executes top-level `test_*` functions (legacy `main()` fallback preserved) via a public `call_function` on the runtime; J-3 `ail benchmark` streamed nothing until process exit (looked hung) — now flushes progress lines with elapsed + per-run markers; J-4 `list.sum` truncated floats to ints — `_coerce_number` preserves precision; J-5 `list.sum_by_key` same precision fix plus clean data-focused `RuntimeError` for non-numeric values instead of an internal error. |
+| **Why** | External J-reports flagged five reliability defects in published tooling/runtime behavior. All are correctness fixes, no new features, no language changes. |
+| **Result** | Full suite 1145 passing / 6 pre-existing failures (unchanged from baseline), 55/55 M136 regression tests, `twine check` PASSED, ruff/mypy zero new violations, canonical benchmark 5/5 from wheel, published to PyPI + GitHub with SHA256-matched assets, post-publication verification from PyPI green (94/100 doctor, benchmark 5/5, J-1..J-5 verified from the installed package). |
+| **Lessons** | The `scripts/sync_versions.py` `^VERSION` regex still misses indented `except ImportError` fallbacks — manual sync of `tools/ail_context/__main__.py` and `tools/ail_mcp/*` required again at v1.1.18. Generated report churn (`reports/dependency_ordering.json`) must be excluded from release commits. |
+| **Documents** | `CHANGELOG.md` v1.1.18, `docs/releases/M136_V1_1_18_RC_REPORT.md` |
+
 ### Governance
 
 - **Benchmark Feedback Loop:** Single-app findings stay in benchmark reports. Only ≥2 independent apps promote lessons to Playbook/AGENTS.md.

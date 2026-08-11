@@ -1,12 +1,14 @@
 # Changelog
 
-## v1.1.18 (M136 Fixes — Release Candidate)
+## v1.1.18 (M136 Fixes — Published)
 
-Patch release containing the M136 engineering-response fixes. Release gate
-passes: complete test suite green (same pre-existing failures as baseline),
-55/55 M136 regression tests, `twine check` PASSED, fresh wheel-only venv
-verified, canonical 5/5 benchmark completes from the wheel. See
-`docs/releases/M136_RC_REPORT.md` and `docs/archive/reports/engineering/M136_ENGINEERING_RESPONSE.md`.
+**Published:** 2026-08-11 to PyPI and GitHub. Patch release containing the M136
+engineering-response fixes. Release gate passed: 1145 tests passing (6
+pre-existing failures unchanged from baseline), 55/55 M136 regression tests,
+`twine check` PASSED, fresh wheel-only venv verified, canonical 5/5 benchmark
+completes from the wheel, post-publication verification from PyPI green. See
+`docs/releases/M136_V1_1_18_RC_REPORT.md` and
+`docs/archive/reports/engineering/M136_ENGINEERING_RESPONSE.md`.
 
 ### Bugs Fixed
 
