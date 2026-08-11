@@ -10,7 +10,7 @@ until this document has been reviewed. Update AGENTS.md reading order after revi
 
 | Attribute | Value |
 |:----------|:------|
-| **Current Release** | v1.1.17 (Published) |
+| **Current Release** | v1.1.18 (Release Gate) |
 | **Current Milestone** | A100 — Community Validation (ready for recruitment) |
 | **Project Phase** | Public Release (engineering frozen) |
 
@@ -333,6 +333,7 @@ software development under real usage conditions.
 |-----------|-------|:------:|
 | **v1.1.16** | ✅ Released and published — PyPI + GitHub, 1128 tests passing, external review GO | Published |
 | **v1.1.17** | ✅ Released and published — PyPI + GitHub, 1217 tests passing, A100 preconditions (M135) shipped, wheel-only install verified from PyPI | Published |
+| **v1.1.18** | M136 fixes — J-1..J-5 (cp1252 rename, test_* auto-execution, benchmark streaming, list.sum precision, list.sum_by_key precision) | Release Gate |
 | **A100** | Community Validation — evidence from real users | Current |
 | **v1.2.x** | Determined by A100 results, not speculation | Future |
 
@@ -563,6 +564,6 @@ Every document type has exactly one owner. If you need to add information, first
 
 | Field | Value |
 |:------|:------|
-| **Date** | 2026-08-07 |
-| **Version** | v1.1.17 |
+| **Date** | 2026-08-11 |
+| **Version** | v1.1.18 |
 | **Milestone** | A100 — Community Validation |

@@ -6,4 +6,4 @@
 try:
     from compiler._version import __version__
 except ImportError:
-    __version__ = "1.1.17"
+    __version__ = "1.1.18"

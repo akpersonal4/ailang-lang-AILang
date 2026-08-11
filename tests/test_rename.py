@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import io
+import sys
 from pathlib import Path
 
 import pytest
@@ -305,3 +307,40 @@ class TestRenameCli:
         content = (project / "example.ail").read_text(encoding="utf-8")
         assert "supplier" not in content
         assert "vendor" in content
+
+    def test_rename_survives_ascii_only_stdout(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """J-1: rename must not crash when stdout cannot encode Unicode.
+
+        On Windows, a redirected (piped) console forces Python to use the
+        ANSI code page (e.g. cp1252), which cannot encode U+2192. The CLI
+        success message used to print '->' as U+2192 and raised
+        UnicodeEncodeError after the rename had already been applied.
+        """
+        from compiler.cli.main import cmd_rename
+
+        project = tmp_path / "asciiproj"
+        project.mkdir()
+        (project / "ail.toml").write_text(
+            "[project]\nname = 'x'\nversion = '0.1.0'\n", encoding="utf-8"
+        )
+        (project / "main.ail").write_text(
+            "fn foo(x) { return x }\nfn main() { return foo(1) }\n",
+            encoding="utf-8",
+        )
+        monkeypatch.chdir(project)
+
+        real_stdout = sys.stdout
+        sys.stdout = io.TextIOWrapper(
+            io.BytesIO(), encoding="cp1252", errors="strict"
+        )
+        try:
+            result = cmd_rename(["foo", "bar", "--no-verify"])
+        finally:
+            sys.stdout = real_stdout
+
+        assert result == 0
+        content = (project / "main.ail").read_text(encoding="utf-8")
+        assert "foo" not in content
+        assert "bar" in content

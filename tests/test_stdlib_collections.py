@@ -5,8 +5,11 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 
+import pytest
+
 from compiler.compilation import CompilationSession
 from compiler.diagnostics import DiagnosticReporter
+from compiler.runtime.errors import RuntimeError as AILangRuntimeError
 from compiler.runtime.interpreter import Runtime
 
 
@@ -328,6 +331,100 @@ fn main() {
 }
 """)
     assert result == 1
+
+
+def test_list_sum_sums_floats() -> None:
+    """list.sum should preserve float precision instead of truncating."""
+    result = _run_program("""
+import list;
+
+fn main() {
+    let items = list.new();
+    list.append(items, 4.5);
+    list.append(items, 3.25);
+    let total = list.sum(items);
+    if (total == 7.75) {
+        return 1;
+    }
+    return 0;
+}
+""")
+    assert result == 1
+
+
+def test_list_sum_sums_decimal_strings() -> None:
+    """list.sum should sum numeric strings including decimals."""
+    result = _run_program("""
+import list;
+
+fn main() {
+    let items = list.new();
+    list.append(items, "4.50");
+    list.append(items, "5.25");
+    let total = list.sum(items);
+    if (total == 9.75) {
+        return 1;
+    }
+    return 0;
+}
+""")
+    assert result == 1
+
+
+def test_list_sum_mixes_int_float_and_string() -> None:
+    """list.sum should combine int, float, and numeric-string values."""
+    result = _run_program("""
+import list;
+
+fn main() {
+    let items = list.new();
+    list.append(items, 1);
+    list.append(items, 2.5);
+    list.append(items, "1.5");
+    let total = list.sum(items);
+    if (total == 5.0) {
+        return 1;
+    }
+    return 0;
+}
+""")
+    assert result == 1
+
+
+def test_list_sum_by_key_sums_decimal_strings() -> None:
+    """list.sum_by_key should sum decimal string amounts, not crash."""
+    result = _run_program("""
+import list;
+
+fn main() {
+    let items = list.new();
+    list.append(items, map.set(map.new(), "amount", "4.50"));
+    list.append(items, map.set(map.new(), "amount", "15.25"));
+    let total = list.sum_by_key(items, "amount");
+    if (total == 19.75) {
+        return 1;
+    }
+    return 0;
+}
+""")
+    assert result == 1
+
+
+def test_list_sum_rejects_non_numeric_with_clean_error() -> None:
+    """list.sum on a non-numeric string should raise a data-focused error."""
+    source = """
+import list;
+
+fn main() {
+    let items = list.new();
+    list.append(items, "abc");
+    return list.sum(items);
+}
+"""
+    with pytest.raises(AILangRuntimeError) as excinfo:
+        _run_program(source)
+    assert "internal error" not in excinfo.value.format_diagnostic().lower()
+    assert "non-numeric" in excinfo.value.reason
 
 
 def test_list_take_returns_first_n_items() -> None:

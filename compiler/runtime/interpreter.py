@@ -391,6 +391,35 @@ class Runtime:
         """
         self._source_map = source_map
 
+    def call_function(self, name: str, args: tuple[Any, ...] = ()) -> Any:
+        """Call a user-defined function by name after module initialization.
+
+        This is the public entry point used by tooling (e.g. ``ail test``)
+        to invoke ``test_*`` functions that would otherwise only run when
+        referenced from ``main()``.
+
+        Args:
+            name: Unqualified function name (e.g. ``test_addition``).
+            args: Positional arguments, if any.
+
+        Returns:
+            The function's return value.
+
+        Raises:
+            RuntimeError: If the function is not defined.
+        """
+        function = self._functions.get(name)
+        if function is None:
+            raise self._augment_error(RuntimeError(
+                operation="call",
+                reason=f"Unknown function '{name}'.",
+                suggestion=(
+                    "Check that the function is defined in a module that "
+                    "was discovered by the compiler."
+                ),
+            ))
+        return self._call_function(function, tuple(args))
+
     def _augment_error(self, error: RuntimeError) -> RuntimeError:
         """Inject source location into a RuntimeError if not already set.
 

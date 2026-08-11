@@ -1534,9 +1534,10 @@ def cmd_test(args: list[str]) -> int:
     forward references, missing imports, and ordering violations.
     If check fails, tests do not run — developer receives exact fixes.
 
-    Each test file must define a main() function that calls test functions
-    and prints results. A test passes if it compiles and runs without output
-    containing "FAIL".
+    Each test file may define test_* functions, which are auto-executed.
+    A test file that defines no test_* functions must define a main()
+    function that calls test functions and prints results. A test passes
+    if it compiles and runs without output containing "FAIL".
 
     Usage:
         ail test                         Run all tests in current directory
@@ -1785,10 +1786,28 @@ def cmd_test(args: list[str]) -> int:
 
             program_ir = bundle.module_irs[main_module]
 
+            # Auto-execute test_* functions when present (new convention).
+            # Falls back to executing the module, which auto-invokes main(),
+            # so legacy test files that only define main() keep working.
+            test_function_names = sorted(
+                name
+                for name in runtime._functions
+                if name.startswith("test_") and "." not in name
+            )
+
             old_stdout = sys.stdout
             sys.stdout = captured = io.StringIO()
             try:
-                runtime.execute(program_ir)
+                if test_function_names:
+                    for test_name in test_function_names:
+                        result = runtime.call_function(test_name)
+                        # A test may report a failure by returning a "FAIL: ..."
+                        # string instead of printing it; surface that so the
+                        # output scan below can detect it.
+                        if isinstance(result, str) and "FAIL" in result:
+                            print(result)
+                else:
+                    runtime.execute(program_ir)
             finally:
                 sys.stdout = old_stdout
 
@@ -1927,7 +1946,7 @@ def cmd_rename(args: list[str]) -> int:
 
     changes = tool.compute_changes(old_name, new_name)
     if not changes:
-        print(f"No files to change for '{old_name}' → '{new_name}'", file=sys.stderr)
+        print(f"No files to change for '{old_name}' -> '{new_name}'", file=sys.stderr)
         return 0
 
     if dry_run or diff_mode:
@@ -1951,7 +1970,7 @@ def cmd_rename(args: list[str]) -> int:
         print("All changes have been rolled back.", file=sys.stderr)
         return 1
 
-    print(f"Renamed '{old_name}' → '{new_name}' across {len(changes)} file(s)")
+    print(f"Renamed '{old_name}' -> '{new_name}' across {len(changes)} file(s)")
     print(f"Rollback bundle: {rb_dir}")
 
     if not no_verify:

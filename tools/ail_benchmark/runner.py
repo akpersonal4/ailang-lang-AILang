@@ -163,7 +163,7 @@ def run_benchmark(
 
     for i in range(repeat):
         if not quiet:
-            print(f"  [{i + 1}/{repeat}] Building {benchmark.name}...")
+            print(f"  [{i + 1}/{repeat}] Building {benchmark.name}...", flush=True)
 
         # Build step (no extra args needed for build)
         build_cmd = [python, "-m", "compiler", "build", str(benchmark.path)]
@@ -177,12 +177,12 @@ def run_benchmark(
                 f"{build_measurement.stderr.strip()}"
             )
             if not quiet:
-                print(f"  [FAIL] Build failed: {result.error[:120]}")
+                print(f"  [FAIL] Build failed: {result.error[:120]}", flush=True)
             result.runs.append(run)
             break
 
         if not quiet:
-            print(f"  [{i + 1}/{repeat}] Running {benchmark.name}...")
+            print(f"  [{i + 1}/{repeat}] Running {benchmark.name}...", flush=True)
 
         # Run step (append extra args if any)
         run_cmd = [python, "-m", "compiler", "run", str(benchmark.path)] + extra_args
@@ -197,7 +197,7 @@ def run_benchmark(
                 f"{run_measurement.stderr.strip()}"
             )
             if not quiet:
-                print(f"  [FAIL] Run failed: {result.error[:120]}")
+                print(f"  [FAIL] Run failed: {result.error[:120]}", flush=True)
             break
 
         build_times.append(build_measurement.time)
@@ -206,7 +206,8 @@ def run_benchmark(
         if not quiet:
             print(
                 f"  [OK] {benchmark.name} — build {build_measurement.time:.3f}s, "
-                f"run {run_measurement.time:.3f}s"
+                f"run {run_measurement.time:.3f}s",
+                flush=True,
             )
 
     # Compute stats from successful runs only

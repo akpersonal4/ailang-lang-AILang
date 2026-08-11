@@ -196,19 +196,23 @@ def main() -> int:
         return ExitCode.INTERNAL_ERROR
 
     if not args.quiet:
-        print(f"\nAILang Benchmark Runner ({args.suite} suite)")
-        print(f"  Benchmarks: {len(benchmarks)}")
-        print(f"  Repeat: {args.repeat}×")
-        print(f"  Memory: {'Yes' if args.memory else 'No'}")
+        print(f"\nAILang Benchmark Runner ({args.suite} suite)", flush=True)
+        print(f"  Benchmarks: {len(benchmarks)}", flush=True)
+        print(f"  Repeat: {args.repeat}×", flush=True)
+        print(f"  Memory: {'Yes' if args.memory else 'No'}", flush=True)
         if args.compare:
-            print(f"  Comparing against: {args.compare}")
-        print()
+            print(f"  Comparing against: {args.compare}", flush=True)
+        print(flush=True)
 
     # Step 2: Run all benchmarks
     results = []
     for bm in benchmarks:
         if not args.quiet:
-            print(f">> {bm.name} ({bm.suite})")
+            elapsed_so_far = time.perf_counter() - start_wall
+            print(
+                f">> {bm.name} ({bm.suite})  [elapsed {elapsed_so_far:.1f}s]",
+                flush=True,
+            )
 
         try:
             result = run_benchmark(
@@ -304,16 +308,16 @@ def main() -> int:
 
     if not args.markdown_only:
         json_path.write_text(json_output, encoding="utf-8")
-        print(f"Generated: {json_path}")
+        print(f"Generated: {json_path}", flush=True)
 
     if not args.json_only:
         md_path.write_text(md_output, encoding="utf-8")
-        print(f"Generated: {md_path}")
+        print(f"Generated: {md_path}", flush=True)
 
     # Step 7: Save baseline if requested
     if args.baseline:
         saved = save_baseline(result_dicts, root, args.baseline)
-        print(f"Saved baseline: {saved}")
+        print(f"Saved baseline: {saved}", flush=True)
 
     # Step 8: Determine exit code (precedence: internal error > failure > regression > success)
     has_failure = False

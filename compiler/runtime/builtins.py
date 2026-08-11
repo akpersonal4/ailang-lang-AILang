@@ -119,11 +119,49 @@ def list_remove(args: tuple[RuntimeValue, ...]) -> list[RuntimeValue]:
     return values
 
 
-def list_sum(args: tuple[RuntimeValue, ...]) -> int:
+def _coerce_number(value: RuntimeValue, operation: str) -> int | float:
+    """Coerce a runtime value to a number for aggregation.
+
+    Accepts Int, Float, Bool (as 0/1), and numeric Strings (e.g. "4.50").
+    Raises a clear runtime error for anything else so the user sees a
+    data-focused diagnostic instead of an internal compiler error.
+    """
+    if isinstance(value, bool):
+        return int(value)
+    if isinstance(value, (int, float)):
+        return value
+    if isinstance(value, str):
+        try:
+            return int(value)
+        except ValueError:
+            try:
+                return float(value)
+            except ValueError:
+                raise RuntimeError(
+                    operation=operation,
+                    reason=f"Cannot sum non-numeric string '{value}'.",
+                    expected_type="Int, Float, or numeric String",
+                    actual_type="String",
+                    suggestion=(
+                        "Convert the value to a number before summing, or "
+                        "check the data source."
+                    ),
+                ) from None
+    tname = RuntimeError._type_name(value)
+    raise RuntimeError(
+        operation=operation,
+        reason=f"Cannot sum value of type {tname}.",
+        expected_type="Int, Float, or numeric String",
+        actual_type=tname,
+        suggestion="Only numeric values can be summed.",
+    )
+
+
+def list_sum(args: tuple[RuntimeValue, ...]) -> int | float:
     _expect_list(args[0], "list.sum")
-    total = 0
+    total: int | float = 0
     for item in args[0]:
-        total += int(item)
+        total += _coerce_number(item, "list.sum()")
     return total
 
 
@@ -201,13 +239,13 @@ def list_group_by_key(
     return groups
 
 
-def list_sum_by_key(args: tuple[RuntimeValue, ...]) -> int:
+def list_sum_by_key(args: tuple[RuntimeValue, ...]) -> int | float:
     items = _expect_list(args[0], "list.sum_by_key")
     key = str(args[1])
-    total = 0
+    total: int | float = 0
     for item in items:
         if isinstance(item, dict) and key in item:
-            total += int(item[key])
+            total += _coerce_number(item[key], "list.sum_by_key()")
     return total
 
 

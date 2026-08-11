@@ -427,7 +427,7 @@ class CompilationSession:
                 Severity,
             )
 
-            modules = " → ".join(sorted(cycle))
+            modules = " -> ".join(sorted(cycle))
             diagnostic = Diagnostic(
                 Severity.ERROR,
                 MOD001_CIRCULAR_IMPORT,

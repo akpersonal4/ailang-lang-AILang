@@ -1,5 +1,43 @@
 # Changelog
 
+## v1.1.18 (M136 Fixes — Release Candidate)
+
+Patch release containing the M136 engineering-response fixes. Release gate
+passes: complete test suite green (same pre-existing failures as baseline),
+55/55 M136 regression tests, `twine check` PASSED, fresh wheel-only venv
+verified, canonical 5/5 benchmark completes from the wheel. See
+`docs/releases/M136_RC_REPORT.md` and `docs/archive/reports/engineering/M136_ENGINEERING_RESPONSE.md`.
+
+### Bugs Fixed
+
+- **J-1 — `ail rename` crashes under Windows cp1252/piped stdout**: rename
+  confirmation messages used the Unicode arrow `→`, which raised
+  `UnicodeEncodeError` when stdout was piped on a cp1252 console. Arrow
+  replaced with ASCII `->` in `compiler/cli/main.py` and
+  `compiler/compilation/session.py`. Regression test:
+  `tests/test_rename.py::test_rename_survives_ascii_only_stdout`.
+- **J-2 — `ail test` auto-executes `test_*` functions**: test files may now
+  define `test_*` functions that are discovered and executed automatically
+  (a test fails if its output contains `FAIL`); files that define no
+  `test_*` functions fall back to the legacy `main()` convention.
+  Implemented via a public `call_function` on the runtime and updated
+  `cmd_test` in `compiler/cli/main.py`. Regression tests:
+  `tests/test_cli_test_cmd.py` (passing/failing/crashing/multiple/legacy).
+- **J-3 — `ail benchmark` streaming/hang fix**: progress lines are now
+  flushed immediately (`flush=True`) in `tools/ail_benchmark/__main__.py`
+  and `tools/ail_benchmark/runner.py`, with per-benchmark elapsed markers
+  and per-run completion markers, so output streams while benchmarks run
+  instead of appearing only at process exit. Regression test:
+  `tests/test_benchmark_streaming.py`.
+- **J-4 — `list.sum` floating-point precision**: summing floats truncated
+  to integers. `_coerce_number` in `compiler/runtime/builtins.py` now
+  preserves float precision for float and numeric-string values.
+- **J-5 — `list.sum_by_key` float/decimal precision and clean errors**:
+  `list.sum_by_key` coerces values through `_coerce_number` (floats and
+  decimal strings no longer truncate) and raises a deterministic,
+  data-focused `RuntimeError` for non-numeric values instead of a generic
+  internal error. Regression tests in `tests/test_stdlib_collections.py`.
+
 ## v1.1.17 (A100 Community Validation — Published)
 
 **Published:** 2026-08-07 to PyPI and GitHub. Release gate passed: 1217 tests,
