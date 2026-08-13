@@ -86,7 +86,9 @@ def test_testgen_single_file_mode_writes_into_project(tmp_path: Path) -> None:
         timeout=180,
     )
     assert result.returncode == 0, f"testgen failed: {result.stderr}"
-    generated = project / "tests" / "generated" / "test_app_example_generated.py"
+    # M136 P1a fix: testgen now emits ``.ail`` test files (compatible
+    # with ``ail test``) instead of pytest ``.py`` files.
+    generated = project / "tests" / "generated" / "test_app_example_generated.ail"
     assert generated.is_file(), f"expected generated test file, got: {result.stdout}"
 
 

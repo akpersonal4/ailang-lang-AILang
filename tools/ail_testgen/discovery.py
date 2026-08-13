@@ -22,17 +22,32 @@ def discover_apps() -> list[AppInfo]:
 
 
 def discover_existing_tests() -> list[Path]:
-    """Discover existing handwritten test files in tests/ (excluding generated)."""
+    """Discover existing handwritten test files.
+
+    Tests live alongside the apps they cover (the convention used by the
+    AILang project: ``apps/<name>/tests/test_*.ail``). Generated tests
+    are skipped by filename (``*_generated.ail``).
+    """
     root = resolve_project_root()
+    result: list[Path] = []
+    apps_dir = root / "apps"
+    if apps_dir.is_dir():
+        for path in apps_dir.rglob("test_*.ail"):
+            if path.name.endswith("_generated.ail"):
+                continue
+            result.append(path)
+        for path in apps_dir.rglob("*_test.ail"):
+            if path.name.endswith("_generated.ail"):
+                continue
+            result.append(path)
+    # Honour legacy ``tests/`` directory layout too.
     tests_dir = root / "tests"
-    if not tests_dir.is_dir():
-        return []
-    result = []
-    for path in tests_dir.rglob("*.py"):
-        if "generated" in path.parts:
-            continue
-        result.append(path)
-    return sorted(result)
+    if tests_dir.is_dir():
+        for path in tests_dir.rglob("test_*.ail"):
+            if "generated" in path.parts:
+                continue
+            result.append(path)
+    return sorted(set(result))
 
 
 def _count_lines(path: Path) -> int:

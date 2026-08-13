@@ -57,9 +57,25 @@ def find_missing_tests(
 
 
 def _find_tested_app_names(existing_tests: list[Path]) -> set[str]:
-    """Extract app names from existing test file names."""
+    """Extract app names from existing test file paths.
+
+    Recognises two layouts used by the AILang project:
+      1. ``apps/<app_name>/tests/test_<anything>.ail`` — any handwritten
+         test under an app's ``tests/`` directory covers that app.
+      2. Legacy: ``test_<app_name>.ail`` / ``test_app_<app_name>.ail``
+         at the project root, where the stem encodes the app name.
+    """
     names: set[str] = set()
     for path in existing_tests:
+        # Layout 1: apps/<name>/tests/...
+        parts = path.parts
+        if "apps" in parts and "tests" in parts:
+            apps_idx = parts.index("apps")
+            tests_idx = parts.index("tests")
+            if tests_idx == apps_idx + 2:
+                names.add(parts[apps_idx + 1])
+                continue
+        # Layout 2: stem-based naming.
         stem = path.stem
         if stem.startswith("test_app_"):
             names.add(stem[len("test_app_") :])

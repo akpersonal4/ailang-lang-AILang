@@ -12,7 +12,7 @@ from pathlib import Path
 try:
     from compiler._version import __version__ as VERSION
 except ImportError:
-    VERSION = "1.1.18"
+    VERSION = "1.1.19"
 
 LANGUAGE_RULES = {
     "no_loops": {

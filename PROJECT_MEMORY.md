@@ -491,6 +491,8 @@ A chronological record of every major engineering phase, with results, lessons, 
 
 ### M136 — Reliability & Tooling Fixes Shipped (v1.1.18)
 
+> **Naming reconciliation:** "M136" refers to TWO distinct groups. **J-1..J-5** (this entry) — **shipped in v1.1.18**. **P0/P1a/P1b** — a separate group (P0 `ail run` single-execution entry + welcome to stderr; P1a `ail testgen` emits `.ail` instead of pytest; P1b `_frame_ever_bound` O(n²)→O(n) name-resolution) — **completed/verified, pending publication**. P0/P1a/P1b are NOT present in published v1.1.18.
+
 | Aspect | Detail |
 |--------|--------|
 | **What** | Shipped the five M136 fixes and published v1.1.18 to PyPI + GitHub: J-1 `ail rename` crashed with `UnicodeEncodeError` under Windows cp1252/piped stdout (Unicode `→` replaced with ASCII `->`); J-2 `ail test` now auto-executes top-level `test_*` functions (legacy `main()` fallback preserved) via a public `call_function` on the runtime; J-3 `ail benchmark` streamed nothing until process exit (looked hung) — now flushes progress lines with elapsed + per-run markers; J-4 `list.sum` truncated floats to ints — `_coerce_number` preserves precision; J-5 `list.sum_by_key` same precision fix plus clean data-focused `RuntimeError` for non-numeric values instead of an internal error. |

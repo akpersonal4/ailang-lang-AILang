@@ -10,6 +10,12 @@ completes from the wheel, post-publication verification from PyPI green. See
 `docs/releases/M136_V1_1_18_RC_REPORT.md` and
 `docs/archive/reports/engineering/M136_ENGINEERING_RESPONSE.md`.
 
+> **Naming note:** This release contains **M136 J-1..J-5** (below) — **shipped in
+> v1.1.18**. It does NOT contain **M136 P0/P1a/P1b** (single-execution `ail run`
+> entry + welcome to stderr; `ail testgen` emitting `.ail`; `_frame_ever_bound`
+> O(n²)→O(n) name-resolution), which are completed/verified in the working tree
+> and pending a future release.
+
 ### Bugs Fixed
 
 - **J-1 — `ail rename` crashes under Windows cp1252/piped stdout**: rename

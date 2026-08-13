@@ -67,6 +67,14 @@ class Runtime:
         self._source_map: dict[str, tuple[str, str]] = {}
         # Current expression source span being evaluated
         self._current_span: int | None = None
+        # Monotonic set of names that have been bound in some frame during
+        # this run. Used to skip the frame-chain walk in `_resolve_name` when
+        # the name is guaranteed not to be visible via dynamic scoping,
+        # turning per-row module-name resolution from O(call_depth) into O(1).
+        # Safe by construction: names are only added, never removed, and a
+        # name that *was* frame-bound but is no longer present (its frame
+        # has popped) merely causes a wasted walk, never an incorrect result.
+        self._frame_ever_bound: set[str] = set()
 
     def execute(self, program: ProgramIR) -> Any:
         try:
@@ -220,9 +228,11 @@ class Runtime:
         frame.module = self._function_modules.get(id(function))
         for name, value in zip(function.parameters, args):
             frame.define(name, value)
+            self._frame_ever_bound.add(name)
         for name in function.parameters[len(args) :]:
             if name in defaults:
                 frame.define(name, defaults[name])
+                self._frame_ever_bound.add(name)
         self._frame_stack.append(frame)
         try:
             result = self._execute_block(function.body)
@@ -486,17 +496,33 @@ class Runtime:
     def _define_local(self, name: str, value: Any) -> None:
         if self._frame_stack:
             self._frame_stack[-1].define(name, value)
+            self._frame_ever_bound.add(name)
         else:
             self._global_environment.define(name, value)
 
     def _assign_local(self, name: str, value: Any) -> None:
         if self._frame_stack:
             self._frame_stack[-1].assign(name, value)
+            # An assign may introduce a new binding in the frame chain
+            # (e.g. when no ancestor has the name). Track it so future
+            # resolves of `name` still consult the frame chain instead of
+            # skipping straight to the global / module lookup.
+            self._frame_ever_bound.add(name)
         else:
             self._global_environment.define(name, value)
 
-    def _initialize_module(self, module_name: str) -> Environment | None:
+    def _initialize_module(
+        self, module_name: str, run_body: bool = True
+    ) -> Environment | None:
         """Initialize a module exactly once, following dependency order.
+
+        Args:
+            module_name: Name of the module to initialize.
+            run_body: When False, skip executing module-level body statements
+                (function/let registrations) and only register the module
+                environment plus import aliases. Used by ``cmd_run`` for the
+                user's entry module so that ``runtime.execute(program_ir)``
+                runs the entry body exactly once.
 
         Returns:
             The module environment if initialization succeeded, None otherwise.
@@ -514,9 +540,12 @@ class Runtime:
         # Create module environment
         module_env = Environment()
 
-        # Execute module-level code
-        for node in module_ir.body:
-            self._execute_node_in_module(module_name, module_env, node)
+        # Execute module-level code (skipped for the user entry module,
+        # whose body is executed by ``runtime.execute`` to guarantee a
+        # single execution).
+        if run_body:
+            for node in module_ir.body:
+                self._execute_node_in_module(module_name, module_env, node)
 
         self._modules[module_name] = module_env
         self._initialized_modules.add(module_name)
@@ -572,10 +601,19 @@ class Runtime:
                         break
                 if fn_frame is not None and self._is_stdlib_module(fn_frame.module):
                     return BUILTINS[name]
-            try:
-                return self._frame_stack[-1].resolve(name)
-            except NameError:
-                pass
+            # Fast path: if `name` has never been bound in any frame on the
+            # current stack (and all prior frames this run), the chain walk
+            # is guaranteed to raise NameError. Skip it and fall through to
+            # the global / builtin / module lookup. This turns the
+            # per-row module-name resolution that dominates large recursive
+            # programs (e.g. ledger-style row helpers calling `convert.to_string`)
+            # from O(call_depth) into O(1). Dynamic scoping is preserved:
+            # names that *are* (or have been) frame-bound still walk the chain.
+            if name in self._frame_ever_bound:
+                try:
+                    return self._frame_stack[-1].resolve(name)
+                except NameError:
+                    pass
         try:
             return self._global_environment.resolve(name)
         except NameError:

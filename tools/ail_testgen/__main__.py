@@ -18,7 +18,7 @@ from ail_platform.project import resolve_project_root
 from tools.ail_testgen.analyzer import analyze_coverage, find_missing_tests
 from tools.ail_testgen.discovery import discover_apps, discover_existing_tests
 from tools.ail_testgen.generator import generate_all
-from tools.ail_testgen.models import AppInfo
+from tools.ail_testgen.models import AppInfo, TestCase
 from tools.ail_testgen.reporter import generate_json_report, generate_markdown_report
 from tools.common.cli import add_common_args, add_output_args, create_parser
 from tools.common.filesystem import ensure_output_dir
@@ -29,7 +29,7 @@ def build_parser():
     parser = create_parser(
         "ail_testgen",
         "AILang Test Generator — auto-discovers apps, analyzes coverage gaps, "
-        "and generates pytest-compatible test files.",
+        "and generates .ail test files compatible with `ail test`.",
     )
     add_output_args(parser)
     add_common_args(parser)
@@ -141,14 +141,49 @@ def main(argv: list[str] | None = None) -> int:
     if not args.report_only:
         missing = find_missing_tests(apps, existing_tests)
 
+        # Group missing cases by app so each generated test file lives in
+        # its app's own ``tests/`` directory. That keeps ``import`` paths
+        # resolvable (the test and the app share a directory ancestor) and
+        # lets ``ail test <app_dir>`` discover generated tests alongside
+        # handwritten ones.
+        from collections import defaultdict
+
+        grouped: dict[str, list[TestCase]] = defaultdict(list)
+        for case in missing:
+            grouped[case.app_name].append(case)
+
         if not args.dry_run:
             if not args.quiet:
                 print("Generating test files...")
-            generated_files = generate_all(missing, output_dir, force=args.force)
+            for app_name, app_cases in grouped.items():
+                # Place the generated test inside the app's own ``tests/``
+                # directory when one already exists (matches the project's
+                # handwritten-test convention); otherwise alongside the
+                # app's main.ail so imports still resolve.
+                app_source = app_cases[0].source_file
+                app_dir = app_source.parent
+                candidate_tests_dir = app_dir / "tests"
+                per_app_dir = (
+                    candidate_tests_dir
+                    if candidate_tests_dir.is_dir()
+                    else app_dir
+                )
+                # Honour --output-dir when the user passed one explicitly
+                # (useful for single-file mode where the "app dir" is the
+                # file's directory and the user wants a known location).
+                if args.output_dir is not None:
+                    per_app_dir = output_dir
+                generated_files.extend(
+                    generate_all(
+                        app_cases, per_app_dir, force=args.force, root=root
+                    )
+                )
             generated_count = sum(
                 1 for f in generated_files if f["status"] == "generated"
             )
-            skipped_count = sum(1 for f in generated_files if f["status"] == "skipped")
+            skipped_count = sum(
+                1 for f in generated_files if f["status"] == "skipped"
+            )
             if not args.quiet:
                 print("  Generated: %d files" % generated_count)
                 print("  Skipped: %d files" % skipped_count)
@@ -156,20 +191,27 @@ def main(argv: list[str] | None = None) -> int:
             if not args.quiet:
                 print("Dry run: would generate %d test files" % len(missing))
             for m in missing:
+                app_source = m.source_file
+                app_dir = app_source.parent
+                candidate_tests_dir = app_dir / "tests"
+                per_app_dir = (
+                    candidate_tests_dir
+                    if candidate_tests_dir.is_dir()
+                    else app_dir
+                )
+                if args.output_dir is not None:
+                    per_app_dir = output_dir
+                rel = (
+                    per_app_dir / f"test_app_{m.app_name}_generated.ail"
+                ).relative_to(root)
                 generated_files.append(
                     {
-                        "file": "tests/generated/test_app_%s_generated.py" % m.app_name,
+                        "file": str(rel).replace("\\", "/"),
                         "app": m.app_name,
                         "status": "would_generate",
                         "test_count": 1,
                     }
                 )
-
-    # Create __init__.py in generated dir so pytest discovers it
-    if not args.dry_run and not args.report_only:
-        init_file = output_dir / "__init__.py"
-        if not init_file.exists():
-            init_file.write_text("", encoding="utf-8")
 
     # Generate reports
     report_dir = ensure_output_dir(root / "generated")

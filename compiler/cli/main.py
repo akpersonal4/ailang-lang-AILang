@@ -96,7 +96,11 @@ def _mark_onboarded() -> None:
 
 def _show_welcome() -> None:
     """Display the first-run welcome message."""
-    print("""
+    # Route to stderr so the banner never pollutes a program's stdout
+    # (which would corrupt deterministic output and be mistaken for
+    # double execution when piped or captured).
+    print(
+        """
 Welcome to AILang.
 
 Recommended startup sequence:
@@ -110,7 +114,9 @@ Recommended startup sequence:
   7. ail run             Compile and execute
 
 For more help: ail --help
-""")
+""",
+        file=sys.stderr,
+    )
     _mark_onboarded()
 
 
@@ -395,23 +401,31 @@ def cmd_run(args: list[str]) -> int:
         source_map[module_name] = (str(src.path), src.text)
     runtime.set_source_map(source_map)
 
-    for module_name in session._graph.topological_sort():
-        runtime._initialize_module(module_name)
-
-    try:
-        main_module = None
+    # Determine the user entry module name (the module that owns the
+    # source file we were asked to run). Its body must execute exactly
+    # once via ``runtime.execute`` below, so we initialize every OTHER
+    # module (stdlib and imported user modules) with body execution and
+    # the entry module without body execution.
+    entry_module = session._path_to_module_name(source_path)
+    if entry_module not in bundle.module_irs:
+        # Fallback: pick the first module in topological order.
         for module_name in session._graph.topological_sort():
             if module_name in bundle.module_irs:
-                main_module = module_name
+                entry_module = module_name
                 break
 
-        if main_module is None:
-            raise RuntimeError(
-                operation="runtime.execute()",
-                reason="No main module found in compilation bundle.",
-            )
+    for module_name in session._graph.topological_sort():
+        if module_name == entry_module:
+            continue
+        runtime._initialize_module(module_name)
 
-        program_ir = bundle.module_irs[main_module]
+    # Register the entry module's environment and import aliases without
+    # running its body; ``runtime.execute`` will run the body and main
+    # exactly once.
+    runtime._initialize_module(entry_module, run_body=False)
+
+    try:
+        program_ir = bundle.module_irs[entry_module]
         runtime.execute(program_ir)
         return 0
     except RuntimeError as e:
@@ -1527,6 +1541,33 @@ def cmd_publish(args: list[str]) -> int:
         return 1
 
 
+def _derive_root_from_tests(test_files: list[Path]) -> Path | None:
+    """Pick a module-resolution root for the collected test files.
+
+    Walks upward from each test file looking for a directory containing
+    ``main.ail`` (the conventional AILang app entry) and returns the
+    shallowest such directory. When all test files share the same
+    nearest ``main.ail`` ancestor the result is unambiguous, which is
+    what happens for ``ail test apps/<name>`` invocations.
+    """
+    candidates: list[Path] = []
+    for tf in test_files:
+        current = tf.resolve().parent
+        while True:
+            if (current / "main.ail").is_file():
+                candidates.append(current)
+                break
+            if current == current.parent:
+                break
+            current = current.parent
+    if not candidates:
+        return None
+    # Prefer the shallowest candidate (closest to the test files) so that
+    # ``ail test apps/<name>/tests/`` resolves to ``apps/<name>/``.
+    candidates.sort(key=lambda p: len(p.parts))
+    return candidates[0]
+
+
 def cmd_test(args: list[str]) -> int:
     """Discover and run test files (test_*.ail).
 
@@ -1615,7 +1656,14 @@ def cmd_test(args: list[str]) -> int:
         else:
             paths.append(arg)
 
-    # Default root to CWD so 'ail test tests/' resolves modules from CWD
+    # Default root to CWD so 'ail test tests/' resolves modules from CWD.
+    # When the user passes positional path(s) without an explicit --root,
+    # try to derive a sensible root by walking up from the collected test
+    # files and looking for a directory containing ``main.ail`` (the
+    # conventional AILang app layout). This lets ``ail test
+    # apps/<name>/tests/`` resolve ``import <module>`` against
+    # ``apps/<name>/`` without forcing the user to add ``--root``.
+    root_was_explicit = root_override is not None
     if root_override is None:
         root_override = str(Path.cwd())
 
@@ -1678,6 +1726,17 @@ def cmd_test(args: list[str]) -> int:
         print("- test_*.ail", file=sys.stderr)
         print("- *_test.ail", file=sys.stderr)
         return 1
+
+    # Derive a sensible root when the user did not pass --root and we
+    # have at least one positional path. Pick the directory that contains
+    # ``main.ail`` and is the lowest common ancestor's nearest app dir
+    # for the collected test files. This lets ``ail test apps/<name>``
+    # resolve ``import main;`` against ``apps/<name>/main.ail`` without
+    # requiring the user to add ``--root`` explicitly.
+    if not root_was_explicit and paths:
+        candidate = _derive_root_from_tests(test_files)
+        if candidate is not None:
+            root_override = str(candidate)
 
     # Auto-check: detect forward references and ordering violations before test execution
     if not no_check:
