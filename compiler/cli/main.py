@@ -426,7 +426,9 @@ def cmd_run(args: list[str]) -> int:
 
     try:
         program_ir = bundle.module_irs[entry_module]
-        runtime.execute(program_ir)
+        result = runtime.execute(program_ir)
+        if isinstance(result, int) and not isinstance(result, bool):
+            return result
         return 0
     except RuntimeError as e:
         print(e.format_diagnostic(), file=sys.stderr)
@@ -951,6 +953,7 @@ _STDLIB_FUNCTIONS = frozenset(
         "io.writeln",
         "io.println",
         "system.exit",
+        "test.expect",
         "array.new",
         "array.push",
         "array.len",
@@ -978,6 +981,7 @@ _STDLIB_MODULES = frozenset(
         "convert",
         "io",
         "system",
+        "test",
         "array",
     }
 )
@@ -1856,14 +1860,21 @@ def cmd_test(args: list[str]) -> int:
 
             old_stdout = sys.stdout
             sys.stdout = captured = io.StringIO()
+            test_failed = False
             try:
                 if test_function_names:
                     for test_name in test_function_names:
                         result = runtime.call_function(test_name)
-                        # A test may report a failure by returning a "FAIL: ..."
-                        # string instead of printing it; surface that so the
-                        # output scan below can detect it.
-                        if isinstance(result, str) and "FAIL" in result:
+                        # Primary verdict: the test's return value and any
+                        # raised assertion (RuntimeError from test.expect),
+                        # NOT scanning output text for the literal "FAIL".
+                        if isinstance(result, int) and not isinstance(result, bool):
+                            if result != 0:
+                                test_failed = True
+                        elif isinstance(result, str) and "FAIL" in result:
+                            # Legacy convention: a test returns a "FAIL: ..."
+                            # string to report failure through its value.
+                            test_failed = True
                             print(result)
                 else:
                     runtime.execute(program_ir)
@@ -1871,9 +1882,13 @@ def cmd_test(args: list[str]) -> int:
                 sys.stdout = old_stdout
 
             output = captured.getvalue()
-            has_fail = "FAIL" in output
+            # Legacy print-based tests report failure by printing "FAIL".
+            # Kept as a supplementary signal only; the primary verdict above
+            # is the return value plus raised assertions.
+            if "FAIL" in output:
+                test_failed = True
 
-            if has_fail:
+            if test_failed:
                 failed += 1
                 errors.append(test_file.name)
                 print(f"FAIL  {test_file.name}", file=sys.stderr)
@@ -1882,8 +1897,8 @@ def cmd_test(args: list[str]) -> int:
                         print("  " + line, file=sys.stderr)
             else:
                 passed += 1
+                print(f"PASS  {test_file.name}")
                 if verbose:
-                    print(f"PASS  {test_file.name}")
                     if output.strip():
                         for line in output.strip().split("\n"):
                             print("  " + line)

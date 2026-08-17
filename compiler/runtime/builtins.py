@@ -601,6 +601,34 @@ def string_split(args: tuple[RuntimeValue, ...]) -> list[str]:
     return s.split(delim)
 
 
+def test_expect(args: tuple[RuntimeValue, ...]) -> bool:
+    """Assert that *condition* is truthy, matching AILang ``if`` semantics.
+
+    A falsey condition raises a structured ``RuntimeError`` so ``ail test``
+    reports a genuine test failure instead of string-scanning output for
+    the literal ``FAIL``. This is the primitive behind ``test.expect``.
+    """
+    if len(args) not in (1, 2):
+        raise RuntimeError(
+            operation="test.expect()",
+            reason="Expected 1-2 arguments: a condition and an optional message.",
+        )
+    condition = args[0]
+    message = str(args[1]) if len(args) > 1 else "Assertion failed"
+    if not condition:
+        raise RuntimeError(
+            operation="test.expect()",
+            reason=message,
+            expected_type="truthy value",
+            actual_type=RuntimeError._type_name(condition),
+            suggestion=(
+                "The test assertion failed. Fix the code under test or "
+                "correct the expectation."
+            ),
+        )
+    return True
+
+
 def system_exit(args: tuple[RuntimeValue, ...]) -> None:
     """Exit the process with the given exit code."""
     code = int(args[0]) if args else 0
@@ -685,6 +713,7 @@ BUILTINS: dict[str, Any] = {
     "__native_to_int": native_to_int,
     "__native_to_string": native_to_string,
     "system_exit": system_exit,
+    "__test_expect": test_expect,
     "io_read": io_read,
 }
 

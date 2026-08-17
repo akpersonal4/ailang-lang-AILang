@@ -501,6 +501,22 @@ A chronological record of every major engineering phase, with results, lessons, 
 | **Lessons** | The `scripts/sync_versions.py` `^VERSION` regex still misses indented `except ImportError` fallbacks — manual sync of `tools/ail_context/__main__.py` and `tools/ail_mcp/*` required again at v1.1.18. Generated report churn (`reports/dependency_ordering.json`) must be excluded from release commits. |
 | **Documents** | `CHANGELOG.md` v1.1.18, `docs/releases/M136_V1_1_18_RC_REPORT.md` |
 
+### M137 — Trampoline Execution Model (ADR-017 Phase 2) (v1.1.19-pre)
+
+| Aspect | Detail |
+|--------|--------|
+| **What** | Implemented the trampoline / explicit interpreter stack execution model (ADR-017 Option E). Replaced Python host-stack recursion with a heap-allocated interpreter stack in `compiler/runtime/interpreter.py`. Three-tier tail-call strategy: (1) depth==1 → push to trampoline stack, (2) depth>1 safe args → `_inline_tail_chain` iterative draining, (3) depth>1 unsafe args → fall through to normal execution. Removed the 2000-frame recursion ceiling for tail-recursive calls. Fixed `_TailCallSentinel` branch-propagation bug (2 lines added to `_execute_block`). |
+| **Why** | The recursion ceiling (~1,999 depth) was the binding constraint for the 10k product target. A canonical business workload at 10,000 records requires ≥10,000 recursive depth. The ceiling was an architecture-internal execution constraint (Python host stack), not a language rule. Option E removes the ceiling for tail-recursive calls with zero language surface change. Non-tail-recursive calls still consume the Python host stack. |
+| **Result** | All acceptance criteria pass: canonical 10k workload 980 ms avg (target: <5000 ms), depth 20,000 executes, memory 23.4 MB at depth 20k (linear), determinism preserved across 5 runs, 1183/1185 tests pass (2 pre-existing), zero regressions. ADR-017 approved by decision-holder. Phase 2 complete. |
+| **Performance** | Depth scaling: 100→20,000 (200×) = 278× time, 1.39× overhead (near-linear). Per-call: 6.7–13.2 µs. Canonical 10k: 980 ms avg. Fibonacci(30): 21.9s (exponential, non-tail-recursive). |
+| **Memory** | Linear: 1.2 KB/frame. Depth 10k = 11.64 MB additional. Depth 20k = 23.41 MB. 10k record workload = 3.49 MB peak. |
+| **Determinism** | Byte-identical across 5 runs on all workloads (countdown, fibonacci, arithmetic, 10k records). |
+| **Regression** | 1183 passed, 2 pre-existing deselected, 0 new failures. Ruff/mypy unchanged. |
+| **Profiling** | `_evaluate_expression` 24.2%, `isinstance` 8.7% (5.7M calls), `_call_function` 8.3%, name resolution 30% combined. No escalation gate fired. |
+| **Lessons** | (1) The three-tier strategy was necessary because CallIR in tail-call arguments prevents static inline optimization. (2) `_TailCallSentinel` must propagate through if-branches — a subtle bug that caused ackermann to continue executing after a matched branch. (3) The trampoline is invisible to AI — same language, same semantics, same tests. (4) Per-call overhead (~10 µs) is acceptable for business workloads; a VM is not justified at this time. |
+| **Files** | `compiler/runtime/interpreter.py` (~200 LOC changes), `benchmarks/phase2_trampoline_validation.py` (532 LOC, new), `tests/test_benchmark.py` (updated), `docs/adr/ADR-017-gate-f-iteration-execution-model.md` (§19 added) |
+| **Documents** | `docs/adr/ADR-017-gate-f-iteration-execution-model.md` (§19 Implementation Results), `benchmarks/phase2_trampoline_validation.py`, `docs/benchmarks/PERF_SCALING_POST_TRAMPOLINE.md` |
+
 ### Governance
 
 - **Benchmark Feedback Loop:** Single-app findings stay in benchmark reports. Only ≥2 independent apps promote lessons to Playbook/AGENTS.md.

@@ -247,12 +247,11 @@ fn find_contact(contacts, name) {
 | environment | ✅ Complete | All spec functions implemented |
 | convert | ✅ Complete | Extra `to_number` added |
 | io | ⚠️ Redundant | Wraps print unnecessarily |
-| system | ⚠️ Incomplete | `exit` doesn't actually exit |
+| system | ✅ Complete | `exit` terminates the process with the given exit code |
 
 ---
 
 ## Priority Actions
 
-1. **Immediate:** Fix `system.exit()` to actually terminate the process
-2. **Near-term:** Consider `list.iter`, `list.sum`, `list.find` for v0.2.0
+1. **Near-term:** Consider `list.iter`, `list.sum`, `list.find` for v0.2.0
 3. **Future:** Evaluate `string.icontains`, `string.join` for convenience

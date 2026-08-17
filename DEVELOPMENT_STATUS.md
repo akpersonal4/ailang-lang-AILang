@@ -12,7 +12,7 @@ until this document has been reviewed. Update AGENTS.md reading order after revi
 |:----------|:------|
 | **Current Release** | v1.1.18 (Published) |
 | **Current Milestone** | A100 — Community Validation (ready for recruitment) |
-| **Project Phase** | Public Release (engineering frozen) |
+| **Project Phase** | Public Release (engineering frozen — trampoline implemented, pending publication) |
 
 ### Release Status
 
@@ -57,7 +57,7 @@ until this document has been reviewed. Update AGENTS.md reading order after revi
 |------|--------|
 | Language | 100% |
 | Compiler | 99.9% |
-| Runtime | 99% |
+| Runtime | 99.5% (trampoline implemented, pending publication) |
 | Formatter | 99% |
 | Platform Services | 100% |
 | Platform Integration | 100% |
@@ -369,8 +369,9 @@ software development under real usage conditions.
 - Semantic analyzer (optimized)
 
 ### Runtime
-- **Frozen** — RTO-001 implemented, no further changes until new bottleneck evidence
+- **Frozen** — RTO-001 implemented, trampoline implemented (ADR-017), no further changes until new bottleneck evidence
 - v0.2.1 exception: `string_find`, `string_split` Python builtins added (10 LOC, no semantic changes)
+- v1.1.19 exception: Trampoline execution model (ADR-017 Option E) — interpreter-internal only, no language surface change
 
 ### Language Spec
 - **Frozen** — v0.1.x specification locked, no new keywords, grammar, or syntax changes
@@ -388,6 +389,7 @@ software development under real usage conditions.
 
 | Item | Version | Date |
 |------|---------|------|
+| **M137 — Trampoline Execution Model (ADR-017 Phase 2)** — Implemented trampoline / explicit interpreter stack in `compiler/runtime/interpreter.py`. Three-tier tail-call strategy. Removed 2000-frame recursion ceiling. Depth 20,000 executes. Canonical 10k workload: 980 ms avg (target: <5000 ms). Memory: 23.4 MB at depth 20k. Determinism preserved across 5 runs. 1183/1185 tests pass (2 pre-existing). Zero regressions. Fixed `_TailCallSentinel` branch-propagation bug. ADR-017 approved by decision-holder. See `docs/adr/ADR-017-gate-f-iteration-execution-model.md` §19 and `benchmarks/phase2_trampoline_validation.py`. | v1.1.19-pre | 2026-08-17 |
 | **M136 — Reliability & Tooling Fixes** — Shipped the five M136 fixes: J-1 `ail rename` cp1252/piped-stdout `UnicodeEncodeError` (ASCII `->`), J-2 `ail test` auto-executes `test_*` functions with legacy `main()` fallback, J-3 `ail benchmark` streaming/flush + elapsed/per-run markers, J-4 `list.sum` float precision, J-5 `list.sum_by_key` float/decimal precision + clean data-focused errors. Release gate passed: 1145 passing / 6 pre-existing failures, 55/55 M136 regression tests, `twine check` PASSED, fresh wheel-only venv verified, canonical benchmark 5/5 from wheel, published to PyPI + GitHub with SHA256-matched assets, post-publication verification from PyPI green. See `CHANGELOG.md` v1.1.18 and `docs/releases/M136_V1_1_18_RC_REPORT.md`.
 
 > **Naming reconciliation:** "M136" refers to TWO distinct groups. **J-1..J-5** (above) — **shipped in v1.1.18**. **P0/P1a/P1b** — a separate group of working-tree fixes (P0 `ail run` single-execution entry + welcome to stderr; P1a `ail testgen` emits `.ail` instead of pytest; P1b `_frame_ever_bound` O(n²)→O(n) name-resolution) — **completed/verified, pending publication**. P0/P1a/P1b are NOT present in published v1.1.18. | v1.1.18 | 2026-08-11 |
@@ -495,6 +497,7 @@ software development under real usage conditions.
 | **v1.1.16** | ✅ **Published** | M134 External Review Verification — released to PyPI + GitHub |
 | **v1.1.17** | ✅ **Published** | M135 A100 Preconditions — wheel-install tooling fixes + bundled apps, released to PyPI + GitHub, verified from PyPI |
 | **v1.1.18** | ✅ **Published** | M136 Reliability & Tooling Fixes — J-1..J-5 (shipped in v1.1.18), released to PyPI + GitHub, canonical benchmark 5/5 from wheel, verified from PyPI |
+| **v1.1.19** | 🔧 Working tree | M137 Trampoline Execution Model (ADR-017 Phase 2) — 10k depth resolved, 980ms canonical workload, zero regressions, pending publication |
 
 > **Note:** M136 **P0/P1a/P1b** (single-execution entry, testgen `.ail` output, `_frame_ever_bound` name-resolution) are a distinct group — completed/verified in the working tree, **pending publication**. They are NOT in v1.1.18.
 

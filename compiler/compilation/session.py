@@ -270,14 +270,26 @@ class CompilationSession:
         if module_name in self._sources:
             existing = self._sources[module_name].path
             if (
-                existing
+                importer is None
+                and existing
                 and "stdlib" in str(existing)
                 and "stdlib" not in str(file_path)
             ):
-                self._shadowed_user_modules.add(module_name)
-            if importer is not None:
-                self._graph.add_dependency(importer, module_name)
-            return
+                # The user's explicit entry point shares a name with a stdlib
+                # module (e.g. test.ail or math.ail). The entry point takes
+                # precedence over the pre-registered stdlib module so the user's
+                # code is parsed and executed as the entry module.
+                pass
+            else:
+                if (
+                    existing
+                    and "stdlib" in str(existing)
+                    and "stdlib" not in str(file_path)
+                ):
+                    self._shadowed_user_modules.add(module_name)
+                if importer is not None:
+                    self._graph.add_dependency(importer, module_name)
+                return
 
         try:
             source = Source.from_file(str(file_path))

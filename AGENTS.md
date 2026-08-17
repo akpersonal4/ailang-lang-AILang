@@ -15,18 +15,83 @@ Generate correct, idiomatic AILang code that builds and runs on first compile. E
 
 ## 2. Mandatory Reading Order
 
-### 2.1 Before Writing AILang Code
+### 2.0 Mandatory Project Context (before ANY work)
 
-Before writing any AILang code, read these files in order:
+Before performing ANY work on AILang — including responding to feature requests, planning, benchmarking, or writing code — read these files in order:
 
 | Order | File |
 |:-----:|------|
-| 1 | `DEVELOPMENT_STATUS.md` |
-| 2 | `PROJECT_MEMORY.md` |
-| 3 | `AGENTS.md` (this file) |
-| 4 | `docs/guides/AILANG_DEVELOPMENT_PLAYBOOK.md` |
-| 5 | `docs/architecture/ARCHITECTURE_DECISIONS.md` |
-| 6 | `docs/reference/LANGUAGE_SPEC.md` |
+| 1 | `docs/roadmap/AILANG_STRATEGIC_ENGINEERING_PLAN.md` |
+| 2 | `docs/roadmap/PRODUCT_ROADMAP.md` |
+| 3 | `DEVELOPMENT_STATUS.md` |
+| 4 | `PROJECT_MEMORY.md` |
+
+The **Strategic Engineering Plan** is the authoritative source for:
+- current product direction
+- engineering priorities
+- evidence gates
+- performance targets
+- reliability requirements
+- maintenance goals
+- architectural decisions
+- feature freeze boundaries
+
+> Do not implement, propose, release, or publish changes that conflict with the
+> Strategic Engineering Plan. **A feature request is NOT automatic authorization.**
+
+Before starting any implementation, explicitly identify and report:
+- the relevant strategic objective
+- the applicable evidence gate
+- the current baseline
+- the success metric
+- the stop condition
+
+If the requested work is not justified by the plan or its evidence gates, **STOP**
+and report that it requires strategic approval before implementation.
+
+#### Project Governance Hierarchy
+
+```
+1. docs/governance/PROJECT_CONSTITUTION.md   (immutable rules)
+   ↓
+2. docs/roadmap/AILANG_STRATEGIC_ENGINEERING_PLAN.md
+   ↓
+3. docs/roadmap/PRODUCT_ROADMAP.md
+   ↓
+4. DEVELOPMENT_STATUS.md
+   ↓
+5. Individual milestone / ADR documents
+   ↓
+6. Implementation tasks
+```
+
+Lower levels must not contradict higher levels. When documents conflict, the higher level wins.
+
+#### Project State Report (required before any work)
+
+Before acting, report the current state so authorization is explicit:
+
+```text
+PROJECT STATE
+Release: <current released version>
+Phase: <A100 / engineering freeze / ...>
+Freeze: <frozen components>
+Strategic Objective: <from the plan>
+Current Evidence: <baseline relevant to the work>
+Requested Work: <what is being asked>
+Authorized: <YES / NO — plan-justified or not>
+```
+
+### 2.1 Before Writing AILang Code
+
+Before writing any AILang code, read the files in `2.0` plus these in order:
+
+| Order | File |
+|:-----:|------|
+| 1 | `AGENTS.md` (this file) |
+| 2 | `docs/guides/AILANG_DEVELOPMENT_PLAYBOOK.md` |
+| 3 | `docs/architecture/ARCHITECTURE_DECISIONS.md` |
+| 4 | `docs/reference/LANGUAGE_SPEC.md` |
 
 > Developers first need to know **what is happening today** before learning **how the language works**.
 

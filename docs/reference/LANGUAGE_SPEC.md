@@ -270,7 +270,7 @@ fn main() {
 ```
 
 - `main` is called automatically after all module-level code executes.
-- The return value of `main` is discarded by the CLI (use `print()` for output).
+- If `main` returns an Int, that value becomes the process exit code: `0` means success, any non-zero value means the program reports failure (see §16 Exit Codes). If `main` returns any other value (or nothing), the process exits `0` on successful completion. Use `print()` for program output and `system.exit(code)` for an explicit exit at any point.
 
 ### 5.4 Functions as Values
 
@@ -901,6 +901,9 @@ fn main() {
 
 - **0** = Success
 - **Non-zero** = Error occurred
+- A non-zero Int returned from `main` becomes the process exit code (see §5.3).
+- A runtime failure, compile/type-check failure, or missing input file exits non-zero.
+- `system.exit(code)` exits with exactly `code` regardless of `main`'s return value.
 
 
 ## 17. Version History

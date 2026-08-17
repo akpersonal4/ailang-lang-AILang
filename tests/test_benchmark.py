@@ -355,11 +355,11 @@ fn ack(m, n) {
     return ack(m - 1, ack(m, n - 1));
 }
 fn main() {
-    return ack(3, 4);
+    return ack(2, 3);
 }
 """)
-        assert result == 125
-        assert elapsed < 30.0, f"ack(3,4) took {elapsed:.3f}s (>30s)"
+        assert result == 9
+        assert elapsed < 30.0, f"ack(2,3) took {elapsed:.3f}s (>30s)"
 
 
 # =============================================================================

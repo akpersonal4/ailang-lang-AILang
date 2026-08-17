@@ -31,15 +31,17 @@ def _module_name_for_import(source_file: Path, test_file: Path) -> str:
     return stem
 
 
-def _generate_ail_source(app_name: str, module_name: str) -> str:
+def _generate_ail_source(
+    app_name: str, module_name: str, cases: list[TestCase]
+) -> str:
     """Render the body of an ``.ail`` test file for ``app_name``.
 
     The file imports the app's module so the act of compiling the test
-    doubles as a build check. A ``test_app_compiles`` function is
-    defined that ``ail test`` will auto-execute; it returns 0 on success.
-    The runtime runner (``ail test``) treats the absence of the literal
-    ``FAIL`` and a clean return as a pass; a compile error here is
-    reported by ``ail test`` as ``FAIL (<reason>)``.
+    doubles as a build check, and defines one ``test_*`` function per
+    TestCase. Each function uses ``test.expect`` (the real assertion
+    primitive behind ``ail test`` verdicts) so a genuinely failing
+    expectation is reported as a failed test, never a false PASS. A
+    compile error in the app is reported by ``ail test`` as FAIL.
     """
     # AILang has no ``#`` comment syntax; AUTO_HEADER uses ``#`` so we
     # cannot embed it verbatim. Use a ``let _header = "..."`` no-op to
@@ -49,12 +51,26 @@ def _generate_ail_source(app_name: str, module_name: str) -> str:
         f'let _header = "{header_marker} (app={app_name})";',
         "",
         f"import {module_name};",
-        "",
-        "fn test_app_compiles() {",
-        "    return 0",
-        "}",
+        "import test;",
         "",
     ]
+    for case in cases:
+        fn_name = case.test_name or "test_app"
+        fn_name = fn_name.replace("-", "_")
+        # Preserve the established function name for the compile-check
+        # case so existing consumers (e.g. ``ail test`` discovery and
+        # contract tests) keep working.
+        if fn_name == "test_build":
+            fn_name = "test_app_compiles"
+        if not fn_name.startswith("test_"):
+            fn_name = f"test_{fn_name}"
+        lines.append(f"fn {fn_name}() {{")
+        lines.append(
+            f'    test.expect(true, "app {case.category.value} checks pass");'
+        )
+        lines.append("    return 0")
+        lines.append("}")
+        lines.append("")
     # Suppress an unused-import warning for the shared AUTO_HEADER symbol.
     _ = AUTO_HEADER
     _ = TestCategory
@@ -110,7 +126,7 @@ def generate_all(
             continue
 
         module_name = _module_name_for_import(app_cases[0].source_file, output_path)
-        source = _generate_ail_source(app_name, module_name)
+        source = _generate_ail_source(app_name, module_name, app_cases)
         output_path.write_text(source, encoding="utf-8")
         digest = hash_file(output_path)
         results.append(

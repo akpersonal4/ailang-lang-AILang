@@ -32,7 +32,7 @@ fn main() {
 }
 ```
 
-The `main()` function is called when the program runs. Its return value is discarded by the CLI (all output must use `print()`).
+The `main()` function is called when the program runs. If it returns an Int, that value becomes the process exit code (`0` = success, non-zero = failure); other return values exit `0` on success. Program output goes to stdout via `print()`.
 
 ## 2. Functions
 

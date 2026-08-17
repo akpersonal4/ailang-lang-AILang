@@ -36,6 +36,45 @@ class ReturnSignal:
         self.value = value
 
 
+# Sentinel returned by _evaluate_expression when a CallIR is trampolined
+# (pushed to _trampoline_stack) instead of executed immediately.  The
+# caller (binary-op handler, etc.) uses this to detect the deferral and
+# set up _trampoline_pending_binary.
+_TRAMPOLINE_SENTINEL = object()
+
+
+class _TrampolinePendingBinary:
+    """Stores a binary operation waiting for a trampolined call to complete.
+
+    When the left operand of a binary expression is a trampolined function call,
+    the operation cannot be completed immediately.  This object records the
+    operator and the **pre-evaluated** right operand so the trampoline loop can
+    finish the operation without needing the caller's scope.
+    """
+
+    __slots__ = ("operator", "right_value")
+
+    def __init__(self, operator: str, right_value: Any) -> None:
+        self.operator = operator
+        self.right_value = right_value
+
+
+class _TailCallSentinel:
+    """Sentinel returned by _execute_block to signal a tail-call for inline chaining.
+
+    When a tail-call is detected at depth > 1 and the call arguments contain
+    no recursive CallIRs (e.g. ``build_records(n - 1, items)``), _execute_block
+    returns this sentinel instead of recursing through the Python host stack.
+    ``_inline_tail_chain`` drains the chain iteratively.
+    """
+
+    __slots__ = ("function", "args")
+
+    def __init__(self, function: FunctionIR, args: tuple[Any, ...]) -> None:
+        self.function = function
+        self.args = args
+
+
 class Runtime:
     """Execute a lowered IR program with lexical scopes and frames."""
 
@@ -75,6 +114,37 @@ class Runtime:
         # name that *was* frame-bound but is no longer present (its frame
         # has popped) merely causes a wasted walk, never an incorrect result.
         self._frame_ever_bound: set[str] = set()
+        # --- Trampoline (ADR-017) ---
+        # Explicit call stack for iterative execution of tail-recursive calls.
+        # Replaces Python host-stack recursion for tail-call positions,
+        # removing the ~2000-frame ceiling imposed by CPython's stack limit.
+        # Each entry is (function, args, parent_frame) where parent_frame is
+        # the StackFrame that was active when the tail call was detected,
+        # needed to preserve the lexical scope chain across trampoline iterations.
+        self._trampoline_stack: list[tuple[FunctionIR, tuple[Any, ...], StackFrame | None]] = []
+        # Stack of pending binary operations: when the left side of a binary
+        # expression is a trampolined call, the operation is deferred and
+        # pushed here.  The trampoline loop completes each once the deferred
+        # call returns.  A stack (not a single value) is needed because
+        # nested patterns like ``f(x) + g(y) + 1`` produce multiple pending
+        # operations at different nesting levels.
+        self._trampoline_pending_binaries: list[_TrampolinePendingBinary] = []
+        # Flag set by _execute_block before evaluating a tail-call return
+        # expression.  When True, _evaluate_expression will trampoline
+        # FunctionIR calls instead of recursing through the Python host stack.
+        self._trampoline_tail_call_active: bool = False
+        # Total number of trampoline iterations in the current top-level call.
+        # Used to enforce the recursion depth limit even though the Python
+        # host stack is no longer growing.
+        self._trampoline_iterations: int = 0
+        # Depth of nested function calls initiated by the trampoline loop.
+        # Incremented/decremented in _call_function.  At depth==1, tail
+        # calls are pushed to the trampoline stack.  At depth>1 with safe
+        # arguments (no CallIR): tail calls use _inline_tail_chain for
+        # iterative draining without nested trampolines.  At depth>1 with
+        # recursive arguments (e.g. ack(m-1, ack(m, n-1))): fall through
+        # to normal Python recursion to avoid infinite trampoline nesting.
+        self._trampoline_depth: int = 0
 
     def execute(self, program: ProgramIR) -> Any:
         try:
@@ -82,7 +152,7 @@ class Runtime:
             for node in program.body:
                 result = self._execute_node(node)
             if "main" in self._functions:
-                return self._call_function(self._functions["main"], ())
+                return self._trampoline_call(self._functions["main"], ())
             return result
         except RuntimeError:
             raise
@@ -176,7 +246,100 @@ class Runtime:
         try:
             result: Any = None
             for statement in block.statements:
+                # --- Trampoline tail-call detection (ADR-017) ---
+                # Detect tail-call patterns in the IR BEFORE evaluating
+                # the expression, so we can push to the trampoline stack
+                # instead of recursing through the Python host stack.
+                if isinstance(statement, ReturnIR):
+                    rv_node = statement.value
+                    # Pattern 1: return f(args)  — direct tail call
+                    # Three strategies based on depth and argument safety:
+                    #   depth==1:  push to trampoline stack, return None
+                    #   depth>1, args safe (no CallIR): inline tail chain
+                    #   depth>1, args unsafe (has CallIR): fall through to
+                    #            normal execution (avoids infinite nesting
+                    #            for ackermann-style nested recursion)
+                    if self._is_tail_call(rv_node):
+                        callee = self._functions[rv_node.callee]
+                        has_call_args = any(
+                            isinstance(a, CallIR) for a in rv_node.arguments
+                        )
+                        if self._trampoline_depth == 1:
+                            call_args = tuple(
+                                self._evaluate_expression(a)
+                                for a in rv_node.arguments
+                            )
+                            parent = (
+                                self._frame_stack[-1]
+                                if self._frame_stack
+                                else None
+                            )
+                            self._trampoline_stack.append(
+                                (callee, call_args, parent)
+                            )
+                            return None  # trampoline loop will process next frame
+                        elif not has_call_args:
+                            call_args = tuple(
+                                self._evaluate_expression(a)
+                                for a in rv_node.arguments
+                            )
+                            return _TailCallSentinel(callee, call_args)
+                        # else: fall through to normal execution below
+                    # Pattern 2: return f(args) + simple_expr — tail call
+                    # with binary op.  Only activate when the right operand
+                    # is a simple expression (literal or variable) that can
+                    # be safely pre-evaluated in the current scope.  Complex
+                    # right operands (e.g. fib(n-2)) would themselves trigger
+                    # recursion and must not be deferred.
+                    if (
+                        isinstance(rv_node, BinaryOperationIR)
+                        and self._is_tail_call(rv_node.left)
+                        and isinstance(
+                            rv_node.right,
+                            (LiteralIR, VariableReferenceIR),
+                        )
+                    ):
+                        # Pre-evaluate the right operand NOW while the
+                        # function frame is still on the stack.
+                        right_val = self._evaluate_expression(rv_node.right)
+                        if self._trampoline_depth == 1:
+                            self._trampoline_tail_call_active = True
+                            left_val = self._evaluate_expression(rv_node.left)
+                            self._trampoline_tail_call_active = False
+                            if left_val is _TRAMPOLINE_SENTINEL:
+                                self._trampoline_pending_binaries.append(
+                                    _TrampolinePendingBinary(
+                                        rv_node.operator, right_val
+                                    )
+                                )
+                                return None
+                            return ReturnSignal(
+                                self._apply_binary(
+                                    rv_node.operator, left_val, right_val
+                                )
+                            )
+                        else:
+                            has_call_args = any(
+                                isinstance(a, CallIR)
+                                for a in rv_node.left.arguments
+                            )
+                            if not has_call_args:
+                                call_args = tuple(
+                                    self._evaluate_expression(a)
+                                    for a in rv_node.left.arguments
+                                )
+                                callee = self._functions[rv_node.left.callee]
+                                left_val = self._inline_tail_chain(
+                                    callee, call_args
+                                )
+                                return ReturnSignal(
+                                    self._apply_binary(
+                                        rv_node.operator, left_val, right_val
+                                    )
+                                )
                 result = self._execute_node(statement)
+                if isinstance(result, _TailCallSentinel):
+                    return result
                 if isinstance(statement, ReturnIR) or isinstance(result, ReturnSignal):
                     return result
             return result
@@ -190,8 +353,10 @@ class Runtime:
         # useless for the user; _augment_error uses call_span instead.
         caller_span = self._current_span
         self._call_depth += 1
+        self._trampoline_depth += 1
         if self._call_depth > self._max_call_depth:
             self._call_depth -= 1
+            self._trampoline_depth -= 1
             raise self._augment_error(RuntimeError(
                 operation="call",
                 reason=(
@@ -212,6 +377,7 @@ class Runtime:
         required = total - len(defaults)
         if len(args) < required or len(args) > total:
             self._call_depth -= 1
+            self._trampoline_depth -= 1
             raise self._augment_error(RuntimeError(
                 operation="function_call",
                 reason=(
@@ -238,10 +404,220 @@ class Runtime:
             result = self._execute_block(function.body)
             if isinstance(result, ReturnSignal):
                 return result.value
+            if isinstance(result, _TailCallSentinel):
+                return self._inline_tail_chain(result.function, result.args)
             return result
         finally:
             self._frame_stack.pop()
             self._call_depth -= 1
+            self._trampoline_depth -= 1
+
+    # ------------------------------------------------------------------
+    # Trampoline (ADR-017 Option E)
+    # ------------------------------------------------------------------
+
+    def _is_tail_call(self, expression: Any) -> bool:
+        """Return True if *expression* is a CallIR targeting a FunctionIR
+        (not a builtin).  Used to detect tail-call positions where the
+        interpreter can defer the call to the trampoline stack instead of
+        recursing through the Python host stack."""
+        if not isinstance(expression, CallIR):
+            return False
+        if isinstance(expression.callee, str):
+            callee = self._functions.get(expression.callee)
+            return callee is not None
+        return False
+
+    def _trampoline_call(self, function: FunctionIR, args: tuple[Any, ...]) -> Any:
+        """Entry point for trampolined execution.
+
+        Pushes the initial call frame onto the trampoline stack and drives
+        the iterative execution loop.  Tail-recursive calls detected during
+        ``_execute_block`` are pushed to the stack instead of recursing,
+        keeping the Python host-stack depth at O(1) regardless of AILang
+        recursion depth.
+
+        Each trampoline entry carries a saved parent frame so that the
+        lexical scope chain is preserved across trampoline iterations.
+
+        This method is re-entrant: when called from a function that is itself
+        being executed by an outer trampoline (depth > 1), it saves and
+        restores all trampoline state so nested tail-call chains run in an
+        isolated trampoline without corrupting the outer one.
+        """
+        # Save any existing trampoline state for re-entrant calls (depth > 1).
+        saved_stack = self._trampoline_stack
+        saved_pending = self._trampoline_pending_binaries
+        saved_iterations = self._trampoline_iterations
+        saved_tail_active = self._trampoline_tail_call_active
+        saved_depth = self._trampoline_depth
+
+        # Initialize fresh trampoline state for this call.
+        self._trampoline_stack = [(function, args, None)]
+        self._trampoline_pending_binaries = []
+        self._trampoline_iterations = 0
+        self._trampoline_tail_call_active = False
+        self._trampoline_depth = 0
+
+        try:
+            result: Any = None
+
+            while self._trampoline_stack:
+                fn, fn_args, parent_frame = self._trampoline_stack.pop()
+
+                # Enforce the recursion depth limit across trampoline iterations.
+                # The trampoline bypasses the Python host stack, so it can handle
+                # much deeper recursion than _max_call_depth.  Use a 50x multiplier
+                # to allow the canonical 10k workload while still catching runaway
+                # iterations.
+                self._trampoline_iterations += 1
+                if self._trampoline_iterations > self._max_call_depth * 50:
+                    raise self._augment_error(RuntimeError(
+                        operation="call",
+                        reason=(
+                            f"Recursion depth exceeded (limit: {self._max_call_depth}). "
+                            "AILang recursion is bounded to prevent stack overflow."
+                        ),
+                        suggestion=(
+                            "Simplify recursive logic. The recursion limit is fixed at "
+                            f"{self._max_call_depth} in this build; for larger iterations "
+                            "use multiple smaller batches."
+                        ),
+                    ))
+
+                # Temporarily restore the parent frame so _call_function creates
+                # a frame with the correct lexical parent, preserving the scope
+                # chain for variables declared in calling functions.
+                saved_frame_stack = self._frame_stack
+                if parent_frame is not None:
+                    self._frame_stack = [parent_frame]
+                else:
+                    self._frame_stack = []
+                try:
+                    result = self._call_function(fn, fn_args)
+                finally:
+                    self._frame_stack = saved_frame_stack
+
+                # Complete any pending binary operations when the stack is empty
+                # (base case reached).  The right operand was pre-evaluated when
+                # the pending binary was created, so no scope is needed.
+                if not self._trampoline_stack:
+                    while self._trampoline_pending_binaries:
+                        pending = self._trampoline_pending_binaries.pop()
+                        result = self._apply_binary(
+                            pending.operator, result, pending.right_value
+                        )
+
+            return result
+        finally:
+            # Restore outer trampoline state (no-op for top-level calls).
+            self._trampoline_stack = saved_stack
+            self._trampoline_pending_binaries = saved_pending
+            self._trampoline_iterations = saved_iterations
+            self._trampoline_tail_call_active = saved_tail_active
+            self._trampoline_depth = saved_depth
+
+    def _inline_tail_chain(self, function: FunctionIR, args: tuple[Any, ...]) -> Any:
+        """Drain a tail-call chain iteratively without growing the host stack.
+
+        Called at depth > 1 when the tail-call arguments contain no recursive
+        CallIRs (e.g. ``build_records(n - 1, items)``).  Sets up frames
+        directly instead of going through ``_call_function`` to avoid inflating
+        ``_call_depth`` / ``_trampoline_depth`` and triggering nested trampoline
+        creation for argument evaluations.
+
+        When the function body detects another tail call (Pattern 1), it
+        returns a ``_TailCallSentinel`` which this method uses to loop with
+        the new callee and arguments.
+        """
+        while True:
+            self._trampoline_iterations += 1
+            if self._trampoline_iterations > self._max_call_depth * 50:
+                raise self._augment_error(RuntimeError(
+                    operation="call",
+                    reason=(
+                        f"Recursion depth exceeded (limit: {self._max_call_depth}). "
+                        "AILang recursion is bounded to prevent stack overflow."
+                    ),
+                    suggestion=(
+                        "Simplify recursive logic. The recursion limit is fixed at "
+                        f"{self._max_call_depth} in this build; for larger iterations "
+                        "use multiple smaller batches."
+                    ),
+                ))
+
+            # Set up frame directly (like _call_function but without depth tracking).
+            frame = StackFrame(
+                function_name=function.name,
+                parent_frame=self._frame_stack[-1] if self._frame_stack else None,
+            )
+            for name, value in zip(function.parameters, args):
+                frame.define(name, value)
+                self._frame_ever_bound.add(name)
+
+            self._frame_stack.append(frame)
+            try:
+                result = self._execute_block(function.body)
+            finally:
+                self._frame_stack.pop()
+
+            if isinstance(result, ReturnSignal):
+                result = result.value
+
+            if isinstance(result, _TailCallSentinel):
+                function = result.function
+                args = result.args
+                continue
+
+            return result
+
+    def _apply_binary(self, op: str, left: Any, right: Any) -> Any:
+        """Evaluate a binary operation on pre-evaluated operands."""
+        if op == "+":
+            return left + right
+        if op == "-":
+            return left - right
+        if op == "*":
+            return left * right
+        if op == "/":
+            try:
+                return left / right
+            except ZeroDivisionError:
+                raise self._augment_error(RuntimeError(
+                    operation="division",
+                    reason="Division by zero is undefined.",
+                    expected_type="non-zero divisor",
+                    actual_type="0",
+                    suggestion="Guard division with a check for zero.",
+                ))
+        if op == "%":
+            try:
+                return left % right
+            except ZeroDivisionError:
+                raise self._augment_error(RuntimeError(
+                    operation="modulo",
+                    reason="Modulo by zero is undefined.",
+                    expected_type="non-zero divisor",
+                    actual_type="0",
+                    suggestion="Guard modulo with a check for zero.",
+                ))
+        if op == "==":
+            return left == right
+        if op == "!=":
+            return left != right
+        if op == "<":
+            return left < right
+        if op == "<=":
+            return left <= right
+        if op == ">":
+            return left > right
+        if op == ">=":
+            return left >= right
+        if op == "&&":
+            return bool(left and right)
+        if op == "||":
+            return bool(left or right)
+        raise ValueError(f"Unsupported operator: {op}")
 
     def _evaluate_expression(self, expression: Any) -> Any:
         # Track the source span of the expression being evaluated so a
@@ -350,6 +726,25 @@ class Runtime:
 
             # Handle callable (built-in or regular function)
             if isinstance(callee, FunctionIR):
+                # --- Trampoline: detect tail-call position (ADR-017) ---
+                # When this CallIR is the immediate return value of the
+                # enclosing function and targets a user FunctionIR (not a
+                # builtin), push the call to the trampoline stack instead
+                # of recursing through the Python host stack.  This keeps
+                # the Python host-stack depth at O(1).
+                if self._trampoline_tail_call_active and self._is_tail_call(expression) and self._trampoline_depth == 1:
+                    args = tuple(
+                        self._evaluate_expression(arg) for arg in expression.arguments
+                    )
+                    # Save the parent frame to preserve the scope chain.
+                    parent = (
+                        self._frame_stack[-1]
+                        if self._frame_stack
+                        else None
+                    )
+                    self._trampoline_stack.append((callee, args, parent))
+                    self._trampoline_tail_call_active = False
+                    return _TRAMPOLINE_SENTINEL
                 args = tuple(
                     self._evaluate_expression(arg) for arg in expression.arguments
                 )
@@ -428,7 +823,7 @@ class Runtime:
                     "was discovered by the compiler."
                 ),
             ))
-        return self._call_function(function, tuple(args))
+        return self._trampoline_call(function, tuple(args))
 
     def _augment_error(self, error: RuntimeError) -> RuntimeError:
         """Inject source location into a RuntimeError if not already set.
