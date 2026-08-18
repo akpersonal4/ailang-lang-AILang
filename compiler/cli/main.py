@@ -429,6 +429,15 @@ def cmd_run(args: list[str]) -> int:
         result = runtime.execute(program_ir)
         if isinstance(result, int) and not isinstance(result, bool):
             return result
+        # After main() (or module execution), run any test_* functions so
+        # that ``ail run`` on a test file propagates assertion failures.
+        test_names = sorted(
+            n for n in runtime._functions
+            if n.startswith("test_") and "." not in n
+        )
+        if test_names:
+            for name in test_names:
+                runtime.call_function(name)
         return 0
     except RuntimeError as e:
         print(e.format_diagnostic(), file=sys.stderr)

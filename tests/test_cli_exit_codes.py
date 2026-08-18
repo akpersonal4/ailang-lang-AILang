@@ -118,3 +118,64 @@ class TestP01ExitCodes:
             "}\n",
         )
         assert result.returncode == 0
+
+
+class TestA100TestExitCodes:
+    """A100-001: ``ail run`` on a test file must propagate assertion failures."""
+
+    PASSING_TEST = (
+        "fn add(a, b) { return a + b }\n"
+        "fn test_correct() { test.expect(add(2, 3) == 5, \"works\") }\n"
+    )
+
+    FAILING_TEST = (
+        "fn add(a, b) { return a + b }\n"
+        "fn test_wrong() { test.expect(add(2, 3) == 6, \"should fail\") }\n"
+    )
+
+    MIXED_TEST = (
+        "fn add(a, b) { return a + b }\n"
+        "fn test_pass() { test.expect(add(2, 3) == 5, \"ok\") }\n"
+        "fn test_fail() { test.expect(add(2, 3) == 6, \"wrong\") }\n"
+    )
+
+    def test_ail_run_passing_test_exits_zero(self, tmp_path: Path) -> None:
+        result = _run_file(tmp_path, self.PASSING_TEST)
+        assert result.returncode == 0
+
+    def test_ail_run_failing_test_exits_nonzero(self, tmp_path: Path) -> None:
+        result = _run_file(tmp_path, self.FAILING_TEST)
+        assert result.returncode == 1
+        assert "Runtime Error" in result.stderr
+
+    def test_ail_run_mixed_test_exits_nonzero(self, tmp_path: Path) -> None:
+        result = _run_file(tmp_path, self.MIXED_TEST)
+        assert result.returncode == 1
+
+    def test_ail_run_ordinary_program_still_exits_zero(self, tmp_path: Path) -> None:
+        result = _run_file(tmp_path, 'fn main() { print("hello"); return 0 }')
+        assert result.returncode == 0
+        assert result.stdout == "hello\n"
+
+    def test_ail_test_failing_exits_nonzero_unchanged(self, tmp_path: Path) -> None:
+        """ail test behavior must remain unchanged."""
+        result = subprocess.run(
+            [sys.executable, "-m", "compiler", "test", _write(tmp_path, "t.ail", self.FAILING_TEST)],
+            capture_output=True,
+            text=True,
+        )
+        assert result.returncode == 1
+
+    def test_ail_test_passing_exits_zero_unchanged(self, tmp_path: Path) -> None:
+        result = subprocess.run(
+            [sys.executable, "-m", "compiler", "test", _write(tmp_path, "t.ail", self.PASSING_TEST)],
+            capture_output=True,
+            text=True,
+        )
+        assert result.returncode == 0
+
+
+def _write(tmp_path: Path, name: str, source: str) -> str:
+    p = tmp_path / name
+    p.write_text(source, encoding="utf-8")
+    return str(p)
