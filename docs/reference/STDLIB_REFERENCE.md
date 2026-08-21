@@ -929,6 +929,14 @@ convert.to_number("42")  // 42
 convert.to_number(42)     // 42
 ```
 
+### `to_float(value)`
+Converts a string, int, or float to a floating-point number. Raises an error on non-numeric input.
+```ail
+convert.to_float("12.50")  // 12.5
+convert.to_float(42)       // 42.0
+convert.to_float(3.14)     // 3.14
+```
+
 ---
 
 ## io

@@ -140,6 +140,7 @@ _STDLIB_FUNCTIONS: list[CompletionItem] = [
     CompletionItem("environment.args", kind=6, detail="environment.args()"),
     CompletionItem("convert.to_string", kind=6, detail="convert.to_string(value)"),
     CompletionItem("convert.to_int", kind=6, detail="convert.to_int(value)"),
+    CompletionItem("convert.to_float", kind=6, detail="convert.to_float(value)"),
     CompletionItem("convert.to_bool", kind=6, detail="convert.to_bool(value)"),
     CompletionItem("convert.to_number", kind=6, detail="convert.to_number(value)"),
     CompletionItem("io.write", kind=6, detail="io.write(value)"),

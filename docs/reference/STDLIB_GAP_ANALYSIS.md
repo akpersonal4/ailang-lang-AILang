@@ -245,7 +245,7 @@ fn find_contact(contacts, name) {
 | time | ✅ Complete | All spec functions implemented |
 | random | ✅ Complete | All spec functions implemented |
 | environment | ✅ Complete | All spec functions implemented |
-| convert | ✅ Complete | Extra `to_number` added |
+| convert | ✅ Complete | Extra `to_number` and `to_float` added |
 | io | ⚠️ Redundant | Wraps print unnecessarily |
 | system | ✅ Complete | `exit` terminates the process with the given exit code |
 

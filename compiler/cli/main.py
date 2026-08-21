@@ -956,6 +956,7 @@ _STDLIB_FUNCTIONS = frozenset(
         "environment.args",
         "convert.to_string",
         "convert.to_int",
+        "convert.to_float",
         "convert.to_bool",
         "convert.to_number",
         "io.write",

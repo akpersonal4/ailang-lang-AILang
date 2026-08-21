@@ -10,9 +10,9 @@ until this document has been reviewed. Update AGENTS.md reading order after revi
 
 | Attribute | Value |
 |:----------|:------|
-| **Current Release** | v1.1.18 (Published) |
+| **Current Release** | v1.1.22 (Published) |
 | **Current Milestone** | A100 — Community Validation (ready for recruitment) |
-| **Project Phase** | Public Release (engineering frozen — trampoline implemented, pending publication) |
+| **Project Phase** | Public Release (engineering frozen — A101 P0 hardening published in v1.1.22) |
 
 ### Release Status
 
@@ -46,9 +46,18 @@ until this document has been reviewed. Update AGENTS.md reading order after revi
 | GitHub Release | ✅ v1.1.17 Published |
 | A100 Preconditions (M135) | ✅ Shipped in v1.1.17 — fresh venv verified from PyPI, 8/8 CLI checks pass |
 | M136 Fixes | ✅ Shipped in v1.1.18 — J-1..J-5, published to PyPI + GitHub |
-| M136 P0/P1a/P1b | ⏳ Completed/verified in working tree — PENDING publication (not in any published release; v1.1.18 predates them) |
+| M136 P0/P1a/P1b | ✅ Published in v1.1.19 (P0/P1a/P1b) + v1.1.20 (trampoline correction) |
 | PyPI Publication | ✅ v1.1.18 Published |
 | GitHub Release | ✅ v1.1.18 Published |
+| v1.1.19 (PyPI) | ⚠️ Published from pre-trampoline commit `837e05c` — contains P0/P1a/P1b only, should be yanked |
+| v1.1.19 (GitHub) | ✅ Published from trampoline commit `8d9a30e` — historical, superseded by v1.1.20 |
+| PyPI Publication | ✅ v1.1.20 Published (authoritative trampoline release) |
+| GitHub Release | ✅ v1.1.20 Published (authoritative trampoline release) |
+| PyPI Publication | ✅ v1.1.21 Published (A100-001 exit-code fix + A100-002 spec version) |
+| GitHub Release | ✅ v1.1.21 Published |
+| A101 P0-A/P0-B/P0-D | ✅ Shipped in v1.1.22 — `convert.to_float`, per-call-chain 100k budget, corrected error messages (ADR-018 APPROVED) |
+| PyPI Publication | ✅ v1.1.22 Published |
+| GitHub Release | ✅ v1.1.22 Published |
 | Engineering Freeze | ✅ Restored — no v1.2 work until A100 results |
 
 ### Maturity Assessment
@@ -57,7 +66,7 @@ until this document has been reviewed. Update AGENTS.md reading order after revi
 |------|--------|
 | Language | 100% |
 | Compiler | 99.9% |
-| Runtime | 99.5% (trampoline implemented, pending publication) |
+| Runtime | 99.5% (trampoline published in v1.1.20) |
 | Formatter | 99% |
 | Platform Services | 100% |
 | Platform Integration | 100% |

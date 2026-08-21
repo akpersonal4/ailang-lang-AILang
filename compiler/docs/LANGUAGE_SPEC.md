@@ -1,6 +1,6 @@
 # AILang Language Specification
 
-**Version:** 1.1.21  
+**Version:** 1.1.22  
 **Status:** Complete — Implementation Reference  
 **Canonical Source:** This document is the single source of truth for the AILang language.
 
@@ -496,7 +496,7 @@ math.add(1, 2)        // calls add exported by math.ail
 | `time` | Time: `now`, `timestamp`, `sleep`, `format` |
 | `random` | Random numbers: `int`, `float`, `choice` |
 | `environment` | Environment: `get`, `cwd`, `args` |
-| `convert` | Type conversion: `to_string`, `to_int`, `to_bool`, `to_number` |
+| `convert` | Type conversion: `to_string`, `to_int`, `to_float`, `to_bool`, `to_number` |
 | `io` | I/O helpers: `write`, `writeln`, `println`, `read` |
 | `system` | System operations: `exit` |
 

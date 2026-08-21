@@ -383,6 +383,36 @@ def native_to_string(args: tuple[RuntimeValue, ...]) -> str:
     return str(args[0])
 
 
+def native_to_float(args: tuple[RuntimeValue, ...]) -> float:
+    if len(args) != 1:
+        raise RuntimeError(
+            operation="convert.to_float()",
+            reason="Expected exactly 1 argument.",
+            suggestion="Pass a single string, int, or float value.",
+        )
+    value = args[0]
+    if isinstance(value, float):
+        return value
+    if isinstance(value, int):
+        return float(value)
+    if isinstance(value, str):
+        try:
+            return float(value)
+        except ValueError:
+            raise RuntimeError(
+                operation="convert.to_float()",
+                reason=f"Cannot convert '{value}' to Float.",
+                expected_type="String containing a number",
+                actual_type=f"String '{value}'",
+            )
+    raise RuntimeError(
+        operation="convert.to_float()",
+        reason="Expected a String, Int, or Float.",
+        expected_type="String, Int, or Float",
+        actual_type=RuntimeError._type_name(value),
+    )
+
+
 def set_add(args: tuple[RuntimeValue, ...]) -> set[RuntimeValue]:
     values = _expect_set(args[0], "set.add")
     values.add(args[1])
@@ -712,6 +742,7 @@ BUILTINS: dict[str, Any] = {
     "string_split": string_split,
     "__native_to_int": native_to_int,
     "__native_to_string": native_to_string,
+    "__native_to_float": native_to_float,
     "system_exit": system_exit,
     "__test_expect": test_expect,
     "io_read": io_read,

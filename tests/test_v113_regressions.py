@@ -140,19 +140,32 @@ def test_lex004_non_utf8_source() -> None:
 
 
 def test_recursion_depth_clean_error() -> None:
-    """Deep recursion raises a clean RuntimeError, not a Python traceback."""
+    """Deep tail recursion succeeds with trampoline; exceeding 100k budget
+    raises a clean RuntimeError referencing 100000 (not 2000).
+
+    recurse(99998) uses exactly 100000 trampoline iterations
+    (main + 99998 calls + base case). The check is >, not >=.
+    recurse(100001) exceeds the budget."""
     original = get_policy()
     try:
         set_policy(SandboxPolicy(working_dir=_get_repo_root(), enabled=False))
+        # recurse(99998) succeeds via the trampoline (ADR-017).
+        result = _run_source(
+            "fn recurse(n) { if (n <= 0) { return 0 } return recurse(n - 1) }\n"
+            "fn main() { return recurse(99998) }"
+        )
+        assert result == 0
+
+        # recurse(100001) exceeds the 100k iteration budget (ADR-018).
         with pytest.raises(AILangRuntimeError) as exc_info:
             _run_source(
                 "fn recurse(n) { if (n <= 0) { return 0 } return recurse(n - 1) }\n"
-                "fn main() { return recurse(100000) }"
+                "fn main() { return recurse(100001) }"
             )
         err = exc_info.value
         assert err.operation == "call"
         assert "Recursion depth exceeded" in err.reason
-        assert "2000" in err.reason
+        assert "100000" in err.reason
     finally:
         set_policy(original)
 

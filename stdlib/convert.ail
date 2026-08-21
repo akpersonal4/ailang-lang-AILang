@@ -6,6 +6,10 @@ fn to_int(value) {
     return __native_to_int(value)
 }
 
+fn to_float(value) {
+    return __native_to_float(value)
+}
+
 fn to_bool(value) {
     if (value == "true" || value == "1" || value == "yes") {
         return true

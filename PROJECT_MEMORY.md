@@ -7,8 +7,8 @@ Project history, key decisions, and evolution timeline for AI coding assistants.
 ## Project Identity
 
 - **Language:** AILang — AI-first, deterministic, specification-driven
-- **Version:** v1.1.18
-- **Standard Library:** 16 `.ail` modules (extended: `file.listdir`, `list.sum`, `list.find_by_key`, `list.filter_by_key`, `list.filter_by_contains`, `list.collect_key`, `list.group_by_key`, `list.sum_by_key`, `list.take`, `list.skip`, `list.search_by_name`, `list.exists_by_key`, `list.sort`, `list.sort_by_key`, `list.copy`, `io.read`, `string.join`, `string.from_int`, `string.from_bool`, `map.values`, `map.get_or_default`, `map.safe_get`, `convert.to_number`)
+- **Version:** v1.1.22
+- **Standard Library:** 16 `.ail` modules (extended: `file.listdir`, `list.sum`, `list.find_by_key`, `list.filter_by_key`, `list.filter_by_contains`, `list.collect_key`, `list.group_by_key`, `list.sum_by_key`, `list.take`, `list.skip`, `list.search_by_name`, `list.exists_by_key`, `list.sort`, `list.sort_by_key`, `list.copy`, `io.read`, `string.join`, `string.from_int`, `string.from_bool`, `map.values`, `map.get_or_default`, `map.safe_get`, `convert.to_number`, `convert.to_float`)
 - **Test Suite:** 1217 passing tests across 80+ test scripts
 - **Applications:** 66+ across `apps/`, `ai_benchmarks/`, `examples/patterns/`
 
@@ -501,21 +501,30 @@ A chronological record of every major engineering phase, with results, lessons, 
 | **Lessons** | The `scripts/sync_versions.py` `^VERSION` regex still misses indented `except ImportError` fallbacks — manual sync of `tools/ail_context/__main__.py` and `tools/ail_mcp/*` required again at v1.1.18. Generated report churn (`reports/dependency_ordering.json`) must be excluded from release commits. |
 | **Documents** | `CHANGELOG.md` v1.1.18, `docs/releases/M136_V1_1_18_RC_REPORT.md` |
 
-### M137 — Trampoline Execution Model (ADR-017 Phase 2) (v1.1.19-pre)
+### M137 — Trampoline Execution Model (ADR-017 Phase 2) (v1.1.20)
 
 | Aspect | Detail |
 |--------|--------|
-| **What** | Implemented the trampoline / explicit interpreter stack execution model (ADR-017 Option E). Replaced Python host-stack recursion with a heap-allocated interpreter stack in `compiler/runtime/interpreter.py`. Three-tier tail-call strategy: (1) depth==1 → push to trampoline stack, (2) depth>1 safe args → `_inline_tail_chain` iterative draining, (3) depth>1 unsafe args → fall through to normal execution. Removed the 2000-frame recursion ceiling for tail-recursive calls. Fixed `_TailCallSentinel` branch-propagation bug (2 lines added to `_execute_block`). |
+| **What** | Implemented the trampoline / explicit interpreter stack execution model (ADR-017 Option E). Replaced Python host-stack recursion with a heap-allocated interpreter stack in `compiler/runtime/interpreter.py`. Three-tier tail-call strategy: (1) depth==1 → push to trampoline stack, (2) depth>1 safe args → `_inline_tail_chain` iterative draining, (3) depth>1 unsafe args → fall through to normal execution. Removed the 2000-frame recursion ceiling for tail-recursive calls. Fixed `_TailCallSentinel` branch-propagation bug (2 lines added to `_execute_block`). Published as v1.1.20 after correcting v1.1.19 publication mismatch (v1.1.19 PyPI was pre-trampoline). |
 | **Why** | The recursion ceiling (~1,999 depth) was the binding constraint for the 10k product target. A canonical business workload at 10,000 records requires ≥10,000 recursive depth. The ceiling was an architecture-internal execution constraint (Python host stack), not a language rule. Option E removes the ceiling for tail-recursive calls with zero language surface change. Non-tail-recursive calls still consume the Python host stack. |
-| **Result** | All acceptance criteria pass: canonical 10k workload 980 ms avg (target: <5000 ms), depth 20,000 executes, memory 23.4 MB at depth 20k (linear), determinism preserved across 5 runs, 1183/1185 tests pass (2 pre-existing), zero regressions. ADR-017 approved by decision-holder. Phase 2 complete. |
-| **Performance** | Depth scaling: 100→20,000 (200×) = 278× time, 1.39× overhead (near-linear). Per-call: 6.7–13.2 µs. Canonical 10k: 980 ms avg. Fibonacci(30): 21.9s (exponential, non-tail-recursive). |
-| **Memory** | Linear: 1.2 KB/frame. Depth 10k = 11.64 MB additional. Depth 20k = 23.41 MB. 10k record workload = 3.49 MB peak. |
-| **Determinism** | Byte-identical across 5 runs on all workloads (countdown, fibonacci, arithmetic, 10k records). |
-| **Regression** | 1183 passed, 2 pre-existing deselected, 0 new failures. Ruff/mypy unchanged. |
-| **Profiling** | `_evaluate_expression` 24.2%, `isinstance` 8.7% (5.7M calls), `_call_function` 8.3%, name resolution 30% combined. No escalation gate fired. |
-| **Lessons** | (1) The three-tier strategy was necessary because CallIR in tail-call arguments prevents static inline optimization. (2) `_TailCallSentinel` must propagate through if-branches — a subtle bug that caused ackermann to continue executing after a matched branch. (3) The trampoline is invisible to AI — same language, same semantics, same tests. (4) Per-call overhead (~10 µs) is acceptable for business workloads; a VM is not justified at this time. |
+| **Result** | All acceptance criteria pass: canonical 10k workload 283 ms avg (target: <5000 ms), depth 10k+ executes via trampoline, determinism preserved across 5 runs (12502500), 768/769 tests pass (1 pre-existing), zero regressions. ADR-017 approved by decision-holder. Phase 2 complete. Published to PyPI (v1.1.20) and GitHub with SHA256-matched assets. |
+| **Performance** | Depth scaling: 10k tail-recursive in 328ms. Per-call: ~10 µs. Canonical 10k: 283 ms avg. |
+| **Determinism** | Byte-identical across 5 runs (sum_acc(5000,0) = 12502500 on all runs). |
+| **Regression** | 768 passed, 1 pre-existing, 0 new failures. Ruff/mypy unchanged. |
+| **Publication** | v1.1.20 is the authoritative release. v1.1.19 (PyPI) was pre-trampoline — pending manual yank. |
+| **Lessons** | (1) The three-tier strategy was necessary because CallIR in tail-call arguments prevents static inline optimization. (2) `_TailCallSentinel` must propagate through if-branches — a subtle bug that caused ackermann to continue executing after a matched branch. (3) The trampoline is invisible to AI — same language, same semantics, same tests. (4) Per-call overhead (~10 µs) is acceptable for business workloads; a VM is not justified at this time. (5) Tail-recursive trampoline requires `main()` entry point to drain the trampoline stack; top-level code without `main()` does not exercise the trampoline loop. |
 | **Files** | `compiler/runtime/interpreter.py` (~200 LOC changes), `benchmarks/phase2_trampoline_validation.py` (532 LOC, new), `tests/test_benchmark.py` (updated), `docs/adr/ADR-017-gate-f-iteration-execution-model.md` (§19 added) |
-| **Documents** | `docs/adr/ADR-017-gate-f-iteration-execution-model.md` (§19 Implementation Results), `benchmarks/phase2_trampoline_validation.py`, `docs/benchmarks/PERF_SCALING_POST_TRAMPOLINE.md` |
+| **Documents** | `docs/adr/ADR-017-gate-f-iteration-execution-model.md` (§19 Implementation Results), `benchmarks/phase2_trampoline_validation.py`, `docs/benchmarks/PERF_SCALING_POST_TRAMPOLINE.md`, `docs/releases/PUBLICATION_MATRIX_v1_1_20.md` |
+
+### A101 — P0 Hardening + v1.1.22 RC (v1.1.21 → v1.1.22)
+
+| | |
+|---|---|
+| **What** | A101 P0 items: P0-A `convert.to_float()` stdlib function + native builtin; P0-B per-call-chain trampoline iteration budget (100,000 iterations per chain, restored on failure — ADR-018); P0-D corrected 100,000-iteration error messages for both enforcement paths. v1.1.22 RC: ADR-018 status finalized DRAFT→APPROVED, 2 cosmetic Ruff E501s fixed, version metadata synced, full validation battery passed (1284/2 pre-existing, zero new ruff/mypy/test failures, determinism 5/5, canonical 10k −0.23% vs baseline). |
+| **Result** | RC verdict READY FOR PUBLICATION; published as v1.1.22 after publication-time cleanup (stray scratch `stdlib/test.ail` removed from package contents). |
+| **Lessons** | (1) A stale regular install of an old version in the dev venv can shadow current source in subprocesses that don't pin PYTHONPATH — upgrade the venv install when validating new builtins. (2) Untracked scratch files under packaged directories (e.g., `stdlib/`) leak into wheels/sdists — audit artifact contents against `git ls-files` before publication. |
+| **Files** | `compiler/runtime/builtins.py`, `compiler/runtime/interpreter.py`, `stdlib/convert.ail`, `compiler/lsp/features/{completion,hover,signature_help}.py`, `compiler/cli/main.py`, `tests/test_adr018_per_chain_budget.py`, `docs/adr/ADR-018-cumulative-iteration-budget.md` |
+| **Documents** | `docs/roadmap/AILANG_A101_POST_ADR018_VALIDATION_REPORT.md`, `docs/roadmap/AILANG_A101_V1_1_22_RC_REPORT.md`, `docs/adr/AILANG_A101_ADR018_ACCEPTANCE_REVIEW.md`, `docs/roadmap/AILANG_A101_V1_1_22_PUBLICATION_REPORT.md` |
 
 ### Governance
 

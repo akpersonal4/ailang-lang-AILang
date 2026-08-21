@@ -475,13 +475,15 @@ class Runtime:
                     raise self._augment_error(RuntimeError(
                         operation="call",
                         reason=(
-                            f"Recursion depth exceeded (limit: {self._max_call_depth}). "
+                            f"Recursion depth exceeded "
+                            f"(limit: {self._max_call_depth * 50}). "
                             "AILang recursion is bounded to prevent stack overflow."
                         ),
                         suggestion=(
-                            "Simplify recursive logic. The recursion limit is fixed at "
-                            f"{self._max_call_depth} in this build; for larger iterations "
-                            "use multiple smaller batches."
+                            "Simplify recursive logic. The recursion limit is "
+                            f"{self._max_call_depth * 50} iterations per "
+                            "trampoline loop; for larger iterations use multiple "
+                            "smaller batches."
                         ),
                     ))
 
@@ -529,47 +531,63 @@ class Runtime:
         When the function body detects another tail call (Pattern 1), it
         returns a ``_TailCallSentinel`` which this method uses to loop with
         the new callee and arguments.
+
+        Per-call-chain iteration budget (ADR-018 Option C): each chain gets
+        an independent iteration budget of ``_max_call_depth * 50``.  The
+        counter is saved on entry and restored on exit (including exception
+        paths) so that independent chains do not share a cumulative budget.
         """
-        while True:
-            self._trampoline_iterations += 1
-            if self._trampoline_iterations > self._max_call_depth * 50:
-                raise self._augment_error(RuntimeError(
-                    operation="call",
-                    reason=(
-                        f"Recursion depth exceeded (limit: {self._max_call_depth}). "
-                        "AILang recursion is bounded to prevent stack overflow."
-                    ),
-                    suggestion=(
-                        "Simplify recursive logic. The recursion limit is fixed at "
-                        f"{self._max_call_depth} in this build; for larger iterations "
-                        "use multiple smaller batches."
-                    ),
-                ))
+        # ADR-018 §8.1: save and reset iteration counter for this chain.
+        saved_iterations = self._trampoline_iterations
+        self._trampoline_iterations = 0
+        try:
+            while True:
+                # ADR-018 lines 534–535: increment and enforce per-chain budget.
+                self._trampoline_iterations += 1
+                if self._trampoline_iterations > self._max_call_depth * 50:
+                    raise self._augment_error(RuntimeError(
+                        operation="call",
+                        reason=(
+                            f"Recursion depth exceeded "
+                            f"(limit: {self._max_call_depth * 50}). "
+                            "AILang recursion is bounded to prevent stack overflow."
+                        ),
+                        suggestion=(
+                            "Simplify recursive logic. The recursion limit is "
+                            f"{self._max_call_depth * 50} iterations per call "
+                            "chain; for larger iterations use multiple smaller "
+                            "batches."
+                        ),
+                    ))
 
-            # Set up frame directly (like _call_function but without depth tracking).
-            frame = StackFrame(
-                function_name=function.name,
-                parent_frame=self._frame_stack[-1] if self._frame_stack else None,
-            )
-            for name, value in zip(function.parameters, args):
-                frame.define(name, value)
-                self._frame_ever_bound.add(name)
+                # Set up frame directly (like _call_function without depth tracking).
+                frame = StackFrame(
+                    function_name=function.name,
+                    parent_frame=self._frame_stack[-1] if self._frame_stack else None,
+                )
+                for name, value in zip(function.parameters, args):
+                    frame.define(name, value)
+                    self._frame_ever_bound.add(name)
 
-            self._frame_stack.append(frame)
-            try:
-                result = self._execute_block(function.body)
-            finally:
-                self._frame_stack.pop()
+                self._frame_stack.append(frame)
+                try:
+                    result = self._execute_block(function.body)
+                finally:
+                    self._frame_stack.pop()
 
-            if isinstance(result, ReturnSignal):
-                result = result.value
+                if isinstance(result, ReturnSignal):
+                    result = result.value
 
-            if isinstance(result, _TailCallSentinel):
-                function = result.function
-                args = result.args
-                continue
+                if isinstance(result, _TailCallSentinel):
+                    function = result.function
+                    args = result.args
+                    continue
 
-            return result
+                return result
+        finally:
+            # ADR-018 §8.3: restore previous counter so enclosing scope
+            # is unaffected by this chain's iterations.
+            self._trampoline_iterations = saved_iterations
 
     def _apply_binary(self, op: str, left: Any, right: Any) -> Any:
         """Evaluate a binary operation on pre-evaluated operands."""

@@ -85,6 +85,7 @@ _STDLIB_DOCS: dict[str, str] = {
     "environment.args": "`environment.args()` — Command-line arguments.",
     "convert.to_string": "`convert.to_string(value)` — Converts to string.",
     "convert.to_int": "`convert.to_int(value)` — Converts to integer.",
+    "convert.to_float": "`convert.to_float(value)` — Converts to float.",
     "convert.to_bool": "`convert.to_bool(value)` — Converts to boolean.",
     "convert.to_number": "`convert.to_number(value)` — Identity for numbers.",
     "io.write": "`io.write(value)` — Prints to stdout (no newline).",

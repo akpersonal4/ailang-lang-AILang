@@ -122,6 +122,7 @@ _STDLIB_SIGNATURES: dict[str, tuple[str, list[tuple[str, str]]]] = {
     "environment.args": ("environment.args()", []),
     "convert.to_string": ("convert.to_string(value)", [("value", "Value to convert")]),
     "convert.to_int": ("convert.to_int(value)", [("value", "String or int")]),
+    "convert.to_float": ("convert.to_float(value)", [("value", "String/int/float")]),
     "convert.to_bool": ("convert.to_bool(value)", [("value", "String to parse")]),
     "convert.to_number": ("convert.to_number(value)", [("value", "Numeric value")]),
     "io.write": ("io.write(value)", [("value", "Value to print")]),
