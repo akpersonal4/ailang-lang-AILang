@@ -1,0 +1,3 @@
+fn expect(condition, message) {
+    return __test_expect(condition, message)
+}
