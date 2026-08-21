@@ -2,7 +2,7 @@
   "name": "vscode-ailang",
   "displayName": "AILang",
   "description": "AILang language support — syntax highlighting, diagnostics, formatting, hover, go-to-definition, snippets, build/run",
-    "version": "1.1.22",
+    "version": "1.1.23",
   "publisher": "ailang",
   "license": "Apache-2.0",
   "keywords": [
