@@ -10,7 +10,7 @@ until this document has been reviewed. Update AGENTS.md reading order after revi
 
 | Attribute | Value |
 |:----------|:------|
-| **Current Release** | v1.1.21 (latest healthy) — v1.1.22 uploaded but defective (see Release Status) |
+| **Current Release** | v1.1.23 (Published — corrective; supersedes defective v1.1.22) |
 | **Current Milestone** | A100 — Community Validation (ready for recruitment) |
 | **Project Phase** | Public Release (engineering frozen — A101 P0 hardening published in v1.1.22) |
 
@@ -58,6 +58,7 @@ until this document has been reviewed. Update AGENTS.md reading order after revi
 | A101 P0-A/P0-B/P0-D | ✅ Shipped in v1.1.22 — `convert.to_float`, per-call-chain 100k budget, corrected error messages (ADR-018 APPROVED) |
 | PyPI Publication | ⚠️ v1.1.22 Uploaded — **DEFECTIVE: missing `stdlib/test.ail`; `import test` broken for installs** (v1.1.21 wheels shipped it unintentionally). Same-version re-upload impossible; yank prohibited. Remediation pending approval |
 | GitHub Release | ⚠️ v1.1.22 Created — assets match PyPI hashes; carries same defect |
+| Corrective Release | ✅ v1.1.23 Published — `stdlib/test.ail` restored to artifacts (tracked at `e1406b8`, released at `0ae2b77`); fresh-PyPI battery 22/22 incl. `import test`/`test.expect`/testgen; full gates passed (`AILANG_A101_V1_1_23_CORRECTIVE_RELEASE_REPORT.md`) |
 | Engineering Freeze | ✅ Restored — no v1.2 work until A100 results |
 
 ### Maturity Assessment
